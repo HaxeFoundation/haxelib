@@ -112,7 +112,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = 104;
+	static var VERSION = 105;
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
@@ -130,31 +130,31 @@ class Main {
 	function new() {
 		args = Sys.args();
 		commands = new List();
-		addCommand("install",install,"install a given library");
-		addCommand("list",list,"list all installed libraries",false);
-		addCommand("upgrade",upgrade,"upgrade all installed libraries");
-		addCommand("update",update,"update a single library");
-		addCommand("remove",remove,"remove a given library/version",false);
-		addCommand("set",set,"set the current version for a library",false);
-		addCommand("search",search,"list libraries matching a word");
-		addCommand("info",info,"list informations on a given library");
-		addCommand("user",user,"list informations on a given user");
-		addCommand("register",register,"register a new user");
-		addCommand("submit",submit,"submit or update a library package");
-		addCommand("setup",setup,"set the haxelib repository path",false);
-		addCommand("config",config,"print the repository path",false);
-		addCommand("path",path,"give paths to libraries",false);
-		addCommand("run",run,"run the specified library with parameters",false);
-		addCommand("local",local,"install the specified package locally",false);
-		addCommand("dev",dev,"set the development directory for a given library",false);
+		addCommand("install", install, "install a given library");
+		addCommand("list", list, "list all installed libraries", false);
+		addCommand("upgrade", upgrade, "upgrade all installed libraries");
+		addCommand("update", update, "update a single library");
+		addCommand("remove", remove, "remove a given library/version", false);
+		addCommand("set", set, "set the current version for a library", false);
+		addCommand("search", search, "list libraries matching a word");
+		addCommand("info", info, "list informations on a given library");
+		addCommand("user", user, "list informations on a given user");
+		addCommand("register", register, "register a new user");
+		addCommand("submit", submit, "submit or update a library package");
+		addCommand("setup", setup, "set the haxelib repository path", false);
+		addCommand("config", config, "print the repository path", false);
+		addCommand("path", path, "give paths to libraries", false);
+		addCommand("run", run, "run the specified library with parameters", false);
+		addCommand("local", local, "install the specified package locally", false);
+		addCommand("dev", dev, "set the development directory for a given library", false);
 		addCommand("git", git, "uses git repository as library");
 		addCommand("proxy", proxy, "setup the Http proxy");
 		initSite();
 	}
 
 	function initSite() {
-		siteUrl = "http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.dir;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl+SERVER.url).api);
+		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + SERVER.url).api);
 	}
 
 	function param( name, ?passwd ) {
@@ -197,7 +197,7 @@ class Main {
 	function usage() {
 		var vmin = Std.string(VERSION % 100);
 		var ver = Std.int(VERSION/100) + "." + if( vmin.length == 1 ) "0"+vmin else vmin;
-		print("Haxe Library Manager "+ver+" - (c)2006-2012 Haxe Foundation");
+		print("Haxe Library Manager "+ver+" - (c)2006-2013 Haxe Foundation");
 		print(" Usage : haxelib [command] [options]");
 		print(" Commands :");
 		for( c in commands )

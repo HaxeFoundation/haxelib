@@ -20,10 +20,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 package tools.haxelib;
+import haxe.io.Bytes;
 import tools.haxelib.Data;
-#if haxelib_site
 import tools.haxelib.SiteDb;
-#end
 
 class SiteApi {
 
@@ -34,14 +33,15 @@ class SiteApi {
 	}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
-		return Project.manager.containing(word);
+		//return Project.manager.containing(word);
+		return new List();
 	}
 
 	public function infos( project : String ) : ProjectInfos {
-		var p = Project.manager.search({ name : project }).first();
+		var p = Project.manager.select($name == project);
 		if( p == null )
 			throw "No such Project : "+project;
-		var vl = Version.manager.search({ project : p.id });
+		var vl = Version.manager.search($project == p.id);
 		var versions = new Array();
 		for( v in vl )
 			versions.push({ name : v.name, comments : v.comments, date : v.date });
@@ -53,15 +53,15 @@ class SiteApi {
 			owner : p.owner.name,
 			website : p.website,
 			license : p.license,
-			tags : Tag.manager.search({ project : p.id }).map(function(t) return t.tag),
+			tags : Tag.manager.search($project == p.id).map(function(t) return t.tag),
 		};
 	}
 
 	public function user( name : String ) : UserInfos {
-		var u = User.manager.search({ name : name }).first();
+		var u = User.manager.search($name == name).first();
 		if( u == null )
 			throw "No such user : "+name;
-		var pl = Project.manager.search({ owner : u.id });
+		var pl = Project.manager.search($owner == u.id);
 		var projects = new Array();
 		for( p in pl )
 			projects.push(p.name);
@@ -88,7 +88,7 @@ class SiteApi {
 	}
 
 	public function isNewUser( name : String ) : Bool {
-		return User.manager.search({ name : name }).first() == null;
+		return User.manager.select($name == name) == null;
 	}
 
 	public function checkDeveloper( prj : String, user : String ) : Void {
@@ -110,6 +110,10 @@ class SiteApi {
 		return Std.string(Std.random(100000000));
 	}
 
+	//public function submitBytes(id:Int, bytes:Bytes) {
+		//sys.io.File.saveBytes('${Site.TMP_DIR}/$id.tmp', bytes);
+	//}
+	
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		var path = Site.TMP_DIR+"/"+Std.parseInt(id)+".tmp";
 
@@ -203,7 +207,7 @@ class SiteApi {
 
 		// look for current version
 		var current = null;
-		for( v in Version.manager.search({ project : p.id }) )
+		for( v in Version.manager.search($project == p.id) )
 			if( v.name == infos.version ) {
 				current = v;
 				break;
@@ -263,10 +267,10 @@ class SiteApi {
 	}
 
 	public function postInstall( project : String, version : String ) {
-		var p = Project.manager.search({ name : project }).first();
+		var p = Project.manager.select($name == project);
 		if( p == null )
 			throw "No such Project : "+project;
-		var v = Version.manager.search({ project : p.id, name : version }).first();
+		var v = Version.manager.select($project == p.id && $name == version);
 		if( v == null )
 			throw "No such Version : "+version;
 		v.downloads++;

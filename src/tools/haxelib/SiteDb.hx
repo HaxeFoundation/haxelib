@@ -21,66 +21,83 @@
  */
 package tools.haxelib;
 
-class User extends neko.db.Object {
+import sys.db.*;
+import sys.db.Types;
 
-	public static var manager = new neko.db.Manager<User>(User);
+class User extends Object {
 
-	public var id : Int;
+	public var id : SId;
 	public var name : String;
 	public var fullname : String;
 	public var email : String;
 	public var pass : String;
 
 }
+class VersionManager extends Manager<Version> {
 
-class Project extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [
-			{ key : "owner", prop : "owner", manager : User.manager },
-			{ key : "version", prop : "version", manager : Version.manager },
-		];
+	public function latest( n : Int ) {
+		return this.search(true, { orderBy: -date, limit: n } );
 	}
+
+	public function byProject( p : Project ) {
+		return this.search($project == p.id, { orderBy: -date } );
+	}
+
+}
+
+class TagManager extends Manager<Tag> {
+
+	public function topTags( n : Int ) : List<{ tag:String, count: Int }> {
+		return cast this.unsafeExecute("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT " + n).results();
+	}
+
+}
+
+class ProjectManager extends Manager<Project> {
+
+	public function containing( word ) : List<{ id : Int, name : String }> {
+		//TODO: the cast could be avoided by changing the return type to iterable. Same problem at the next cast
+		return cast this.unsafeExecute("SELECT id, name FROM Project WHERE name LIKE " + word + " OR description LIKE " + word).results();
+	}
+
+	public function allByName() {
+		//TODO: review. Unless I am mistaken, there is no way to express COLLATE NOCASE yet
+		return this.unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE", false);
+	}
+
+}
+
+class Project extends Object {
 
 	public static var manager = new ProjectManager(Project);
 
-	public var id : Int;
+	public var id : SId;
 	public var name : String;
 	public var description : String;
 	public var website : String;
 	public var license : String;
-	public var downloads : Int;
-	public var owner(dynamic,dynamic) : User;
-	public var version(dynamic,dynamic) : Version;
+	public var downloads : Int = 0;
+	@:relation(owner) public var owner : User;
+	@:relation(version) public var version : Version;
 
 }
 
-class Tag extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [
-			{ key : "project", prop : "project", manager : Project.manager },
-		];
-	}
+class Tag extends Object {
 
 	public static var manager = new TagManager(Tag);
 
-	public var id : Int;
+	public var id : SId;
 	public var tag : String;
-	public var project(dynamic,dynamic) : Project;
+	@:relation(project) public var project : Project;
 
 }
 
-class Version extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [{ key : "project", prop : "project", manager : Project.manager }];
-	}
+class Version extends Object {
 
 	public static var manager = new VersionManager(Version);
 
-	public var id : Int;
-	public var project(dynamic,dynamic) : Project;
+	public var id : SId;
+	@:relation(project) public var project : Project;
 	public var name : String;
 	public var date : String; // sqlite does not have a proper 'date' type
 	public var comments : String;
@@ -89,59 +106,18 @@ class Version extends neko.db.Object {
 
 }
 
-class Developer extends neko.db.Object {
-
-	static var TABLE_IDS = ["user","project"];
-	static function RELATIONS() {
-		return [
-			{ key : "user", prop : "user", manager : User.manager },
-			{ key : "project", prop : "project", manager : Project.manager },
-		];
-	}
-
-	public static var manager = new neko.db.Manager<Developer>(Developer);
-
-	public var user(dynamic,dynamic) : User;
-	public var project(dynamic,dynamic) : Project;
-
-}
-
-class ProjectManager extends neko.db.Manager<Project> {
-
-	public function containing( word ) : List<{ id : Int, name : String }> {
-		word = quote("%"+word+"%");
-		return results("SELECT id, name FROM Project WHERE name LIKE "+word+" OR description LIKE "+word);
-	}
-
-	public function allByName() {
-		return objects("SELECT * FROM Project ORDER BY name COLLATE NOCASE",false);
-	}
-
-}
-
-class VersionManager extends neko.db.Manager<Version> {
-
-	public function latest( n : Int ) {
-		return objects("SELECT * FROM Version ORDER BY date DESC LIMIT "+n,false);
-	}
-
-	public function byProject( p : Project ) {
-		return objects("SELECT * FROM Version WHERE project = "+p.id+" ORDER BY date DESC",false);
-	}
-
-}
-
-class TagManager extends neko.db.Manager<Tag> {
-
-	public function topTags( n : Int ) {
-		return results("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT "+n);
-	}
+@:id(user,project)
+class Developer extends Object {
+	
+	@:relation(user) public var user : User;
+	@:relation(project) public var project : Project;
 
 }
 
 class SiteDb {
 
 	public static function create( db : sys.db.Connection ) {
+		//TODO: set the exact field types and use TableCreate here
 		db.request("DROP TABLE IF EXISTS User");
 		db.request("
 			CREATE TABLE User (

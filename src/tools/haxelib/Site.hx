@@ -20,16 +20,16 @@
  * DEALINGS IN THE SOFTWARE.
  */
 package tools.haxelib;
-#if haxelib_site
+
+import neko.Web;
 import tools.haxelib.SiteDb;
-#end
 import haxe.rtti.CType;
 
 class Site {
 
 	static var db : sys.db.Connection;
 
-	static var CWD = neko.Web.getCwd();
+	static var CWD = Web.getCwd();
 	static var DB_FILE = CWD+"haxelib.db";
 	public static var TMP_DIR = CWD+"tmp";
 	public static var REP_DIR = CWD+Data.REPOSITORY;
@@ -39,21 +39,25 @@ class Site {
 	}
 
 	static function initDatabase() {
-		db = neko.db.Sqlite.open(DB_FILE);
-		neko.db.Manager.cnx = db;
-		neko.db.Manager.initialize();
+		db = sys.db.Sqlite.open(DB_FILE);
+		sys.db.Manager.cnx = db;
+		sys.db.Manager.initialize();
 	}
 
 	static function run() {
+		
 		if( !sys.FileSystem.exists(TMP_DIR) )
 			sys.FileSystem.createDirectory(TMP_DIR);
 		if( !sys.FileSystem.exists(REP_DIR) )
 			sys.FileSystem.createDirectory(REP_DIR);
-
+		
+		
 		var ctx = new haxe.remoting.Context();
-		ctx.addObject("api",new SiteApi(db));
+		ctx.addObject("api", new SiteApi(db));
+		
 		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
 			return;
+		
 		if( Sys.args()[0] == "setup" ) {
 			setup();
 			neko.Lib.print("Setup done\n");
@@ -62,16 +66,36 @@ class Site {
 		var file = null;
 		var sid = null;
 		var bytes = 0;
-		neko.Web.parseMultipart(function(p,filename) {
-			if( p == "file" ) {
-				sid = Std.parseInt(filename);
-				file = sys.io.File.write(TMP_DIR+"/"+sid+".tmp",true);
-			} else
-				throw p+" not accepted";
-		},function(data,pos,len) {
-			bytes += len;
-			file.writeFullBytes(data,pos,len);
-		});
+		
+		//RAPTORS: the whole handling for nekotools is seriously evil
+		if (Sys.executablePath().indexOf('nekotools') == -1)
+			Web.parseMultipart(function(p,filename) {
+				if( p == "file" ) {
+					sid = Std.parseInt(filename);
+					file = sys.io.File.write(TMP_DIR + "/" + sid + ".tmp", true);
+				} else 
+					throw p+" not accepted";
+			},function(data,pos,len) {
+				bytes += len;
+				file.writeFullBytes(data,pos,len);
+			});
+		else {
+			var post = Web.getPostData();
+			if (post != null) {
+				var index = post.indexOf('PK');
+				if (index == -1)
+					throw 'Invalid Zip - or so I claim';
+					
+				var start = post.substr(0, index);
+				var data = post.substr(index);
+				
+				sid = Std.parseInt(start.split('filename="').pop());
+				file = sys.io.File.write(TMP_DIR + "/" + sid + ".tmp", true);
+				bytes = data.length;//thank got neko does not use utf8
+				file.writeString(data);
+			}
+		}
+		
 		if( file != null ) {
 			file.close();
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
@@ -94,13 +118,14 @@ class Site {
 	}
 
 	static function fillContent( ctx : Dynamic ) {
-		var uri = neko.Web.getURI().split("/");
+		var uri = Web.getURI().split("/");
 		var error = function(msg) { ctx.error = StringTools.htmlEscape(msg); return true; }
 		if( uri[0] == "" )
 			uri.shift();
 		var act = uri.shift();
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
+	
 		ctx.menuTags = Tag.manager.topTags(10);
 		switch( act ) {
 		case "p":
@@ -155,7 +180,7 @@ class Site {
 				var cl = html.find(root,path,0);
 				if( cl == null ) {
 					// we most likely clicked on a class which is part of the haxe core documentation
-					neko.Web.redirect("http://haxe.org/api/"+path.join("/"));
+					Web.redirect("http://haxe.org/api/"+path.join("/"));
 					return false;
 				}
 				html.process(cl);
@@ -172,21 +197,21 @@ class Site {
 		case "all":
 			ctx.projects = Project.manager.allByName();
 		case "search":
-			var v = neko.Web.getParams().get("v");
+			var v = Web.getParams().get("v");
 			var p = Project.manager.search({ name : v }).first();
 			if( p != null ) {
-				neko.Web.redirect("/p/"+p.name);
+				Web.redirect("/p/"+p.name);
 				return false;
 			}
 			if( Tag.manager.count({ tag : v }) > 0 ) {
-				neko.Web.redirect("/t/"+v);
+				Web.redirect("/t/"+v);
 				return false;
 			}
 			ctx.projects = Project.manager.containing(v).map(function(p) return Project.manager.get(p.id));
 			ctx.act_all = true;
 			ctx.search = StringTools.htmlEscape(v);
 		case "rss":
-			neko.Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
+			Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
 			neko.Lib.println('<?xml version="1.0" encoding="UTF-8"?>');
 			neko.Lib.print(buildRss().toString());
 			return false;
@@ -219,7 +244,7 @@ class Site {
 			return e;
 		}
 		Sys.setTimeLocale("en_US.UTF8");
-		var url = "http://"+neko.Web.getClientHeader("Host");
+		var url = "http://"+Web.getClientHeader("Host");
 		var rss = Xml.createElement("rss");
 		rss.set("version","2.0");
 		var channel = createChild(rss, "channel");
@@ -251,7 +276,7 @@ class Site {
 			error = { e : e };
 		}
 		db.close();
-		neko.db.Manager.cleanup();
+		sys.db.Manager.cleanup();
 		if( error != null )
 			neko.Lib.rethrow(error.e);
 	}
