@@ -22,6 +22,7 @@
 package tools.haxelib;
 
 import neko.Web;
+import sys.db.RecordMacros;
 import tools.haxelib.SiteDb;
 import haxe.rtti.CType;
 
@@ -126,22 +127,22 @@ class Site {
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
 	
-		ctx.menuTags = Tag.manager.topTags(10);
+		ctx.menuTags = Tag.topTags(10);
 		switch( act ) {
 		case "p":
 			var name = uri.shift();
-			var p = Project.manager.search({ name : name }).first();
+			var p = Project.manager.select({ name : name });
 			if( p == null )
 				return error("Unknown project '"+name+"'");
 			ctx.p = p;
 			ctx.owner = p.owner;
 			ctx.version = p.version;
-			ctx.versions = Version.manager.byProject(p);
+			ctx.versions = Version.byProject(p);
 			var tags = Tag.manager.search({ project : p.id });
 			if( !tags.isEmpty() ) ctx.tags = tags;
 		case "u":
 			var name = uri.shift();
-			var u = User.manager.search({ name : name }).first();
+			var u = User.manager.select({ name : name });
 			if( u == null )
 				return error("Unknown user '"+name+"'");
 			ctx.u = u;
@@ -152,7 +153,7 @@ class Site {
 			ctx.tprojects = Tag.manager.search({ tag : tag }).map(function(t) return t.project);
 		case "d":
 			var name = uri.shift();
-			var p = Project.manager.search({ name : name }).first();
+			var p = Project.manager.select({ name : name });
 			if( p == null )
 				return error("Unknown project '"+name+"'");
 			var version = uri.shift();
@@ -161,7 +162,7 @@ class Site {
 				v = p.version;
 				version = v.name;
 			} else {
-				v = Version.manager.search({ project : p.id, name : version }).first();
+				v = Version.manager.select( { project : p.id, name : version } );
 				if( v == null ) return error("Unknown version '"+version+"'");
 			}
 			if( v.documentation == null )
@@ -189,16 +190,16 @@ class Site {
 			ctx.v = v;
 			ctx.content = buf.toString();
 		case "index":
-			var vl = Version.manager.latest(10);
+			var vl = Version.latest(10);
 			for( v in vl ) {
 				var p = v.project; // fetch
 			}
 			ctx.versions = vl;
 		case "all":
-			ctx.projects = Project.manager.allByName();
+			ctx.projects = Project.allByName();
 		case "search":
 			var v = Web.getParams().get("v");
-			var p = Project.manager.search({ name : v }).first();
+			var p = Project.manager.select({ name : v });
 			if( p != null ) {
 				Web.redirect("/p/"+p.name);
 				return false;
@@ -207,7 +208,7 @@ class Site {
 				Web.redirect("/t/"+v);
 				return false;
 			}
-			ctx.projects = Project.manager.containing(v).map(function(p) return Project.manager.get(p.id));
+			ctx.projects = Project.containing(v).map(function(p) return Project.manager.get(p.id));
 			ctx.act_all = true;
 			ctx.search = StringTools.htmlEscape(v);
 		case "rss":
@@ -253,7 +254,7 @@ class Site {
 		createChildWithContent(channel, "description", "lib.haxe.org RSS");
 		createChildWithContent(channel, "generator", "haxe");
 		createChildWithContent(channel, "language", "en");
-		for (v in Version.manager.latest(10)){
+		for (v in Version.latest(10)){
 			var project = v.project;
 			var item = createChild(channel, "item");
 			createChildWithContent(item, "title", StringTools.htmlEscape(project.name+" "+v.name));

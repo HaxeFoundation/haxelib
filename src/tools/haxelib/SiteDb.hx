@@ -33,43 +33,8 @@ class User extends Object {
 	public var pass : String;
 
 }
-class VersionManager extends Manager<Version> {
-
-	public function latest( n : Int ) {
-		return this.search(true, { orderBy: -date, limit: n } );
-	}
-
-	public function byProject( p : Project ) {
-		return this.search($project == p.id, { orderBy: -date } );
-	}
-
-}
-
-class TagManager extends Manager<Tag> {
-
-	public function topTags( n : Int ) : List<{ tag:String, count: Int }> {
-		return cast this.unsafeExecute("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT " + n).results();
-	}
-
-}
-
-class ProjectManager extends Manager<Project> {
-
-	public function containing( word ) : List<{ id : Int, name : String }> {
-		//TODO: the cast could be avoided by changing the return type to iterable. Same problem at the next cast
-		return cast this.unsafeExecute("SELECT id, name FROM Project WHERE name LIKE " + word + " OR description LIKE " + word).results();
-	}
-
-	public function allByName() {
-		//TODO: review. Unless I am mistaken, there is no way to express COLLATE NOCASE yet
-		return this.unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE", false);
-	}
-
-}
 
 class Project extends Object {
-
-	public static var manager = new ProjectManager(Project);
 
 	public var id : SId;
 	public var name : String;
@@ -79,22 +44,32 @@ class Project extends Object {
 	public var downloads : Int = 0;
 	@:relation(owner) public var owner : User;
 	@:relation(version) public var version : Version;
+	
+	static public function containing( word ) : List<{ id : Int, name : String }> {
+		//TODO: the cast could be avoided by changing the return type to iterable. Same problem at the next cast
+		return cast Manager.cnx.request("SELECT id, name FROM Project WHERE name LIKE " + word + " OR description LIKE " + word).results();
+	}
+
+	static public function allByName() {
+		//TODO: review. Unless I am mistaken, there is no way to express COLLATE NOCASE yet
+		return manager.unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE", false);
+	}
 
 }
 
 class Tag extends Object {
 
-	public static var manager = new TagManager(Tag);
-
 	public var id : SId;
 	public var tag : String;
 	@:relation(project) public var project : Project;
+	
+	static public function topTags( n : Int ) : List<{ tag:String, count: Int }> {
+		return cast Manager.cnx.request("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT " + n).results();
+	}
 
 }
 
 class Version extends Object {
-
-	public static var manager = new VersionManager(Version);
 
 	public var id : SId;
 	@:relation(project) public var project : Project;
@@ -103,6 +78,14 @@ class Version extends Object {
 	public var comments : String;
 	public var downloads : Int;
 	public var documentation : Null<String>;
+	
+	static public function latest( n : Int ) {
+		return manager.search(true, { orderBy: -date, limit: n } );
+	}
+
+	static public function byProject( p : Project ) {
+		return manager.search($project == p.id, { orderBy: -date } );
+	}
 
 }
 
