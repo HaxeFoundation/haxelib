@@ -1,0 +1,7 @@
+<project name="Bar" url="http://example.org" license="GPL">
+	<user name="Bar"/>
+	<tag v="bar"/>
+	<tag v="test"/>
+	<description>This project is an example of an haxelib project</description>
+	<version name="1.0.0">Initial release, everything is working correctly</version>
+</project>

@@ -1,5 +1,4 @@
 -cp src
--neko bin/index.n
--D 
+-neko server/index.n
 -main tools.haxelib.Site
 -dce no
