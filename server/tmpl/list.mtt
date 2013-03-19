@@ -1,0 +1,12 @@
+<h2>::if search::Search Results for '::search::'::else::All Projects::end:::</h2>
+
+<div class="projects">
+<ul>
+::foreach projects::
+	<li>
+		<a href="/p/::name::">::name::</a>
+		<div class="description">::description::</div>
+	</li>
+::end::
+</ul>
+</div>

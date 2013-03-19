@@ -1,0 +1,16 @@
+<h2>Tag ::tag::</h2>
+
+<p>
+	Here's the list of projects using this tag :
+</p>
+
+<div class="projects">
+<ul>
+::foreach tprojects::
+	<li>
+		<a href="/p/::name::">::name::</a>
+		<div class="description">::description::</div>
+	</li>
+::end::
+</ul>
+</div>

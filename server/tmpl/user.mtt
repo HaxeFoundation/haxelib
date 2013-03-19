@@ -1,0 +1,16 @@
+<h2>::(u.name)::</h2>
+
+<div class="uinfos">
+	<div class="name"><div class="label">Name</div> ::(u.fullname)::</div>
+	<div class="email"><div class="label">Email</div> ::(u.email)::</div>
+</div>
+
+<h2>Projects</h2>
+
+<div class="projects">
+<ul>
+::foreach uprojects::
+	<li><a href="/p/::name::">::name::</a></li>
+::end::
+</ul>
+</div>
