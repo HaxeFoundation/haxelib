@@ -21,6 +21,7 @@
  */
 package tools.haxelib;
 import haxe.zip.Reader;
+using StringTools;
 
 enum Answer {
 	Yes;
@@ -454,7 +455,7 @@ class Main {
 		// locate haxelib.xml base path
 		var basepath = null;
 		for( f in zip ) {
-			if( StringTools.endsWith(f.fileName,Data.XML) ) {
+			if( f.fileName.endsWith(Data.XML) ) {
 				basepath = f.fileName.substr(0,f.fileName.length - Data.XML.length);
 				break;
 			}
@@ -465,7 +466,7 @@ class Main {
 		// unzip content
 		for( zipfile in zip ) {
 			var n = zipfile.fileName;
-			if( StringTools.startsWith(n,basepath) ) {
+			if( n.startsWith(basepath) ) {
 				// remove basepath
 				n = n.substr(basepath.length,n.length-basepath.length);
 				if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
@@ -575,7 +576,7 @@ class Main {
 			} else
 				throw "This is the first time you are runing haxelib. Please run haxelib setup first";
 		}
-		rep = StringTools.trim(rep);
+		rep = rep.trim();
 		if( setup ) {
 			if( args.length <= argcur ) {
 				print("Please enter haxelib repository path with write access");
@@ -610,11 +611,11 @@ class Main {
 	}
 
 	function getCurrent( dir ) {
-		return StringTools.trim(sys.io.File.getContent(dir + "/.current"));
+		return sys.io.File.getContent(dir + "/.current").trim();
 	}
 
 	function getDev( dir ) {
-		return StringTools.trim(sys.io.File.getContent(dir + "/.dev"));
+		return sys.io.File.getContent(dir + "/.dev").trim();
 	}
 
 	function list() {
@@ -624,7 +625,7 @@ class Main {
 				continue;
 			var versions = new Array();
 			var current = getCurrent(rep + p);
-			var dev = try StringTools.trim(sys.io.File.getContent(rep+p+"/.dev")) catch( e : Dynamic ) null;
+			var dev = try sys.io.File.getContent(rep+p+"/.dev").trim() catch( e : Dynamic ) null;
 			for( v in sys.FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." )
 					continue;
@@ -749,7 +750,7 @@ class Main {
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
 		var version = if( version != null ) version else getCurrent(pdir);
 		var vdir = pdir + "/" + Data.safe(version);
-		if( StringTools.endsWith(vdir, "dev") )
+		if( vdir.endsWith( "dev") )
 			vdir = getDev(pdir);
 		if( !sys.FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
@@ -794,7 +795,7 @@ class Main {
 			}
 			try {
 				var f = sys.io.File.getContent(dir + "extraParams.hxml");
-				Sys.println(StringTools.trim(f));
+				Sys.println(f.trim());
 			} catch( e : Dynamic ) {
 			}
 			Sys.println(dir);
