@@ -108,10 +108,6 @@ class SiteApi {
 	public function getSubmitId() : String {
 		return Std.string(Std.random(100000000));
 	}
-
-	//public function submitBytes(id:Int, bytes:Bytes) {
-		//sys.io.File.saveBytes('${Site.TMP_DIR}/$id.tmp', bytes);
-	//}
 	
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		var path = Site.TMP_DIR+"/"+Std.parseInt(id)+".tmp";
