@@ -33,8 +33,7 @@ class SiteApi {
 	}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
-		//return Project.manager.containing(word);
-		return new List();
+		return Project.containing(word);
 	}
 
 	public function infos( project : String ) : ProjectInfos {
