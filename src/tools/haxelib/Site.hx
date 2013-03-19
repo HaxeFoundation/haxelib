@@ -23,6 +23,7 @@ package tools.haxelib;
 
 import neko.Web;
 import sys.db.RecordMacros;
+import sys.io.File;
 import tools.haxelib.SiteDb;
 import haxe.rtti.CType;
 
@@ -33,6 +34,7 @@ class Site {
 	static var CWD = Web.getCwd();
 	static var DB_FILE = CWD+"haxelib.db";
 	public static var TMP_DIR = CWD+"tmp";
+	public static var TMPL_DIR = CWD+"tmpl/";
 	public static var REP_DIR = CWD+Data.REPOSITORY;
 
 	static function setup() {
@@ -106,7 +108,7 @@ class Site {
 	}
 
 	static function display() {
-		var data = sys.io.File.getContent(CWD + "website.mtt");
+		var data = File.getContent(TMPL_DIR + "website.mtt");
 		var page = new haxe.Template(data);
 		var ctx : Dynamic = {};
 		var macros = {
