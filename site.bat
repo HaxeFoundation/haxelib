@@ -1,4 +1,4 @@
 @echo off
-cd bin
-nekotools server -rewrite -p 80
+cd server
+nekotools server -rewrite
 pause
