@@ -114,6 +114,7 @@ class Site {
 				return "/"+Data.REPOSITORY+"/"+Data.fileName(res(p).name,res(v).name);
 			}
 		};
+		haxe.Template.globals.menuTags = Tag.topTags(10);
 		if( fillContent(ctx) )
 			neko.Lib.print( page.execute(ctx,macros) );
 	}
@@ -127,7 +128,6 @@ class Site {
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
 	
-		ctx.menuTags = Tag.topTags(10);
 		switch( act ) {
 		case "p":
 			var name = uri.shift();
