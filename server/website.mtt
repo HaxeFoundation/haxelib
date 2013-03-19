@@ -14,7 +14,7 @@
 
 <div class="menu">
 	<div class="title">Search :</div>
-	<form action="/search" method="POST">
+	<form action="/search" method="GET">
 		<input name="v"/>
 	</form>
 	<div class="title">Top tags :</div>
