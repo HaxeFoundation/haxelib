@@ -97,18 +97,26 @@ class PrepareServer {
 		}
 
 		Sys.println("Submitting test libraries");
-		var site = new SiteProxy(HttpConnection.urlConnect('http://localhost:2000/').api);
-		for (library in libraries) {
-			Sys.println("Submitting library: " + library);
-			site.register(library, library, library+'@example.org', library + ' Developer');
-			// TODO: This is not how haxelib usually behave, do we need dependencies checks and all the other stuff?
-			site.checkDeveloper(library,library);
-			var data = File.getBytes(testFolder + 'libraries/lib' + library + '.zip');
-			var id = site.getSubmitId();
-			var h = new haxe.Http('http://localhost:2000/');
-			h.fileTransfert("file",id,new BytesInput(data),data.length);
-			h.request(true);
-			site.processSubmit(id,library,library);
+		try {
+			var site = new SiteProxy(HttpConnection.urlConnect('http://localhost:2000/').api);
+			for (library in libraries) {
+				Sys.println("Submitting library: " + library);
+				site.register(library, library, library+'@example.org', library + ' Developer');
+				// TODO: This is not how haxelib usually behave, do we need dependencies checks and all the other stuff?
+				site.checkDeveloper(library, library);
+				var libraryFile = testFolder + 'libraries/lib' + library + '.zip';
+				var data = File.getBytes(libraryFile);
+				var id = site.getSubmitId();
+				var h = new haxe.Http('http://localhost:2000/');
+				h.fileTransfert("file", id, new BytesInput(data), data.length);
+				h.request(true);
+				site.processSubmit(id, library, library);
+				FileSystem.deleteFile(libraryFile);
+			}
+		}
+		catch (e:Dynamic) {
+			Sys.println("There was a problem submitting test libraries to the local haxelib server. Make sure it is running.");
+			Sys.exit(1);
 		}
 
 	}
