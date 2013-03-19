@@ -2,7 +2,7 @@
 
 <div class="pinfos">
 	<div class="description">::(p.description)::</div>
-	::if tags::<div class="tags"><div class="label">Tags</div> ::foreach tags::<a href="/t/::tag::">::tag::</a>::end::</div>::end::
+	::if (tags.length != 0)::<div class="tags"><div class="label">Tags</div> ::foreach tags::<a href="/t/::tag::">::tag::</a>::end::</div>::end::
 	<div class="url"><div class="label">Website</div> <a href="::(p.website)::">::(p.website)::</a></div>
 	<div class="version"><div class="label">Version</div> ::(version.name)::</div>
 	<div class="owner"><div class="label">Owner</div> <a href="/u/::(owner.name)::">::(owner.name)::</a></div>
