@@ -1,0 +1,14 @@
+<h2>::(p.name):: ::(v.name):: Documentation</h2>
+
+<script type="text/javascript">
+	function toggle(id) {
+		var e = document.getElementById(id);
+		e.isopen = !e.isopen;
+		e.style.display = e.isopen?"block":"none";
+		return false;
+	}
+</script>
+
+<div class="api">
+::content::
+</div>
