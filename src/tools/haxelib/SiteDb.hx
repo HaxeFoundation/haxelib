@@ -45,9 +45,11 @@ class Project extends Object {
 	@:relation(owner) public var owner : User;
 	@:relation(version) public var version : Version;
 	
-	static public function containing( word ) : List<{ id : Int, name : String }> {
-		//TODO: the cast could be avoided by changing the return type to iterable. Same problem at the next cast
-		return cast Manager.cnx.request("SELECT id, name FROM Project WHERE name LIKE " + word + " OR description LIKE " + word).results();
+	static public function containing( word:String ) : List<{ id: Int, name: String }> {
+		var ret = new List();
+		for (project in manager.search($name.like(word) || $description.like(word)))
+			ret.push( { id: project.id, name: project.name } );
+		return ret;
 	}
 
 	static public function allByName() {
