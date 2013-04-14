@@ -1,0 +1,27 @@
+<h2>::(p.name)::</h2>
+
+<div class="pinfos">
+	<div class="description">::(p.description)::</div>
+	::if (tags.length != 0)::<div class="tags"><div class="label">Tags</div> ::foreach tags::<a href="/t/::tag::">::tag::</a>::end::</div>::end::
+	<div class="url"><div class="label">Website</div> <a href="::(p.website)::">::(p.website)::</a></div>
+	<div class="version"><div class="label">Version</div> ::(version.name)::</div>
+	<div class="owner"><div class="label">Owner</div> <a href="/u/::(owner.name)::">::(owner.name)::</a></div>
+	<div class="license"><div class="label">License</div> ::(p.license)::</div>
+	::if (version.documentation)::<div class="doc"><a href="/d/::(p.name)::">Documentation</a></div>::end::
+	<div class="download"><a href="$$download(p,version)">Download</a></div>
+</div>
+
+<h2>History</h2>
+
+<div class="versions">
+<ul>
+	::foreach versions::
+	<li>
+		<div class="date">::date:: </div>
+		<div class="name">::name:: </div>
+		<div class="download"><a href="$$download(p,__current__)">Download</a></div>
+		<div class="comments">::comments::</div>
+	</li>
+	::end::
+</ul>
+</div>

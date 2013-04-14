@@ -21,8 +21,11 @@
  */
 package tools.haxelib;
 
+import haxe.web.Dispatch;
+import neko.Lib;
 import neko.Web;
 import sys.db.RecordMacros;
+import sys.io.File;
 import tools.haxelib.SiteDb;
 import haxe.rtti.CType;
 
@@ -33,6 +36,7 @@ class Site {
 	static var CWD = Web.getCwd();
 	static var DB_FILE = CWD+"haxelib.db";
 	public static var TMP_DIR = CWD+"tmp";
+	public static var TMPL_DIR = CWD+"tmpl/";
 	public static var REP_DIR = CWD+Data.REPOSITORY;
 
 	static function setup() {
@@ -105,125 +109,167 @@ class Site {
 		display();
 	}
 
+	static function getTemplate(name:String) {
+		var data = File.getContent(TMPL_DIR + name + '.mtt');
+		return new haxe.Template(data);
+	}
+
 	static function display() {
-		var data = sys.io.File.getContent(CWD + "website.mtt");
-		var page = new haxe.Template(data);
-		var ctx : Dynamic = {};
+		
 		var macros = {
 			download : function( res, p, v ) {
 				return "/"+Data.REPOSITORY+"/"+Data.fileName(res(p).name,res(v).name);
 			}
 		};
-		if( fillContent(ctx) )
-			neko.Lib.print( page.execute(ctx,macros) );
-	}
 
-	static function fillContent( ctx : Dynamic ) {
-		var uri = Web.getURI().split("/");
-		var error = function(msg) { ctx.error = StringTools.htmlEscape(msg); return true; }
-		if( uri[0] == "" )
-			uri.shift();
-		var act = uri.shift();
-		if( act == null || act == "" || act == "index.n" )
-			act = "index";
-	
-		ctx.menuTags = Tag.topTags(10);
-		switch( act ) {
-		case "p":
-			var name = uri.shift();
-			var p = Project.manager.select({ name : name });
-			if( p == null )
-				return error("Unknown project '"+name+"'");
-			ctx.p = p;
-			ctx.owner = p.owner;
-			ctx.version = p.version;
-			ctx.versions = Version.byProject(p);
-			var tags = Tag.manager.search({ project : p.id });
-			if( !tags.isEmpty() ) ctx.tags = tags;
-		case "u":
-			var name = uri.shift();
-			var u = User.manager.select({ name : name });
-			if( u == null )
-				return error("Unknown user '"+name+"'");
-			ctx.u = u;
-			ctx.uprojects = Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; });
-		case "t":
-			var tag = uri.shift();
-			ctx.tag = StringTools.htmlEscape(tag);
-			ctx.tprojects = Tag.manager.search({ tag : tag }).map(function(t) return t.project);
-		case "d":
-			var name = uri.shift();
-			var p = Project.manager.select({ name : name });
-			if( p == null )
-				return error("Unknown project '"+name+"'");
-			var version = uri.shift();
-			var v;
-			if( version == null ) {
-				v = p.version;
-				version = v.name;
-			} else {
-				v = Version.manager.select( { project : p.id, name : version } );
-				if( v == null ) return error("Unknown version '"+version+"'");
-			}
-			if( v.documentation == null )
-				return error("Project "+p.name+" version "+version+" has no documentation");
-			var root : TypeRoot = haxe.Unserializer.run(v.documentation);
-			var buf = new StringBuf();
-			var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
-			html.output = function(str) buf.add(str);
-			var path = uri.join(".").toLowerCase().split(".");
-			if( path.length == 1 && path[0] == "" )
-				path = [];
-			if( path.length == 0 ) {
-				ctx.index = true;
-				html.process(TPackage("root","root",root));
-			} else {
-				var cl = html.find(root,path,0);
-				if( cl == null ) {
-					// we most likely clicked on a class which is part of the haxe core documentation
-					Web.redirect("http://haxe.org/api/"+path.join("/"));
-					return false;
-				}
-				html.process(cl);
-			}
-			ctx.p = p;
-			ctx.v = v;
-			ctx.content = buf.toString();
-		case "index":
-			var vl = Version.latest(10);
-			for( v in vl ) {
-				var p = v.project; // fetch
-			}
-			ctx.versions = vl;
-		case "all":
-			ctx.projects = Project.allByName();
-		case "search":
-			var v = Web.getParams().get("v");
-			var p = Project.manager.select({ name : v });
-			if( p != null ) {
-				Web.redirect("/p/"+p.name);
-				return false;
-			}
-			if( Tag.manager.count({ tag : v }) > 0 ) {
-				Web.redirect("/t/"+v);
-				return false;
-			}
-			ctx.projects = Project.containing(v).map(function(p) return Project.manager.get(p.id));
-			ctx.act_all = true;
-			ctx.search = StringTools.htmlEscape(v);
-		case "rss":
-			Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
-			neko.Lib.println('<?xml version="1.0" encoding="UTF-8"?>');
-			neko.Lib.print(buildRss().toString());
-			return false;
-		default:
-			ctx.error = "Unknown action : "+act;
-			return true;
+		// required by all templates
+		haxe.Template.globals.menuTags = Tag.topTags(10);
+
+		// render content into layout template
+		var render = function(page:String, context:Dynamic) {
+			var layout = getTemplate('layout');
+			var content = getTemplate(page);
+			Lib.print(layout.execute({
+				content: content.execute(context, macros)
+			}));
 		}
-		Reflect.setField(ctx,"act_"+act,true);
-		return true;
-	}
 
+		var error = function(msg:String) {
+			render('error', {
+				error: StringTools.htmlEscape(msg)
+			});
+		}
+
+		var api = {
+
+			// index page
+			doDefault: function() {
+				var vl = Version.latest(10);
+				for( v in vl ) {
+					var p = v.project; // fetch
+				}
+				return render('index', {
+					versions: vl
+				});
+			},
+
+			// project page
+			doP: function(name:String) {
+				var p = Project.manager.select({ name : name });
+				if( p == null )
+					return error("Unknown project '"+name+"'");
+				return render('project', {
+					p: p,
+					owner: p.owner,
+					version: p.version,
+					versions: Version.byProject(p),
+					tags: Tag.manager.search({ project : p.id })
+				});
+			},
+
+			// user page
+			doU: function(name:String) {
+				var u = User.manager.select({ name : name });
+				if( u == null )
+					return error("Unknown user '"+name+"'");
+				return render('user', {
+					u: u,
+					uprojects: Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; })
+				});
+			},
+
+			// tag page
+			doT: function(tagName: String) {
+				render('tag', {
+					tag: StringTools.htmlEscape(tagName),
+					tprojects: Tag.manager.search({ tag : tagName }).map(function(t) return t.project)
+				});
+			},
+
+			// list of all projects page
+			doAll: function() {
+				render('list', {
+					projects: Project.allByName()
+				});
+			},
+
+			// documenation
+			doD: function(name:String, version:Null<String>) {
+				return error('Library documenation display is currently not implemented');
+				/*
+				// TODO: the current project does not allow uploads with documenation, this ported, but not tested
+				var ctx:Dynamic = {};
+				var p = Project.manager.select({ name : name });
+				if( p == null )
+					return error("Unknown project '"+name+"'");
+				var v;
+				if( version == null ) {
+					v = p.version;
+					version = v.name;
+				} else {
+					v = Version.manager.select( { project : p.id, name : version } );
+					if( v == null ) return error("Unknown version '"+version+"'");
+				}
+				if( v.documentation == null )
+					return error("Project "+p.name+" version "+version+" has no documentation");
+				var root : TypeRoot = haxe.Unserializer.run(v.documentation);
+				var buf = new StringBuf();
+				var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
+				html.output = function(str) buf.add(str);
+				var path = uri.join(".").toLowerCase().split(".");
+				if( path.length == 1 && path[0] == "" )
+					path = [];
+				if( path.length == 0 ) {
+					ctx.index = true;
+					html.process(TPackage("root","root",root));
+				} else {
+					var cl = html.find(root,path,0);
+					if( cl == null ) {
+						// we most likely clicked on a class which is part of the haxe core documentation
+						Web.redirect("http://haxe.org/api/"+path.join("/"));
+						return false;
+					}
+					html.process(cl);
+				}
+				ctx.p = p;
+				ctx.v = v;
+				ctx.content = buf.toString();
+				return render('documentation', {});
+				*/
+			},
+
+			// search
+			doSearch: function() {
+				var v = Web.getParams().get("v");
+				var p = Project.manager.select({ name : v });
+				if( p != null ) {
+					return Web.redirect("/p/"+p.name);
+				}
+				if( Tag.manager.count({ tag : v }) > 0 ) {
+					return Web.redirect("/t/"+v);
+				}
+				return render('list', {
+					search: StringTools.htmlEscape(v),
+					projects: Project.containing(v).map(function(p) return Project.manager.get(p.id))
+				});
+			},
+
+			// RSS feed
+			doRss: function() {
+				Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
+				Lib.println('<?xml version="1.0" encoding="UTF-8"?>');
+				Lib.print(buildRss().toString());
+			}
+		};
+		try {
+			Dispatch.run(Web.getURI(),Web.getParams(), api);
+		}
+		catch (e:DispatchError) {
+			// TODO: maybe we could give a nicer error message
+			error('Invalid URL');
+		}
+
+	}
 	static function buildRss() : Xml {
 		var createChild = function(root:Xml, name:String){
 			var c = Xml.createElement(name);
