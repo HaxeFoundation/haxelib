@@ -47,6 +47,7 @@ class Project extends Object {
 	
 	static public function containing( word:String ) : List<{ id: Int, name: String }> {
 		var ret = new List();
+		word = '%$word%';
 		for (project in manager.search($name.like(word) || $description.like(word)))
 			ret.push( { id: project.id, name: project.name } );
 		return ret;
