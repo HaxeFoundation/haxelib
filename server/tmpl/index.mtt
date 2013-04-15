@@ -12,9 +12,9 @@
 	::foreach versions::
 	<li>
 		<div class="date">::date:: </div>
-		<div class="project"><a href="/p/::(__project.name)::">::(__project.name)::</a> </div>
+		<div class="project"><a href="/p/::(project.name)::">::(project.name)::</a> </div>
 		<div class="name">::name:: </div>
-		<div class="download"><a href="$$download(__project,__current__)">Download</a></div>
+		<div class="download"><a href="$$download(project,__current__)">Download</a></div>
 		<div class="comments">::comments::</div>
 	</li>
 	::end::
