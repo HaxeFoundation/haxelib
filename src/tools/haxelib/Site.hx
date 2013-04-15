@@ -24,17 +24,23 @@ package tools.haxelib;
 import haxe.web.Dispatch;
 import neko.Lib;
 import neko.Web;
-import sys.db.RecordMacros;
+import sys.db.*;
 import sys.io.File;
 import tools.haxelib.SiteDb;
 import haxe.rtti.CType;
+import haxe.Json;
+
+using sys.io.File;
+using sys.FileSystem;
+using Lambda;
 
 class Site {
 
-	static var db : sys.db.Connection;
+	static var db : Connection;
 
 	static var CWD = Web.getCwd();
-	static var DB_FILE = CWD+"haxelib.db";
+	static var DB_CONFIG = CWD + "dbconfig.json";
+	static var DB_FILE = CWD + "haxelib.db";
 	public static var TMP_DIR = CWD+"tmp";
 	public static var TMPL_DIR = CWD+"tmpl/";
 	public static var REP_DIR = CWD+Data.REPOSITORY;
@@ -44,9 +50,25 @@ class Site {
 	}
 
 	static function initDatabase() {
-		db = sys.db.Sqlite.open(DB_FILE);
-		sys.db.Manager.cnx = db;
-		sys.db.Manager.initialize();
+		db = 
+			if (DB_CONFIG.exists()) 
+				Mysql.connect(Json.parse(DB_CONFIG.getContent()));
+			else 
+				Sqlite.open(DB_FILE);
+				
+		Manager.cnx = db;
+		Manager.initialize();
+		
+		var managers:Array<Manager<Dynamic>> = [
+			User.manager,
+			Project.manager,
+			Tag.manager,
+			Version.manager,
+			Developer.manager
+		];
+		for (m in managers)
+			if (!TableCreate.exists(m))
+				TableCreate.create(m);
 	}
 
 	static function run() {
@@ -65,7 +87,7 @@ class Site {
 		
 		if( Sys.args()[0] == "setup" ) {
 			setup();
-			neko.Lib.print("Setup done\n");
+			Sys.print("Setup done\n");
 			return;
 		}
 		var file = null;
@@ -103,166 +125,29 @@ class Site {
 		
 		if( file != null ) {
 			file.close();
-			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
+			Sys.print("File #"+sid+" accepted : "+bytes+" bytes written");
 			return;
 		}
 		display();
 	}
-
+	
 	static function getTemplate(name:String) {
 		var data = File.getContent(TMPL_DIR + name + '.mtt');
-		return new haxe.Template(data);
+		return new Template(data);
 	}
+	static var macros = {
+		download : function( res:String->Dynamic, p, v ) {
+			return "/" + Data.REPOSITORY + "/" + Data.fileName(res(p).name, res(v).toSemver().toString());
+		},
+	};
 
-	static function display() {
-		
-		var macros = {
-			download : function( res, p, v ) {
-				return "/"+Data.REPOSITORY+"/"+Data.fileName(res(p).name,res(v).name);
-			}
-		};
+	static function display() {		
 
 		// required by all templates
 		haxe.Template.globals.menuTags = Tag.topTags(10);
 
-		// render content into layout template
-		var render = function(page:String, context:Dynamic) {
-			var layout = getTemplate('layout');
-			var content = getTemplate(page);
-			Lib.print(layout.execute({
-				content: content.execute(context, macros)
-			}));
-		}
-
-		var error = function(msg:String) {
-			render('error', {
-				error: StringTools.htmlEscape(msg)
-			});
-		}
-
-		var api = {
-
-			// index page
-			doDefault: function() {
-				var vl = Version.latest(10);
-				for( v in vl ) {
-					var p = v.project; // fetch
-				}
-				return render('index', {
-					versions: vl
-				});
-			},
-
-			// project page
-			doP: function(name:String) {
-				var p = Project.manager.select({ name : name });
-				if( p == null )
-					return error("Unknown project '"+name+"'");
-				return render('project', {
-					p: p,
-					owner: p.owner,
-					version: p.version,
-					versions: Version.byProject(p),
-					tags: Tag.manager.search({ project : p.id })
-				});
-			},
-
-			// user page
-			doU: function(name:String) {
-				var u = User.manager.select({ name : name });
-				if( u == null )
-					return error("Unknown user '"+name+"'");
-				return render('user', {
-					u: u,
-					uprojects: Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; })
-				});
-			},
-
-			// tag page
-			doT: function(tagName: String) {
-				render('tag', {
-					tag: StringTools.htmlEscape(tagName),
-					tprojects: Tag.manager.search({ tag : tagName }).map(function(t) return t.project)
-				});
-			},
-
-			// list of all projects page
-			doAll: function() {
-				render('list', {
-					projects: Project.allByName()
-				});
-			},
-
-			// documenation
-			doD: function(name:String, version:Null<String>) {
-				return error('Library documenation display is currently not implemented');
-				/*
-				// TODO: the current project does not allow uploads with documenation, this ported, but not tested
-				var ctx:Dynamic = {};
-				var p = Project.manager.select({ name : name });
-				if( p == null )
-					return error("Unknown project '"+name+"'");
-				var v;
-				if( version == null ) {
-					v = p.version;
-					version = v.name;
-				} else {
-					v = Version.manager.select( { project : p.id, name : version } );
-					if( v == null ) return error("Unknown version '"+version+"'");
-				}
-				if( v.documentation == null )
-					return error("Project "+p.name+" version "+version+" has no documentation");
-				var root : TypeRoot = haxe.Unserializer.run(v.documentation);
-				var buf = new StringBuf();
-				var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
-				html.output = function(str) buf.add(str);
-				var path = uri.join(".").toLowerCase().split(".");
-				if( path.length == 1 && path[0] == "" )
-					path = [];
-				if( path.length == 0 ) {
-					ctx.index = true;
-					html.process(TPackage("root","root",root));
-				} else {
-					var cl = html.find(root,path,0);
-					if( cl == null ) {
-						// we most likely clicked on a class which is part of the haxe core documentation
-						Web.redirect("http://haxe.org/api/"+path.join("/"));
-						return false;
-					}
-					html.process(cl);
-				}
-				ctx.p = p;
-				ctx.v = v;
-				ctx.content = buf.toString();
-				return render('documentation', {});
-				*/
-			},
-
-			// search
-			doSearch: function() {
-				var v = Web.getParams().get("v");
-				var p = Project.manager.select({ name : v });
-				if( p != null ) {
-					return Web.redirect("/p/"+p.name);
-				}
-				if( Tag.manager.count({ tag : v }) > 0 ) {
-					return Web.redirect("/t/"+v);
-				}
-				return render('list', {
-					search: StringTools.htmlEscape(v),
-					projects: Project.containing(v).map(function(p) return Project.manager.get(p.id))
-				});
-			},
-
-			// RSS feed
-			doRss: function() {
-				Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
-				Lib.println('<?xml version="1.0" encoding="UTF-8"?>');
-				Lib.print(buildRss().toString());
-			}
-		};
 		try {
-			Dispatch.run(Web.getURI(),Web.getParams(), api);
+			Dispatch.run(Web.getURI(),Web.getParams(), Site);
 		}
 		catch (e:DispatchError) {
 			// TODO: maybe we could give a nicer error message
@@ -270,6 +155,138 @@ class Site {
 		}
 
 	}
+	static function error(msg:String) {
+		render('error', {
+			error: StringTools.htmlEscape(msg)
+		});
+	}
+	// render content into layout template
+	static function render(page:String, context:Dynamic) {
+		var layout = getTemplate('layout');
+		var content = getTemplate(page);
+		Sys.print(layout.execute({
+			content: content.execute(context, macros)
+		}));
+	}	
+	// index page
+	static function doDefault() {
+		var vl = Version.latest(10);
+		for( v in vl ) {
+			var p = v.project; // fetch
+		}
+		return render('index', {
+			versions: vl
+		});
+	}
+
+	// project page
+	static function doP(name:String) {
+		var p = Project.manager.select({ name : name });
+		if( p == null )
+			return error("Unknown project '"+name+"'");
+		return render('project', {
+			p: p,
+			owner: p.owner,
+			version: p.version,
+			versions: Version.byProject(p),
+			tags: Tag.manager.search({ project : p.id })
+		});
+	}
+
+	// user page
+	static function doU(name:String) {
+		var u = User.manager.select({ name : name });
+		if( u == null )
+			return error("Unknown user '"+name+"'");
+		return render('user', {
+			u: u,
+			uprojects: Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; })
+		});
+	}
+
+	// tag page
+	static function doT(tagName: String) {
+		render('tag', {
+			tag: StringTools.htmlEscape(tagName),
+			tprojects: Tag.manager.search({ tag : tagName }).map(function(t) return t.project)
+		});
+	}
+
+	// list of all projects page
+	static function doAll() {
+		render('list', {
+			projects: Project.allByName()
+		});
+	}
+
+	// documenation
+	static function doD(name:String, version:Null<String>) {
+		return error('Library documenation display is currently not implemented');
+		/*
+		// TODO: the current project does not allow uploads with documenation, this ported, but not tested
+		var ctx:Dynamic = {};
+		var p = Project.manager.select({ name : name });
+		if( p == null )
+			return error("Unknown project '"+name+"'");
+		var v;
+		if( version == null ) {
+			v = p.version;
+			version = v.name;
+		} else {
+			v = Version.manager.select( { project : p.id, name : version } );
+			if( v == null ) return error("Unknown version '"+version+"'");
+		}
+		if( v.documentation == null )
+			return error("Project "+p.name+" version "+version+" has no documentation");
+		var root : TypeRoot = haxe.Unserializer.run(v.documentation);
+		var buf = new StringBuf();
+		var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
+		html.output = function(str) buf.add(str);
+		var path = uri.join(".").toLowerCase().split(".");
+		if( path.length == 1 && path[0] == "" )
+			path = [];
+		if( path.length == 0 ) {
+			ctx.index = true;
+			html.process(TPackage("root","root",root));
+		} else {
+			var cl = html.find(root,path,0);
+			if( cl == null ) {
+				// we most likely clicked on a class which is part of the haxe core documentation
+				Web.redirect("http://haxe.org/api/"+path.join("/"));
+				return false;
+			}
+			html.process(cl);
+		}
+		ctx.p = p;
+		ctx.v = v;
+		ctx.content = buf.toString();
+		return render('documentation', {});
+		*/
+	}
+
+	// search
+	static function doSearch() {
+		var v = Web.getParams().get("v");
+		var p = Project.manager.select({ name : v });
+		if( p != null ) {
+			return Web.redirect("/p/"+p.name);
+		}
+		if( Tag.manager.count({ tag : v }) > 0 ) {
+			return Web.redirect("/t/"+v);
+		}
+		return render('list', {
+			search: StringTools.htmlEscape(v),
+			projects: Project.containing(v).map(function(p) return Project.manager.get(p.id))
+		});
+	}
+
+	// RSS feed
+	static function doRss() {
+		Web.setHeader("Content-Type", "text/xml; charset=UTF-8");
+		Sys.println('<?xml version="1.0" encoding="UTF-8"?>');
+		Sys.print(buildRss().toString());
+	}
+	
 	static function buildRss() : Xml {
 		var createChild = function(root:Xml, name:String){
 			var c = Xml.createElement(name);
@@ -303,7 +320,7 @@ class Site {
 		for (v in Version.latest(10)){
 			var project = v.project;
 			var item = createChild(channel, "item");
-			createChildWithContent(item, "title", StringTools.htmlEscape(project.name+" "+v.name));
+			createChildWithContent(item, "title", StringTools.htmlEscape(project.name + " " + v.toSemver()));
 			createChildWithContent(item, "link", url+"/p/"+project.name);
 			createChildWithContent(item, "guid", url+"/p/"+project.name+"?v="+v.id);
 			var date = DateTools.format(Date.fromString(v.date), "%a, %e %b %Y %H:%M:%S %z");
@@ -323,9 +340,9 @@ class Site {
 			error = { e : e };
 		}
 		db.close();
-		sys.db.Manager.cleanup();
+		Manager.cleanup();
 		if( error != null )
-			neko.Lib.rethrow(error.e);
+			Lib.rethrow(error.e);
 	}
 
 }

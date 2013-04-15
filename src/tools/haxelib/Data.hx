@@ -54,7 +54,7 @@ typedef XmlInfos = {
 	var website : String;
 	var desc : String;
 	var license : String;
-	var version : String;
+	var version : SemVer;
 	var versionComments : String;
 	var developers : List<String>;
 	var tags : List<String>;
@@ -93,7 +93,7 @@ class Data {
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
 			throw "Invalid parameter : "+name;
-		return name.split(".").join(",");
+		return name.split(".").join(",");//TODO: is this really unsafe in any way?
 	}
 
 	public static function unsafe( name : String ) {
@@ -160,7 +160,7 @@ class Data {
 			project : project,
 			website : p.att.url,
 			desc : p.node.description.innerData,
-			version : p.node.version.att.name,
+			version : SemVer.ofString(p.node.version.att.name),
 			versionComments : p.node.version.innerData,
 			license : p.att.license,
 			tags : tags,

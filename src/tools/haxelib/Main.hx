@@ -358,10 +358,11 @@ class Main {
 		}
 
 		// check if this version already exists
+		
 		var sinfos = try site.infos(infos.project) catch( _ : Dynamic ) null;
 		if( sinfos != null )
-			for( v in sinfos.versions )
-				if( v.name == infos.version && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
+			for( v in sinfos.versions ) 
+				if( v.name == infos.version.toString() && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
@@ -404,7 +405,7 @@ class Main {
 			}
 		if( !found )
 			throw "No such version "+version;
-		doInstall(inf.name,version,version == inf.curversion);
+		doInstall(inf.name, version, version == inf.curversion);
 	}
 
 	function doInstall( project, version, setcurrent ) {
@@ -431,8 +432,8 @@ class Main {
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
 
-		doInstallFile(filepath,setcurrent);
-		site.postInstall(project,version);
+		doInstallFile(filepath, setcurrent);
+		site.postInstall(project, SemVer.ofString(version));
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
@@ -447,7 +448,7 @@ class Main {
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
 		pdir += "/";
-		var target = pdir + Data.safe(infos.version);
+		var target = pdir + Data.safe(infos.version.toString());
 		safeDir(target);
 		target += "/";
 
@@ -491,7 +492,7 @@ class Main {
 
 		// set current version
 		if( setcurrent || !sys.FileSystem.exists(pdir+".current") ) {
-			sys.io.File.saveContent(pdir+".current",infos.version);
+			sys.io.File.saveContent(pdir + ".current", infos.version.toString());
 			print("  Current version is now "+infos.version);
 		}
 

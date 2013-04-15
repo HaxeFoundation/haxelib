@@ -3,5 +3,5 @@
 	<tag v="foo"/>
 	<tag v="test"/>
 	<description>This project is an example of an haxelib project</description>
-	<version name="1.0.0">Initial release, everything is working correctly</version>
+	<version name="1.0.0-alpha.0">Initial release, everything is working correctly</version>
 </project>
