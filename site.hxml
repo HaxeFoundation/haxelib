@@ -2,3 +2,10 @@
 -neko server/index.n
 -main tools.haxelib.Site
 -dce no
+
+--next 
+
+-cp src 
+-neko server/legacy/index.n
+-main tools.legacyhaxelib.Site
+-dce no
