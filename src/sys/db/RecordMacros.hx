@@ -337,7 +337,7 @@ class RecordMacros {
 			var fi = {
 				name : f.name,
 				t : try makeType(f.type) catch( e : String ) error(e,f.pos),
-				isNull : isNull,
+				isNull : isNull || f.meta.has(':nullable'),//TODO: this is a temporary hack to enable SNull<SEnum<T>>
 			};
 			var isId = switch( fi.t ) {
 			case DId, DUId: true;
@@ -583,7 +583,9 @@ class RecordMacros {
 											case TFun(_, _): error('only allowed if all constructors are constant', e2.pos);
 											default:
 										}
-									return { sql : makeOp(eq?" = ":" != ", r1.sql, macro $e2.getIndex(), pos), t : DBool, n : r1.n };
+									
+									var sql = macro ($ { r1.sql } + { var value = $e2; if (value == null) $v { eq ? " IS NULL" : " IS NOT NULL" } else ($v { eq ? "=" : "!=" } + value.getIndex()); } );
+									return { sql : sql, t : DBool, n : r1.n };
 								default: throw 'assert';
 							}
 						}

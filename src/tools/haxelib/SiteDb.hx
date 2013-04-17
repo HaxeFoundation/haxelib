@@ -79,7 +79,7 @@ class Version extends Object {
 	public var major : Int;
 	public var minor : Int;
 	public var patch : Int;
-	public var preview : SNull<SEnum<SemVer.Preview>>;
+	@:nullable public var preview : SEnum<SemVer.Preview>;
 	public var previewNum : SNull<Int>;
 	@:skip public var name(get, never):String;
 	function get_name() return toSemver().toString();
@@ -96,7 +96,7 @@ class Version extends Object {
 	public var date : String; // sqlite does not have a proper 'date' type
 	public var comments : String;
 	public var downloads : Int;
-	public var documentation : Null<String>;
+	public var documentation : SNull<String>;
 	
 	static public function latest( n : Int ) {
 		return manager.search(true, { orderBy: -date, limit: n } );
