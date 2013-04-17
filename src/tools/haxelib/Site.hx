@@ -52,13 +52,6 @@ class Site {
 		if( !sys.FileSystem.exists(REP_DIR) )
 			sys.FileSystem.createDirectory(REP_DIR);
 		
-		
-		var ctx = new haxe.remoting.Context();
-		ctx.addObject("api", new SiteApi(db));
-		
-		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
-			return;
-		
 		if( Sys.args()[0] == "setup" ) {
 			setup();
 			neko.Lib.print("Setup done\n");

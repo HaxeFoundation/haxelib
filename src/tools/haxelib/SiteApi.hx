@@ -23,14 +23,39 @@ package tools.haxelib;
 import haxe.io.Bytes;
 import tools.haxelib.Data;
 import tools.haxelib.SiteDb;
+import neko.Web;
 
 class SiteApi {
 
-	var db : sys.db.Connection;
+	static var db : sys.db.Connection;
 
-	public function new( db ) {
-		this.db = db;
+	static var CWD = Web.getCwd() + "../../";
+	static var DB_FILE = CWD+"haxelib.db";
+	public static var TMP_DIR = CWD+"tmp";
+	public static var REP_DIR = CWD+Data.REPOSITORY;
+
+	static function run() {
+		if( !sys.FileSystem.exists(TMP_DIR) )
+			sys.FileSystem.createDirectory(TMP_DIR);
+		if( !sys.FileSystem.exists(REP_DIR) )
+			sys.FileSystem.createDirectory(REP_DIR);
+		
+		var ctx = new haxe.remoting.Context();
+		ctx.addObject("api", new SiteApi());
+		
+		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
+			return;
+		else 
+			throw "Invalid remoting call";
 	}
+
+	static function initDatabase() {
+		db = sys.db.Sqlite.open(DB_FILE);
+		sys.db.Manager.cnx = db;
+		sys.db.Manager.initialize();
+	}
+
+	public function new() {}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
 		return Project.containing(word);
@@ -272,6 +297,20 @@ class SiteApi {
 		v.update();
 		p.downloads++;
 		p.update();
+	}
+
+	static function main() {
+		var error = null;
+		initDatabase();
+		try {
+			run();
+		} catch( e : Dynamic ) {
+			error = { e : e };
+		}
+		db.close();
+		sys.db.Manager.cleanup();
+		if( error != null )
+			neko.Lib.rethrow(error.e);
 	}
 
 }
