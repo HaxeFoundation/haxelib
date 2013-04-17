@@ -8,4 +8,6 @@
 -cp src 
 -neko server/legacy/index.n
 -main tools.legacyhaxelib.Site
+-lib hx2compat
+-D haxelib_site
 -dce no
