@@ -116,6 +116,7 @@ class PrepareServer {
 		}
 		catch (e:Dynamic) {
 			Sys.println("There was a problem submitting test libraries to the local haxelib server. Make sure it is running.");
+			Sys.println(e);
 			Sys.exit(1);
 		}
 

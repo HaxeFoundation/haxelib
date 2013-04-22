@@ -1,0 +1,3 @@
+cd bin
+haxelib
+pause

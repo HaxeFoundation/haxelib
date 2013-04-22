@@ -43,10 +43,11 @@ class Project extends Object {
 	public var license : String;
 	public var downloads : Int = 0;
 	@:relation(owner) public var owner : User;
-	@:relation(version) public var version : Version;
+	@:relation(version) public var version : SNull<Version>;
 	
 	static public function containing( word:String ) : List<{ id: Int, name: String }> {
 		var ret = new List();
+		word = '%$word%';
 		for (project in manager.search($name.like(word) || $description.like(word)))
 			ret.push( { id: project.id, name: project.name } );
 		return ret;
@@ -75,11 +76,27 @@ class Version extends Object {
 
 	public var id : SId;
 	@:relation(project) public var project : Project;
-	public var name : String;
+	public var major : Int;
+	public var minor : Int;
+	public var patch : Int;
+	@:nullable public var preview : SEnum<SemVer.Preview>;
+	public var previewNum : SNull<Int>;
+	@:skip public var name(get, never):String;
+	function get_name() return toSemver().toString();
+	
+	public function toSemver():SemVer {
+		return new SemVer(
+			major,
+			minor,
+			patch,
+			preview,
+			previewNum
+		);
+	}
 	public var date : String; // sqlite does not have a proper 'date' type
 	public var comments : String;
 	public var downloads : Int;
-	public var documentation : Null<String>;
+	public var documentation : SNull<String>;
 	
 	static public function latest( n : Int ) {
 		return manager.search(true, { orderBy: -date, limit: n } );
@@ -102,58 +119,6 @@ class Developer extends Object {
 class SiteDb {
 
 	public static function create( db : sys.db.Connection ) {
-		//TODO: set the exact field types and use TableCreate here
-		db.request("DROP TABLE IF EXISTS User");
-		db.request("
-			CREATE TABLE User (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				name VARCHAR(16) NOT NULL UNIQUE,
-				fullname VARCHAR(50) NOT NULL,
-				pass VARCHAR(32) NOT NULL,
-				email VARCHAR(50) NOT NULL
-			)
-		");
-		db.request("DROP TABLE IF EXISTS Project");
-		db.request("
-			CREATE TABLE Project (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				owner INTEGER NOT NULL,
-				name VARCHAR(32) NOT NULL UNIQUE,
-				license VARCHAR(20) NOT NULL,
-				description TEXT NOT NULL,
-				website VARCHAR(100) NOT NULL,
-				version INT,
-				downloads INT NOT NULL
-			)
-		");
-		db.request("DROP TABLE IF EXISTS Version");
-		db.request("
-			CREATE TABLE Version (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				project INTEGER NOT NULL,
-				downloads INTEGER NOT NULL,
-				date VARCHAR(19) NOT NULL,
-				name VARCHAR(32) NOT NULL,
-				comments TEXT NOT NULL,
-				documentation TEXT NULL
-			)
-		");
-		db.request("DROP TABLE IF EXISTS Developer");
-		db.request("
-			CREATE TABLE Developer (
-				user INTEGER NOT NULL,
-				project INTEGER NOT NULL
-			)
-		");
-		db.request("DROP TABLE IF EXISTS Tag");
-		db.request("
-			CREATE TABLE Tag (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				tag VARCHAR(32) NOT NULL,
-				project INTEGER NOT NULL
-			)
-		");
-		db.request("DROP INDEX IF EXISTS TagSearch");
-		db.request("CREATE INDEX TagSearch ON Tag(tag)");
+		//now based on TableCreate when establishing the connection
 	}
 }

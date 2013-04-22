@@ -24,6 +24,7 @@ import haxe.io.Bytes;
 import tools.haxelib.Data;
 import tools.haxelib.SiteDb;
 import neko.Web;
+import tools.haxelib.SemVer;
 
 class SiteApi {
 
@@ -68,10 +69,10 @@ class SiteApi {
 		var vl = Version.manager.search($project == p.id);
 		var versions = new Array();
 		for( v in vl )
-			versions.push({ name : v.name, comments : v.comments, date : v.date });
+			versions.push({ name : v.toSemver().toString(), comments : v.comments, date : v.date });
 		return {
 			name : p.name,
-			curversion : if( p.version == null ) null else p.version.name,
+			curversion : if( p.version == null ) null else p.version.toSemver().toString(),
 			desc : p.description,
 			versions : versions,
 			owner : p.owner.name,
@@ -225,14 +226,6 @@ class SiteApi {
 			}
 		}
 
-		// look for current version
-		var current = null;
-		for( v in Version.manager.search($project == p.id) )
-			if( v.name == infos.version ) {
-				current = v;
-				break;
-			}
-
 		// update documentation
 		var doc = null;
 		var docXML = Data.readDoc(zip);
@@ -259,22 +252,18 @@ class SiteApi {
 		}
 
 		// update file
-		var target = Site.REP_DIR+"/"+Data.fileName(p.name,infos.version);
-		if( current != null ) sys.FileSystem.deleteFile(target);
+		var target = Site.REP_DIR + "/" + Data.fileName(p.name, infos.version.toString());
 		sys.FileSystem.rename(path,target);
-
-		// update existing version
-		if( current != null ) {
-			current.documentation = doc;
-			current.comments = infos.versionComments;
-			current.update();
-			return "Version "+current.name+" (id#"+current.id+") updated";
-		}
 
 		// add new version
 		var v = new Version();
 		v.project = p;
-		v.name = infos.version;
+		v.major = infos.version.major;
+		v.minor = infos.version.minor;
+		v.patch = infos.version.patch;
+		v.preview = infos.version.preview;
+		v.previewNum = infos.version.previewNum;
+		
 		v.comments = infos.versionComments;
 		v.downloads = 0;
 		v.date = Date.now().toString();
@@ -283,16 +272,23 @@ class SiteApi {
 
 		p.version = v;
 		p.update();
-		return "Version "+v.name+" (id#"+v.id+") added";
+		return "Version " + v.toSemver().toString() + " (id#" + v.id + ") added";
 	}
 
-	public function postInstall( project : String, version : String ) {
+	public function postInstall( project : String, version : SemVer ) {
 		var p = Project.manager.select($name == project);
 		if( p == null )
-			throw "No such Project : "+project;
-		var v = Version.manager.select($project == p.id && $name == version);
+			throw "No such Project : " + project;
+		var v = Version.manager.select(
+			$project == p.id && 
+			$major == version.major && 
+			$minor == version.minor && 
+			$patch == version.patch && 
+			$preview == version.preview && 
+			$previewNum == version.previewNum
+		);
 		if( v == null )
-			throw "No such Version : "+version;
+			throw "No such Version : " + version;
 		v.downloads++;
 		v.update();
 		p.downloads++;
