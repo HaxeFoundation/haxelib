@@ -139,12 +139,15 @@ class Site {
 		// required by all templates
 		haxe.Template.globals.menuTags = Tag.topTags(10);
 
+		var uri = Web.getURI();
+		if (uri == "/index.n") uri = "/";
+
 		try {
-			Dispatch.run(Web.getURI(),Web.getParams(), Site);
+			Dispatch.run(uri,Web.getParams(), Site);
 		}
 		catch (e:DispatchError) {
 			// TODO: maybe we could give a nicer error message
-			error('Invalid URL');
+			error('Page not found:' + uri);
 		}
 
 	}
