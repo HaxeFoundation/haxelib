@@ -8,8 +8,9 @@ mkdir -p server/api/2.0
 haxe site.hxml
 
 cp src/tools/haxelib/.htaccess server/
-cp src/tools/haxelib/website.mtt server/
+cp -ar src/tools/haxelib/tmpl server/
 cp src/tools/haxelib/haxelib.css server/
+cp src/tools/haxelib/dbconfig.json.example server/
 
 cp src/tools/legacyhaxelib/.htaccess server/legacy/
 cp src/tools/legacyhaxelib/website.mtt server/legacy/
