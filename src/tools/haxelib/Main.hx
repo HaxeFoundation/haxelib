@@ -112,7 +112,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = 105;
+	static var VERSION = 200;
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
