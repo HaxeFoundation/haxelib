@@ -136,8 +136,8 @@ class SiteApi {
 	}
 	
 	public function processSubmit( id : String, user : String, pass : String ) : String {
-		var path = Site.TMP_DIR+"/"+Std.parseInt(id)+".tmp";
-
+		var path = TMP_DIR+"/"+Std.parseInt(id)+".tmp";
+		
 		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
 		file.close();
@@ -256,7 +256,7 @@ class SiteApi {
 		}
 
 		// update file
-		var target = Site.REP_DIR + "/" + Data.fileName(p.name, infos.version.toString());
+		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version.toString());
 		sys.FileSystem.rename(path,target);
 
 		// add new version

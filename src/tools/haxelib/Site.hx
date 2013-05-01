@@ -43,7 +43,7 @@ class Site {
 	static var DB_FILE = CWD + "haxelib.db";
 	public static var TMP_DIR = CWD+"tmp";
 	public static var TMPL_DIR = CWD+"tmpl/";
-	public static var REP_DIR = CWD+Data.REPOSITORY+"/2.0/";
+	public static var REP_DIR = CWD+Data.REPOSITORY;
 
 	static function setup() {
 		SiteDb.create(db);

@@ -118,7 +118,8 @@ class Main {
 		host : "haxelib.dev",
 		port : 80,
 		dir : "",
-		url : "index.n"
+		url : "index.n",
+		apiVersion : "2.0"
 	};
 
 	var argcur : Int;
@@ -154,7 +155,7 @@ class Main {
 
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + SERVER.url).api);
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url).api);
 	}
 
 	function param( name, ?passwd ) {
