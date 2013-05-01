@@ -115,7 +115,7 @@ class Main {
 	static var VERSION = 104;
 	static var REPNAME = "lib";
 	static var SERVER = {
-		host : "lib.haxe.org",
+		host : "haxelib.jasononeil.com.au",
 		port : 80,
 		dir : "",
 		url : "index.n"
