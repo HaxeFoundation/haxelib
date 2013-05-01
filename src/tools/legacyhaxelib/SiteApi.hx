@@ -141,6 +141,7 @@ class SiteApi {
 			p.description = infos.desc;
 			p.website = infos.website;
 			p.license = infos.license;
+			p.downloads = 0;
 			p.owner = u;
 			p.insert();
 			for( u in devs ) {
