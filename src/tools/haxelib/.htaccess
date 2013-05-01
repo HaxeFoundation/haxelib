@@ -8,7 +8,7 @@ RewriteEngine On
 
 RewriteBase /
 RewriteCond %{HTTP:X-Haxe-Remoting}: 1
-RewriteRule ^index.n$ haxelib1/index.n/ [L]
+RewriteRule ^index.n$ legacy/index.n [L]
 
 # Enable rewrite for the new site's pages, only if the file or dir doesn't exist
 
