@@ -182,11 +182,11 @@ class Site {
 			var v = neko.Web.getParams().get("v");
 			var p = Project.manager.search({ name : v }).first();
 			if( p != null ) {
-				neko.Web.redirect("/p/"+p.name);
+				neko.Web.redirect("/legacy/p/"+p.name);
 				return false;
 			}
 			if( Tag.manager.count({ tag : v }) > 0 ) {
-				neko.Web.redirect("/t/"+v);
+				neko.Web.redirect("/legacy/t/"+v);
 				return false;
 			}
 			ctx.projects = Project.manager.containing(v).map(function(p) return Project.manager.get(p.id));
