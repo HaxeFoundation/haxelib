@@ -230,25 +230,29 @@ class SiteApi {
 		var doc = null;
 		var docXML = Data.readDoc(zip);
 		if( docXML != null ) {
-			var p = new haxe.rtti.XmlParser();
-			p.process(Xml.parse(docXML).firstElement(),null);
-			p.sort();
-			var roots = new Array();
-			for( x in p.root )
-				switch( x ) {
-				case TPackage(name,_,_):
-					switch( name ) {
-					case "flash","flash8","sys","cs","java","flash9","haxe","js","neko","cpp","php","tools": // don't include haXe core types
-					default: roots.push(x);
+			try {
+				var p = new haxe.rtti.XmlParser();
+				p.process(Xml.parse(docXML).firstElement(),null);
+				p.sort();
+				var roots = new Array();
+				for( x in p.root )
+					switch( x ) {
+					case TPackage(name,_,_):
+						switch( name ) {
+						case "flash","flash8","sys","cs","java","flash9","haxe","js","neko","cpp","php","tools": // don't include haXe core types
+						default: roots.push(x);
+						}
+					default:
+						// don't include haXe root types
 					}
-				default:
-					// don't include haXe root types
-				}
-			var s = new haxe.Serializer();
-			s.useEnumIndex = true;
-			s.useCache = true;
-			s.serialize(roots);
-			doc = s.toString();
+				var s = new haxe.Serializer();
+				s.useEnumIndex = true;
+				s.useCache = true;
+				s.serialize(roots);
+				doc = s.toString();
+			} catch ( e:Dynamic ) {
+				// If documentation can't be generated, ignore it.
+			}
 		}
 
 		// update file
