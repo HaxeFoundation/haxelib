@@ -31,8 +31,8 @@ class Site {
 
 	static var CWD = neko.Web.getCwd();
 	static var DB_FILE = CWD+"haxelib.db";
-	public static var TMP_DIR = CWD+"tmp";
-	public static var REP_DIR = CWD+Data.REPOSITORY;
+	public static var TMP_DIR = CWD+"../tmp";
+	public static var REP_DIR = CWD+"../"+Data.REPOSITORY;
 
 	static function setup() {
 		SiteDb.create(db);
