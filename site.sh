@@ -22,7 +22,6 @@ if [ ! -f server/haxelib.db ];
 then
     cd server
     neko index.n setup
-	chmod o+w haxelib.db
     cd ..
 fi
 
@@ -30,16 +29,19 @@ if [ ! -f server/legacy/haxelib.db ];
 then
     cd server/legacy
     neko index.n setup
-	chmod o+w haxelib.db
     cd ../..
 fi
 
 # Make sure the server folders are writeable.  
 
-chmod o+w server/tmp
-chmod o+w server/files
-chmod o+w server/legacy/tmp
-chmod o+w server/legacy/files
+chmod a+w server
+chmod a+w server/tmp
+chmod a+w server/files
+chmod a+w server/legacy
+chmod a+w server/legacy/tmp
+chmod a+w server/legacy/files
+chmod a+w server/haxelib.db
+chmod a+w server/legacy/haxelib.db
 
 
 cd server
