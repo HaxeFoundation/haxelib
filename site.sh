@@ -27,6 +27,7 @@ if [ ! -f server/haxelib.db ];
 then
     cd server
     neko index.n setup
+	chmod o+w haxelib.db
     cd ..
 fi
 
@@ -34,6 +35,7 @@ if [ ! -f server/legacy/haxelib.db ];
 then
     cd server/legacy
     neko index.n setup
+	chmod o+w haxelib.db
     cd ../..
 fi
 
