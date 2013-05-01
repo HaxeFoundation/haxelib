@@ -1,0 +1,5 @@
+-neko index.n
+-main tools.legacyhaxelib.Site
+-dce no
+-D haxelib-site
+-lib hx2compat

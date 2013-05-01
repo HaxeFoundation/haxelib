@@ -1,2 +1,3 @@
 #!/bin/sh
-haxe --run tools.haxelib.Main $@
+haxe haxelib.hxml
+neko bin/haxelib $@

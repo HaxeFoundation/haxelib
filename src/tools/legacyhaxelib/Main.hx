@@ -19,10 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package tools.legacyhaxelib;
 import haxe.zip.Reader;
-import tools.haxelib.Data;
-using StringTools;
 
 enum Answer {
 	Yes;
@@ -30,7 +28,7 @@ enum Answer {
 	Always;
 }
 
-class SiteProxy extends haxe.remoting.Proxy<tools.haxelib.SiteApi> {
+class SiteProxy extends haxe.remoting.Proxy<tools.legacyhaxelib.SiteApi> {
 }
 
 class Progress extends haxe.io.Output {
@@ -114,14 +112,13 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = 200;
+	static var VERSION = 104;
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "haxelib.jasononeil.com.au",
 		port : 80,
 		dir : "",
-		url : "index.n",
-		apiVersion : "2.0"
+		url : "index.n"
 	};
 
 	var argcur : Int;
@@ -133,31 +130,31 @@ class Main {
 	function new() {
 		args = Sys.args();
 		commands = new List();
-		addCommand("install", install, "install a given library, or all libraries from a hxml file");
-		addCommand("list", list, "list all installed libraries", false);
-		addCommand("upgrade", upgrade, "upgrade all installed libraries");
-		addCommand("update", update, "update a single library");
-		addCommand("remove", remove, "remove a given library/version", false);
-		addCommand("set", set, "set the current version for a library", false);
-		addCommand("search", search, "list libraries matching a word");
-		addCommand("info", info, "list informations on a given library");
-		addCommand("user", user, "list informations on a given user");
-		addCommand("register", register, "register a new user");
-		addCommand("submit", submit, "submit or update a library package");
-		addCommand("setup", setup, "set the haxelib repository path", false);
-		addCommand("config", config, "print the repository path", false);
-		addCommand("path", path, "give paths to libraries", false);
-		addCommand("run", run, "run the specified library with parameters", false);
-		addCommand("local", local, "install the specified package locally", false);
-		addCommand("dev", dev, "set the development directory for a given library", false);
+		addCommand("install",install,"install a given library");
+		addCommand("list",list,"list all installed libraries",false);
+		addCommand("upgrade",upgrade,"upgrade all installed libraries");
+		addCommand("update",update,"update a single library");
+		addCommand("remove",remove,"remove a given library/version",false);
+		addCommand("set",set,"set the current version for a library",false);
+		addCommand("search",search,"list libraries matching a word");
+		addCommand("info",info,"list informations on a given library");
+		addCommand("user",user,"list informations on a given user");
+		addCommand("register",register,"register a new user");
+		addCommand("submit",submit,"submit or update a library package");
+		addCommand("setup",setup,"set the haxelib repository path",false);
+		addCommand("config",config,"print the repository path",false);
+		addCommand("path",path,"give paths to libraries",false);
+		addCommand("run",run,"run the specified library with parameters",false);
+		addCommand("local",local,"install the specified package locally",false);
+		addCommand("dev",dev,"set the development directory for a given library",false);
 		addCommand("git", git, "uses git repository as library");
 		addCommand("proxy", proxy, "setup the Http proxy");
 		initSite();
 	}
 
 	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url).api);
+		siteUrl = "http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.dir;
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl+SERVER.url).api);
 	}
 
 	function param( name, ?passwd ) {
@@ -200,7 +197,7 @@ class Main {
 	function usage() {
 		var vmin = Std.string(VERSION % 100);
 		var ver = Std.int(VERSION/100) + "." + if( vmin.length == 1 ) "0"+vmin else vmin;
-		print("Haxe Library Manager "+ver+" - (c)2006-2013 Haxe Foundation");
+		print("Haxe Library Manager "+ver+" - (c)2006-2012 Haxe Foundation");
 		print(" Usage : haxelib [command] [options]");
 		print(" Commands :");
 		for( c in commands )
@@ -361,11 +358,10 @@ class Main {
 		}
 
 		// check if this version already exists
-		
 		var sinfos = try site.infos(infos.project) catch( _ : Dynamic ) null;
 		if( sinfos != null )
-			for( v in sinfos.versions ) 
-				if( v.name == infos.version.toString() && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
+			for( v in sinfos.versions )
+				if( v.name == infos.version && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
@@ -388,41 +384,17 @@ class Main {
 	}
 
 	function install() {
-		var prj = param("Library name or hxml file:");
-
-		// No library given, install libraries listed in *.hxml in given directory
-		if( prj == "all")
-		{
-			installFromAllHxml();
+		var prj = param("Library name");
+		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
+			if( !StringTools.endsWith(prj,".zip") )
+				throw "Local file to install must be a zip";
+			doInstallFile(prj,true,true);
 			return;
 		}
-
-		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
-			// *.hxml provided, install all libraries/versions in this hxml file
-			if( prj.endsWith(".hxml") )
-			{
-				installFromHxml(prj);
-				return;
-			}
-			// *.zip provided, install zip as haxe library
-			if( prj.endsWith(".zip") )
-			{
-				doInstallFile(prj,true,true);
-				return;
-			}
-		}
-
-		// Name provided that wasn't a local hxml or zip, so try to install it from server
 		var inf = site.infos(prj);
-		var reqversion = paramOpt();
-		var version = getVersion(inf, reqversion);
-		doInstall(inf.name,version,version == inf.curversion);
-	}
-
-	function getVersion( inf:ProjectInfos, ?reqversion:String )
-	{
 		if( inf.curversion == null )
-			throw "The library "+inf.name+" has not yet released a version";
+			throw "This library has not yet released a version";
+		var reqversion = paramOpt();
 		var version = if( reqversion != null ) reqversion else inf.curversion;
 		var found = false;
 		for( v in inf.versions )
@@ -431,85 +403,8 @@ class Main {
 				break;
 			}
 		if( !found )
-			throw "No such version "+version+" for library "+inf.name;
-		
-		return version;
-	}
-
-	function installFromHxml( path )
-	{
-		var hxml = sys.io.File.getContent(path);
-		var lines = hxml.split("\n");
-
-		var libsToInstall = new Map<String, {name:String,version:String}>();
-		for (l in lines)
-		{
-			l = l.trim();
-			if (l.startsWith("-lib"))
-			{
-				var key = l.substr(5);
-				var parts = key.split(":");
-				var libName = parts[0].trim();
-				var libVersion = if (parts.length > 1) parts[1].trim() else null;
-
-				if (libsToInstall.exists(key) == false)
-				{
-					libsToInstall.set(key, { name:libName, version:libVersion });
-				}
-			}
-		}
-		installMany(libsToInstall);
-	}
-
-	function installFromAllHxml()
-	{
-		var hxmlFiles = sys.FileSystem.readDirectory(Sys.getCwd()).filter(function (f) return f.endsWith(".hxml"));
-		if (hxmlFiles.length > 0)
-		{
-			for (file in hxmlFiles)
-			{
-				if (file.endsWith(".hxml"))
-				{
-					print('Installing all libraries from $file:');
-					installFromHxml(Sys.getCwd()+file);
-				}
-			}
-		}
-		else 
-		{
-			print ("No hxml files found in the current directory.");
-		}
-	}
-
-	function installMany( libs:Iterable<{name:String,version:String}>, ?setCurrent=true )
-	{
-		if (Lambda.count(libs) == 0) return;
-
-		// Check the version numbers are all good
-		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
-		print("Loading info about the required libraries");
-		for (l in libs)
-		{
-			var inf = site.infos(l.name);
-			l.version = getVersion(inf, l.version);
-		}
-
-		// Print a list with all the info
-		print("Haxelib is going to install these libraries:");
-		for (l in libs)
-		{
-			var vString = (l.version == null) ? "" : " - " + l.version;
-			print("  " + l.name + vString);
-		}
-
-		// Install if they confirm
-		if (ask("Continue?") != No)
-		{
-			for (l in libs)
-			{
-				doInstall(l.name, l.version, setCurrent);
-			}
-		}
+			throw "No such version "+version;
+		doInstall(inf.name,version,version == inf.curversion);
 	}
 
 	function doInstall( project, version, setcurrent ) {
@@ -517,7 +412,7 @@ class Main {
 
 		// check if exists already
 		if( sys.FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
-			print("Library "+project+" version "+version+" installed");
+			print("You already have "+project+" version "+version+" installed");
 			setCurrent(project,version,true);
 			return;
 		}
@@ -536,8 +431,8 @@ class Main {
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
 
-		doInstallFile(filepath, setcurrent);
-		site.postInstall(project, SemVer.ofString(version));
+		doInstallFile(filepath,setcurrent);
+		site.postInstall(project,version);
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
@@ -552,14 +447,14 @@ class Main {
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
 		pdir += "/";
-		var target = pdir + Data.safe(infos.version.toString());
+		var target = pdir + Data.safe(infos.version);
 		safeDir(target);
 		target += "/";
 
 		// locate haxelib.xml base path
 		var basepath = null;
 		for( f in zip ) {
-			if( f.fileName.endsWith(Data.XML) ) {
+			if( StringTools.endsWith(f.fileName,Data.XML) ) {
 				basepath = f.fileName.substr(0,f.fileName.length - Data.XML.length);
 				break;
 			}
@@ -570,7 +465,7 @@ class Main {
 		// unzip content
 		for( zipfile in zip ) {
 			var n = zipfile.fileName;
-			if( n.startsWith(basepath) ) {
+			if( StringTools.startsWith(n,basepath) ) {
 				// remove basepath
 				n = n.substr(basepath.length,n.length-basepath.length);
 				if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
@@ -596,7 +491,7 @@ class Main {
 
 		// set current version
 		if( setcurrent || !sys.FileSystem.exists(pdir+".current") ) {
-			sys.io.File.saveContent(pdir + ".current", infos.version.toString());
+			sys.io.File.saveContent(pdir+".current",infos.version);
 			print("  Current version is now "+infos.version);
 		}
 
@@ -680,7 +575,7 @@ class Main {
 			} else
 				throw "This is the first time you are runing haxelib. Please run haxelib setup first";
 		}
-		rep = rep.trim();
+		rep = StringTools.trim(rep);
 		if( setup ) {
 			if( args.length <= argcur ) {
 				print("Please enter haxelib repository path with write access");
@@ -715,11 +610,11 @@ class Main {
 	}
 
 	function getCurrent( dir ) {
-		return sys.io.File.getContent(dir + "/.current").trim();
+		return StringTools.trim(sys.io.File.getContent(dir + "/.current"));
 	}
 
 	function getDev( dir ) {
-		return sys.io.File.getContent(dir + "/.dev").trim();
+		return StringTools.trim(sys.io.File.getContent(dir + "/.dev"));
 	}
 
 	function list() {
@@ -729,7 +624,7 @@ class Main {
 				continue;
 			var versions = new Array();
 			var current = getCurrent(rep + p);
-			var dev = try sys.io.File.getContent(rep+p+"/.dev").trim() catch( e : Dynamic ) null;
+			var dev = try StringTools.trim(sys.io.File.getContent(rep+p+"/.dev")) catch( e : Dynamic ) null;
 			for( v in sys.FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." )
 					continue;
@@ -854,7 +749,7 @@ class Main {
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
 		var version = if( version != null ) version else getCurrent(pdir);
 		var vdir = pdir + "/" + Data.safe(version);
-		if( vdir.endsWith( "dev") )
+		if( StringTools.endsWith(vdir, "dev") )
 			vdir = getDev(pdir);
 		if( !sys.FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
@@ -899,7 +794,7 @@ class Main {
 			}
 			try {
 				var f = sys.io.File.getContent(dir + "extraParams.hxml");
-				Sys.println(f.trim());
+				Sys.println(StringTools.trim(f));
 			} catch( e : Dynamic ) {
 			}
 			Sys.println(dir);
