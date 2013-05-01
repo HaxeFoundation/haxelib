@@ -114,18 +114,14 @@ class Main {
 
 	static var VERSION = 105;
 	static var REPNAME = "lib";
-	static var SERVER = {
-		host : "lib.haxe.org",
-		port : 80,
-		dir : "",
-		url : "index.n"
-	};
 
 	var argcur : Int;
 	var args : Array<String>;
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool }>;
 	var siteUrl : String;
 	var site : SiteProxy;
+	var configFile : String;
+	var configData : Dynamic;
 
 	function new() {
 		args = Sys.args();
@@ -149,12 +145,42 @@ class Main {
 		addCommand("dev", dev, "set the development directory for a given library", false);
 		addCommand("git", git, "uses git repository as library");
 		addCommand("proxy", proxy, "setup the Http proxy");
-		initSite();
+		loadConfigFile();
+		initSite(configData.host, configData.port, configData.dir, configData.url);
 	}
 
-	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + SERVER.url).api);
+	function loadConfigFile() {
+		if( Sys.systemName() == "Windows" )
+			configFile = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
+		else
+			configFile = Sys.getEnv("HOME");
+		configFile += "/.haxelib";
+		var content;
+		try {
+			configData = haxe.Json.parse(sys.io.File.getContent(configFile));
+		} catch( e : Dynamic ) {
+			try {
+				configData = haxe.Json.parse(sys.io.File.getContent("/etc/.haxelib"));
+			} catch( e : Dynamic ) {
+				// default config data
+				configData = {
+					host : "lib.haxe.org",
+					port : 80,
+					dir : "",
+					url: "index.n"
+				};
+			}
+		}
+	}
+
+	function saveConfigFile() {
+		var content = haxe.Json.stringify(configData);
+		sys.io.File.saveContent(configFile, content);
+	}
+
+	function initSite( host, port, dir, url ) {
+		siteUrl = "http://" + host + ":" + port + "/" + dir;
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + url).api);
 	}
 
 	function param( name, ?passwd ) {
@@ -222,11 +248,12 @@ class Main {
 				var r = ~/^(http:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
 				if( !r.match(path) )
 					throw "Invalid repository format '"+path+"'";
-				SERVER.host = r.matched(2);
+				var host = r.matched(2);
+				var port = configData.port;
 				if( r.matched(3) != null )
-					SERVER.port = Std.parseInt(r.matched(3).substr(1));
-				SERVER.dir = r.matched(4);
-				initSite();
+					port = r.matched(3).substr(1);
+				var dir = r.matched(4);
+				initSite(host, port, dir, configData.url);
 			default:
 				argcur--;
 				break;
@@ -242,7 +269,7 @@ class Main {
 					c.f();
 				} catch( e : Dynamic ) {
 					if( e == "std@host_resolve" ) {
-						print("Host "+SERVER.host+" was not found");
+						print("Host "+configData.host+" was not found");
 						print("Please ensure that your internet connection is on");
 						print("If you don't have an internet connection or if you are behing a proxy");
 						print("please download manually the file from http://lib.haxe.org/files");
@@ -327,15 +354,18 @@ class Main {
 		var data = sys.io.File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
 		var infos = Data.readInfos(zip,true);
-		var user = infos.developers.first();
+		var user = configData.user;
+		if( user == null ) {
+			user = configData.user = param("User");
+			saveConfigFile();
+		}
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
 			print("Please enter the following informations for registration");
 			password = doRegister(user);
 		} else {
-			if( infos.developers.length > 1 )
-				user = param("User");
+			print("Please enter your password, "+user);
 			password = haxe.crypto.Md5.encode(param("Password",true));
 			if( !site.checkPassword(user,password) )
 				throw "Invalid password for "+user;
@@ -369,7 +399,7 @@ class Main {
 		var id = site.getSubmitId();
 
 		// directly send the file data over Http
-		var h = new haxe.Http("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
+		var h = new haxe.Http("http://"+configData.host+":"+configData.port+"/"+configData.url);
 		h.onError = function(e) { throw e; };
 		h.onData = print;
 		h.fileTransfert("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
@@ -549,24 +579,16 @@ class Main {
 			if( last != "/" && last != "\\" )
 				haxepath += "/";
 		}
-		var config_file;
-		if( win )
-			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
-		else
-			config_file = Sys.getEnv("HOME");
-		config_file += "/.haxelib";
-		var rep = try
-			sys.io.File.getContent(config_file)
-		catch( e : Dynamic ) try
-			sys.io.File.getContent("/etc/.haxelib")
-		catch( e : Dynamic ) {
+
+		var rep : String = configData.path;
+		if( rep == null ) {
 			if( setup ) {
-				(win ? haxepath : "/usr/lib/haxe/")+REPNAME;
+				rep = (win ? haxepath : "/usr/lib/haxe/")+REPNAME;
 			} else if( win ) {
 				// Windows have a default directory (no need for setup)
 				if( haxepath == null )
 					throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
-				var rep = haxepath+REPNAME;
+				rep = haxepath+REPNAME;
 				try {
 					safeDir(rep);
 				} catch( e : Dynamic ) {
@@ -576,6 +598,7 @@ class Main {
 			} else
 				throw "This is the first time you are runing haxelib. Please run haxelib setup first";
 		}
+
 		rep = StringTools.trim(rep);
 		if( setup ) {
 			if( args.length <= argcur ) {
@@ -595,7 +618,9 @@ class Main {
 				}
 			}
 			rep = try sys.FileSystem.fullPath(rep) catch( e : Dynamic ) rep;
-			sys.io.File.saveContent(config_file, rep);
+			configData.path = rep;
+			saveConfigFile();
+
 		} else if( !sys.FileSystem.exists(rep) )
 			throw "haxelib Repository "+rep+" does not exists. Please run haxelib setup again";
 		return rep+"/";
@@ -953,7 +978,7 @@ class Main {
 		var code = p.exitCode();
 		return { code:code, out: code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString() };
 	}
-	
+
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");
