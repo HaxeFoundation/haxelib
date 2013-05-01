@@ -16,11 +16,6 @@ cp src/tools/legacyhaxelib/.htaccess server/legacy/
 cp src/tools/legacyhaxelib/website.mtt server/legacy/
 cp src/tools/legacyhaxelib/haxelib.css server/legacy/
 
-# Make sure the server folders are writeable.  
-
-chmod o+w server/
-chmod o+w server/legacy/
-
 # If the databases don't exist, run "setup"
 
 if [ ! -f server/haxelib.db ];
@@ -38,6 +33,14 @@ then
 	chmod o+w haxelib.db
     cd ../..
 fi
+
+# Make sure the server folders are writeable.  
+
+chmod o+w server/tmp
+chmod o+w server/files
+chmod o+w server/legacy/tmp
+chmod o+w server/legacy/files
+
 
 cd server
 # starting server on port 2000, because binding port 80 requires root privileges,
