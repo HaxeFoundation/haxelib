@@ -2,3 +2,19 @@
 -neko server/index.n
 -main tools.haxelib.Site
 -dce no
+
+--next 
+
+-cp src 
+-neko server/api/2.0/index.n
+-main tools.haxelib.SiteApi
+-dce no
+
+--next 
+
+-cp src 
+-neko server/legacy/index.n
+-main tools.legacyhaxelib.Site
+-lib hx2compat
+-D haxelib_site
+-dce no

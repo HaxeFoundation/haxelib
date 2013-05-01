@@ -1,0 +1,10 @@
+# Set index.n to come before index.php
+
+DirectoryIndex index.n
+
+# Enable rewrite
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.n/$1
