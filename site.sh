@@ -4,9 +4,6 @@
 
 mkdir -p server/legacy
 mkdir -p server/api/2.0
-mkdir -p server/files/
-mkdir -p server/files/2.0
-mkdir -p server/tmp/
 
 haxe site.hxml
 
