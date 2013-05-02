@@ -359,10 +359,10 @@ class Main {
 		}
 
 		// check if this version already exists
-		
+
 		var sinfos = try site.infos(infos.project) catch( _ : Dynamic ) null;
 		if( sinfos != null )
-			for( v in sinfos.versions ) 
+			for( v in sinfos.versions )
 				if( v.name == infos.version.toString() && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
 					throw "Aborted";
 
@@ -454,15 +454,7 @@ class Main {
 		target += "/";
 
 		// locate haxelib.xml base path
-		var basepath = null;
-		for( f in zip ) {
-			if( StringTools.endsWith(f.fileName,Data.XML) ) {
-				basepath = f.fileName.substr(0,f.fileName.length - Data.XML.length);
-				break;
-			}
-		}
-		if( basepath == null )
-			throw "No "+Data.XML+" found";
+		var basepath = Data.locateBasePath(zip);
 
 		// unzip content
 		for( zipfile in zip ) {
@@ -762,8 +754,8 @@ class Main {
 				throw "Library "+prj+" has two version included "+version+" and "+p.version;
 			}
 		l.add({ project : prj, version : version });
-		var xml = sys.io.File.getContent(vdir+"/haxelib.xml");
-		var inf = Data.readData(xml,false);
+		var json = sys.io.File.getContent(vdir+"/"+Data.JSON);
+		var inf = Data.readData(json,false);
 		for( d in inf.dependencies )
 			checkRec(d.project,if( d.version == "" ) null else d.version,l);
 	}
@@ -954,7 +946,7 @@ class Main {
 		var code = p.exitCode();
 		return { code:code, out: code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString() };
 	}
-	
+
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");
