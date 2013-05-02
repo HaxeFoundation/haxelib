@@ -3,4 +3,4 @@
 *.zip
 *.tmp
 *.db
-/bin/prepare.n
+server

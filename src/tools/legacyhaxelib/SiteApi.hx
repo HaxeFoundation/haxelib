@@ -19,74 +19,49 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
-import haxe.io.Bytes;
-import tools.haxelib.Data;
-import tools.haxelib.SiteDb;
-import neko.Web;
-import tools.haxelib.SemVer;
+package tools.legacyhaxelib;
+import tools.legacyhaxelib.Data;
+#if haxelib_site
+import tools.legacyhaxelib.SiteDb;
+#end
 
 class SiteApi {
 
-	static var db : sys.db.Connection;
+	var db : sys.db.Connection;
 
-	static var CWD = Web.getCwd() + "../../";
-	static var DB_FILE = CWD+"haxelib.db";
-	public static var TMP_DIR = CWD+"tmp";
-	public static var REP_DIR = CWD+Data.REPOSITORY;
-
-	static function run() {
-		if( !sys.FileSystem.exists(TMP_DIR) )
-			sys.FileSystem.createDirectory(TMP_DIR);
-		if( !sys.FileSystem.exists(REP_DIR) )
-			sys.FileSystem.createDirectory(REP_DIR);
-		
-		var ctx = new haxe.remoting.Context();
-		ctx.addObject("api", new SiteApi());
-		
-		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
-			return;
-		else 
-			throw "Invalid remoting call";
+	public function new( db ) {
+		this.db = db;
 	}
-
-	static function initDatabase() {
-		db = sys.db.Sqlite.open(DB_FILE);
-		sys.db.Manager.cnx = db;
-		sys.db.Manager.initialize();
-	}
-
-	public function new() {}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
-		return Project.containing(word);
+		return Project.manager.containing(word);
 	}
 
 	public function infos( project : String ) : ProjectInfos {
-		var p = Project.manager.select($name == project);
+		var p = Project.manager.search({ name : project }).first();
 		if( p == null )
 			throw "No such Project : "+project;
-		var vl = Version.manager.search($project == p.id);
+		var vl = Version.manager.search({ project : p.id });
 		var versions = new Array();
 		for( v in vl )
-			versions.push({ name : v.toSemver().toString(), comments : v.comments, date : v.date });
+			versions.push({ name : v.name, comments : v.comments, date : v.date });
 		return {
 			name : p.name,
-			curversion : if( p.version == null ) null else p.version.toSemver().toString(),
+			curversion : if( p.version == null ) null else p.version.name,
 			desc : p.description,
 			versions : versions,
 			owner : p.owner.name,
 			website : p.website,
 			license : p.license,
-			tags : Tag.manager.search($project == p.id).map(function(t) return t.tag),
+			tags : Tag.manager.search({ project : p.id }).map(function(t) return t.tag),
 		};
 	}
 
 	public function user( name : String ) : UserInfos {
-		var u = User.manager.search($name == name).first();
+		var u = User.manager.search({ name : name }).first();
 		if( u == null )
 			throw "No such user : "+name;
-		var pl = Project.manager.search($owner == u.id);
+		var pl = Project.manager.search({ owner : u.id });
 		var projects = new Array();
 		for( p in pl )
 			projects.push(p.name);
@@ -113,7 +88,7 @@ class SiteApi {
 	}
 
 	public function isNewUser( name : String ) : Bool {
-		return User.manager.select($name == name) == null;
+		return User.manager.search({ name : name }).first() == null;
 	}
 
 	public function checkDeveloper( prj : String, user : String ) : Void {
@@ -134,10 +109,10 @@ class SiteApi {
 	public function getSubmitId() : String {
 		return Std.string(Std.random(100000000));
 	}
-	
+
 	public function processSubmit( id : String, user : String, pass : String ) : String {
-		var path = TMP_DIR+"/"+Std.parseInt(id)+".tmp";
-		
+		var path = Site.TMP_DIR+"/"+Std.parseInt(id)+".tmp";
+
 		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
 		file.close();
@@ -166,6 +141,7 @@ class SiteApi {
 			p.description = infos.desc;
 			p.website = infos.website;
 			p.license = infos.license;
+			p.downloads = 0;
 			p.owner = u;
 			p.insert();
 			for( u in devs ) {
@@ -226,12 +202,23 @@ class SiteApi {
 			}
 		}
 
+		// look for current version
+		var current = null;
+		for( v in Version.manager.search({ project : p.id }) )
+			if( v.name == infos.version ) {
+				current = v;
+				break;
+			}
+
 		// update documentation
 		var doc = null;
 		var docXML = Data.readDoc(zip);
 		if( docXML != null ) {
 			try {
 				var p = new haxe.rtti.XmlParser();
+				var firstElm = Xml.parse(docXML).firstElement();
+				p.process(firstElm, null);
+				throw "get to here before doc";
 				p.process(Xml.parse(docXML).firstElement(),null);
 				p.sort();
 				var roots = new Array();
@@ -256,18 +243,22 @@ class SiteApi {
 		}
 
 		// update file
-		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version.toString());
+		var target = Site.REP_DIR+"/"+Data.fileName(p.name,infos.version);
+		if( current != null ) sys.FileSystem.deleteFile(target);
 		sys.FileSystem.rename(path,target);
+
+		// update existing version
+		if( current != null ) {
+			current.documentation = doc;
+			current.comments = infos.versionComments;
+			current.update();
+			return "Version "+current.name+" (id#"+current.id+") updated";
+		}
 
 		// add new version
 		var v = new Version();
 		v.project = p;
-		v.major = infos.version.major;
-		v.minor = infos.version.minor;
-		v.patch = infos.version.patch;
-		v.preview = infos.version.preview;
-		v.previewNum = infos.version.previewNum;
-		
+		v.name = infos.version;
 		v.comments = infos.versionComments;
 		v.downloads = 0;
 		v.date = Date.now().toString();
@@ -276,41 +267,20 @@ class SiteApi {
 
 		p.version = v;
 		p.update();
-		return "Version " + v.toSemver().toString() + " (id#" + v.id + ") added";
+		return "Version "+v.name+" (id#"+v.id+") added";
 	}
 
-	public function postInstall( project : String, version : SemVer ) {
-		var p = Project.manager.select($name == project);
+	public function postInstall( project : String, version : String ) {
+		var p = Project.manager.search({ name : project }).first();
 		if( p == null )
-			throw "No such Project : " + project;
-		var v = Version.manager.select(
-			$project == p.id && 
-			$major == version.major && 
-			$minor == version.minor && 
-			$patch == version.patch && 
-			$preview == version.preview && 
-			$previewNum == version.previewNum
-		);
+			throw "No such Project : "+project;
+		var v = Version.manager.search({ project : p.id, name : version }).first();
 		if( v == null )
-			throw "No such Version : " + version;
+			throw "No such Version : "+version;
 		v.downloads++;
 		v.update();
 		p.downloads++;
 		p.update();
-	}
-
-	static function main() {
-		var error = null;
-		initDatabase();
-		try {
-			run();
-		} catch( e : Dynamic ) {
-			error = { e : e };
-		}
-		db.close();
-		sys.db.Manager.cleanup();
-		if( error != null )
-			neko.Lib.rethrow(error.e);
 	}
 
 }

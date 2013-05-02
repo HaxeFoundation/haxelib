@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package tools.legacyhaxelib;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 
@@ -54,7 +54,7 @@ typedef XmlInfos = {
 	var website : String;
 	var desc : String;
 	var license : String;
-	var version : SemVer;
+	var version : String;
 	var versionComments : String;
 	var developers : List<String>;
 	var tags : List<String>;
@@ -65,7 +65,7 @@ class Data {
 
 	public static var XML = "haxelib.xml";
 	public static var DOCXML = "haxedoc.xml";
-	public static var REPOSITORY = "files/2.0";
+	public static var REPOSITORY = "files";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
 	static var LICENSES = ["GPL","LGPL","BSD","Public","MIT"];
 
@@ -93,7 +93,7 @@ class Data {
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
 			throw "Invalid parameter : "+name;
-		return name.split(".").join(",");//TODO: is this really unsafe in any way?
+		return name.split(".").join(",");
 	}
 
 	public static function unsafe( name : String ) {
@@ -160,7 +160,7 @@ class Data {
 			project : project,
 			website : p.att.url,
 			desc : p.node.description.innerData,
-			version : SemVer.ofString(p.node.version.att.name),
+			version : p.node.version.att.name,
 			versionComments : p.node.version.innerData,
 			license : p.att.license,
 			tags : tags,
