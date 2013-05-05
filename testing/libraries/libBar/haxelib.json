@@ -6,5 +6,5 @@
 	"description": "This project is an example of an haxelib project",
 	"version": "1.0.0",
 	"releaseNote": "Initial release, everything is working correctly",
-	"contributors": "Bar"
+	"contributors": ["Bar"]
 }

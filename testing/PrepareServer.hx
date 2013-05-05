@@ -80,10 +80,10 @@ class PrepareServer {
 		if (FileSystem.exists(serverPath + 'tmp') && FileSystem.isDirectory(serverPath + 'tmp'))
 		deleteFolderContent(serverPath + 'tmp');
 		
-		Sys.println("Cleaning DB");
-		var sqlFile = serverPath + 'haxelib.db';
+		Sys.println("Cleaning legacy DB");
+		var sqlFile = serverPath + 'legacy/haxelib.db';
 		var con = Sqlite.open(sqlFile);
-		SiteDb.create(con);
+		tools.legacyhaxelib.SiteDb.create(con);
 
 		Sys.println("Package testing libraries");
 		var libraries = new List<String>();
@@ -98,20 +98,27 @@ class PrepareServer {
 
 		Sys.println("Submitting test libraries");
 		try {
-			var site = new SiteProxy(HttpConnection.urlConnect('http://localhost:2000/').api);
-			for (library in libraries) {
-				Sys.println("Submitting library: " + library);
-				site.register(library, library, library+'@example.org', library + ' Developer');
-				// TODO: This is not how haxelib usually behave, do we need dependencies checks and all the other stuff?
-				site.checkDeveloper(library, library);
-				var libraryFile = testFolder + 'libraries/lib' + library + '.zip';
-				var data = File.getBytes(libraryFile);
-				var id = site.getSubmitId();
-				var h = new haxe.Http('http://localhost:2000/');
-				h.fileTransfert("file", id, new BytesInput(data), data.length);
-				h.request(true);
-				site.processSubmit(id, library, library);
-				FileSystem.deleteFile(libraryFile);
+			var sites = [
+				'legacy' => 'http://localhost:2000/',
+				'2.0.0-rc' => 'http://localhost:2000/api/2.0.0-rc/',
+			];
+			for (siteName in sites.keys()) {
+				trace('Test $siteName on ' + sites.get(siteName));
+				var site = new SiteProxy(HttpConnection.urlConnect(sites.get(siteName)).api);
+				for (library in libraries) {
+					Sys.println("Submitting library: " + library);
+					site.register(library, library, library+'@example.org', library + ' Developer');
+					// TODO: This is not how haxelib usually behave, do we need dependencies checks and all the other stuff?
+					site.checkDeveloper(library, library);
+					var libraryFile = testFolder + 'libraries/lib' + library + '.zip';
+					var data = File.getBytes(libraryFile);
+					var id = site.getSubmitId();
+					var h = new haxe.Http('http://localhost:2000/');
+					h.fileTransfert("file", id, new BytesInput(data), data.length);
+					h.request(true);
+					site.processSubmit(id, library, library);
+					//FileSystem.deleteFile(libraryFile);
+				}				
 			}
 		}
 		catch (e:Dynamic) {
