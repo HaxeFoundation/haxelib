@@ -65,7 +65,7 @@ class Data {
 
 	public static var JSON = "haxelib.json";
 	public static var DOCXML = "haxedoc.xml";
-	public static var REPOSITORY = "files/2.0";
+	public static var REPOSITORY = "files";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
 	static var LICENSES = ["GPL","LGPL","BSD","Public","MIT"];
 
@@ -107,18 +107,36 @@ class Data {
 				break;
 			}
 		if( infodata == null )
-			throw JSON+" not found in package";
+			throw JSON + " not found in package";
+		
 		return readData(infodata,check);
 	}
 
 	static function doCheck( doc : Dynamic ) {
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )
 			throw "License must be one of the following: " + LICENSES;
-		if( doc.contributors == null )
-			throw "At least one contributor must be included";
+		switch Type.typeof(doc.contributors) {
+			case TNull: throw "At least one contributor must be included";
+			//case TClass(String): doc.contributors = [doc.contributors];
+			case TClass(Array):
+			default: throw 'invalid type for contributors';
+		}
+		switch Type.typeof(doc.tags) {
+			case TClass(Array), TNull:
+			default: throw 'tags must be defined as array';
+		}
+		switch Type.typeof(doc.dependencies) {
+			case TObject, TNull:
+			default: throw 'dependencies must be defined as object';
+		}
+		switch Type.typeof(doc.releasenote) {
+			case TClass(String):
+			case TNull: throw 'no releasenote specified';
+			default: throw 'releasenote should be string';
+		}
 	}
 
-	public static function readData( jsondata : String, check : Bool ) : Infos {
+	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc = Json.parse(jsondata);
 		if( check )
 			doCheck(doc);
@@ -133,6 +151,7 @@ class Data {
 		}
 		var devs = new List();
 		var developers:Array<String> = doc.contributors;
+		
 		for( d in developers )
 			devs.add(d);
 		var deps = new List();
@@ -141,12 +160,13 @@ class Data {
 				deps.add({ project: d, version: Std.string(Reflect.field(doc.dependencies, d)) });
 			}
 		}
+		
 		return {
 			project : project,
 			website : doc.url,
 			desc : doc.description,
 			version : SemVer.ofString(doc.version),
-			versionComments : doc.comment,
+			versionComments : doc.releasenote,
 			license : doc.license,
 			tags : tags,
 			developers : devs,
