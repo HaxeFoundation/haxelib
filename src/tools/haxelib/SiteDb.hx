@@ -57,8 +57,8 @@ class Project extends Object {
 	}
 
 	static public function allByName() {
-		//TODO: review. Unless I am mistaken, there is no way to express COLLATE NOCASE yet
-		return manager.unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE", false);
+		//TODO: Propose SPOD patch to support manager.search(true, { orderBy: name.toLowerCase() } );
+		return manager.unsafeObjects('SELECT * FROM Project ORDER BY LOWER(name)', false);
 	}
 
 }
