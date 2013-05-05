@@ -6,7 +6,7 @@
 --next 
 
 -cp src 
--neko server/api/2.0/index.n
+-neko server/api/2.0.0-rc/index.n
 -main tools.haxelib.SiteApi
 -dce no
 -D haxelib_api
