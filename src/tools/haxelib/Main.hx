@@ -745,10 +745,12 @@ class Main {
 						};
 						
 						var file = '$haxepath/haxelib.sh';
-						File.saveContent(
+						try File.saveContent(
 							file,
 							'#!\nhaxe --run -main tools.haxelib.Main '+args.join(' ')
-						);
+						)
+						catch (e:Dynamic) 
+							throw 'Error writing file $file. Please ensure you have write permissions. Error message ' + Std.string(e);
 					}
 					else throw p.stdout.readAll();
 				}
