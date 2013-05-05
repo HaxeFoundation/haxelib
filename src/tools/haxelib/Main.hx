@@ -112,14 +112,14 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('2.0.0-rc');
+	static var VERSION = 200;
 	static var REPNAME = "lib";
 	static var SERVER = {
-		host : "lib.haxe.org",
+		host : "haxelib.jasononeil.com.au",
 		port : 80,
 		dir : "",
 		url : "index.n",
-		apiVersion : VERSION.toString()
+		apiVersion : "2.0"
 	};
 
 	var argcur : Int;
@@ -196,7 +196,9 @@ class Main {
 	}
 
 	function usage() {
-		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
+		var vmin = Std.string(VERSION % 100);
+		var ver = Std.int(VERSION/100) + "." + if( vmin.length == 1 ) "0"+vmin else vmin;
+		print("Haxe Library Manager "+ver+" - (c)2006-2013 Haxe Foundation");
 		print(" Usage : haxelib [command] [options]");
 		print(" Commands :");
 		for( c in commands )
@@ -322,14 +324,10 @@ class Main {
 	}
 
 	function submit() {
-		Sys.println('submitting');
 		var file = param("Package");
 		var data = sys.io.File.getBytes(file);
-		Sys.println(data.length + 'bytes');
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		Sys.println('found ' + zip.length + ' items');
-		var infos = Data.readInfos(zip, true);
-		Sys.println('infos: ' + infos);
+		var infos = Data.readInfos(zip,true);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -440,11 +438,13 @@ class Main {
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
+
 		// read zip content
 		var f = sys.io.File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
 		var infos = Data.readInfos(zip,false);
+
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
