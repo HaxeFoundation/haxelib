@@ -9,6 +9,7 @@
 -neko server/api/2.0/index.n
 -main tools.haxelib.SiteApi
 -dce no
+-D haxelib_api
 
 --next 
 

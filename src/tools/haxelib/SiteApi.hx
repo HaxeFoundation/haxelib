@@ -22,18 +22,12 @@
 package tools.haxelib;
 import haxe.io.Bytes;
 import tools.haxelib.Data;
+import tools.haxelib.Paths.*;
 import tools.haxelib.SiteDb;
 import neko.Web;
 import tools.haxelib.SemVer;
 
 class SiteApi {
-
-	static var db : sys.db.Connection;
-
-	static var CWD = Web.getCwd() + "../../";
-	static var DB_FILE = CWD+"haxelib.db";
-	public static var TMP_DIR = CWD+"tmp";
-	public static var REP_DIR = CWD+Data.REPOSITORY;
 
 	static function run() {
 		if( !sys.FileSystem.exists(TMP_DIR) )
@@ -49,13 +43,7 @@ class SiteApi {
 		else 
 			throw "Invalid remoting call";
 	}
-
-	static function initDatabase() {
-		db = sys.db.Sqlite.open(DB_FILE);
-		sys.db.Manager.cnx = db;
-		sys.db.Manager.initialize();
-	}
-
+	
 	public function new() {}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
@@ -301,14 +289,13 @@ class SiteApi {
 
 	static function main() {
 		var error = null;
-		initDatabase();
+		SiteDb.init();
 		try {
 			run();
 		} catch( e : Dynamic ) {
 			error = { e : e };
 		}
-		db.close();
-		sys.db.Manager.cleanup();
+		SiteDb.cleanup();
 		if( error != null )
 			neko.Lib.rethrow(error.e);
 	}

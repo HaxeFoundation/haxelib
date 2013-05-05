@@ -29,47 +29,14 @@ import sys.io.File;
 import tools.haxelib.SiteDb;
 import haxe.rtti.CType;
 import haxe.Json;
+import tools.haxelib.Paths.*;
 
 using sys.io.File;
 using sys.FileSystem;
 using Lambda;
 
 class Site {
-
-	static var db : Connection;
-
-	static var CWD = Web.getCwd();
-	static var DB_CONFIG = CWD + "dbconfig.json";
-	static var DB_FILE = CWD + "haxelib.db";
-	public static var TMP_DIR = CWD+"tmp";
-	public static var TMPL_DIR = CWD+"tmpl/";
-	public static var REP_DIR = CWD+Data.REPOSITORY;
-
-	static function setup() {
-		SiteDb.create(db);
-	}
-
-	static function initDatabase() {
-		db = 
-			if (DB_CONFIG.exists()) 
-				Mysql.connect(Json.parse(DB_CONFIG.getContent()));
-			else 
-				Sqlite.open(DB_FILE);
-				
-		Manager.cnx = db;
-		Manager.initialize();
-		
-		var managers:Array<Manager<Dynamic>> = [
-			User.manager,
-			Project.manager,
-			Tag.manager,
-			Version.manager,
-			Developer.manager
-		];
-		for (m in managers)
-			if (!TableCreate.exists(m))
-				TableCreate.create(m);
-	}
+	static function setup() {}//obsolete
 
 	static function run() {
 		
@@ -329,14 +296,13 @@ class Site {
 
 	static function main() {
 		var error = null;
-		initDatabase();
+		SiteDb.init();
 		try {
 			run();
 		} catch( e : Dynamic ) {
 			error = { e : e };
 		}
-		db.close();
-		Manager.cleanup();
+		SiteDb.cleanup();
 		if( error != null )
 			Lib.rethrow(error.e);
 	}
