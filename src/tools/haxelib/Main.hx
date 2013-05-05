@@ -20,7 +20,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 package tools.haxelib;
+
 import haxe.zip.Reader;
+import sys.io.File;
+import sys.io.Process;
+import haxe.ds.Option;
 
 enum Answer {
 	Yes;
@@ -112,14 +116,14 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = 200;
+	static var VERSION = SemVer.ofString('2.0.0-rc');
 	static var REPNAME = "lib";
 	static var SERVER = {
-		host : "haxelib.jasononeil.com.au",
+		host : "lib.haxe.org",
 		port : 80,
 		dir : "",
 		url : "index.n",
-		apiVersion : "2.0"
+		apiVersion : VERSION.toString()
 	};
 
 	var argcur : Int;
@@ -135,6 +139,7 @@ class Main {
 		addCommand("list", list, "list all installed libraries", false);
 		addCommand("upgrade", upgrade, "upgrade all installed libraries");
 		addCommand("update", update, "update a single library");
+		addCommand("updateself", updateSelf, "update haxelib itself");
 		addCommand("remove", remove, "remove a given library/version", false);
 		addCommand("set", set, "set the current version for a library", false);
 		addCommand("search", search, "list libraries matching a word");
@@ -152,6 +157,8 @@ class Main {
 		addCommand("proxy", proxy, "setup the Http proxy");
 		initSite();
 	}
+	
+	
 
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
@@ -196,9 +203,7 @@ class Main {
 	}
 
 	function usage() {
-		var vmin = Std.string(VERSION % 100);
-		var ver = Std.int(VERSION/100) + "." + if( vmin.length == 1 ) "0"+vmin else vmin;
-		print("Haxe Library Manager "+ver+" - (c)2006-2013 Haxe Foundation");
+		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
 		print(" Usage : haxelib [command] [options]");
 		print(" Commands :");
 		for( c in commands )
@@ -324,10 +329,14 @@ class Main {
 	}
 
 	function submit() {
+		Sys.println('submitting');
 		var file = param("Package");
 		var data = sys.io.File.getBytes(file);
+		Sys.println(data.length + 'bytes');
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		var infos = Data.readInfos(zip,true);
+		Sys.println('found ' + zip.length + ' items');
+		var infos = Data.readInfos(zip, true);
+		Sys.println('infos: ' + infos);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -438,13 +447,11 @@ class Main {
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
-
 		// read zip content
 		var f = sys.io.File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
 		var infos = Data.readInfos(zip,false);
-
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
@@ -674,13 +681,80 @@ class Main {
 				setCurrent(p, inf.curversion, true);
 		}
 	}
-
-	function update() {
-		var prj = param("Library");
+	function updateByName(prj:String) {
 		var state = { rep : getRepository(), prompt : false, updated : false };
 		doUpdate(prj,state);
-		if( !state.updated )
+		return state.updated;
+	}
+	function update() {
+		var prj = param('Library');
+		if (!updateByName(prj))
 			print(prj + " is up to date");
+	}	
+	
+	function updateSelf() {
+		function tryBuild() {
+			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
+			return 
+				if (p.exitCode() == 0) None;
+				else Some(p.stderr.readAll().toString());
+		}
+		if (!updateByName('haxelib_client'))
+			print("haxelib is up to date");
+		switch tryBuild() {
+			case None:
+				var haxepath = Sys.getEnv("HAXEPATH"),
+					win = Sys.systemName() == "Windows";
+					
+				if (haxepath == null) 
+					throw 'HAXEPATH environment variable not defined';
+				else 
+					haxepath += 
+						switch (haxepath.charAt(haxepath.length - 1)) {
+							case '/', '\\': '';
+							default: '/';
+						}
+				
+				if (win) {
+					var file = '$haxepath/haxelib.n';
+					var p = new Process(
+						'haxe', 
+						[
+							'-neko', file, 
+							'-lib', 'haxelib_client', 
+							'-main', 'tools.haxelib.Main', 
+						]
+					);
+					if (p.exitCode() == 0) {
+						var p = new Process('nekotools', ['boot', file]);
+						if (p.exitCode() != 0) 
+							throw 'Error booting haxelib :' + p.stderr.readAll().toString();
+					}
+					else throw 'Error rebuilding haxelib: ' + p.stderr.readAll().toString();
+				}
+				else {
+					var p = new Process('haxelib', ['path', 'haxelib_client']);
+					if (p.exitCode() == 0) {
+						var args = [];
+						for (arg in p.stdout.readAll().toString().split('\n')) {
+							arg = StringTools.trim(arg);
+							if (arg.charAt(0) == '-') 
+								args.push(arg);
+							else if (arg.length > 0) 
+								args.push('-cp "$arg"');
+						};
+						
+						var file = '$haxepath/haxelib.sh';
+						File.saveContent(
+							file,
+							'#!\nhaxe --run -main tools.haxelib.Main '+args.join(' ')
+						);
+					}
+					else throw p.stdout.readAll();
+				}
+			case Some(error):
+				throw 'Error compiling haxelib client: $error';
+		}
 	}
 
 	function deleteRec(dir) {
