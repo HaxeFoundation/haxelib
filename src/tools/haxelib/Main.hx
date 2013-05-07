@@ -140,7 +140,7 @@ class Main {
 		addCommand("list", list, "list all installed libraries", false);
 		addCommand("upgrade", upgrade, "upgrade all installed libraries");
 		addCommand("update", update, "update a single library");
-		addCommand("updateself", updateSelf, "update haxelib itself");
+		addCommand("selfupdate", updateSelf, "update haxelib itself");
 		addCommand("remove", remove, "remove a given library/version", false);
 		addCommand("set", set, "set the current version for a library", false);
 		addCommand("search", search, "list libraries matching a word");
