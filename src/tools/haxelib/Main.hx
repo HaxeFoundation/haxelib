@@ -730,13 +730,13 @@ class Main {
 								args.push('-cp "$arg"');
 						};
 						
-						var file = '$haxepath/haxelib';
+						var file = haxepath+'haxelib';
 						try File.saveContent(
 							file,
-							'#!\nhaxe --run -main tools.haxelib.Main '+args.join(' ')
+							'#!\nhaxe '+args.join(' ')+' --run tools.haxelib.Main $@'
 						)
 						catch (e:Dynamic) 
-							throw 'Error writing file $file. Please ensure you have write permissions. Error message ' + Std.string(e);
+							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
 					}
 					else throw p.stdout.readAll();
 				}
