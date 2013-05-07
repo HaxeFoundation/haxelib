@@ -703,7 +703,7 @@ class Main {
 				var win = Sys.systemName() == "Windows";
 				var haxepath = 
 					if (win) Sys.getEnv("HAXEPATH");
-					else new Path(new Process('which', ['haxelib.sh']).stdout.readAll().toString()).dir + '/';
+					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
 					
 				if (haxepath == null) 
 					throw 'HAXEPATH environment variable not defined';
@@ -730,7 +730,7 @@ class Main {
 								args.push('-cp "$arg"');
 						};
 						
-						var file = '$haxepath/haxelib.sh';
+						var file = '$haxepath/haxelib';
 						try File.saveContent(
 							file,
 							'#!\nhaxe --run -main tools.haxelib.Main '+args.join(' ')
