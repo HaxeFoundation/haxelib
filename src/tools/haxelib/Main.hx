@@ -176,6 +176,7 @@ class Main {
 				case 10, 13: break;
 				case c: s.addChar(c);
 			}
+			while (true);
 			print("");
 			return s.toString();
 		}
