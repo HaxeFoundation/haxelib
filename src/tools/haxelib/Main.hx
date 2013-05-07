@@ -117,7 +117,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('3.0.0-rc.4');
+	static var VERSION = SemVer.ofString('3.0.0-rc.5');
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
@@ -172,9 +172,10 @@ class Main {
 		Sys.print(name+" : ");
 		if( passwd ) {
 			var s = new StringBuf();
-			var c;
-			while( (c = Sys.getChar(false)) != 13 )
-				s.addChar(c);
+			do switch Sys.getChar(false) {
+				case 10, 13: break;
+				case c: s.addChar(c);
+			}
 			print("");
 			return s.toString();
 		}
