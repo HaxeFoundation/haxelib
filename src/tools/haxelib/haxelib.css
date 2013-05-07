@@ -9,7 +9,11 @@ body {
 	font-size : 10.5pt;
 	background : #FFFFFF url("http://haxe.org/img/haxe/bg_main.gif") repeat-x;
 }
-
+.legacy-notice {
+	border : 1px solid #AAA;
+	padding: 10px;
+	margin: 10px;
+}
 .page {
 	margin: 10px auto 10px auto;
 	padding : 5px;
