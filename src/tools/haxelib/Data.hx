@@ -54,7 +54,7 @@ typedef Infos = {
 	var website : String;
 	var desc : String;
 	var license : String;
-	var version : SemVer;
+	var version : String;
 	var versionComments : String;
 	var developers : List<String>;
 	var tags : List<String>;
@@ -72,7 +72,7 @@ class Data {
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
 			throw "Invalid parameter : "+name;
-		return name.split(".").join(",");//TODO: is this really unsafe in any way?
+		return name.split(".").join(",");
 	}
 
 	public static function unsafe( name : String ) {
@@ -121,6 +121,11 @@ class Data {
 			case TClass(Array):
 			default: throw 'invalid type for contributors';
 		}
+		switch Type.typeof(doc.version) {
+			case TClass(String):
+				SemVer.ofString(doc.version);
+			default: throw 'version must be defined as string';
+		}
 		switch Type.typeof(doc.tags) {
 			case TClass(Array), TNull:
 			default: throw 'tags must be defined as array';
@@ -137,7 +142,7 @@ class Data {
 	}
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
-		var doc = Json.parse(jsondata);
+		var doc = try Json.parse(jsondata) catch( e : Dynamic ) throw "Error in JSON data : " + e;
 		if( check )
 			doCheck(doc);
 		var project:String = doc.name;
@@ -165,7 +170,7 @@ class Data {
 			project : project,
 			website : doc.url,
 			desc : doc.description,
-			version : SemVer.ofString(doc.version),
+			version : doc.version,
 			versionComments : doc.releasenote,
 			license : doc.license,
 			tags : tags,
