@@ -703,7 +703,7 @@ class Main {
 				var win = Sys.systemName() == "Windows";
 				var haxepath = 
 					if (win) Sys.getEnv("HAXEPATH");
-					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
+					else new Path(new Process('which', ['haxelib.sh']).stdout.readAll().toString()).dir + '/';
 					
 				if (haxepath == null) 
 					throw 'HAXEPATH environment variable not defined';
