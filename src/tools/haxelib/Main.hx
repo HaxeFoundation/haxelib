@@ -21,6 +21,7 @@
  */
 package tools.haxelib;
 
+import haxe.io.Path;
 import haxe.zip.Reader;
 import sys.io.File;
 import sys.io.Process;
@@ -116,14 +117,14 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('2.0.0-rc');
+	static var VERSION = SemVer.ofString('3.0.0-rc.2');
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
 		port : 80,
 		dir : "",
 		url : "index.n",
-		apiVersion : VERSION.toString()
+		apiVersion : VERSION.major+"."+VERSION.minor,
 	};
 
 	var argcur : Int;
@@ -329,14 +330,10 @@ class Main {
 	}
 
 	function submit() {
-		Sys.println('submitting');
 		var file = param("Package");
 		var data = sys.io.File.getBytes(file);
-		Sys.println(data.length + 'bytes');
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		Sys.println('found ' + zip.length + ' items');
-		var infos = Data.readInfos(zip, true);
-		Sys.println('infos: ' + infos);
+		var infos = Data.readInfos(zip,true);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -415,7 +412,7 @@ class Main {
 			}
 		if( !found )
 			throw "No such version "+version;
-		doInstall(inf.name, version, version == inf.curversion);
+		doInstall(inf.name,version,version == inf.curversion);
 	}
 
 	function doInstall( project, version, setcurrent ) {
@@ -443,7 +440,7 @@ class Main {
 		h.customRequest(false,progress);
 
 		doInstallFile(filepath, setcurrent);
-		site.postInstall(project, SemVer.ofString(version));
+		site.postInstall(project, version);
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
@@ -703,8 +700,10 @@ class Main {
 			print("haxelib is up to date");
 		switch tryBuild() {
 			case None:
-				var haxepath = Sys.getEnv("HAXEPATH"),
-					win = Sys.systemName() == "Windows";
+				var win = Sys.systemName() == "Windows";
+				var haxepath = 
+					if (win) Sys.getEnv("HAXEPATH");
+					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
 					
 				if (haxepath == null) 
 					throw 'HAXEPATH environment variable not defined';
@@ -716,21 +715,8 @@ class Main {
 						}
 				
 				if (win) {
-					var file = '$haxepath/haxelib.n';
-					var p = new Process(
-						'haxe', 
-						[
-							'-neko', file, 
-							'-lib', 'haxelib_client', 
-							'-main', 'tools.haxelib.Main', 
-						]
-					);
-					if (p.exitCode() == 0) {
-						var p = new Process('nekotools', ['boot', file]);
-						if (p.exitCode() != 0) 
-							throw 'Error booting haxelib :' + p.stderr.readAll().toString();
-					}
-					else throw 'Error rebuilding haxelib: ' + p.stderr.readAll().toString();
+					File.saveContent('update.hxml', '-lib haxelib_client\n--run tools.haxelib.Rebuild');
+					Sys.println('Please run haxe update.hxml');
 				}
 				else {
 					var p = new Process('haxelib', ['path', 'haxelib_client']);
@@ -830,7 +816,9 @@ class Main {
 				throw "Library "+prj+" has two version included "+version+" and "+p.version;
 			}
 		l.add({ project : prj, version : version });
-		var json = sys.io.File.getContent(vdir+"/"+Data.JSON);
+		var json = try sys.io.File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
+		if( json == null )
+			return; // ignore missing haxelib.json, assume no dependencies
 		var inf = Data.readData(json,false);
 		for( d in inf.dependencies )
 			checkRec(d.project,if( d.version == "" ) null else d.version,l);

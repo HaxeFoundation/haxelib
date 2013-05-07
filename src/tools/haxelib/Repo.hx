@@ -213,6 +213,14 @@ class Repo implements SiteApi {
 				}
 			}
 		}
+		
+		// look for current version
+		var current = null;
+		for( v in Version.manager.search({ project : p.id }) )
+			if( v.name == infos.version ) {
+				current = v;
+				break;
+			}		
 
 		// update documentation
 		var doc = null;
@@ -244,17 +252,26 @@ class Repo implements SiteApi {
 		}
 
 		// update file
-		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version.toString());
+		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version);
 		sys.FileSystem.rename(path,target);
-
+		var semVer = SemVer.ofString(infos.version);
+		
+		// update existing version
+		if( current != null ) {
+			current.documentation = doc;
+			current.comments = infos.versionComments;
+			current.update();
+			return "Version "+current.name+" (id#"+current.id+") updated";
+		}
+		
 		// add new version
 		var v = new Version();
 		v.project = p;
-		v.major = infos.version.major;
-		v.minor = infos.version.minor;
-		v.patch = infos.version.patch;
-		v.preview = infos.version.preview;
-		v.previewNum = infos.version.previewNum;
+		v.major = semVer.major;
+		v.minor = semVer.minor;
+		v.patch = semVer.patch;
+		v.preview = semVer.preview;
+		v.previewNum = semVer.previewNum;
 		
 		v.comments = infos.versionComments;
 		v.downloads = 0;
@@ -267,10 +284,12 @@ class Repo implements SiteApi {
 		return "Version " + v.toSemver().toString() + " (id#" + v.id + ") added";
 	}
 
-	public function postInstall( project : String, version : SemVer ) {
+	public function postInstall( project : String, version : String ) {
 		var p = Project.manager.select($name == project);
 		if( p == null )
 			throw "No such Project : " + project;
+			
+		var version = SemVer.ofString(version);
 		var v = Version.manager.select(
 			$project == p.id && 
 			$major == version.major && 

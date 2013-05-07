@@ -35,6 +35,6 @@ interface SiteApi {
 	
 	public function processSubmit( id : String, user : String, pass : String ) : String;
 
-	public function postInstall( project : String, version : SemVer ):Void;
+	public function postInstall( project : String, version : String):Void;
 }
 
