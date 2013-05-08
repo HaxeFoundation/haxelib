@@ -26,6 +26,7 @@ import haxe.zip.Reader;
 import sys.io.File;
 import sys.io.Process;
 import haxe.ds.Option;
+using StringTools;
 
 enum Answer {
 	Yes;
@@ -459,7 +460,7 @@ class Main {
 		safeDir(target);
 		target += "/";
 
-		// locate haxelib.xml base path
+		// locate haxelib.json base path
 		var basepath = Data.locateBasePath(zip);
 
 		// unzip content
@@ -501,7 +502,12 @@ class Main {
 		print("Done");
 
 		// process dependencies
-		for( d in infos.dependencies ) {
+		doInstallDependencies(infos.dependencies);
+	}
+
+	function doInstallDependencies( dependencies:List<{ project: String, version : String }> )
+	{
+		for( d in dependencies ) {
 			print("Installing dependency "+d.project+" "+d.version);
 			if( d.version == "" )
 				d.version = site.infos(d.project).curversion;
@@ -610,7 +616,7 @@ class Main {
 	}
 
 	function getCurrent( dir ) {
-		return StringTools.trim(sys.io.File.getContent(dir + "/.current"));
+		return (sys.FileSystem.exists(dir+"/.dev")) ? "dev" : StringTools.trim(sys.io.File.getContent(dir + "/.current"));
 	}
 
 	function getDev( dir ) {
@@ -661,7 +667,6 @@ class Main {
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
 			Sys.command("git pull");
-			// TODO: update haxelib.xml version?
 			Sys.setCwd(oldCwd);
 			state.updated = true;
 		} else {
@@ -877,13 +882,30 @@ class Main {
 				sys.FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
+			if ( !dir.endsWith("/") ) 
+				dir += "/";
 			try {
 				sys.io.File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
+				
+				try {
+					// Check for haxelib.json, install dependencies
+					var haxelibJsonPath = dir + "haxelib.json";
+					if (sys.FileSystem.exists(haxelibJsonPath))
+					{
+						var haxelibJson = sys.io.File.getContent(haxelibJsonPath);
+						var infos = Data.readData(haxelibJson,true);
+						doInstallDependencies(infos.dependencies);
+					}
+				}
+				catch (e:Dynamic) {
+					print('Error installing dependencies for $project:\n  $e');
+				}
 			}
 			catch (e:Dynamic) {
 				print("Could not write to " +proj + "/.dev");
 			}
+
 		}
 	}
 
@@ -927,16 +949,8 @@ class Main {
 		}
 
 		var gitPath = param("Git path");
+		var branch = paramOpt();
 		var subDir = paramOpt();
-
-		var match = ~/@([0-9]+)/;
-		var rev = if (match.match(gitPath) && match.matchedRight() == "")
-		{
-			gitPath = match.matchedLeft();
-			match.matched(1);
-		}
-		else
-			null;
 
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
@@ -946,11 +960,11 @@ class Main {
 			return;
 		}
 		Sys.setCwd(libPath);
-		if (rev != null) {
-			var ret = command("git", ["checkout", rev]);
+		if (branch != null) {
+			var ret = command("git", ["checkout", branch]);
 			if (ret.code != 0)
 			{
-				print("Could not checkout revision: " +ret.out);
+				print("Could not checkout branch, tag or path: " +ret.out);
 				// TODO: We might have to get rid of the cloned repository here
 				return;
 			}
@@ -958,14 +972,30 @@ class Main {
 		var revision = command("git", ["rev-parse", "HEAD"]).out;
 
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-		if (!sys.FileSystem.exists(devPath +"/haxelib.xml"))
+		var haxelibJsonPath = devPath + "/haxelib.json";
+		var haxelibJson:String;
+		if (sys.FileSystem.exists(haxelibJsonPath))
 		{
-			var haxelib = "<project name='" +libName + "' url='" +gitPath + "' license='BSD'>"
-				+"<description></description>"
-				+"<version name='" +revision + "'>Updated from git.</version>"
-				+"</project>";
-			sys.io.File.saveContent(devPath +"/haxelib.xml", haxelib);
+			haxelibJson = sys.io.File.getContent(haxelibJsonPath);
 		}
+		else
+		{
+			haxelibJson = '{
+  "name": "$libName",
+  "url" : "$gitPath",
+  "license": "",
+  "tags": [],
+  "description": "",
+  "version": "0.0.0",
+  "releasenote": "Updated from git.",
+  "contributors": [],
+  "dependencies": {}
+}';
+			sys.io.File.saveContent(haxelibJsonPath, haxelibJson);
+		}
+
+		var infos = Data.readData(haxelibJson,true);
+		doInstallDependencies(infos.dependencies);
 
 		Sys.setCwd(libPath + "/../");
 		sys.io.File.saveContent(".current", "dev");
