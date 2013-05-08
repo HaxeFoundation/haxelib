@@ -459,7 +459,7 @@ class Main {
 		safeDir(target);
 		target += "/";
 
-		// locate haxelib.xml base path
+		// locate haxelib.json base path
 		var basepath = Data.locateBasePath(zip);
 
 		// unzip content
@@ -666,7 +666,6 @@ class Main {
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
 			Sys.command("git pull");
-			// TODO: update haxelib.xml version?
 			Sys.setCwd(oldCwd);
 			state.updated = true;
 		} else {
@@ -886,12 +885,12 @@ class Main {
 				sys.io.File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
 
-				// Check for haxelib.xml, install dependencies
-				var haxelibXmlPath = dir + "/haxelib.xml";
-				if (sys.FileSystem.exists(haxelibXmlPath))
+				// Check for haxelib.json, install dependencies
+				var haxelibJsonPath = dir + "/haxelib.json";
+				if (sys.FileSystem.exists(haxelibJsonPath))
 				{
-					var haxelibXml = sys.io.File.getContent(haxelibXmlPath);
-					var infos = Data.readData(haxelibXml,false);
+					var haxelibJson = sys.io.File.getContent(haxelibJsonPath);
+					var infos = Data.readData(haxelibJson,true);
 					doInstallDependencies(infos.dependencies);
 				}
 			}
@@ -964,22 +963,29 @@ class Main {
 		var revision = command("git", ["rev-parse", "HEAD"]).out;
 
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-		var haxelibXmlPath = devPath + "/haxelib.xml");
-		var haxelibXml:String;
-		if (sys.FileSystem.exists(haxelibXmlPath))
+		var haxelibJsonPath = devPath + "/haxelib.json";
+		var haxelibJson:String;
+		if (sys.FileSystem.exists(haxelibJsonPath))
 		{
-			haxelibXml = sys.io.File.getContent(haxelibXmlPath);
+			haxelibJson = sys.io.File.getContent(haxelibJsonPath);
 		}
 		else
 		{
-			haxelibXml = "<project name='" +libName + "' url='" +gitPath + "' license='BSD'>"
-				+"<description></description>"
-				+"<version name='" +0 + "'>Updated from git.</version>"
-				+"</project>";
-			sys.io.File.saveContent(haxelibXmlPath, haxelib);
+			haxelibJson = '{
+  "name": "$libName",
+  "url" : "$gitPath",
+  "license": "",
+  "tags": [],
+  "description": "",
+  "version": "0.0.0",
+  "releasenote": "Updated from git.",
+  "contributors": [],
+  "dependencies": {}
+}';
+			sys.io.File.saveContent(haxelibJsonPath, haxelibJson);
 		}
 
-		var infos = Data.readData(haxelibXml,false);
+		var infos = Data.readData(haxelibJson,true);
 		doInstallDependencies(infos.dependencies);
 
 		Sys.setCwd(libPath + "/../");
