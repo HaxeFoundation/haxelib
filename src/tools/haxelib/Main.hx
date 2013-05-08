@@ -708,7 +708,7 @@ class Main {
 					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
 					
 				if (haxepath == null) 
-					throw 'HAXEPATH environment variable not defined';
+					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else 
 					haxepath += 
 						switch (haxepath.charAt(haxepath.length - 1)) {
