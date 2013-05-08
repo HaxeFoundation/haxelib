@@ -615,7 +615,7 @@ class Main {
 	}
 
 	function getCurrent( dir ) {
-		return StringTools.trim(sys.io.File.getContent(dir + "/.current"));
+		return (sys.FileSystem.exists(dir+"/.dev")) ? "dev" : StringTools.trim(sys.io.File.getContent(dir + "/.current"));
 	}
 
 	function getDev( dir ) {
