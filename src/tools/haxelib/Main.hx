@@ -26,6 +26,7 @@ import haxe.zip.Reader;
 import sys.io.File;
 import sys.io.Process;
 import haxe.ds.Option;
+using StringTools;
 
 enum Answer {
 	Yes;
@@ -881,22 +882,30 @@ class Main {
 				sys.FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
+			if ( !dir.endsWith("/") ) 
+				dir += "/";
 			try {
 				sys.io.File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
-
-				// Check for haxelib.json, install dependencies
-				var haxelibJsonPath = dir + "/haxelib.json";
-				if (sys.FileSystem.exists(haxelibJsonPath))
-				{
-					var haxelibJson = sys.io.File.getContent(haxelibJsonPath);
-					var infos = Data.readData(haxelibJson,true);
-					doInstallDependencies(infos.dependencies);
+				
+				try {
+					// Check for haxelib.json, install dependencies
+					var haxelibJsonPath = dir + "haxelib.json";
+					if (sys.FileSystem.exists(haxelibJsonPath))
+					{
+						var haxelibJson = sys.io.File.getContent(haxelibJsonPath);
+						var infos = Data.readData(haxelibJson,true);
+						doInstallDependencies(infos.dependencies);
+					}
+				}
+				catch (e:Dynamic) {
+					print('Error installing dependencies for $project:\n  $e');
 				}
 			}
 			catch (e:Dynamic) {
 				print("Could not write to " +proj + "/.dev");
 			}
+
 		}
 	}
 
