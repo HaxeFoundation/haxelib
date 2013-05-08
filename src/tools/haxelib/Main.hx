@@ -22,7 +22,9 @@
 package tools.haxelib;
 
 import haxe.io.Path;
+import haxe.Json;
 import haxe.zip.Reader;
+import sys.FileSystem;
 import sys.io.File;
 import sys.io.Process;
 import haxe.ds.Option;
