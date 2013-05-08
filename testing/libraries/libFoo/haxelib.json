@@ -1,0 +1,13 @@
+{
+	"name": "Foo",
+	"url" : "http://example.org",
+	"license": "GPL",
+	"tags": ["foo", "test"],
+	"description": "This project is an example of an haxelib project",
+	"version": "0.1.0-alpha.0",
+	"releasenote": "Initial release, everything is working correctly",
+	"dependencies": {
+		"bar": ""
+	},
+	"contributors": ["Foo"]
+}

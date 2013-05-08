@@ -2,3 +2,6 @@
 *.n
 *.zip
 *.tmp
+*.db
+server
+package

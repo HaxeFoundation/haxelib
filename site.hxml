@@ -1,4 +1,21 @@
 -cp src
--neko bin/index.n
+-neko server/index.n
 -main tools.haxelib.Site
+-dce no
+
+--next 
+
+-cp src 
+-neko server/api/3.0/index.n
+-main tools.haxelib.Repo
+-dce no
+-D haxelib_api
+
+--next 
+
+-cp src 
+-neko server/legacy/index.n
+-main tools.legacyhaxelib.Site
+-lib hx2compat
+-D haxelib_site
 -dce no

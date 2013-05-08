@@ -2,25 +2,26 @@
 
 <head>
 <title>lib.haxe.org</title>
-<link type="application/rss+xml" rel="alternate" title="RSS feed" href="/rss"/>
-<link href="/haxelib.css" type="text/css" rel="stylesheet"/>
+<base href="::basehref::" />
+<link type="application/rss+xml" rel="alternate" title="RSS feed" href="rss"/>
+<link href="haxelib.css" type="text/css" rel="stylesheet"/>
 </head>
 
 <body>
 
-<h1><a href="/">lib.haxe.org</a></h1>
+<h1><a href="">(Legacy Haxelib) lib.haxe.org</a></h1>
 
 <div class="page">
 
 <div class="menu">
 	<div class="title">Search :</div>
-	<form action="/search" method="POST">
+	<form action="::basehref::search" method="POST">
 		<input name="v"/>
 	</form>
 	<div class="title">Top tags :</div>
 	<ul>
 	::foreach menuTags::
-	<li><a href="/t/::tag::">::tag::</a> (::count::)</li>
+	<li><a href="t/::tag::">::tag::</a> (::count::)</li>
 	::end::
 	</ul>
 </div>
@@ -50,7 +51,7 @@
 	::foreach versions::
 	<li>
 		<div class="date">::date:: </div>
-		<div class="project"><a href="/p/::(__project.name)::">::(__project.name)::</a> </div>
+		<div class="project"><a href="p/::(__project.name)::">::(__project.name)::</a> </div>
 		<div class="name">::name:: </div>
 		<div class="download"><a href="$$download(__project,__current__)">Download</a></div>
 		<div class="comments">::comments::</div>
@@ -59,7 +60,7 @@
 </ul>
 </div>
 
-<a href="/all">Browse Projects</a>
+<a href="all">Browse Projects</a>
 
 ::elseif act_p::
 
@@ -67,12 +68,12 @@
 
 <div class="pinfos">
 	<div class="description">::(p.description)::</div>
-	::if tags::<div class="tags"><div class="label">Tags</div> ::foreach tags::<a href="/t/::tag::">::tag::</a>::end::</div>::end::
+	::if tags::<div class="tags"><div class="label">Tags</div> ::foreach tags::<a href="t/::tag::">::tag::</a>::end::</div>::end::
 	<div class="url"><div class="label">Website</div> <a href="::(p.website)::">::(p.website)::</a></div>
 	<div class="version"><div class="label">Version</div> ::(version.name)::</div>
-	<div class="owner"><div class="label">Owner</div> <a href="/u/::(owner.name)::">::(owner.name)::</a></div>
+	<div class="owner"><div class="label">Owner</div> <a href="u/::(owner.name)::">::(owner.name)::</a></div>
 	<div class="license"><div class="label">License</div> ::(p.license)::</div>
-	::if (version.documentation)::<div class="doc"><a href="/d/::(p.name)::">Documentation</a></div>::end::
+	::if (version.documentation)::<div class="doc"><a href="d/::(p.name)::">Documentation</a></div>::end::
 	<div class="download"><a href="$$download(p,version)">Download</a></div>
 </div>
 
@@ -105,7 +106,7 @@
 <div class="projects">
 <ul>
 ::foreach uprojects::
-	<li><a href="/p/::name::">::name::</a></li>
+	<li><a href="p/::name::">::name::</a></li>
 ::end::
 </ul>
 </div>
@@ -122,7 +123,7 @@
 <ul>
 ::foreach tprojects::
 	<li>
-		<a href="/p/::name::">::name::</a>
+		<a href="p/::name::">::name::</a>
 		<div class="description">::description::</div>
 	</li>
 ::end::
@@ -137,7 +138,7 @@
 <ul>
 ::foreach projects::
 	<li>
-		<a href="/p/::name::">::name::</a>
+		<a href="p/::name::">::name::</a>
 		<div class="description">::description::</div>
 	</li>
 ::end::
