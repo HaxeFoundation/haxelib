@@ -633,7 +633,11 @@ class Main {
 
 	function list() {
 		var rep = getRepository();
-		for( p in FileSystem.readDirectory(rep) ) {
+		var folders = FileSystem.readDirectory(rep);
+		var filter = paramOpt();
+		if ( filter != null )
+			folders = folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
+		for( p in folders ) {
 			if( p.charAt(0) == "." )
 				continue;
 			var versions = new Array();
