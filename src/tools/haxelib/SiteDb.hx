@@ -23,6 +23,9 @@ package tools.haxelib;
 
 import sys.db.*;
 import sys.db.Types;
+import tools.haxelib.Paths.*;
+using sys.io.File;
+using sys.FileSystem;
 
 class User extends Object {
 
@@ -54,8 +57,8 @@ class Project extends Object {
 	}
 
 	static public function allByName() {
-		//TODO: review. Unless I am mistaken, there is no way to express COLLATE NOCASE yet
-		return manager.unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE", false);
+		//TODO: Propose SPOD patch to support manager.search(true, { orderBy: name.toLowerCase() } );
+		return manager.unsafeObjects('SELECT * FROM Project ORDER BY LOWER(name)', false);
 	}
 
 }
@@ -117,7 +120,34 @@ class Developer extends Object {
 }
 
 class SiteDb {
-
+	static var db : Connection;
+	//TODO: this whole configuration business is rather messy to say the least
+	
+	static public function init() {
+		db = 
+			if (DB_CONFIG.exists()) 
+				Mysql.connect(haxe.Json.parse(DB_CONFIG.getContent()));
+			else 
+				Sqlite.open(DB_FILE);
+				
+		Manager.cnx = db;
+		Manager.initialize();
+		
+		var managers:Array<Manager<Dynamic>> = [
+			User.manager,
+			Project.manager,
+			Tag.manager,
+			Version.manager,
+			Developer.manager
+		];
+		for (m in managers)
+			if (!TableCreate.exists(m))
+				TableCreate.create(m);		
+	}
+	static public function cleanup() {
+		db.close();
+		Manager.cleanup();
+	}
 	public static function create( db : sys.db.Connection ) {
 		//now based on TableCreate when establishing the connection
 	}

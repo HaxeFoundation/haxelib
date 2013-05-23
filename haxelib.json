@@ -1,0 +1,10 @@
+{
+	"name": "haxelib_client",
+	"url" : "http://haxe.org/haxelib",
+	"license": "GPL",
+	"tags": ["haxelib", "core"],
+	"description": "The haxelib client",
+	"version": "3.0.0-rc.6",
+	"releasenote": "Added 'haxelib convertxml' and improved 'haxelib git' support.",
+	"contributors": ["back2dos", "ncannasse","jason"]
+}

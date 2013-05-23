@@ -2,3 +2,4 @@
 -cp src
 -main PrepareServer
 -x bin/prepare
+-lib hx2compat
