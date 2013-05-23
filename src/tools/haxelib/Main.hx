@@ -746,7 +746,7 @@ class Main {
 						var file = haxepath+'haxelib';
 						try File.saveContent(
 							file,
-							'#!\nhaxe '+args.join(' ')+' --run tools.haxelib.Main $@'
+							'#!/bin/sh\nhaxe '+args.join(' ')+' --run tools.haxelib.Main $@'
 						)
 						catch (e:Dynamic) 
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
