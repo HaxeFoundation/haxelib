@@ -120,7 +120,8 @@ class Site {
 	}
 	static function error(msg:String) {
 		render('error', {
-			error: StringTools.htmlEscape(msg)
+			error: StringTools.htmlEscape(msg),
+			legacyurl: "/legacy"+Web.getURI()
 		});
 	}
 	// render content into layout template
