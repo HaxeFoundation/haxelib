@@ -525,7 +525,6 @@ class Main {
 		if( FileSystem.exists(dir) ) {
 			if( !FileSystem.isDirectory(dir) )
 				throw ("A file is preventing "+dir+" to be created");
-			return false;
 		}
 		try {
 			FileSystem.createDirectory(dir);
@@ -580,12 +579,12 @@ class Main {
 				var rep = haxepath+REPNAME;
 				try {
 					safeDir(rep);
-				} catch( e : Dynamic ) {
-					throw "The directory defined by HAXEPATH does not exist, please run haxesetup.exe again";
+				} catch( e : String ) {
+					throw "Error accessing Haxelib repository: $e";
 				}
 				return rep+"\\";
 			} else
-				throw "This is the first time you are runing haxelib. Please run haxelib setup first";
+				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
 		}
 		rep = rep.trim();
 		if( setup ) {
@@ -607,8 +606,11 @@ class Main {
 			}
 			rep = try FileSystem.fullPath(rep) catch( e : Dynamic ) rep;
 			File.saveContent(config_file, rep);
-		} else if( !FileSystem.exists(rep) )
-			throw "haxelib Repository "+rep+" does not exists. Please run haxelib setup again";
+		} else if( !FileSystem.exists(rep) ) {
+			throw "haxelib Repository "+rep+" does not exists. Please run `haxelib setup` again";
+		} else if ( !FileSystem.isDirectory(rep) ) {
+			throw "haxelib Repository "+rep+" exists, but was a file, not a directory.  Please remove it and run `haxelib setup` again.";
+		}
 		return rep+"/";
 	}
 
