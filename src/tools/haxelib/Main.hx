@@ -27,6 +27,7 @@ import haxe.io.Path;
 import haxe.Json;
 import haxe.Timer;
 import haxe.zip.Reader;
+import tools.haxelib.Data;
 import sys.FileSystem;
 import sys.io.File;
 import sys.io.Process;
@@ -142,7 +143,7 @@ class Main {
 	function new() {
 		args = Sys.args();
 		commands = new List();
-		addCommand("install", install, "install a given library");
+		addCommand("install", install, "install a given library, or all libraries from a hxml file");
 		addCommand("list", list, "list all installed libraries", false);
 		addCommand("upgrade", upgrade, "upgrade all installed libraries");
 		addCommand("update", update, "update a single library");
@@ -401,17 +402,41 @@ class Main {
 	}
 
 	function install() {
-		var prj = param("Library name");
-		if( FileSystem.exists(prj) && !FileSystem.isDirectory(prj) ) {
-			if( !prj.endsWith(".zip") )
-				throw "Local file to install must be a zip";
-			doInstallFile(prj,true,true);
+		var prj = param("Library name or hxml file:");
+
+		// No library given, install libraries listed in *.hxml in given directory
+		if( prj == "all")
+		{
+			installFromAllHxml();
 			return;
 		}
+
+		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
+			// *.hxml provided, install all libraries/versions in this hxml file
+			if( prj.endsWith(".hxml") )
+			{
+				installFromHxml(prj);
+				return;
+			}
+			// *.zip provided, install zip as haxe library
+			if( prj.endsWith(".zip") )
+			{
+				doInstallFile(prj,true,true);
+				return;
+			}
+		}
+
+		// Name provided that wasn't a local hxml or zip, so try to install it from server
 		var inf = site.infos(prj);
-		if( inf.curversion == null )
-			throw "This library has not yet released a version";
 		var reqversion = paramOpt();
+		var version = getVersion(inf, reqversion);
+		doInstall(inf.name,version,version == inf.curversion);
+	}
+
+	function getVersion( inf:ProjectInfos, ?reqversion:String )
+	{
+		if( inf.curversion == null )
+			throw "The library "+inf.name+" has not yet released a version";
 		var version = if( reqversion != null ) reqversion else inf.curversion;
 		var found = false;
 		for( v in inf.versions )
@@ -420,8 +445,85 @@ class Main {
 				break;
 			}
 		if( !found )
-			throw "No such version "+version;
-		doInstall(inf.name,version,version == inf.curversion);
+			throw "No such version "+version+" for library "+inf.name;
+		
+		return version;
+	}
+
+	function installFromHxml( path )
+	{
+		var hxml = sys.io.File.getContent(path);
+		var lines = hxml.split("\n");
+
+		var libsToInstall = new Map<String, {name:String,version:String}>();
+		for (l in lines)
+		{
+			l = l.trim();
+			if (l.startsWith("-lib"))
+			{
+				var key = l.substr(5);
+				var parts = key.split(":");
+				var libName = parts[0].trim();
+				var libVersion = if (parts.length > 1) parts[1].trim() else null;
+
+				if (libsToInstall.exists(key) == false)
+				{
+					libsToInstall.set(key, { name:libName, version:libVersion });
+				}
+			}
+		}
+		installMany(libsToInstall);
+	}
+
+	function installFromAllHxml()
+	{
+		var hxmlFiles = sys.FileSystem.readDirectory(Sys.getCwd()).filter(function (f) return f.endsWith(".hxml"));
+		if (hxmlFiles.length > 0)
+		{
+			for (file in hxmlFiles)
+			{
+				if (file.endsWith(".hxml"))
+				{
+					print('Installing all libraries from $file:');
+					installFromHxml(Sys.getCwd()+file);
+				}
+			}
+		}
+		else 
+		{
+			print ("No hxml files found in the current directory.");
+		}
+	}
+
+	function installMany( libs:Iterable<{name:String,version:String}>, ?setCurrent=true )
+	{
+		if (Lambda.count(libs) == 0) return;
+
+		// Check the version numbers are all good
+		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
+		print("Loading info about the required libraries");
+		for (l in libs)
+		{
+			var inf = site.infos(l.name);
+			l.version = getVersion(inf, l.version);
+		}
+
+		// Print a list with all the info
+		print("Haxelib is going to install these libraries:");
+		for (l in libs)
+		{
+			var vString = (l.version == null) ? "" : " - " + l.version;
+			print("  " + l.name + vString);
+		}
+
+		// Install if they confirm
+		if (ask("Continue?") != No)
+		{
+			for (l in libs)
+			{
+				doInstall(l.name, l.version, setCurrent);
+			}
+		}
 	}
 
 	function doInstall( project, version, setcurrent ) {
