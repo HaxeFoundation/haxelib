@@ -894,8 +894,7 @@ class Main {
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
-			if ( !dir.endsWith("/") ) 
-				dir += "/";
+			dir = cleanUpDirPath( dir );
 			try {
 				File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
@@ -919,6 +918,15 @@ class Main {
 			}
 
 		}
+	}
+
+	function cleanUpDirPath( dir : String ) {
+		// Evaluate the absolute path, and add trailing slash.  Restore CWD when done.
+		var cwd = Sys.getCwd();
+		Sys.setCwd( dir );
+		dir = Sys.getCwd();
+		Sys.setCwd( cwd );
+		return dir;
 	}
 
 	function checkGit() {
