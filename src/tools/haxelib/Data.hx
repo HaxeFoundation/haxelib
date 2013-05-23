@@ -68,6 +68,7 @@ class Data {
 	public static var REPOSITORY = "files";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
 	static var LICENSES = ["GPL","LGPL","BSD","Public","MIT"];
+	static var RESERVED_NAMES = ["haxe","all"];
 
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
@@ -113,6 +114,8 @@ class Data {
 	}
 
 	static function doCheck( doc : Dynamic ) {
+		if ( Lambda.indexOf(RESERVED_NAMES, doc.name.toLowerCase()) > -1 )
+			throw 'Library name "${doc.name}" is reserved.  Please choose another name';
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )
 			throw "License must be one of the following: " + LICENSES;
 		switch Type.typeof(doc.contributors) {
