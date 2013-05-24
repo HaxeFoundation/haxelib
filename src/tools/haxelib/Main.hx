@@ -22,15 +22,13 @@
 package tools.haxelib;
 
 import haxe.crypto.Md5;
-import haxe.Http;
+import haxe.*;
 import haxe.io.Path;
-import haxe.Json;
-import haxe.Timer;
 import haxe.zip.Reader;
 import sys.FileSystem;
-import sys.io.File;
-import sys.io.Process;
+import sys.io.*;
 import haxe.ds.Option;
+
 using StringTools;
 
 enum Answer {
@@ -581,7 +579,7 @@ class Main {
 				try {
 					safeDir(rep);
 				} catch( e : Dynamic ) {
-					throw "The directory defined by HAXEPATH does not exist, please run haxesetup.exe again";
+					throw 'The directory defined by HAXEPATH does not exist, nor can it be created because: $e\nPlease run haxesetup.exe again';
 				}
 				return rep+"\\";
 			} else
