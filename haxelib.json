@@ -4,7 +4,7 @@
 	"license": "GPL",
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
-	"version": "3.0.0-rc.4",
-	"releasenote": "Haxelib 3.0.0 RC4 (for Haxe 3 RC2)",
+	"version": "3.0.0-rc.6",
+	"releasenote": "Added 'haxelib convertxml' and improved 'haxelib git' support.",
 	"contributors": ["back2dos", "ncannasse","jason"]
 }

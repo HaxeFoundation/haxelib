@@ -3,7 +3,7 @@
 # Build the site, copy components over
 
 mkdir -p server/legacy
-mkdir -p server/api/2.0
+mkdir -p server/api/3.0
 
 haxe site.hxml
 
