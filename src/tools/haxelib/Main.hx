@@ -260,7 +260,7 @@ class Main {
 						print("Host "+SERVER.host+" was not found");
 						print("Please ensure that your internet connection is on");
 						print("If you don't have an internet connection or if you are behing a proxy");
-						print("please download manually the file from http://lib.haxe.org/files");
+						print("please download manually the file from http://lib.haxe.org/files/3.0/");
 						print("and run 'haxelib local <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
 						Sys.exit(1);

@@ -65,7 +65,7 @@ class Data {
 
 	public static var JSON = "haxelib.json";
 	public static var DOCXML = "haxedoc.xml";
-	public static var REPOSITORY = "files";
+	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
 	static var LICENSES = ["GPL","LGPL","BSD","Public","MIT"];
 	static var RESERVED_NAMES = ["haxe","all"];
