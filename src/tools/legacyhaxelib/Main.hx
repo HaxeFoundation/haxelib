@@ -117,7 +117,7 @@ class Main {
 	static var SERVER = {
 		host : "lib.haxe.org",
 		port : 80,
-		dir : "legacy",
+		dir : "",
 		url : "index.n"
 	};
 
@@ -153,7 +153,7 @@ class Main {
 	}
 
 	function initSite() {
-		siteUrl = "http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.dir;
+		siteUrl = "http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.dir+'/';
 		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl+SERVER.url).api);
 	}
 
@@ -422,7 +422,7 @@ class Main {
 		var filepath = rep+filename;
 		var out = sys.io.File.write(filepath,true);
 		var progress = new Progress(out);
-		var h = new haxe.Http(siteUrl+Data.REPOSITORY+"/"+filename);
+		var h = new haxe.Http(siteUrl + Data.REPOSITORY + "/" + filename);
 		h.onError = function(e) {
 			progress.close();
 			sys.FileSystem.deleteFile(filepath);
