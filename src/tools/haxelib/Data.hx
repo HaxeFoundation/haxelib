@@ -22,8 +22,8 @@
 package tools.haxelib;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
-
 import haxe.Json;
+using StringTools;
 
 typedef UserInfos = {
 	var name : String;
@@ -114,8 +114,13 @@ class Data {
 	}
 
 	static function doCheck( doc : Dynamic ) {
-		if ( Lambda.indexOf(RESERVED_NAMES, doc.name.toLowerCase()) > -1 )
+		var libName = doc.name.toLowerCase();
+		if ( Lambda.indexOf(RESERVED_NAMES, libName) > -1 )
 			throw 'Library name "${doc.name}" is reserved.  Please choose another name';
+		if ( libName.endsWith(".zip") )
+			throw 'Library name cannot end in ".zip".  Please choose another name';
+		if ( libName.endsWith(".hxml") )
+			throw 'Library name cannot end in ".hxml".  Please choose another name';
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )
 			throw "License must be one of the following: " + LICENSES;
 		switch Type.typeof(doc.contributors) {
