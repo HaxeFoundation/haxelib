@@ -131,6 +131,7 @@ class Main {
 		url : "index.n",
 		apiVersion : VERSION.major+"."+VERSION.minor,
 	};
+	static var seperator:String;
 
 	var argcur : Int;
 	var args : Array<String>;
@@ -139,7 +140,9 @@ class Main {
 	var site : SiteProxy;
 
 	function new() {
+		seperator = ( Sys.systemName() == "Windows" ) ? "\\" : "/"
 		args = Sys.args();
+
 		commands = new List();
 		addCommand("install", install, "install a given library, or all libraries from a hxml file");
 		addCommand("list", list, "list all installed libraries", false);
@@ -162,6 +165,7 @@ class Main {
 		addCommand("dev", dev, "set the development directory for a given library", false);
 		addCommand("git", git, "uses git repository as library");
 		addCommand("proxy", proxy, "setup the Http proxy");
+		
 		initSite();
 	}
 	
@@ -830,7 +834,7 @@ class Main {
 					haxepath += 
 						switch (haxepath.charAt(haxepath.length - 1)) {
 							case '/', '\\': '';
-							default: '/';
+							default: seperator;
 						}
 				
 				if (win) {
@@ -955,8 +959,8 @@ class Main {
 			var dir = rep + pdir;
 			try {
 				dir = getDev(rep+Data.safe(d.project));
-				if( dir.length == 0 || (dir.charAt(dir.length-1) != '/' && dir.charAt(dir.length-1) != '\\') )
-					dir += "/";
+				if( dir.length == 0 || dir.charAt(dir.length-1) != seperator )
+					dir += seperator;
 				pdir = dir;
 			} catch( e : Dynamic ) {
 			}
@@ -994,7 +998,7 @@ class Main {
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
-			dir = try FileSystem.fullPath(dir)+"/" catch( e : Dynamic ) rep;
+			dir = try FileSystem.fullPath(dir) catch( e : Dynamic ) rep;
 			try {
 				File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
