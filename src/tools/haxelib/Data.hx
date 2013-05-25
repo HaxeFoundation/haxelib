@@ -64,6 +64,7 @@ typedef Infos = {
 class Data {
 
 	public static var JSON = "haxelib.json";
+	public static var XML = "haxelib.xml";
 	public static var DOCXML = "haxedoc.xml";
 	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
@@ -100,7 +101,7 @@ class Data {
 		return null;
 	}
 
-	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos {
+	public static function readInfos( zip : List<Entry>, check : Bool, xmlFallback : Bool ) : Infos {
 		var infodata = null;
 		for( f in zip )
 			if( StringTools.endsWith(f.fileName,JSON) ) {
@@ -108,7 +109,15 @@ class Data {
 				break;
 			}
 		if( infodata == null )
+		{
+			for( f in zip )
+			if( StringTools.endsWith(f.fileName,XML) ) {
+				var xml = Reader.unzip(f).toString();
+				infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
+				break;
+			}
 			throw JSON + " not found in package";
+		}
 		
 		return readData(infodata,check);
 	}
