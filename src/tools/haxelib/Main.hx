@@ -140,7 +140,7 @@ class Main {
 	var site : SiteProxy;
 
 	function new() {
-		seperator = ( Sys.systemName() == "Windows" ) ? "\\" : "/"
+		seperator = ( Sys.systemName() == "Windows" ) ? "\\" : "/";
 		args = Sys.args();
 
 		commands = new List();
