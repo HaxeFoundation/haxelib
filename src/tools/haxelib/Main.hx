@@ -959,7 +959,7 @@ class Main {
 			var dir = rep + pdir;
 			try {
 				dir = getDev(rep+Data.safe(d.project));
-				if( dir.length == 0 || dir.charAt(dir.length-1) != seperator )
+				if( dir.length == 0 || ( dir.charAt(dir.length-1) != "/" && dir.charAt(dir.length-1) != "\\" ) )
 					dir += seperator;
 				pdir = dir;
 			} catch( e : Dynamic ) {
@@ -998,7 +998,7 @@ class Main {
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
-			if ( dir.endsWith(seperator) ) dir = dir.substr(0,-1);
+			if ( dir.endsWith("/") || dir.endsWith("\\") ) dir = dir.substr(0,-1);
 			dir = try FileSystem.fullPath(dir) catch( e : Dynamic ) rep;
 			try {
 				File.saveContent(devfile, dir);
