@@ -998,6 +998,7 @@ class Main {
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
 		} else {
+			if ( dir.endsWith(seperator) ) dir = dir.substr(0,-1);
 			dir = try FileSystem.fullPath(dir) catch( e : Dynamic ) rep;
 			try {
 				File.saveContent(devfile, dir);
