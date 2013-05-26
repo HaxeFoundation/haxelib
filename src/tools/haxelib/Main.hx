@@ -1099,7 +1099,7 @@ class Main {
 			haxelibJson = '{
   "name": "$libName",
   "url" : "$gitPath",
-  "license": "",
+  "license": "Public",
   "tags": [],
   "description": "",
   "version": "0.0.0",
