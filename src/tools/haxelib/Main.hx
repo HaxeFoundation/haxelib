@@ -1093,25 +1093,9 @@ class Main {
 		if (FileSystem.exists(haxelibJsonPath))
 		{
 			haxelibJson = File.getContent(haxelibJsonPath);
+			var infos = Data.readData(haxelibJson,true);
+			doInstallDependencies(infos.dependencies);
 		}
-		else
-		{
-			haxelibJson = '{
-  "name": "$libName",
-  "url" : "$gitPath",
-  "license": "",
-  "tags": [],
-  "description": "",
-  "version": "0.0.0",
-  "releasenote": "Updated from git.",
-  "contributors": [],
-  "dependencies": {}
-}';
-			File.saveContent(haxelibJsonPath, haxelibJson);
-		}
-
-		var infos = Data.readData(haxelibJson,true);
-		doInstallDependencies(infos.dependencies);
 
 		Sys.setCwd(libPath + "/../");
 		File.saveContent(".current", "dev");
