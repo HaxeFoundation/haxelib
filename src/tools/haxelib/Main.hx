@@ -1055,14 +1055,9 @@ class Main {
 		var libName = param("Library name");
 		var rep = getRepository();
 		var libPath = rep + Data.safe(libName) + "/git";
-
-		if( FileSystem.exists(libPath) ) {
-			var state = { rep : rep, prompt : false, updated : false };
-			doUpdate(libName,state);
-			if( !state.updated )
-				print("You already have a git version of "+libName+" installed");
-			return;
-		}
+		
+		if( FileSystem.exists(libPath) )
+			deleteRec(libPath);
 
 		var gitPath = param("Git path");
 		var branch = paramOpt();
@@ -1081,7 +1076,7 @@ class Main {
 			if (ret.code != 0)
 			{
 				print("Could not checkout branch, tag or path: " +ret.out);
-				// TODO: We might have to get rid of the cloned repository here
+				deleteRec(libPath);
 				return;
 			}
 		}
