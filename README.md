@@ -1,4 +1,4 @@
-haxelib
+Haxelib
 =======
 
-Provisional project for the Haxe 3 related haxelib changes.
+For documentation, please refer to [haxe.org](http://haxe.org/haxelib)
