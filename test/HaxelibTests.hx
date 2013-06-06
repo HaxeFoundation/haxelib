@@ -6,6 +6,7 @@ class HaxelibTests {
 		var r = new TestRunner();
 
 		r.add(new TestSemVer());
+		r.add(new TestData());
 		
 		r.run();
 	}
