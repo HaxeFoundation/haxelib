@@ -36,7 +36,7 @@ class SemVer {
 	
 	static public function ofString(s:String):SemVer 
 		return
-			if (parse.match(s)) 
+			if (s!=null && parse.match(s.toLowerCase())) 
 				new SemVer(
 					parse.matched(1).parseInt(),
 					parse.matched(2).parseInt(),
