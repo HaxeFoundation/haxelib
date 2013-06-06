@@ -111,12 +111,13 @@ class Data {
 		if( infodata == null )
 		{
 			for( f in zip )
-			if( StringTools.endsWith(f.fileName,XML) ) {
-				var xml = Reader.unzip(f).toString();
-				infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
-				break;
-			}
-			throw JSON + " not found in package";
+				if( StringTools.endsWith(f.fileName,XML) ) {
+					var xml = Reader.unzip(f).toString();
+					infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
+					break;
+				}
+			if( infodata == null )
+				throw JSON + " not found in package";
 		}
 		
 		return readData(infodata,check);
