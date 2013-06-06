@@ -562,7 +562,9 @@ class Main {
 		var f = File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
-		var infos = Data.readInfos(zip,false,true);
+		var re = ~/([^/\\]+).zip$/
+		var zipName = re.match(filepath) ? re.matched(1) : "unknownlib";
+		var infos = Data.readInfos(zip,false,true,zipName);
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
