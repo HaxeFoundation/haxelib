@@ -274,14 +274,15 @@ class Site {
 		Sys.setTimeLocale("en_US.UTF8");
 		var url = "http://"+Web.getClientHeader("Host");
 		var rss = Xml.createElement("rss");
+		var num = 50;
 		rss.set("version","2.0");
 		var channel = createChild(rss, "channel");
-		createChildWithContent(channel, "title", "haxe-libs");
+		createChildWithContent(channel, "title", "Latest haxelib releases");
 		createChildWithContent(channel, "link", url);
-		createChildWithContent(channel, "description", "lib.haxe.org RSS");
+		createChildWithContent(channel, "description", 'The $num latest haxelib releases on lib.haxe.org');
 		createChildWithContent(channel, "generator", "haxe");
 		createChildWithContent(channel, "language", "en");
-		for (v in Version.latest(10)){
+		for (v in Version.latest(num)){
 			var project = v.project;
 			var item = createChild(channel, "item");
 			createChildWithContent(item, "title", StringTools.htmlEscape(project.name + " " + v.toSemver()));
