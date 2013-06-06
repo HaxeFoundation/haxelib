@@ -346,7 +346,7 @@ class Main {
 		var file = param("Package");
 		var data = File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		var infos = Data.readInfos(zip,true,true);
+		var infos = Data.readInfos(zip,true,false);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -562,7 +562,7 @@ class Main {
 		var f = File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
-		var infos = Data.readInfos(zip,false,false);
+		var infos = Data.readInfos(zip,false,true);
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);

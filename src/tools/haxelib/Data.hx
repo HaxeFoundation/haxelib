@@ -108,7 +108,7 @@ class Data {
 				infodata = Reader.unzip(f).toString();
 				break;
 			}
-		if( infodata == null )
+		if( infodata == null && xmlFallback )
 		{
 			for( f in zip )
 				if( StringTools.endsWith(f.fileName,XML) ) {
@@ -116,9 +116,9 @@ class Data {
 					infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
 					break;
 				}
-			if( infodata == null )
-				throw JSON + " not found in package";
 		}
+		if( infodata == null )
+			throw JSON + " not found in package";
 		
 		return readData(infodata,check);
 	}
