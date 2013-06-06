@@ -101,21 +101,23 @@ class Data {
 		return null;
 	}
 
-	public static function readInfos( zip : List<Entry>, check : Bool, xmlFallback : Bool ) : Infos {
+	public static function readInfos( zip : List<Entry>, check : Bool, fallback : Bool, ?fallbackName:String ) : Infos {
 		var infodata = null;
 		for( f in zip )
 			if( StringTools.endsWith(f.fileName,JSON) ) {
 				infodata = Reader.unzip(f).toString();
 				break;
 			}
-		if( infodata == null && xmlFallback )
-		{
+		if( infodata == null && fallback ) {
 			for( f in zip )
 				if( StringTools.endsWith(f.fileName,XML) ) {
 					var xml = Reader.unzip(f).toString();
 					infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
 					break;
 				}
+			if( infodata == null ) {
+				infodata == '{ name: "$fallbackName" }';
+			}
 		}
 		if( infodata == null )
 			throw JSON + " not found in package";
@@ -131,6 +133,8 @@ class Data {
 			throw 'Library name cannot end in ".zip".  Please choose another name';
 		if ( libName.endsWith(".hxml") )
 			throw 'Library name cannot end in ".hxml".  Please choose another name';
+		if( libName.length < 3 )
+			throw "Project name must contain at least 3 characters";
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )
 			throw "License must be one of the following: " + LICENSES;
 		switch Type.typeof(doc.contributors) {
@@ -164,33 +168,44 @@ class Data {
 		if( check )
 			doCheck(doc);
 		var project:String = doc.name;
-		if( project.length < 3 )
-			throw "Project name must contain at least 3 characters";
+
 		var tags = new List();
-		if( doc.tags != null) {
+		if( doc.tags != null ) {
 			var tagsArray:Array<String> = doc.tags;
 			for( t in tagsArray )
 				tags.add(t);
 		}
-		var devs = new List();
-		var developers:Array<String> = doc.contributors;
 		
-		for( d in developers )
-			devs.add(d);
+		var devs = new List();
+		if( doc.contributors != null ) {
+			var contributors:Array<String> = doc.contributors;
+			for( c in contributors )
+				devs.add(d);
+		}
+
 		var deps = new List();
 		if( doc.dependencies != null ) {
 			for( d in Reflect.fields(doc.dependencies) ) {
-				deps.add({ project: d, version: Std.string(Reflect.field(doc.dependencies, d)) });
+				var version = try { 
+					SemVer.ofString(Std.string(Reflect.field(doc.dependencies, d))).toString(); 
+				} catch (e:Dynamic) "";
+				deps.add({ project: d, version: version });
 			}
 		}
+
+		var website = ( doc.url!=null ) ? doc.url : "";
+		var desc = ( doc.description!=null ) ? doc.description : "";
+		var version = try { SemVer.ofString(doc.version).toString() } catch (e:Dynamic) "0.0.0";
+		var versionComments = ( doc.releasenote!=null ) ? doc.releasenote : "";
+		var license = ( doc.license!=null ) ? doc.license : "Unknown";
 		
 		return {
 			project : project,
-			website : doc.url,
-			desc : doc.description,
-			version : doc.version,
-			versionComments : doc.releasenote,
-			license : doc.license,
+			website : website,
+			desc : desc,
+			version : version,
+			versionComments : versionComments,
+			license : license,
 			tags : tags,
 			developers : devs,
 			dependencies : deps
