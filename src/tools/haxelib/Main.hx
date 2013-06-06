@@ -172,8 +172,8 @@ class Main {
 	
 
 	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url).api);
+		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir + "api/" + SERVER.apiVersion + "/" + SERVER.url;
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl).api);
 	}
 
 	function param( name, ?passwd ) {
@@ -245,6 +245,7 @@ class Main {
 				if( r.matched(3) != null )
 					SERVER.port = Std.parseInt(r.matched(3).substr(1));
 				SERVER.dir = r.matched(4);
+				if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
 				initSite();
 			default:
 				argcur--;
