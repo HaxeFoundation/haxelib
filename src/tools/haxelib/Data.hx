@@ -126,6 +126,8 @@ class Data {
 	}
 
 	static function doCheck( doc : Dynamic ) {
+		if ( doc.name == null )
+			throw 'Error: Library has no name defined in JSON file.';
 		var libName = doc.name.toLowerCase();
 		if ( Lambda.indexOf(RESERVED_NAMES, libName) > -1 )
 			throw 'Library name "${doc.name}" is reserved.  Please choose another name';
@@ -140,7 +142,7 @@ class Data {
 		switch Type.typeof(doc.contributors) {
 			case TNull: throw "At least one contributor must be included";
 			//case TClass(String): doc.contributors = [doc.contributors];
-			case TClass(Array):
+			case TClass(Array): if (doc.contributors.length < 1) throw "At least one contributor must be included";
 			default: throw 'invalid type for contributors';
 		}
 		switch Type.typeof(doc.version) {
@@ -165,8 +167,10 @@ class Data {
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc = try Json.parse(jsondata) catch( e : Dynamic ) throw "Error in JSON data : " + e;
+		
 		if( check )
 			doCheck(doc);
+
 		var project:String = doc.name;
 
 		var tags = new List();
@@ -180,7 +184,7 @@ class Data {
 		if( doc.contributors != null ) {
 			var contributors:Array<String> = doc.contributors;
 			for( c in contributors )
-				devs.add(d);
+				devs.add( c );
 		}
 
 		var deps = new List();
@@ -195,7 +199,7 @@ class Data {
 
 		var website = ( doc.url!=null ) ? doc.url : "";
 		var desc = ( doc.description!=null ) ? doc.description : "";
-		var version = try { SemVer.ofString(doc.version).toString() } catch (e:Dynamic) "0.0.0";
+		var version = try SemVer.ofString(doc.version).toString() catch (e:Dynamic) "0.0.0";
 		var versionComments = ( doc.releasenote!=null ) ? doc.releasenote : "";
 		var license = ( doc.license!=null ) ? doc.license : "Unknown";
 		
