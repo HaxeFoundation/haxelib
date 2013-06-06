@@ -1,14 +1,14 @@
 <html>
 
 <head>
-<title>lib.haxe.org</title>
+<title>haxelib (::site::)</title>
 <link type="application/rss+xml" rel="alternate" title="RSS feed" href="/rss"/>
 <link href="/haxelib.css" type="text/css" rel="stylesheet"/>
 </head>
 
 <body>
 
-<h1><a href="/">lib.haxe.org</a></h1>
+<h1><a href="/">haxelib (::site::)</a></h1>
 
 <div class="page">
 

@@ -129,7 +129,8 @@ class Site {
 		var layout = getTemplate('layout');
 		var content = getTemplate(page);
 		Sys.print(layout.execute({
-			content: content.execute(context, macros)
+			content: content.execute(context, macros),
+			site: neko.Web.getHostName()
 		}));
 	}	
 	// index page
@@ -277,9 +278,9 @@ class Site {
 		var num = 50;
 		rss.set("version","2.0");
 		var channel = createChild(rss, "channel");
-		createChildWithContent(channel, "title", "Latest haxelib releases");
+		createChildWithContent(channel, "title", 'Latest haxelib releases (${neko.Web.getHostName()})');
 		createChildWithContent(channel, "link", url);
-		createChildWithContent(channel, "description", 'The $num latest haxelib releases on lib.haxe.org');
+		createChildWithContent(channel, "description", 'The $num latest haxelib releases on ${neko.Web.getHostName()}');
 		createChildWithContent(channel, "generator", "haxe");
 		createChildWithContent(channel, "language", "en");
 		for (v in Version.latest(num)){
