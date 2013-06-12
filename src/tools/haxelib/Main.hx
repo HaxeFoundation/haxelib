@@ -672,11 +672,8 @@ class Main {
 	function getRepository( ?setup : Bool ) {
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
-		if( haxepath != null ) {
-			var last = haxepath.charAt(haxepath.length - 1);
-			if( last != "/" && last != "\\" )
-				haxepath += "/";
-		}
+		if( haxepath != null )
+			haxepath = Path.addTrailingSlash( haxepath );
 		var config_file;
 		if( win )
 			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
@@ -700,7 +697,7 @@ class Main {
 				} catch( e : String ) {
 					throw "Error accessing Haxelib repository: $e";
 				}
-				return rep+"\\";
+				return Path.addTrailingSlash( rep );
 			} else
 				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
 		}
@@ -860,11 +857,7 @@ class Main {
 				if (haxepath == null) 
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else 
-					haxepath += 
-						switch (haxepath.charAt(haxepath.length - 1)) {
-							case '/', '\\': '';
-							default: "/";
-						}
+					haxepath = Path.addTrailingSlash(haxepath);
 				
 				if (win) {
 					File.saveContent('update.hxml', '-lib haxelib_client\n--run tools.haxelib.Rebuild');
@@ -986,8 +979,7 @@ class Main {
 			var dir = rep + pdir;
 			try {
 				dir = getDev(rep+Data.safe(d.project));
-				if( dir.length == 0 || ( dir.charAt(dir.length-1) != "/" && dir.charAt(dir.length-1) != "\\" ) )
-					dir += "/";
+				dir = Path.addTrailingSlash(dir);
 				pdir = dir;
 			} catch( e : Dynamic ) {}
 			var ndir = dir + "ndll";
@@ -1005,10 +997,7 @@ class Main {
 			} catch( e : Dynamic ) {}
 			if (d.info.classPath != "") {
 				var cp = d.info.classPath;
-				if ( !cp.endsWith("\\") && !cp.endsWith("/") ) {
-					cp += "/";
-				}
-				dir = dir + cp;
+				dir = Path.addTrailingSlash( dir + cp );
 			}
 			Sys.println(dir);
 			Sys.println("-D "+d.project);
