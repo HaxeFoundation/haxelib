@@ -18,6 +18,10 @@
 		"description": {
 			"type": "string"
 		},
+		"classPath": {
+			"description": "The folder in the package which contains the source files for this haxelib",
+			"type": "string"
+		},
 		"contributors": {
 			"type": "array",
 			"items": { "$ref": "#/definitions/name" },
