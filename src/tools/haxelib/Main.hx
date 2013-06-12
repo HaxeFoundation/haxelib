@@ -1075,7 +1075,9 @@ class Main {
 		Sys.setCwd(proj);
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
-		print("Done");
+		print('Library $libName set to use git.$devPath, checked out to $branch');
+		print('  Branch/Tag/Rev: $branch');
+		print('  Path: $devPath');
 	}
 
 	function run() {
