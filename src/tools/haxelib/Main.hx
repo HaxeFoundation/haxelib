@@ -546,7 +546,6 @@ class Main {
 			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
 
 		var progress = new Progress(out);
-		trace (siteUrl+Data.REPOSITORY+"/"+filename);
 		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
 		h.onError = function(e) {
 			progress.close();
