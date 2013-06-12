@@ -1107,8 +1107,8 @@ class Main {
 		Sys.setCwd(proj);
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
-		print('Library $libName set to use git.$devPath, checked out to $branch');
-		print('  Branch/Tag/Rev: $branch');
+		print('Library $libName set to use git.');
+		if ( branch!=null ) print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 	}
 
