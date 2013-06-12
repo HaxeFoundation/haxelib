@@ -73,12 +73,20 @@ class TestData extends haxe.unit.TestCase {
 		assertFalse( readDataOkay(getJsonInfos({ name: 'something.hxml' })) );
 		assertFalse( readDataOkay(getJsonInfos({ name: '12' })) );
 		assertTrue( readDataOkay(getJsonInfos({ name: 'mylib' })) );
+		assertFalse( readDataOkay(getJsonInfos([ "name" ])) ); // remove the field altogether
+
+		// Description (optional)
+		assertTrue( readDataOkay(getJsonInfos({ description: 'Some Description' })) );
+		assertTrue( readDataOkay(getJsonInfos({ description: '' })) );
+		assertTrue( readDataOkay(getJsonInfos({ description: null })) );
+		assertTrue( readDataOkay(getJsonInfos([ "description" ])) ); // remove the field altogether
 
 		// Licence
 		assertTrue( readDataOkay(getJsonInfos({ license: 'BSD' })) );
 		assertFalse( readDataOkay(getJsonInfos({ license: null })) );
 		assertFalse( readDataOkay(getJsonInfos({ license: '' })) );
 		assertFalse( readDataOkay(getJsonInfos({ license: 'CustomLicence' })) );
+		assertFalse( readDataOkay(getJsonInfos([ "license" ])) ); // remove the field altogether
 
 		// Contibutors
 		assertFalse( readDataOkay(getJsonInfos({ contributors: [] })) );
@@ -86,30 +94,100 @@ class TestData extends haxe.unit.TestCase {
 		assertFalse( readDataOkay(getJsonInfos({ contributors: "jason" })) );
 		assertTrue( readDataOkay(getJsonInfos({ contributors: ["jason"] })) );
 		assertTrue( readDataOkay(getJsonInfos({ contributors: ["jason","juraj"] })) );
+		assertFalse( readDataOkay(getJsonInfos([ "contributors" ])) ); // remove the field altogether
 
-		// Versions
-		assertTrue( readDataOkay(getJsonInfos({ version: "0.0.0-rc.0" })) );
+		// Version
+		assertTrue( readDataOkay(getJsonInfos({ version: "0.1.2-rc.0" })) );
 		assertFalse( readDataOkay(getJsonInfos({ version: "non-semver" })) );
+		assertFalse( readDataOkay(getJsonInfos({ version: 0 })) );
 		assertFalse( readDataOkay(getJsonInfos({ version: null })) );
+		assertFalse( readDataOkay(getJsonInfos([ "version" ])) ); // remove the field altogether
 
 		// Tags (optional)
 		assertTrue( readDataOkay(getJsonInfos({ tags: ["tag1","tag2"] })) );
 		assertTrue( readDataOkay(getJsonInfos({ tags: null })) );
 		assertFalse( readDataOkay(getJsonInfos({ tags: "mytag" })) );
+		assertTrue( readDataOkay(getJsonInfos([ "tags" ])) ); // remove the field altogether
 
 		// Dependencies (optional)
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: null })) );
-		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"somever" } })) );
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"" } })) );
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"1.3.0" } })) );
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:"nonsemver" } })) );
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:null } })) );
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:0 } })) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: "somelib" })) );
+		assertTrue( readDataOkay(getJsonInfos([ "dependencies" ])) ); // remove the field altogether
 
 		// ReleaseNote
 		assertTrue( readDataOkay(getJsonInfos({ releasenote: "release" })) );
 		assertFalse( readDataOkay(getJsonInfos({ releasenote: ["some","note"] })) );
 		assertFalse( readDataOkay(getJsonInfos({ releasenote: null })) );
+		assertFalse( readDataOkay(getJsonInfos([ "releasenote" ])) ); // remove the field altogether
 	}
 	
 	public function testReadDataWithoutCheck() {
-		assertEquals( "", "" );
+		assertEquals( "", Data.readData("bad json",false).project );
+		assertEquals( "0.0.0", Data.readData("bad json",false).version );
+
+		assertEquals( "mylib", Data.readData(getJsonInfos(),false).project );
+		assertEquals( "0.1.2", Data.readData(getJsonInfos(),false).version );
+		
+		// Names
+		assertEquals( "", Data.readData("{}",false).project );
+		assertEquals( "", Data.readData(getJsonInfos({ name: null }),false).project );
+		assertEquals( "", Data.readData(getJsonInfos({ name: '' }),false).project );
+		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).project );
+		assertEquals( "", Data.readData(getJsonInfos([ "name" ]),false).project ); // remove the field altoge,falsether
+
+		// Description (optional)
+		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).desc );
+		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).desc );
+		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).desc );
+		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).desc ); // remove the field altoge,falsether
+
+		// Licence
+		assertEquals( "BSD", Data.readData(getJsonInfos({ license: 'BSD' }),false).license );
+		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: null }),false).license );
+		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: '' }),false).license );
+		assertEquals( "CustomLicence", Data.readData(getJsonInfos({ license: 'CustomLicence' }),false).license );
+		assertEquals( "Unknown", Data.readData(getJsonInfos([ "license" ]),false).license ); // remove the field altoge,falsether
+
+		// Contibutors
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).developers.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: null }),false).developers.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: "jason" }),false).developers.length );
+		assertEquals( 1, Data.readData(getJsonInfos({ contributors: ["jason"] }),false).developers.length );
+		assertEquals( 2, Data.readData(getJsonInfos({ contributors: ["jason","juraj"] }),false).developers.length );
+		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).developers.length ); // remove the field altoge,falsether
+
+		// Version
+		assertEquals( "0.1.2-rc.0", Data.readData(getJsonInfos({ version: "0.1.2-rc.0" }),false).version );
+		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: "non-semver" }),false).version );
+		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: 0 }),false).version );
+		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: null }),false).version );
+		assertEquals( "0.0.0", Data.readData(getJsonInfos([ "version" ]),false).version ); // remove the field altoge,falsether
+
+		// Tags (optional)
+		assertEquals( 2, Data.readData(getJsonInfos({ tags: ["tag1","tag2"] }),false).tags.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ tags: null }),false).tags.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ tags: "mytag" }),false).tags.length );
+		assertEquals( 0, Data.readData(getJsonInfos([ "tags" ]),false).tags.length ); // remove the field altoge,falsether
+
+		// Dependencies (optional)
+		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.length );
+		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.first().project );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.first().version );
+		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies.first().version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.first().version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.first().version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:0 } }),false).dependencies.first().version );
+		assertEquals( 0, Data.readData(getJsonInfos([ "dependencies" ]),false).dependencies.length ); // remove the field altoge,falsether
+
+		// ReleaseNote
+		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).versionComments );
+		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).versionComments );
+		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altoge,falsether
 	}
 
 	function readDataOkay( json ) {
@@ -120,7 +198,7 @@ class TestData extends haxe.unit.TestCase {
 		catch(e:String) return false;
 	}
 
-	function getJsonInfos(?change:Dynamic) {
+	function getJsonInfos( ?remove:Array<String>, ?change:Dynamic ) {
 		var infos = {
 			name: "mylib",
 			license: "MIT",
@@ -135,6 +213,10 @@ class TestData extends haxe.unit.TestCase {
 				var value = Reflect.field( change, name );
 				Reflect.setField( infos, name, value );
 			}
+		}
+		if (remove != null) {
+			for ( f in remove ) 
+				Reflect.deleteField( infos, f );
 		}
 		return Json.stringify(infos);
 	}

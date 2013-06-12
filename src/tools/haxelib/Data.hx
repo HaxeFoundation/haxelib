@@ -101,24 +101,13 @@ class Data {
 		return null;
 	}
 
-	public static function readInfos( zip : List<Entry>, check : Bool, fallback : Bool, ?fallbackName:String ) : Infos {
+	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos {
 		var infodata = null;
 		for( f in zip )
 			if( StringTools.endsWith(f.fileName,JSON) ) {
 				infodata = Reader.unzip(f).toString();
 				break;
 			}
-		if( infodata == null && fallback ) {
-			for( f in zip )
-				if( StringTools.endsWith(f.fileName,XML) ) {
-					var xml = Reader.unzip(f).toString();
-					infodata = ConvertXml.prettyPrint(ConvertXml.convert(xml));
-					break;
-				}
-			if( infodata == null ) {
-				infodata == '{ name: "$fallbackName" }';
-			}
-		}
 		if( infodata == null )
 			throw JSON + " not found in package";
 		
@@ -127,7 +116,7 @@ class Data {
 
 	static function doCheck( doc : Dynamic ) {
 		if ( doc.name == null )
-			throw 'Error: Library has no name defined in JSON file.';
+			throw 'Error: Library has no field `name` defined in JSON file.';
 		var libName = doc.name.toLowerCase();
 		if ( Lambda.indexOf(RESERVED_NAMES, libName) > -1 )
 			throw 'Library name "${doc.name}" is reserved.  Please choose another name';
@@ -155,7 +144,22 @@ class Data {
 			default: throw 'tags must be defined as array';
 		}
 		switch Type.typeof(doc.dependencies) {
-			case TObject, TNull:
+			case TObject:
+				for ( field in Reflect.fields(doc.dependencies) ) {
+					var val = Reflect.field(doc.dependencies, field);
+					switch Type.typeof(val) {
+						case TClass(String):
+							if ( val != "" ) {
+								try {
+									SemVer.ofString(val);
+								} catch(e:String) {
+									throw 'Dependency $field has an invalid version `$val`. Please use an empty string or a semver compliant string.';
+								}
+							}
+						default: throw 'Dependency $field has an invalid version `$val`. Please use an empty string or a semver compliant string.';
+					}
+				}
+			case TNull:
 			default: throw 'dependencies must be defined as object';
 		}
 		switch Type.typeof(doc.releasenote) {
@@ -166,42 +170,47 @@ class Data {
 	}
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
-		var doc = try Json.parse(jsondata) catch( e : Dynamic ) throw "Error in JSON data : " + e;
+		var doc = try Json.parse(jsondata) catch( e : Dynamic ) {};
 		
 		if( check )
 			doCheck(doc);
 
-		var project:String = doc.name;
+		// The only time `doc.name` here is read, when it hasn't been validated by check, is 
+		// when installing from a local zip file.  In this scenario, leaving an empty string 
+		// will cause an error when the name gets passed to Data.safe(), preventing them from 
+		// continuing.  If we're just reading it to grab dependencies, it doesn't matter if it 
+		// is blank
+		var project:String = (doc.name!=null) ? Std.string(doc.name) : "";
 
 		var tags = new List();
-		if( doc.tags != null ) {
+		try {
 			var tagsArray:Array<String> = doc.tags;
 			for( t in tagsArray )
-				tags.add(t);
-		}
+				tags.add( Std.string(t) );
+		} catch(e:Dynamic) {}
 		
 		var devs = new List();
-		if( doc.contributors != null ) {
+		try {
 			var contributors:Array<String> = doc.contributors;
 			for( c in contributors )
-				devs.add( c );
-		}
+				devs.add( Std.string(c) );
+		} catch(e:Dynamic) {}
 
 		var deps = new List();
-		if( doc.dependencies != null ) {
+		try {
 			for( d in Reflect.fields(doc.dependencies) ) {
 				var version = try { 
-					SemVer.ofString(Std.string(Reflect.field(doc.dependencies, d))).toString(); 
+					SemVer.ofString( Std.string(Reflect.field(doc.dependencies,d)) ).toString(); 
 				} catch (e:Dynamic) "";
 				deps.add({ project: d, version: version });
 			}
-		}
+		} catch(e:Dynamic) {}
 
-		var website = ( doc.url!=null ) ? doc.url : "";
-		var desc = ( doc.description!=null ) ? doc.description : "";
-		var version = try SemVer.ofString(doc.version).toString() catch (e:Dynamic) "0.0.0";
-		var versionComments = ( doc.releasenote!=null ) ? doc.releasenote : "";
-		var license = ( doc.license!=null ) ? doc.license : "Unknown";
+		var website = ( doc.url!=null ) ? Std.string(doc.url) : "";
+		var desc = ( doc.description!=null ) ? Std.string(doc.description) : "";
+		var version = try SemVer.ofString(Std.string(doc.version)).toString() catch (e:Dynamic) "0.0.0";
+		var versionComments = ( doc.releasenote!=null ) ? Std.string(doc.releasenote) : "";
+		var license = ( doc.license!=null && doc.license!="" ) ? Std.string(doc.license) : "Unknown";
 		
 		return {
 			project : project,

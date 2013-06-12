@@ -131,7 +131,6 @@ class Main {
 		url : "index.n",
 		apiVersion : VERSION.major+"."+VERSION.minor,
 	};
-	static var seperator:String;
 
 	var argcur : Int;
 	var args : Array<String>;
@@ -140,7 +139,6 @@ class Main {
 	var site : SiteProxy;
 
 	function new() {
-		seperator = ( Sys.systemName() == "Windows" ) ? "\\" : "/";
 		args = Sys.args();
 
 		commands = new List();
@@ -346,7 +344,7 @@ class Main {
 		var file = param("Package");
 		var data = File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		var infos = Data.readInfos(zip,true,false);
+		var infos = Data.readInfos(zip,true);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -562,9 +560,7 @@ class Main {
 		var f = File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
-		var re = ~/([^/\\]+).zip$/
-		var zipName = re.match(filepath) ? re.matched(1) : "unknownlib";
-		var infos = Data.readInfos(zip,false,true,zipName);
+		var infos = Data.readInfos(zip,false);
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
@@ -837,7 +833,7 @@ class Main {
 					haxepath += 
 						switch (haxepath.charAt(haxepath.length - 1)) {
 							case '/', '\\': '';
-							default: seperator;
+							default: "/";
 						}
 				
 				if (win) {
@@ -963,7 +959,7 @@ class Main {
 			try {
 				dir = getDev(rep+Data.safe(d.project));
 				if( dir.length == 0 || ( dir.charAt(dir.length-1) != "/" && dir.charAt(dir.length-1) != "\\" ) )
-					dir += seperator;
+					dir += "/";
 				pdir = dir;
 			} catch( e : Dynamic ) {
 			}
@@ -1000,29 +996,18 @@ class Main {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
-		} else {
-			if ( dir.endsWith("/") || dir.endsWith("\\") ) dir = dir.substr(0,-1);
-			dir = try FileSystem.fullPath(dir) catch( e : Dynamic ) rep;
+		} 
+		else {
+			if ( dir.endsWith("/") || dir.endsWith("\\") ) {
+				dir = dir.substr(0,-1);
+			}
+			dir = FileSystem.fullPath(dir);
 			try {
 				File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
-				
-				try {
-					// Check for haxelib.json, install dependencies
-					var haxelibJsonPath = dir + "haxelib.json";
-					if (FileSystem.exists(haxelibJsonPath))
-					{
-						var haxelibJson = File.getContent(haxelibJsonPath);
-						var infos = Data.readData(haxelibJson,true);
-						doInstallDependencies(infos.dependencies);
-					}
-				}
-				catch (e:Dynamic) {
-					print('Error installing dependencies for $project:\n  $e');
-				}
 			}
 			catch (e:Dynamic) {
-				print("Could not write to " +proj + "/.dev");
+				print('Could not write to $devfile');
 			}
 
 		}
@@ -1057,7 +1042,8 @@ class Main {
 	function git() {
 		var libName = param("Library name");
 		var rep = getRepository();
-		var libPath = rep + Data.safe(libName) + "/git";
+		var proj = rep + Data.safe(libName);
+		var libPath = proj + "/git";
 		
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
@@ -1078,24 +1064,14 @@ class Main {
 			var ret = command("git", ["checkout", branch]);
 			if (ret.code != 0)
 			{
-				print("Could not checkout branch, tag or path: " +ret.out);
+				print('Could not checkout branch, tag or path "$branch": ' +ret.out);
 				deleteRec(libPath);
 				return;
 			}
 		}
-		var revision = command("git", ["rev-parse", "HEAD"]).out;
-
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-		var haxelibJsonPath = devPath + "/haxelib.json";
-		var haxelibJson:String;
-		if (FileSystem.exists(haxelibJsonPath))
-		{
-			haxelibJson = File.getContent(haxelibJsonPath);
-			var infos = Data.readData(haxelibJson,true);
-			doInstallDependencies(infos.dependencies);
-		}
 
-		Sys.setCwd(libPath + "/../");
+		Sys.setCwd(proj);
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
 		print("Done");
