@@ -541,8 +541,11 @@ class Main {
 		// download to temporary file
 		var filename = Data.fileName(project,version);
 		var filepath = rep+filename;
-		var out = File.write(filepath,true);
+		var out = try File.write(filepath,true)
+			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+
 		var progress = new Progress(out);
+		trace (siteUrl+Data.REPOSITORY+"/"+filename);
 		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
 		h.onError = function(e) {
 			progress.close();
