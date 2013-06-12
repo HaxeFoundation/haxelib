@@ -836,8 +836,11 @@ class Main {
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
-		if (!updateByName('haxelib_client'))
-			print("haxelib is up to date");
+		if (updateByName('haxelib_client'))
+			print("Haxelib successfully updated.");
+		else 
+			print("Haxelib was already up to date...");
+
 		switch tryBuild() {
 			case None:
 				var win = Sys.systemName() == "Windows";
