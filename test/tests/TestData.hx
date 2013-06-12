@@ -121,6 +121,12 @@ class TestData extends haxe.unit.TestCase {
 		assertFalse( readDataOkay(getJsonInfos({ releasenote: ["some","note"] })) );
 		assertFalse( readDataOkay(getJsonInfos({ releasenote: null })) );
 		assertFalse( readDataOkay(getJsonInfos([ "releasenote" ])) ); // remove the field altogether
+
+		// ClassPath
+		assertTrue( readDataOkay(getJsonInfos({ classPath: 'src/' })) );
+		assertTrue( readDataOkay(getJsonInfos({ classPath: '' })) );
+		assertTrue( readDataOkay(getJsonInfos({ classPath: null })) );
+		assertFalse( readDataOkay(getJsonInfos({ classPath: ["src","othersrc"] })) );
 	}
 	
 	public function testReadDataWithoutCheck() {
@@ -183,6 +189,12 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).versionComments );
 		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).versionComments );
 		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altogether
+
+		// ClassPath
+		assertEquals( "src", readDataOkay(getJsonInfos({ classPath: 'src' })) );
+		assertEquals( "", readDataOkay(getJsonInfos({ classPath: '' })) );
+		assertEquals( "", readDataOkay(getJsonInfos({ classPath: null })) );
+		assertEquals( "", readDataOkay(getJsonInfos({ classPath: ["src","othersrc"] })) );
 	}
 
 	function readDataOkay( json ) {

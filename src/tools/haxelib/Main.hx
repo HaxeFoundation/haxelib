@@ -346,6 +346,7 @@ class Main {
 		var data = File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
 		var infos = Data.readInfos(zip,true);
+		Data.checkClassPath(zip,infos);
 		var user = infos.developers.first();
 		var password;
 		if( site.isNewUser(user) ) {
@@ -925,7 +926,7 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( prj : String, version : String, l : List<{ project : String, version : String }> ) {
+	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
 		var pdir = getRepository() + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
@@ -941,13 +942,11 @@ class Main {
 					return;
 				throw "Library "+prj+" has two version included "+version+" and "+p.version;
 			}
-		l.add({ project : prj, version : version });
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		if( json == null )
-			return; // ignore missing haxelib.json, assume no dependencies
 		var inf = Data.readData(json,false);
 		for( d in inf.dependencies )
 			checkRec(d.project,if( d.version == "" ) null else d.version,l);
+		l.add({ project : prj, version : version, info: inf });
 	}
 
 	function path() {
@@ -965,8 +964,7 @@ class Main {
 				if( dir.length == 0 || ( dir.charAt(dir.length-1) != "/" && dir.charAt(dir.length-1) != "\\" ) )
 					dir += "/";
 				pdir = dir;
-			} catch( e : Dynamic ) {
-			}
+			} catch( e : Dynamic ) {}
 			var ndir = dir + "ndll";
 			if( FileSystem.exists(ndir) ) {
 				var sysdir = ndir+"/"+Sys.systemName();
@@ -979,7 +977,13 @@ class Main {
 			try {
 				var f = File.getContent(dir + "extraParams.hxml");
 				Sys.println(f.trim());
-			} catch( e : Dynamic ) {
+			} catch( e : Dynamic ) {}
+			if (d.info.classPath != "") {
+				var cp = d.info.classPath;
+				if ( !cp.endsWith("\\") && !cp.endsWith("/") ) {
+					cp += "/";
+				}
+				dir = dir + cp;
 			}
 			Sys.println(dir);
 			Sys.println("-D "+d.project);

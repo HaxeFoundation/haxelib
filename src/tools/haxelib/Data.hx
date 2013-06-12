@@ -55,6 +55,7 @@ typedef Infos = {
 	var desc : String;
 	var license : String;
 	var version : String;
+	var classPath : String;
 	var versionComments : String;
 	var developers : List<String>;
 	var tags : List<String>;
@@ -114,6 +115,19 @@ class Data {
 		return readData(infodata,check);
 	}
 
+	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
+		if ( infos.classPath != "" ) {
+			var basePath = Data.locateBasePath(zip);
+			var cp = basePath + infos.classPath;
+
+			for( f in zip ) {
+				if( StringTools.startsWith(f.fileName,cp) ) 
+					return;
+			}
+			throw 'Class path `${infos.classPath}` not found';
+		}
+	}
+
 	static function doCheck( doc : Dynamic ) {
 		if ( doc.name == null )
 			throw 'Error: Library has no field `name` defined in JSON file.';
@@ -150,6 +164,10 @@ class Data {
 				}
 			case TNull:
 			default: throw 'tags must be defined as array';
+		}
+		switch Type.typeof(doc.classPath) {
+			case TClass(String), TNull:
+			default: throw 'classPath must be defined as string';
 		}
 		switch Type.typeof(doc.dependencies) {
 			case TObject:
@@ -219,6 +237,7 @@ class Data {
 		var version = try SemVer.ofString(Std.string(doc.version)).toString() catch (e:Dynamic) "0.0.0";
 		var versionComments = ( doc.releasenote!=null ) ? Std.string(doc.releasenote) : "";
 		var license = ( doc.license!=null && doc.license!="" ) ? Std.string(doc.license) : "Unknown";
+		var classPath = ( doc.classPath!=null ) ? Std.string(doc.classPath) : "";
 		
 		return {
 			project : project,
@@ -227,6 +246,7 @@ class Data {
 			version : version,
 			versionComments : versionComments,
 			license : license,
+			classPath : classPath,
 			tags : tags,
 			developers : devs,
 			dependencies : deps
