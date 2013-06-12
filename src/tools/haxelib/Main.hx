@@ -785,9 +785,21 @@ class Main {
 			checkGit();
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
-			Sys.command("git pull");
-			Sys.setCwd(oldCwd);
+			var doGitPull = true;
+			if ( 0 != Sys.command("git diff --exit-code") || 0 != Sys.command("git diff --cached --exit-code") ) {
+				switch ask("Reset changes to "+p+" git repo so we can pull latest version?") {
+					case Yes | Always:
+						Sys.command("git reset --hard");
+					case No:
+						doGitPull = false;
+						print("Git repo left untouched");
+				}
+			}
+			if (doGitPull) {
+				Sys.command("git pull");
+			}
 			state.updated = true;
+			Sys.setCwd(oldCwd);
 		} else {
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
 			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.curversion)) ) {
