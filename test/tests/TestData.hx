@@ -79,7 +79,6 @@ class TestData extends haxe.unit.TestCase {
 		assertTrue( readDataOkay(getJsonInfos({ description: 'Some Description' })) );
 		assertTrue( readDataOkay(getJsonInfos({ description: '' })) );
 		assertTrue( readDataOkay(getJsonInfos({ description: null })) );
-		assertTrue( readDataOkay(getJsonInfos([ "description" ])) ); // remove the field altogether
 
 		// Licence
 		assertTrue( readDataOkay(getJsonInfos({ license: 'BSD' })) );
@@ -107,7 +106,6 @@ class TestData extends haxe.unit.TestCase {
 		assertTrue( readDataOkay(getJsonInfos({ tags: ["tag1","tag2"] })) );
 		assertTrue( readDataOkay(getJsonInfos({ tags: null })) );
 		assertFalse( readDataOkay(getJsonInfos({ tags: "mytag" })) );
-		assertTrue( readDataOkay(getJsonInfos([ "tags" ])) ); // remove the field altogether
 
 		// Dependencies (optional)
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: null })) );
@@ -117,7 +115,6 @@ class TestData extends haxe.unit.TestCase {
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:null } })) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:0 } })) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: "somelib" })) );
-		assertTrue( readDataOkay(getJsonInfos([ "dependencies" ])) ); // remove the field altogether
 
 		// ReleaseNote
 		assertTrue( readDataOkay(getJsonInfos({ releasenote: "release" })) );
@@ -138,20 +135,20 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "", Data.readData(getJsonInfos({ name: null }),false).project );
 		assertEquals( "", Data.readData(getJsonInfos({ name: '' }),false).project );
 		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).project );
-		assertEquals( "", Data.readData(getJsonInfos([ "name" ]),false).project ); // remove the field altoge,falsether
+		assertEquals( "", Data.readData(getJsonInfos([ "name" ]),false).project ); // remove the field altogether
 
 		// Description (optional)
 		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).desc );
 		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).desc );
 		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).desc );
-		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).desc ); // remove the field altoge,falsether
+		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).desc ); // remove the field altogether
 
 		// Licence
 		assertEquals( "BSD", Data.readData(getJsonInfos({ license: 'BSD' }),false).license );
 		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: null }),false).license );
 		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: '' }),false).license );
 		assertEquals( "CustomLicence", Data.readData(getJsonInfos({ license: 'CustomLicence' }),false).license );
-		assertEquals( "Unknown", Data.readData(getJsonInfos([ "license" ]),false).license ); // remove the field altoge,falsether
+		assertEquals( "Unknown", Data.readData(getJsonInfos([ "license" ]),false).license ); // remove the field altogether
 
 		// Contibutors
 		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).developers.length );
@@ -159,20 +156,19 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( 0, Data.readData(getJsonInfos({ contributors: "jason" }),false).developers.length );
 		assertEquals( 1, Data.readData(getJsonInfos({ contributors: ["jason"] }),false).developers.length );
 		assertEquals( 2, Data.readData(getJsonInfos({ contributors: ["jason","juraj"] }),false).developers.length );
-		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).developers.length ); // remove the field altoge,falsether
+		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).developers.length ); // remove the field altogether
 
 		// Version
 		assertEquals( "0.1.2-rc.0", Data.readData(getJsonInfos({ version: "0.1.2-rc.0" }),false).version );
 		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: "non-semver" }),false).version );
 		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: 0 }),false).version );
 		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: null }),false).version );
-		assertEquals( "0.0.0", Data.readData(getJsonInfos([ "version" ]),false).version ); // remove the field altoge,falsether
+		assertEquals( "0.0.0", Data.readData(getJsonInfos([ "version" ]),false).version ); // remove the field altogether
 
 		// Tags (optional)
 		assertEquals( 2, Data.readData(getJsonInfos({ tags: ["tag1","tag2"] }),false).tags.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: null }),false).tags.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: "mytag" }),false).tags.length );
-		assertEquals( 0, Data.readData(getJsonInfos([ "tags" ]),false).tags.length ); // remove the field altoge,falsether
 
 		// Dependencies (optional)
 		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.length );
@@ -182,12 +178,11 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.first().version );
 		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.first().version );
 		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:0 } }),false).dependencies.first().version );
-		assertEquals( 0, Data.readData(getJsonInfos([ "dependencies" ]),false).dependencies.length ); // remove the field altoge,falsether
 
 		// ReleaseNote
 		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).versionComments );
 		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).versionComments );
-		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altoge,falsether
+		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altogether
 	}
 
 	function readDataOkay( json ) {
@@ -204,8 +199,6 @@ class TestData extends haxe.unit.TestCase {
 			license: "MIT",
 			contributors: ["jason"],
 			version: "0.1.2",
-			tags: [],
-			dependencies: {},
 			releasenote: ""
 		};
 		if (change != null) {
