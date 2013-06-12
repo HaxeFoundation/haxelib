@@ -748,7 +748,7 @@ class Main {
 			if( p.charAt(0) == "." )
 				continue;
 			var versions = new Array();
-			var current = getCurrent(rep + p);
+			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
 			var dev = try File.getContent(rep+p+"/.dev").trim() catch( e : Dynamic ) null;
 			for( v in FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." )
