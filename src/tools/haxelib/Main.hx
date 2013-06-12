@@ -122,7 +122,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('3.0.0');
+	static var VERSION = SemVer.ofString('3.0.1-rc.1');
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
