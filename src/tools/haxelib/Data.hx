@@ -140,7 +140,8 @@ class Data {
 			default: throw 'version must be defined as string';
 		}
 		switch Type.typeof(doc.tags) {
-			case TClass(Array)
+			case TClass(Array):
+				var tags:Array<Dynamic> = doc.tags;
 				for (tag in tags) {
 					switch Type.typeof(tag) {
 						case TClass(String):
