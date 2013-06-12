@@ -140,7 +140,14 @@ class Data {
 			default: throw 'version must be defined as string';
 		}
 		switch Type.typeof(doc.tags) {
-			case TClass(Array), TNull:
+			case TClass(Array)
+				for (tag in tags) {
+					switch Type.typeof(tag) {
+						case TClass(String):
+						default: throw 'Invalid tag "$tag" Tags must be a String.';
+					}
+				}
+			case TNull:
 			default: throw 'tags must be defined as array';
 		}
 		switch Type.typeof(doc.dependencies) {
