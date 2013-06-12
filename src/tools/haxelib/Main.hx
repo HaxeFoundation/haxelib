@@ -556,7 +556,9 @@ class Main {
 		h.customRequest(false,progress);
 
 		doInstallFile(filepath, setcurrent);
-		site.postInstall(project, version);
+		try {
+			site.postInstall(project, version);
+		} catch (e:Dynamic) {}
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
