@@ -347,18 +347,27 @@ class Main {
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
 		var infos = Data.readInfos(zip,true);
 		Data.checkClassPath(zip,infos);
-		var user = infos.developers.first();
+		var user:String;
+		if( infos.developers.length==1 ) {
+			user = infos.developers.first();
+		}
+		else {
+			do {
+				print("Which of these users are you: " + infos.developers);
+				user = param("User");
+			} while ( !Lambda.has(infos.developers, user) );
+		}
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
 			print("Please enter the following informations for registration");
 			password = doRegister(user);
 		} else {
-			if( infos.developers.length > 1 )
-				user = param("User");
 			password = Md5.encode(param("Password",true));
-			if( !site.checkPassword(user,password) )
-				throw "Invalid password for "+user;
+			while ( !site.checkPassword(user,password) ) {
+				print ("Invalid password for "+user);
+				password = Md5.encode(param("Password",true));
+			}
 		}
 		site.checkDeveloper(infos.project,user);
 
