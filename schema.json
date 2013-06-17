@@ -48,7 +48,7 @@
 			"description": "The name of a haxelib project or user",
 			"type": "string",
 			"minLength": 2,
-			"pattern": "[A-Za-z0-9_.-]{2,}"
+			"pattern": "^[A-Za-z0-9_.-]{2,}$"
 		},
 		"semver": {
 			"type": "string",
