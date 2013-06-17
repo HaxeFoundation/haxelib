@@ -122,7 +122,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('3.0.0');
+	static var VERSION = SemVer.ofString('3.1.0-rc.2');
 	static var REPNAME = "lib";
 	static var SERVER = {
 		host : "lib.haxe.org",
@@ -131,7 +131,6 @@ class Main {
 		url : "index.n",
 		apiVersion : VERSION.major+"."+VERSION.minor,
 	};
-	static var seperator:String;
 
 	var argcur : Int;
 	var args : Array<String>;
@@ -140,7 +139,6 @@ class Main {
 	var site : SiteProxy;
 
 	function new() {
-		seperator = ( Sys.systemName() == "Windows" ) ? "\\" : "/";
 		args = Sys.args();
 
 		commands = new List();
@@ -172,8 +170,9 @@ class Main {
 	
 
 	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir + "api/" + SERVER.apiVersion + "/" + SERVER.url;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl).api);
+		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
+		var remotingUrl =  siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url;
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).api);
 	}
 
 	function param( name, ?passwd ) {
@@ -346,19 +345,29 @@ class Main {
 		var file = param("Package");
 		var data = File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
-		var infos = Data.readInfos(zip,true,false);
-		var user = infos.developers.first();
+		var infos = Data.readInfos(zip,true);
+		Data.checkClassPath(zip,infos);
+		var user:String;
+		if( infos.developers.length==1 ) {
+			user = infos.developers.first();
+		}
+		else {
+			do {
+				print("Which of these users are you: " + infos.developers);
+				user = param("User");
+			} while ( !Lambda.has(infos.developers, user) );
+		}
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
 			print("Please enter the following informations for registration");
 			password = doRegister(user);
 		} else {
-			if( infos.developers.length > 1 )
-				user = param("User");
 			password = Md5.encode(param("Password",true));
-			if( !site.checkPassword(user,password) )
-				throw "Invalid password for "+user;
+			while ( !site.checkPassword(user,password) ) {
+				print ("Invalid password for "+user);
+				password = Md5.encode(param("Password",true));
+			}
 		}
 		site.checkDeveloper(infos.project,user);
 
@@ -542,7 +551,9 @@ class Main {
 		// download to temporary file
 		var filename = Data.fileName(project,version);
 		var filepath = rep+filename;
-		var out = File.write(filepath,true);
+		var out = try File.write(filepath,true)
+			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+
 		var progress = new Progress(out);
 		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
 		h.onError = function(e) {
@@ -554,7 +565,9 @@ class Main {
 		h.customRequest(false,progress);
 
 		doInstallFile(filepath, setcurrent);
-		site.postInstall(project, version);
+		try {
+			site.postInstall(project, version);
+		} catch (e:Dynamic) {}
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
@@ -562,9 +575,7 @@ class Main {
 		var f = File.read(filepath,true);
 		var zip = Reader.readZip(f);
 		f.close();
-		var re = ~/([^/\\]+).zip$/
-		var zipName = re.match(filepath) ? re.matched(1) : "unknownlib";
-		var infos = Data.readInfos(zip,false,true,zipName);
+		var infos = Data.readInfos(zip,false);
 		// create directories
 		var pdir = getRepository() + Data.safe(infos.project);
 		safeDir(pdir);
@@ -661,11 +672,8 @@ class Main {
 	function getRepository( ?setup : Bool ) {
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
-		if( haxepath != null ) {
-			var last = haxepath.charAt(haxepath.length - 1);
-			if( last != "/" && last != "\\" )
-				haxepath += "/";
-		}
+		if( haxepath != null )
+			haxepath = Path.addTrailingSlash( haxepath );
 		var config_file;
 		if( win )
 			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
@@ -689,7 +697,7 @@ class Main {
 				} catch( e : String ) {
 					throw "Error accessing Haxelib repository: $e";
 				}
-				return rep+"\\";
+				return Path.addTrailingSlash( rep );
 			} else
 				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
 		}
@@ -748,7 +756,7 @@ class Main {
 			if( p.charAt(0) == "." )
 				continue;
 			var versions = new Array();
-			var current = getCurrent(rep + p);
+			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
 			var dev = try File.getContent(rep+p+"/.dev").trim() catch( e : Dynamic ) null;
 			for( v in FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." )
@@ -785,9 +793,21 @@ class Main {
 			checkGit();
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
-			Sys.command("git pull");
-			Sys.setCwd(oldCwd);
+			var doGitPull = true;
+			if ( 0 != Sys.command("git diff --exit-code") || 0 != Sys.command("git diff --cached --exit-code") ) {
+				switch ask("Reset changes to "+p+" git repo so we can pull latest version?") {
+					case Yes | Always:
+						Sys.command("git reset --hard");
+					case No:
+						doGitPull = false;
+						print("Git repo left untouched");
+				}
+			}
+			if (doGitPull) {
+				Sys.command("git pull");
+			}
 			state.updated = true;
+			Sys.setCwd(oldCwd);
 		} else {
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
 			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.curversion)) ) {
@@ -822,8 +842,11 @@ class Main {
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
-		if (!updateByName('haxelib_client'))
-			print("haxelib is up to date");
+		if (updateByName('haxelib_client'))
+			print("Haxelib successfully updated.");
+		else 
+			print("Haxelib was already up to date...");
+
 		switch tryBuild() {
 			case None:
 				var win = Sys.systemName() == "Windows";
@@ -834,11 +857,7 @@ class Main {
 				if (haxepath == null) 
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else 
-					haxepath += 
-						switch (haxepath.charAt(haxepath.length - 1)) {
-							case '/', '\\': '';
-							default: seperator;
-						}
+					haxepath = Path.addTrailingSlash(haxepath);
 				
 				if (win) {
 					File.saveContent('update.hxml', '-lib haxelib_client\n--run tools.haxelib.Rebuild');
@@ -925,7 +944,7 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( prj : String, version : String, l : List<{ project : String, version : String }> ) {
+	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
 		var pdir = getRepository() + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
@@ -941,13 +960,11 @@ class Main {
 					return;
 				throw "Library "+prj+" has two version included "+version+" and "+p.version;
 			}
-		l.add({ project : prj, version : version });
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		if( json == null )
-			return; // ignore missing haxelib.json, assume no dependencies
 		var inf = Data.readData(json,false);
 		for( d in inf.dependencies )
 			checkRec(d.project,if( d.version == "" ) null else d.version,l);
+		l.add({ project : prj, version : version, info: inf });
 	}
 
 	function path() {
@@ -962,11 +979,9 @@ class Main {
 			var dir = rep + pdir;
 			try {
 				dir = getDev(rep+Data.safe(d.project));
-				if( dir.length == 0 || ( dir.charAt(dir.length-1) != "/" && dir.charAt(dir.length-1) != "\\" ) )
-					dir += seperator;
+				dir = Path.addTrailingSlash(dir);
 				pdir = dir;
-			} catch( e : Dynamic ) {
-			}
+			} catch( e : Dynamic ) {}
 			var ndir = dir + "ndll";
 			if( FileSystem.exists(ndir) ) {
 				var sysdir = ndir+"/"+Sys.systemName();
@@ -979,7 +994,10 @@ class Main {
 			try {
 				var f = File.getContent(dir + "extraParams.hxml");
 				Sys.println(f.trim());
-			} catch( e : Dynamic ) {
+			} catch( e : Dynamic ) {}
+			if (d.info.classPath != "") {
+				var cp = d.info.classPath;
+				dir = Path.addTrailingSlash( dir + cp );
 			}
 			Sys.println(dir);
 			Sys.println("-D "+d.project);
@@ -1000,29 +1018,18 @@ class Main {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
-		} else {
-			if ( dir.endsWith("/") || dir.endsWith("\\") ) dir = dir.substr(0,-1);
-			dir = try FileSystem.fullPath(dir) catch( e : Dynamic ) rep;
+		} 
+		else {
+			if ( dir.endsWith("/") || dir.endsWith("\\") ) {
+				dir = dir.substr(0,-1);
+			}
+			dir = FileSystem.fullPath(dir);
 			try {
 				File.saveContent(devfile, dir);
 				print("Development directory set to "+dir);
-				
-				try {
-					// Check for haxelib.json, install dependencies
-					var haxelibJsonPath = dir + "haxelib.json";
-					if (FileSystem.exists(haxelibJsonPath))
-					{
-						var haxelibJson = File.getContent(haxelibJsonPath);
-						var infos = Data.readData(haxelibJson,true);
-						doInstallDependencies(infos.dependencies);
-					}
-				}
-				catch (e:Dynamic) {
-					print('Error installing dependencies for $project:\n  $e');
-				}
 			}
 			catch (e:Dynamic) {
-				print("Could not write to " +proj + "/.dev");
+				print('Could not write to $devfile');
 			}
 
 		}
@@ -1057,7 +1064,8 @@ class Main {
 	function git() {
 		var libName = param("Library name");
 		var rep = getRepository();
-		var libPath = rep + Data.safe(libName) + "/git";
+		var proj = rep + Data.safe(libName);
+		var libPath = proj + "/git";
 		
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
@@ -1078,27 +1086,19 @@ class Main {
 			var ret = command("git", ["checkout", branch]);
 			if (ret.code != 0)
 			{
-				print("Could not checkout branch, tag or path: " +ret.out);
+				print('Could not checkout branch, tag or path "$branch": ' +ret.out);
 				deleteRec(libPath);
 				return;
 			}
 		}
-		var revision = command("git", ["rev-parse", "HEAD"]).out;
-
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-		var haxelibJsonPath = devPath + "/haxelib.json";
-		var haxelibJson:String;
-		if (FileSystem.exists(haxelibJsonPath))
-		{
-			haxelibJson = File.getContent(haxelibJsonPath);
-			var infos = Data.readData(haxelibJson,true);
-			doInstallDependencies(infos.dependencies);
-		}
 
-		Sys.setCwd(libPath + "/../");
+		Sys.setCwd(proj);
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
-		print("Done");
+		print('Library $libName set to use git.');
+		if ( branch!=null ) print('  Branch/Tag/Rev: $branch');
+		print('  Path: $devPath');
 	}
 
 	function run() {

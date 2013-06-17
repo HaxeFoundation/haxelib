@@ -4,7 +4,7 @@
 	"license": "GPL",
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
-	"version": "3.0.0-rc.7",
-	"releasenote": "Added 'haxelib convertxml' and improved 'haxelib git' support.",
-	"contributors": ["back2dos", "ncannasse","jason"]
+	"version": "3.1.0-rc.2",
+	"releasenote": "Fixed issues with `haxelib git` and `haxelib dev`.  Added `classPath` to haxelib JSON format. Small fixes.",
+	"contributors": ["back2dos", "ncannasse", "jason"]
 }

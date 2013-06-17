@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+	"description": "A haxelib project",
+	"type": "object",
+	"properties": {
+		"name": { "$ref": "#/definitions/name" },
+		"license": {
+			"description": "The open source license under which the project is licensed",
+			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT"]
+		},
+		"tags": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"uniqueItems": true
+		},
+		"description": {
+			"type": "string"
+		},
+		"classPath": {
+			"description": "The folder in the package which contains the source files for this haxelib",
+			"type": "string"
+		},
+		"contributors": {
+			"type": "array",
+			"items": { "$ref": "#/definitions/name" },
+			"minItems": 1,
+			"uniqueItems": true
+		},
+		"releasenote": {
+			"type": "string"
+		},
+		"version": { "$ref": "#/definitions/semver" },
+		"url": {
+			"type": "string",
+			"format": "uri"
+		},
+		"dependencies": {
+			"type": "object",
+			"additionalProperties": { "$ref": "#/definitions/dependancyVersion" }
+		}
+	},
+	"additionalProperties": true,
+	"required": ["name", "license", "releasenote", "contributors", "version"],
+	"definitions": {
+		"name": {
+			"description": "The name of a haxelib project or user",
+			"type": "string",
+			"minLength": 2,
+			"pattern": "^[A-Za-z0-9_.-]{2,}$"
+		},
+		"semver": {
+			"type": "string",
+			"pattern": "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-(alpha|beta|rc)(\\.([0-9]+))?)?$"
+		},
+		"dependancyVersion": {
+			"oneOf": [
+				{ "$ref": "#/definitions/semver" },
+				{
+					"type": "string",
+					"maxLength": 0
+				}
+			]
+		}
+	}
+			
+}
