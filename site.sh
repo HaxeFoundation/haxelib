@@ -37,7 +37,7 @@ fi
 chmod a+w server
 chmod a+w server/tmp
 chmod a+w server/files
-chmod a+w server/files/2.0
+chmod a+w server/files/3.0
 chmod a+w server/legacy
 chmod a+w server/haxelib.db
 chmod a+w server/legacy/haxelib.db
