@@ -138,6 +138,8 @@ class Data {
 			throw 'Library name cannot end in ".zip".  Please choose another name';
 		if ( libName.endsWith(".hxml") )
 			throw 'Library name cannot end in ".hxml".  Please choose another name';
+		if ( !alphanum.match(libName) )
+			throw 'Library name can only contain the following characters: [A-Za-z0-9_.-]'
 		if( libName.length < 3 )
 			throw "Project name must contain at least 3 characters";
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )
@@ -159,6 +161,10 @@ class Data {
 				for (tag in tags) {
 					switch Type.typeof(tag) {
 						case TClass(String):
+							if ( !alphanum.match(tag) )
+								throw 'Invalid tag "$tag". Tags can only contain the following characters: [A-Za-z0-9_.-]';
+							if ( tag.length < 2)
+								throw 'Invalid tag "$tag". Tags must contain at least 2 characters';
 						default: throw 'Invalid tag "$tag" Tags must be a String.';
 					}
 				}
