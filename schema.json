@@ -3,16 +3,14 @@
 	"description": "A haxelib project",
 	"type": "object",
 	"properties": {
-		"name": { "$ref": "#/definitions/name" },
+		"name": { "$ref": "#/definitions/projectName" },
 		"license": {
 			"description": "The open source license under which the project is licensed",
 			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT"]
 		},
 		"tags": {
 			"type": "array",
-			"items": {
-				"type": "string"
-			},
+			"items": { "$ref": "#/definitions/haxelibTag" },
 			"uniqueItems": true
 		},
 		"description": {
@@ -24,7 +22,7 @@
 		},
 		"contributors": {
 			"type": "array",
-			"items": { "$ref": "#/definitions/name" },
+			"items": { "$ref": "#/definitions/userName" },
 			"minItems": 1,
 			"uniqueItems": true
 		},
@@ -44,8 +42,20 @@
 	"additionalProperties": true,
 	"required": ["name", "license", "releasenote", "contributors", "version"],
 	"definitions": {
-		"name": {
-			"description": "The name of a haxelib project or user",
+		"userName": {
+			"description": "The name of a user",
+			"type": "string",
+			"minLength": 3,
+			"pattern": "^[A-Za-z0-9_.-]{3,}$"
+		},
+		"projectName": {
+			"description": "The name of a haxelib project",
+			"type": "string",
+			"minLength": 3,
+			"pattern": "^[A-Za-z0-9_.-]{3,}$"
+		},
+		"haxelibTag": {
+			"description": "A keyword or term associated with a haxelib project",
 			"type": "string",
 			"minLength": 2,
 			"pattern": "^[A-Za-z0-9_.-]{2,}$"
