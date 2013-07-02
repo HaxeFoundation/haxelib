@@ -963,9 +963,10 @@ class Main {
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		var inf = Data.readData(json,false);
-		for( d in inf.dependencies )
-			checkRec(d.project,if( d.version == "" ) null else d.version,l);
 		l.add({ project : prj, version : version, info: inf });
+		for( d in inf.dependencies )
+			if( !Lambda.exists(l, function(e) return e.project == d.project) )
+				checkRec(d.project,if( d.version == "" ) null else d.version,l);
 	}
 
 	function path() {
