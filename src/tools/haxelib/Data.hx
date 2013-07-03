@@ -139,7 +139,7 @@ class Data {
 		if ( libName.endsWith(".hxml") )
 			throw 'Library name cannot end in ".hxml".  Please choose another name';
 		if ( !alphanum.match(libName) )
-			throw 'Library name can only contain the following characters: [A-Za-z0-9_.-]'
+			throw 'Library name can only contain the following characters: [A-Za-z0-9_.-]';
 		if( libName.length < 3 )
 			throw "Project name must contain at least 3 characters";
 		if( Lambda.indexOf(LICENSES, doc.license) == -1 )

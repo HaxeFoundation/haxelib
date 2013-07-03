@@ -191,10 +191,9 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altogether
 
 		// ClassPath
-		assertEquals( "src", readDataOkay(getJsonInfos({ classPath: 'src' })) );
-		assertEquals( "", readDataOkay(getJsonInfos({ classPath: '' })) );
-		assertEquals( "", readDataOkay(getJsonInfos({ classPath: null })) );
-		assertEquals( "", readDataOkay(getJsonInfos({ classPath: ["src","othersrc"] })) );
+		assertEquals( "src", Data.readData(getJsonInfos({ classPath: 'src' }), false).classPath );
+		assertEquals( "", Data.readData(getJsonInfos({ classPath: '' }), false).classPath );
+		assertEquals( "", Data.readData(getJsonInfos({ classPath: null }), false).classPath );
 	}
 
 	function readDataOkay( json ) {
