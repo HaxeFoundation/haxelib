@@ -111,7 +111,7 @@ class Data {
 			}
 		if( infodata == null )
 			throw JSON + " not found in package";
-		
+
 		return readData(infodata,check);
 	}
 
@@ -121,7 +121,7 @@ class Data {
 			var cp = basePath + infos.classPath;
 
 			for( f in zip ) {
-				if( StringTools.startsWith(f.fileName,cp) ) 
+				if( StringTools.startsWith(f.fileName,cp) )
 					return;
 			}
 			throw 'Class path `${infos.classPath}` not found';
@@ -203,36 +203,40 @@ class Data {
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc = try Json.parse(jsondata) catch( e : Dynamic ) {};
-		
+
 		if( check )
 			doCheck(doc);
 
-		// The only time `doc.name` here is read, when it hasn't been validated by check, is 
-		// when installing from a local zip file.  In this scenario, leaving an empty string 
-		// will cause an error when the name gets passed to Data.safe(), preventing them from 
-		// continuing.  If we're just reading it to grab dependencies, it doesn't matter if it 
+		// The only time `doc.name` here is read, when it hasn't been validated by check, is
+		// when installing from a local zip file.  In this scenario, leaving an empty string
+		// will cause an error when the name gets passed to Data.safe(), preventing them from
+		// continuing.  If we're just reading it to grab dependencies, it doesn't matter if it
 		// is blank
 		var project:String = (doc.name!=null) ? Std.string(doc.name) : "";
 
 		var tags = new List();
 		try {
 			var tagsArray:Array<String> = doc.tags;
-			for( t in tagsArray )
-				tags.add( Std.string(t) );
+			if ( Reflect.isFunction(tagsArray.iterator) ) {
+				for( t in tagsArray )
+					tags.add( Std.string(t) );
+			}
 		} catch(e:Dynamic) {}
-		
+
 		var devs = new List();
 		try {
-			var contributors:Array<String> = doc.contributors;
-			for( c in contributors )
-				devs.add( Std.string(c) );
+			var contributorsArray:Array<String> = doc.contributors;
+			if ( Reflect.isFunction(contributorsArray.iterator) ) {
+				for( c in contributorsArray )
+					devs.add( Std.string(c) );
+			}
 		} catch(e:Dynamic) {}
 
 		var deps = new List();
 		try {
 			for( d in Reflect.fields(doc.dependencies) ) {
-				var version = try { 
-					SemVer.ofString( Std.string(Reflect.field(doc.dependencies,d)) ).toString(); 
+				var version = try {
+					SemVer.ofString( Std.string(Reflect.field(doc.dependencies,d)) ).toString();
 				} catch (e:Dynamic) "";
 				deps.add({ project: d, version: version });
 			}
@@ -244,7 +248,7 @@ class Data {
 		var versionComments = ( doc.releasenote!=null ) ? Std.string(doc.releasenote) : "";
 		var license = ( doc.license!=null && doc.license!="" ) ? Std.string(doc.license) : "Unknown";
 		var classPath = ( doc.classPath!=null ) ? Std.string(doc.classPath) : "";
-		
+
 		return {
 			project : project,
 			website : website,
