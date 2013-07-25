@@ -43,36 +43,67 @@ class SemVer {
 		return ret;
 	}
 
-	public function isSpecific():Bool {
+	// Returns true if the SemVer is specific (i.e. is not preceeded by a '>' or '<=')
+	public function isSpecific() : Bool {
 		return (precedence == "");
 	}
 
-	public function satisfies(v : SemVer):Bool {
+	// Checks to see if one SemVer satisifies the requirememts of another.
+	// The first SemVer must be specific (i.e. Not be preceeded by a '>' or '<=')
+	public function satisfies(v : SemVer) : Bool {
 		if ( !this.isSpecific() ) { return false; }
-
-		return compareMain(v) || comparePre(v);
-	}
-
-	private function compareMain(other : SemVer) : Bool {
-		return cmp(major, other.precedence, other.major) || cmp(minor, other.precedence, other.minor) || cmp(patch, other.precedence, other.patch);
-	}
-
-	private function comparePre(other : SemVer) : Bool {
-		return cmp(previewCmpVal, other.precedence, other.previewCmpVal) || cmp(previewNumCmpVal, other.precedence, other.previewNumCmpVal);
-	}
-
-	private function cmp(a, op, b) : Bool {
 		var ret;
-		switch (op) {
-			case '', '=', '==': ret = (a == b);
-			case '!=': ret = (a != b);
-			case '>': ret = (a > b);
-			case '>=': ret = (a >= b);
-			case '<': ret = (a < b);
-			case '<=': ret = (a <= b);
-			default: throw 'Invalid operator: ' + op;
+		switch (v.precedence) {
+			case '', '=', '==': ret = (compare(v) == 0);
+			case '!=': ret = (compare(v) != 0);
+			case '>': ret = (compare(v) > 0);
+			case '>=': ret = (compare(v) >= 0);
+			case '<': ret = (compare(v) < 0);
+			case '<=': ret = (compare(v) <= 0);
+			default: throw 'Invalid operator: ' + v.precedence;
 		}
 		return ret;
+	}
+
+	// Will return 0, 1 or -1 if equal to, greater than or less than.
+	private function compare(other : SemVer) : Int {
+		var resultMain = compareMain(other);
+		var resultPre = comparePre(other);
+		return resultMain != 0 ? resultMain : resultPre;
+	}
+
+	// Compares the main Major.Minor.Patch parts of the SemVer
+	// Will return 0, 1 or -1 if equal to, greater than or less than.
+	private function compareMain(other : SemVer) : Int {
+		var majorResult = compareIdentifiers(major, other.major);
+		var minorResult = compareIdentifiers(minor, other.minor);
+		var patchResult = compareIdentifiers(patch, other.patch);
+		return 	majorResult != 0 ? majorResult :
+				minorResult != 0 ? minorResult :
+				patchResult;
+	}
+
+	// Compares the secondary preview/release parts of the SemVer
+	// Will return 0, 1 or -1 if equal to, greater than or less than.
+	private function comparePre(other : SemVer) : Int {
+		if ( preview == null && other.preview == null) {
+			return 0;
+		}
+		var previewCmp : Int = compareIdentifiers(previewCmpVal, other.previewCmpVal);
+		if ( previewCmp == 0 ) {
+			if ( previewNum == null && other.previewNum == null) {
+				return 0;
+			}
+		}
+		return previewCmp != 0 ? previewCmp : compareIdentifiers(previewNumCmpVal, other.previewNumCmpVal);
+	}
+
+	function compareIdentifiers(a : Null<Int>, b : Null<Int>) : Int {
+		return (a != null && b == null) ? -1:
+			(b != null && a == null) ? 1 :
+			a < b ? -1 :
+			a > b ? 1 :
+			0;
 	}
 
 	static var parse = ~/^((?:<|>)?=?)([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
