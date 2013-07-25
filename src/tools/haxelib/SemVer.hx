@@ -89,13 +89,8 @@ class SemVer {
 		if ( preview == null && other.preview == null) {
 			return 0;
 		}
-		var previewCmp : Int = compareIdentifiers(previewCmpVal, other.previewCmpVal);
-		if ( previewCmp == 0 ) {
-			if ( previewNum == null && other.previewNum == null) {
-				return 0;
-			}
-		}
-		return previewCmp != 0 ? previewCmp : compareIdentifiers(previewNumCmpVal, other.previewNumCmpVal);
+		var previewCmp : Int = compareIdentifiers(previewEnumIndex, other.previewEnumIndex);
+		return previewCmp != 0 ? previewCmp : compareIdentifiers(previewNum, other.previewNum);
 	}
 
 	function compareIdentifiers(a : Null<Int>, b : Null<Int>) : Int {
