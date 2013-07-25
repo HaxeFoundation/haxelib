@@ -49,6 +49,7 @@ class TestSemVer extends haxe.unit.TestCase {
 		assertTrue( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<=0.1.2-rc.01") ) );
 		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<0.1.2-rc.01") ) );
 		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString(">0.1.2-rc.01") ) );
+		assertTrue( SemVer.ofString("0.1.2-rc").satisfies( SemVer.ofString(">0.1.2-rc.01") ) );
 
 		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">0.1.2") ) );
 		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<1.0.4") ) );
@@ -59,6 +60,7 @@ class TestSemVer extends haxe.unit.TestCase {
 		assertTrue( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-beta") ) );
 		assertFalse( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-rc") ) );
 
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">1.0.0-rc") ) );
 		assertFalse( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-rc") ) );
 		assertTrue( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-alpha") ) );
 
