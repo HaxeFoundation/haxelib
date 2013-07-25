@@ -10,31 +10,27 @@ enum Preview {
 
 
 class SemVer {
-	public var precedence:String;
+	public var comparator:String;
 	public var major:Int;
 	public var minor:Int;
 	public var patch:Int;
 	public var preview:Null<Preview>;
-	public var previewCmpVal:Int=999;
+	public var previewEnumIndex:Null<Int>;
 	public var previewNum:Null<Int>;
-	public var previewNumCmpVal:Int=~(1<<31);
-	public function new(?precedence : String = "", major, minor, patch, ?preview, ?previewNum) {
-		this.precedence = precedence;
+	public function new(?comparator : String = "", major, minor, patch, ?preview, ?previewNum) {
+		this.comparator = comparator;
 		this.major = major;
 		this.minor = minor;
 		this.patch = patch;
 		this.preview = preview;
 		if ( this.preview != null ) {
-			previewCmpVal = Type.enumIndex( this.preview );
+			previewEnumIndex = Type.enumIndex( this.preview );
 		}
 		this.previewNum = previewNum;
-		if ( this.previewNum != null ) {
-			this.previewNumCmpVal = this.previewNum;
-		}
 	}
 
 	public function toString():String {
-		var ret = '$precedence$major.$minor.$patch';
+		var ret = '$comparator$major.$minor.$patch';
 		if (preview != null) {
 			ret += '-' + preview.getName().toLowerCase();
 			if (previewNum != null)
@@ -45,7 +41,7 @@ class SemVer {
 
 	// Returns true if the SemVer is specific (i.e. is not preceeded by a '>' or '<=')
 	public function isSpecific() : Bool {
-		return (precedence == "");
+		return (comparator == "");
 	}
 
 	// Checks to see if one SemVer satisifies the requirememts of another.
@@ -53,14 +49,14 @@ class SemVer {
 	public function satisfies(v : SemVer) : Bool {
 		if ( !this.isSpecific() ) { return false; }
 		var ret;
-		switch (v.precedence) {
+		switch (v.comparator) {
 			case '', '=', '==': ret = (compare(v) == 0);
 			case '!=': ret = (compare(v) != 0);
 			case '>': ret = (compare(v) > 0);
 			case '>=': ret = (compare(v) >= 0);
 			case '<': ret = (compare(v) < 0);
 			case '<=': ret = (compare(v) <= 0);
-			default: throw 'Invalid operator: ' + v.precedence;
+			default: throw 'Invalid operator: ' + v.comparator;
 		}
 		return ret;
 	}
