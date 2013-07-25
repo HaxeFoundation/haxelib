@@ -68,7 +68,7 @@ class TestSemVer extends haxe.unit.TestCase {
 		assertTrue( SemVer.ofString("0.1.0-beta").satisfies( SemVer.ofString(">0.1.0-alpha") ) );
 		assertFalse( SemVer.ofString("0.1.2-beta").satisfies( SemVer.ofString(">0.1.2-rc.1") ) );
 
-		assertFalse( SemVer.ofString("1.0.0-alpha").satisfies( SemVer.ofString("<=1.0.0-alpha") ) );
+		assertTrue( SemVer.ofString("1.0.0-alpha").satisfies( SemVer.ofString("<=1.0.0-alpha") ) );
 		assertFalse( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<=1.0.0-alpha") ) );
 	}
 
