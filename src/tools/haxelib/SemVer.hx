@@ -124,9 +124,9 @@ class SemVer {
 
 	static var parse = ~/^((?:~)?(?:<|>|!)?=?)([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?(\s|$)/;
 
-	static public function ofString(s:String):SemVer
+	static public function ofString(s:String) : SemVer {
 		return
-			if (s!=null && parse.match(s.toLowerCase()))
+			if (s!=null && parse.match(StringTools.trim(s.toLowerCase()))) {
 				new SemVer(
 					parse.matched(1),
 					parse.matched(2).parseInt(),
@@ -143,7 +143,9 @@ class SemVer {
 						case v if (v == null): null;
 						case v: v.parseInt();
 					}
-				)
-			else
+				);
+			} else {
 				throw '$s is not a valid version string';//TODO: include some URL for reference
+			}
+	}
 }
