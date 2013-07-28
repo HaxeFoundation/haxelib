@@ -41,40 +41,81 @@ class TestSemVer extends haxe.unit.TestCase {
 	}
 
 	public function testSpecificity() {
+		// Does not define a range
 		assertTrue(SemVer.ofString("0.1.2-rc.01").isSpecific());
 		assertFalse(SemVer.ofString(">0.1.2-rc.01").isSpecific());
 	}
 
 	public function testComparisons() {
-		assertTrue( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<=0.1.2-rc.01") ) );
-		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<0.1.2-rc.01") ) );
-		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString(">0.1.2-rc.01") ) );
-		assertTrue( SemVer.ofString("0.1.2-rc").satisfies( SemVer.ofString(">0.1.2-rc.01") ) );
+		// Simple constraints
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">0.1.2").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<1.0.4").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">=0.9.3").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<=1.0.9").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("1.0.0").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("=1.0.0").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("!=1.0.9").constraint ) );
+		assertFalse( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("!=1.0.0").constraint ) );
 
-		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">0.1.2") ) );
-		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<1.0.4") ) );
-		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">=0.9.3") ) );
-		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<=1.0.9") ) );
+		// More parts
+		assertTrue( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<=0.1.2-rc.01").constraint ) );
+		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString("<0.1.2-rc.01").constraint ) );
+		assertFalse( SemVer.ofString("0.1.2-rc.01").satisfies( SemVer.ofString(">0.1.2-rc.01").constraint ) );
+		assertTrue( SemVer.ofString("0.1.2-rc").satisfies( SemVer.ofString(">0.1.2-rc.01").constraint ) );
 
-		assertTrue( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-alpha") ) );
-		assertTrue( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-beta") ) );
-		assertFalse( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-rc") ) );
-
-		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">1.0.0-rc") ) );
-		assertFalse( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-rc") ) );
-		assertTrue( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-alpha") ) );
-
-		assertTrue( SemVer.ofString("0.1.3").satisfies( SemVer.ofString(">0.1.3-alpha") ) );
-		assertFalse( SemVer.ofString("0.1.2-alpha.9").satisfies( SemVer.ofString("<=0.1.2-alpha.8") ) );
-
-		assertTrue( SemVer.ofString("0.1.0-beta").satisfies( SemVer.ofString(">0.1.0-alpha") ) );
-		assertFalse( SemVer.ofString("0.1.2-beta").satisfies( SemVer.ofString(">0.1.2-rc.1") ) );
-
-		assertTrue( SemVer.ofString("1.0.0-alpha").satisfies( SemVer.ofString("<=1.0.0-alpha") ) );
-		assertFalse( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<=1.0.0-alpha") ) );
+		// Release tags
+		assertTrue( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-alpha").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-beta").constraint ) );
+		assertFalse( SemVer.ofString("1.0.0-rc").satisfies( SemVer.ofString(">1.0.0-rc").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.ofString(">1.0.0-rc").constraint ) );
+		assertFalse( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-rc").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0-beta").satisfies( SemVer.ofString(">1.0.0-alpha").constraint ) );
+		assertTrue( SemVer.ofString("0.1.3").satisfies( SemVer.ofString(">0.1.3-alpha").constraint ) );
+		assertFalse( SemVer.ofString("0.1.2-alpha.9").satisfies( SemVer.ofString("<=0.1.2-alpha.8").constraint ) );
+		assertTrue( SemVer.ofString("0.1.0-beta").satisfies( SemVer.ofString(">0.1.0-alpha").constraint ) );
+		assertFalse( SemVer.ofString("0.1.2-beta").satisfies( SemVer.ofString(">0.1.2-rc.1").constraint ) );
+		assertTrue( SemVer.ofString("1.0.0-alpha").satisfies( SemVer.ofString("<=1.0.0-alpha").constraint ) );
+		assertFalse( SemVer.ofString("1.0.0").satisfies( SemVer.ofString("<=1.0.0-alpha").constraint ) );
 	}
 
-	public function testOfStringInvalid() {
+	public function testConstraintCreation() {
+		// Simple
+		assertEquals( "Gt", Type.enumConstructor( SemVer.constraintOfString(">0.1.0-alpha") ) );
+		assertEquals( "Lt", Type.enumConstructor( SemVer.constraintOfString("<0.1.0-alpha") ) );
+		assertEquals( "Gte", Type.enumConstructor( SemVer.constraintOfString(">=0.1.0-alpha") ) );
+		assertEquals( "Lte", Type.enumConstructor( SemVer.constraintOfString("<=0.1.0-alpha") ) );
+		assertEquals( "Eq", Type.enumConstructor( SemVer.constraintOfString("0.1.0-alpha") ) );
+		assertEquals( "Eq", Type.enumConstructor( SemVer.constraintOfString("=0.1.0-alpha") ) );
+
+		// Compound
+		assertEquals( "And", Type.enumConstructor( SemVer.constraintOfString(">0.1.0-alpha && >2.0.1") ) );
+		assertEquals( "Or", Type.enumConstructor( SemVer.constraintOfString(">0.1.0-alpha || >2.0.1") ) );
+	}
+
+	public function testCompoundComparisons() {
+		// AND
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.constraintOfString(">0.1.0-alpha") ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.constraintOfString(">0.1.0-alpha && <2.0.1") ) );
+		assertFalse( SemVer.ofString("1.0.0").satisfies( SemVer.constraintOfString(">0.1.0-alpha && >2.0.1") ) );
+		assertTrue( SemVer.ofString("1.0.0").satisfies( SemVer.constraintOfString(">0.1.0-alpha && <=1.0.0") ) );
+		assertTrue( SemVer.ofString("2.0.0").satisfies( SemVer.constraintOfString(">0.1.0-alpha && <=2.0.0") ) );
+		assertTrue( SemVer.ofString("0.8.4-alpha").satisfies( SemVer.constraintOfString(">0.4.6 && <=0.9.4") ) );
+		assertFalse( SemVer.ofString("0.8.4-alpha").satisfies( SemVer.constraintOfString(">=0.8.4 && <=0.9.4") ) );
+
+		// OR
+		assertTrue( SemVer.ofString("2.3.4").satisfies( SemVer.constraintOfString("1.2.3 || 2.3.4") ) );
+		assertFalse( SemVer.ofString("2.3.5").satisfies( SemVer.constraintOfString("1.2.3 || 2.3.4") ) );
+		assertTrue( SemVer.ofString("1.2.3").satisfies( SemVer.constraintOfString("1.2.3 || 2.3.4") ) );
+		assertFalse( SemVer.ofString("1.9.12-rc.2").satisfies( SemVer.constraintOfString(">2.1.4 || =2.2.0") ) );
+		assertFalse( SemVer.ofString("2.1.3").satisfies( SemVer.constraintOfString(">2.1.4 || =2.2.0") ) );
+		assertFalse( SemVer.ofString("2.1.4").satisfies( SemVer.constraintOfString(">2.1.4 || =2.2.0") ) );
+		assertTrue( SemVer.ofString("2.1.5").satisfies( SemVer.constraintOfString(">2.1.4 || =2.2.0") ) );
+
+		assertFalse( SemVer.ofString("1.9.8-alpha").satisfies( SemVer.constraintOfString(">2.1.4 || 1.9.8") ) );
+		assertTrue( SemVer.ofString("1.9.8").satisfies( SemVer.constraintOfString(">2.1.4 || 1.9.8") ) );
+	}
+
+	public function testOfSemVerInvalid() {
 		assertEquals( "invalid", parseInvalid(null) );
 		assertEquals( "invalid", parseInvalid("") );
 		assertEquals( "invalid", parseInvalid("1") );
@@ -88,9 +129,26 @@ class TestSemVer extends haxe.unit.TestCase {
 		assertEquals( "invalid", parseInvalid("1.2.3-othertag.1") );
 	}
 
+	public function testOfSemConstraintInvalid() {
+		assertEquals( "invalid", parseConstraintInvalid("1.2.3 || 2.3") );
+		assertEquals( "invalid", parseConstraintInvalid("1.2.3 ||") );
+		assertEquals( "invalid", parseConstraintInvalid("1.2.3 & 1.5.4") );
+		assertEquals( "invalid", parseConstraintInvalid("1.2.3 &&") );
+		assertEquals( "invalid", parseConstraintInvalid("1.2.3 && 1.5") );
+		assertEquals( "invalid", parseConstraintInvalid("1.3 && 1.5.2") );
+	}
+
 	function parseInvalid( str:String ) {
 		return try {
 			SemVer.ofString( str ).toString();
+		} catch (e:String) {
+			"invalid";
+		}
+	}
+
+	function parseConstraintInvalid( str:String ) {
+		return try {
+			Type.enumParameters( SemVer.constraintOfString( str ) )[0];
 		} catch (e:String) {
 			"invalid";
 		}
