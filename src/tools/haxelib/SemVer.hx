@@ -8,9 +8,21 @@ enum Preview {
 	RC;
 }
 
+enum SemConstraint {
+    And(left:SemConstraint, right:SemConstraint);
+    Or(left:SemConstraint, right:SemConstraint);
+    Gt(ver:SemVer);
+    Gte(ver:SemVer);
+    Lt(ver:SemVer);
+    Lte(ver:SemVer);
+    Eq(ver:SemVer);
+    Neq(ver:SemVer);
+}
+
 
 class SemVer {
 	public var comparator:String;
+	public var constraint(default, null):SemConstraint;
 	public var major:Int;
 	public var minor:Int;
 	public var patch:Int;
@@ -27,6 +39,7 @@ class SemVer {
 			previewEnumIndex = Type.enumIndex( this.preview );
 		}
 		this.previewNum = previewNum;
+		constraint = toConstraint();
 	}
 
 	public function toString():String {
@@ -43,6 +56,17 @@ class SemVer {
 	public function isSpecific() : Bool {
 		return (comparator == '' || comparator == '=');
 	}
+
+	private function toConstraint() : SemConstraint {
+		switch (this.comparator) {
+			case '', '='	: return Eq(this);
+			case '!='			: return Neq(this);
+			case '>'			: return Gt(this);
+			case '>='			: return Gte(this);
+			case '<'			: return Lt(this);
+			case '<='			: return Lte(this);
+			case v: throw 'Invalid operator \'$v\'';
+		}
 	}
 
 	// Checks to see if one SemVer satisifies the requirememts of another.
