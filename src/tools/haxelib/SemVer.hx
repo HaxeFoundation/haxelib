@@ -71,19 +71,18 @@ class SemVer {
 
 	// Checks to see if one SemVer satisifies the requirememts of another.
 	// The first SemVer must be specific (i.e. Not be preceeded by a '>' or '<=')
-	public function satisfies(v : SemVer) : Bool {
-		if ( !this.isSpecific() ) { return false; }
-		var ret;
-		switch (v.comparator) {
-			case '', '=', '==': ret = (compare(v) == 0);
-			case '!=': ret = (compare(v) != 0);
-			case '>': ret = (compare(v) > 0);
-			case '>=': ret = (compare(v) >= 0);
-			case '<': ret = (compare(v) < 0);
-			case '<=': ret = (compare(v) <= 0);
-			default: throw 'Invalid operator: ' + v.comparator;
+	public function satisfies(c : SemConstraint) : Bool {
+		if ( !this.isSpecific() ) { throw "Comparison attempted against non-specific version"; }
+		switch(c) {
+			case And(l, r): return satisfies(l) && satisfies(r);
+			case Or(l, r) : return satisfies(l) || satisfies(r);
+			case Gt(v)		: return compare(v) > 0;
+			case Gte(v)		: return compare(v) >= 0;
+			case Lt(v)		: return compare(v) < 0;
+			case Lte(v)		: return compare(v) <= 0;
+			case Eq(v)		: return compare(v) == 0;
+			case Neq(v)		: return compare(v) != 0;
 		}
-		return ret;
 	}
 
 	// Will return 0, 1 or -1 if equal to, greater than or less than.
