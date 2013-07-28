@@ -935,8 +935,13 @@ class Main {
 	function setCurrent( prj : String, version : String, doAsk : Bool ) {
 		var pdir = getRepository() + Data.safe(prj);
 		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) )
-			throw "Library "+prj+" version "+version+" is not installed";
+		if( !FileSystem.exists(vdir) ){
+			print("Library "+prj+" version "+version+" is not installed");
+			if(ask("Would you like to install it?") == No)
+				return;
+			doInstall(prj, version, true);
+			return;
+		}
 		if( getCurrent(pdir) == version )
 			return;
 		if( doAsk && ask("Set "+prj+" to version "+version) == No )
