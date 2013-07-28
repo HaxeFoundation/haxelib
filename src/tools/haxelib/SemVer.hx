@@ -122,7 +122,7 @@ class SemVer {
 			0;
 	}
 
-	static var parse = ~/^((?:<|>)?=?)([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
+	static var parse = ~/^((?:~)?(?:<|>|!)?=?)([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?(\s|$)/;
 
 	static public function ofString(s:String):SemVer
 		return
