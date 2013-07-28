@@ -39,9 +39,10 @@ class SemVer {
 		return ret;
 	}
 
-	// Returns true if the SemVer is specific (i.e. is not preceeded by a '>' or '<=')
+	// Returns true if the SemVer is specific (i.e. is not preceeded by '>', '>=', '<' or '<=')
 	public function isSpecific() : Bool {
-		return (comparator == "");
+		return (comparator == '' || comparator == '=');
+	}
 	}
 
 	// Checks to see if one SemVer satisifies the requirememts of another.
