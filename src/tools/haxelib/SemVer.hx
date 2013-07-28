@@ -123,6 +123,29 @@ class SemVer {
 	}
 
 	static var parse = ~/^((?:~)?(?:<|>|!)?=?)([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?(\s|$)/;
+	static var parseCompound = ~/^(\|\||&&)/;
+
+	static public function constraintOfString(s:String) : SemConstraint {
+		var leftConstraint = ofString(s).constraint;
+		var rightSide = StringTools.trim(parse.matchedRight());
+		if (rightSide != null && rightSide.length > 1) {
+			if (parseCompound.match(rightSide)) {
+				var compoundOperator = parseCompound.matched(1);
+				var compoundRightSide = parseCompound.matchedRight();
+				var rightConstraint = constraintOfString(compoundRightSide);
+				return
+					switch compoundOperator {
+						case '&&': And(leftConstraint, rightConstraint);
+						case '||': Or(leftConstraint, rightConstraint);
+						default: throw "Malformed constraint";
+					}
+			} else {
+				throw "Unbalanced constraints";
+			}
+		} else {
+			return leftConstraint;
+		}
+	}
 
 	static public function ofString(s:String) : SemVer {
 		return
