@@ -937,9 +937,8 @@ class Main {
 		var vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
 			print("Library "+prj+" version "+version+" is not installed");
-			if(ask("Would you like to install it?") == No)
-				return;
-			doInstall(prj, version, true);
+			if(ask("Would you like to install it?") != No)
+				doInstall(prj, version, true);
 			return;
 		}
 		if( getCurrent(pdir) == version )
