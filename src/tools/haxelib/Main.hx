@@ -164,11 +164,11 @@ class Main {
 		addCommand("dev", dev, "set the development directory for a given library", false);
 		addCommand("git", git, "uses git repository as library");
 		addCommand("proxy", proxy, "setup the Http proxy");
-		
+
 		initSite();
 	}
-	
-	
+
+
 
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
@@ -459,7 +459,7 @@ class Main {
 			}
 		if( !found )
 			throw "No such version "+version+" for library "+inf.name;
-		
+
 		return version;
 	}
 
@@ -502,7 +502,7 @@ class Main {
 				}
 			}
 		}
-		else 
+		else
 		{
 			print ("No hxml files found in the current directory.");
 		}
@@ -834,32 +834,32 @@ class Main {
 		var prj = param('Library');
 		if (!updateByName(prj))
 			print(prj + " is up to date");
-	}	
-	
+	}
+
 	function updateSelf() {
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
-			return 
+			return
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
 		if (updateByName('haxelib_client'))
 			print("Haxelib successfully updated.");
-		else 
+		else
 			print("Haxelib was already up to date...");
 
 		switch tryBuild() {
 			case None:
 				var win = Sys.systemName() == "Windows";
-				var haxepath = 
+				var haxepath =
 					if (win) Sys.getEnv("HAXEPATH");
 					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
-					
-				if (haxepath == null) 
+
+				if (haxepath == null)
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
-				else 
+				else
 					haxepath = Path.addTrailingSlash(haxepath);
-				
+
 				if (win) {
 					File.saveContent('update.hxml', '-lib haxelib_client\n--run tools.haxelib.Rebuild');
 					Sys.println('Please run haxe update.hxml');
@@ -870,18 +870,18 @@ class Main {
 						var args = [];
 						for (arg in p.stdout.readAll().toString().split('\n')) {
 							arg = arg.trim();
-							if (arg.charAt(0) == '-') 
+							if (arg.charAt(0) == '-')
 								args.push(arg);
-							else if (arg.length > 0) 
+							else if (arg.length > 0)
 								args.push('-cp "$arg"');
 						};
-						
+
 						var file = haxepath+'haxelib';
 						try File.saveContent(
 							file,
 							'#!/bin/sh\nhaxe '+args.join(' ')+' --run tools.haxelib.Main $@'
 						)
-						catch (e:Dynamic) 
+						catch (e:Dynamic)
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
 					}
 					else throw p.stdout.readAll();
@@ -1020,7 +1020,7 @@ class Main {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
 			print("Development directory disabled");
-		} 
+		}
 		else {
 			if ( dir.endsWith("/") || dir.endsWith("\\") ) {
 				dir = dir.substr(0,-1);
@@ -1068,7 +1068,7 @@ class Main {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
 		var libPath = proj + "/git";
-		
+
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
 
@@ -1123,6 +1123,7 @@ class Main {
 		var cmd = "neko run.n";
 		for( i in argcur...args.length )
 			cmd += " "+escapeArg(args[i]);
+		Sys.putEnv("HAXELIB_RUN", "1");
 		Sys.exit(Sys.command(cmd));
 	}
 
