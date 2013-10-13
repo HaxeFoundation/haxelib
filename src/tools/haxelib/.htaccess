@@ -13,7 +13,6 @@ RewriteRule ^index.n$ legacy/index.n [L]
 # Enable rewrite for the new site's pages, only if the file or dir doesn't exist
 
 RewriteBase /
-RewriteCond 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.n/$1 [L]
