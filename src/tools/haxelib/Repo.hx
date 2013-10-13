@@ -126,7 +126,7 @@ class Repo implements SiteApi {
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		var path = TMP_DIR+"/"+Std.parseInt(id)+".tmp";
 		
-		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id+" due to "+e;
+		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
 		file.close();
 
