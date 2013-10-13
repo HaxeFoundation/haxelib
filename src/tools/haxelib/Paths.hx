@@ -2,7 +2,7 @@ package tools.haxelib;
 
 class Paths {
 	static var RELATIVE_ROOT = 
-		#if haxelib_api
+		#if(haxelib_api&&!root)
 			'../../';
 		#else
 			'';

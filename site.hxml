@@ -10,6 +10,7 @@
 -main tools.haxelib.Repo
 -dce no
 -D haxelib_api
+-D root
 
 --next 
 

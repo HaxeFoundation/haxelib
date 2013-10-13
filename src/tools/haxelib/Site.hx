@@ -82,7 +82,6 @@ class Site {
 				file.writeString(data);
 			}
 		}
-		
 		if( file != null ) {
 			file.close();
 			Sys.print("File #"+sid+" accepted : "+bytes+" bytes written");
@@ -108,7 +107,12 @@ class Site {
 
 		var uri = Web.getURI();
 		if (uri == "/index.n") uri = "/";
-
+		var jsonRegex = ~/\/(p|u|t|all)\/?([^\/\.]*)?\.json/;
+		if(jsonRegex.match(uri)) {
+			var second = jsonRegex.matched(2);
+			var hasSecond = second != null && second.length > 0;
+			uri = "/"+jsonRegex.matched(1)+"json/"+(hasSecond ? second+"/" : "");
+		}
 		try {
 			Dispatch.run(uri,Web.getParams(), Site);
 		}
@@ -158,6 +162,21 @@ class Site {
 		});
 	}
 
+	// project JSON page
+	static function doPjson(name:String) {
+		var p = Project.manager.select({ name : name });
+		var obj:Dynamic = null;
+		if(p == null)
+			obj = {err: "Unknown project '"+name+"'"}
+		else
+			obj = {
+				owner: p.owner,
+				version: p.version,
+				versions: Lambda.array(Version.byProject(p)),
+				tags: Tag.manager.search({ project : p.id })
+			};
+		printJson(obj);
+	}
 	// user page
 	static function doU(name:String) {
 		var u = User.manager.select({ name : name });
@@ -169,6 +188,20 @@ class Site {
 		});
 	}
 
+	// user JSON page
+	static function doUjson(name:String) {
+		var u = User.manager.select({ name : name });
+		var obj:Dynamic = null;
+		if(u == null)
+			obj = {err: "Unknown user '"+name+"'"}
+		else
+			obj = {
+				name: name,
+				projects: Lambda.array(Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; }))
+			};
+		printJson(obj);
+	}
+
 	// tag page
 	static function doT(tagName: String) {
 		render('tag', {
@@ -177,11 +210,27 @@ class Site {
 		});
 	}
 
+	// tag JSON page
+	static function doTjson(tagName: String) {
+		var obj = {
+			tag: tagName,
+			projects: Lambda.array(Tag.manager.search({ tag : tagName }).map(function(t) return t.project))
+		};
+		printJson(obj);
+	}
+
 	// list of all projects page
 	static function doAll() {
 		render('list', {
 			projects: Project.allByName()
 		});
+	}
+	// list of all projects JSON page
+	static function doAlljson() {
+		var obj = {
+			projects: Lambda.array(Project.allByName())
+		};
+		printJson(obj);
 	}
 
 	// documenation
@@ -295,6 +344,16 @@ class Site {
 			createChildWithContent(item, "description", StringTools.htmlEscape(v.comments));
 		}
 		return rss;
+	}
+	// print a JSON object and wrap it if there is a callback parameter
+	static function printJson(obj:Dynamic) {
+		var callback = Web.getParams().get("callback");
+		Web.setHeader("Content-Type", callback == null ? "application/json" : "application/javascript");
+		if(callback != null)
+			Sys.print(callback + "(");
+		Sys.print(haxe.Json.stringify(obj));
+		if(callback != null)
+			Sys.print(")");
 	}
 
 	static function main() {
