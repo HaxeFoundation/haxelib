@@ -1,3 +1,3 @@
 #!/bin/sh
 haxe test.hxml
-neko bin/test.n $@
+exec neko bin/test.n "$@"
