@@ -843,6 +843,17 @@ class Main {
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
+
+		//recursively follow symlink
+		function realPath(path:String):String {
+			return switch (new Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]).stdout.readAll().toString()) {
+				case "": //it is not a symlink
+					path;
+				case targetPath:
+					realPath(new Path(path).dir + "/" + targetPath);
+			}
+		}
+
 		if (updateByName('haxelib_client'))
 			print("Haxelib successfully updated.");
 		else
@@ -853,8 +864,8 @@ class Main {
 				var win = Sys.systemName() == "Windows";
 				var haxepath =
 					if (win) Sys.getEnv("HAXEPATH");
-					else new Path(new Process('which', ['haxelib']).stdout.readAll().toString()).dir + '/';
-
+					else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
+				
 				if (haxepath == null)
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else
