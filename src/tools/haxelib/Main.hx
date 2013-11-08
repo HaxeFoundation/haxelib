@@ -1004,8 +1004,8 @@ class Main {
 				var sysdir = ndir+"/"+Sys.systemName();
 				var is64 = neko.Lib.load("std", "sys_is64", 0)();
 				if( is64 ) sysdir += "64";
-				if( !FileSystem.exists(sysdir) )
-					throw "Library "+d.project+" version "+d.version+" does not have a neko dll for your system";
+				// if( !FileSystem.exists(sysdir) )
+				//	throw "Library "+d.project+" version "+d.version+" does not have a neko dll for your system";
 				Sys.println("-L "+pdir+"ndll/");
 			}
 			try {
