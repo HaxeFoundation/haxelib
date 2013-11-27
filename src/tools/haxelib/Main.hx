@@ -793,7 +793,7 @@ class Main {
 				versions.push("[dev:"+dev+"]");
 			all.push(Data.unsafe(p) + ": "+versions.join(" "));
 		}
-		all.sort(Reflect.compare);
+		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
 		for (p in all) {
 			print(p);
 		}
