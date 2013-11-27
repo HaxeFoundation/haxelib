@@ -38,6 +38,13 @@ enum Answer {
 	Always;
 }
 
+private enum CommandCategory {
+	Basic;
+	Information;
+	Development;
+	Miscellaneous;
+}
+
 class SiteProxy extends haxe.remoting.Proxy<tools.haxelib.SiteApi> {
 }
 
@@ -135,7 +142,7 @@ class Main {
 
 	var argcur : Int;
 	var args : Array<String>;
-	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool }>;
+	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
 
@@ -143,27 +150,30 @@ class Main {
 		args = Sys.args();
 
 		commands = new List();
-		addCommand("install", install, "install a given library, or all libraries from a hxml file");
-		addCommand("list", list, "list all installed libraries", false);
-		addCommand("upgrade", upgrade, "upgrade all installed libraries");
-		addCommand("update", update, "update a single library");
-		addCommand("selfupdate", updateSelf, "update haxelib itself");
-		addCommand("remove", remove, "remove a given library/version", false);
-		addCommand("set", set, "set the current version for a library", false);
-		addCommand("search", search, "list libraries matching a word");
-		addCommand("info", info, "list informations on a given library");
-		addCommand("user", user, "list informations on a given user");
-		addCommand("register", register, "register a new user");
-		addCommand("submit", submit, "submit or update a library package");
-		addCommand("setup", setup, "set the haxelib repository path", false);
-		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json");
-		addCommand("config", config, "print the repository path", false);
-		addCommand("path", path, "give paths to libraries", false);
-		addCommand("run", run, "run the specified library with parameters", false);
-		addCommand("local", local, "install the specified package locally", false);
-		addCommand("dev", dev, "set the development directory for a given library", false);
-		addCommand("git", git, "uses git repository as library");
-		addCommand("proxy", proxy, "setup the Http proxy");
+		addCommand("install", install, "install a given library, or all libraries from a hxml file", Basic);
+		addCommand("upgrade", upgrade, "upgrade all installed libraries", Basic);
+		addCommand("update", update, "update a single library", Basic);
+		addCommand("remove", remove, "remove a given library/version", Basic, false);
+		addCommand("list", list, "list all installed libraries", Basic, false);
+		addCommand("set", set, "set the current version for a library", Basic, false);
+		
+		addCommand("search", search, "list libraries matching a word", Information);
+		addCommand("info", info, "list information on a given library", Information);
+		addCommand("user", user, "list information on a given user", Information);
+		addCommand("config", config, "print the repository path", Information, false);
+		addCommand("path", path, "give paths to libraries", Information, false);
+
+		addCommand("submit", submit, "submit or update a library package", Development);
+		addCommand("register", register, "register a new user", Development);
+		addCommand("local", local, "install the specified package locally", Development, false);
+		addCommand("dev", dev, "set the development directory for a given library", Development, false);
+		
+		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
+		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
+		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
+		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
+		addCommand("git", git, "use git repository as library", Miscellaneous);
+		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
 
 		initSite();
 	}
@@ -211,16 +221,27 @@ class Main {
 		return null;
 	}
 
-	function addCommand( name, f, doc, ?net = true ) {
-		commands.add({ name : name, doc : doc, f : f, net : net });
+	function addCommand( name, f, doc, cat, ?net = true ) {
+		commands.add({ name : name, doc : doc, f : f, net : net, cat : cat });
 	}
 
 	function usage() {
 		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
-		print(" Usage : haxelib [command] [options]");
-		print(" Commands :");
-		for( c in commands )
-			print("  "+c.name+" : "+c.doc);
+		print("  Usage: haxelib [command] [options]");
+		var cats = [];
+		var maxLength = 0;
+		for( c in commands ) {
+			if (c.name.length > maxLength) maxLength = c.name.length;
+			var i = c.cat.getIndex();
+			if (cats[i] == null) cats[i] = [c];
+			else cats[i].push(c);
+		}
+		for (cat in cats) {
+			print("  " + cat[0].cat.getName());
+			for (c in cat) {
+				print("    " + StringTools.rpad(c.name, " ", maxLength) + ": " +c.doc);
+			}
+		}
 		Sys.exit(1);
 	}
 
