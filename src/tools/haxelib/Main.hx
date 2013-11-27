@@ -753,6 +753,7 @@ class Main {
 		var filter = paramOpt();
 		if ( filter != null )
 			folders = folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
+		var all = [];
 		for( p in folders ) {
 			if( p.charAt(0) == "." )
 				continue;
@@ -769,7 +770,11 @@ class Main {
 			}
 			if( dev != null )
 				versions.push("[dev:"+dev+"]");
-			print(Data.unsafe(p) + ": "+versions.join(" "));
+			all.push(Data.unsafe(p) + ": "+versions.join(" "));
+		}
+		all.sort(Reflect.compare);
+		for (p in all) {
+			print(p);
 		}
 	}
 
