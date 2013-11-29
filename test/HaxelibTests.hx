@@ -7,7 +7,7 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
-		
+
 		r.run();
 	}
 }
