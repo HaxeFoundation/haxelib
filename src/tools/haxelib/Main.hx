@@ -168,6 +168,7 @@ class Main {
 		addCommand("local", local, "install the specified package locally", Development, false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		addCommand("git", git, "use git repository as library", Development);
+		addCommand("github", github, "use github repository as library", Development);
 		
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
@@ -1106,17 +1107,31 @@ class Main {
 
 	function git() {
 		var libName = param("Library name");
-		var rep = getRepository();
-		var proj = rep + Data.safe(libName);
-		var libPath = proj + "/git";
-
-		if( FileSystem.exists(libPath) )
-			deleteRec(libPath);
-
 		var gitPath = param("Git path");
 		var branch = paramOpt();
 		var subDir = paramOpt();
-
+		
+		installFromGit(libName, gitPath, branch, subDir);
+	}
+	
+	function github() {
+		var gitHubUser = param("GitHub user / organization");
+		var libName = param("Repository name");
+		var branch = paramOpt();
+		var subDir = paramOpt();
+		
+		var gitPath = "https://github.com/" + gitHubUser + "/" + libName;
+		installFromGit(libName, gitPath, branch, subDir);
+	}
+	
+	function installFromGit( libName:String, gitPath:String, branch:String, subDir:String ) {
+		var rep = getRepository();
+		var proj = rep + Data.safe(libName);
+		var libPath = proj + "/git";
+		
+		if( FileSystem.exists(libPath) )
+			deleteRec(libPath);
+			
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
 
