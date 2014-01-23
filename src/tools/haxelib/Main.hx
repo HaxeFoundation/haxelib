@@ -206,10 +206,15 @@ class Main {
 	function ask( question ) {
 		while( true ) {
 			Sys.print(question+" [y/n/a] ? ");
-			switch( Sys.stdin().readLine() ) {
-			case "n": return No;
-			case "y": return Yes;
-			case "a": return Always;
+			try {
+				switch( Sys.stdin().readLine() ) {
+				case "n": return No;
+				case "y": return Yes;
+				case "a": return Always;
+				}
+			} catch(e:haxe.io.Eof) {
+				Sys.println("n");
+				return No;
 			}
 		}
 		return null;
