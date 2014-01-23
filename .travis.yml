@@ -1,6 +1,7 @@
 language: node_js
 
 before_install:
+  - sudo apt-get update                                # run update before installing anything
   - sudo apt-get install python-software-properties -y # for the next command
   - sudo add-apt-repository ppa:eyecreate/haxe -y      # add the ubuntu ppa that contains neko
   - sudo apt-get update                                # pull info from ppa
