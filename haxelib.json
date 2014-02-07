@@ -5,7 +5,7 @@
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
-	"version": "3.1.0-rc.3",
-	"releasenote": "Fixed issues with `haxelib git` and `haxelib dev`.  Added `classPath` to haxelib JSON format. Small fixes.",
-	"contributors": ["back2dos", "ncannasse", "jason"]
+	"version": "3.1.0-rc.4",
+	"releasenote": "Fixed issue with trailing slashes in haxelib dev path",
+	"contributors": ["back2dos", "ncannasse", "jason", "Simn"]
 }
