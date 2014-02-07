@@ -1063,7 +1063,7 @@ class Main {
 			print("Development directory disabled");
 		}
 		else {
-			if ( dir.endsWith("/") || dir.endsWith("\\") ) {
+			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
 				dir = dir.substr(0,-1);
 			}
 			dir = FileSystem.fullPath(dir);
