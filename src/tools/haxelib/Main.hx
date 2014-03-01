@@ -701,9 +701,15 @@ class Main {
 		var haxepath = Sys.getEnv("HAXEPATH");
 		if( haxepath != null )
 			haxepath = Path.addTrailingSlash( haxepath );
-		var config_file;
-		if( win )
-			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
+		var config_file = null;
+		if( win ) {
+			var homeDrive = Sys.getEnv("HOMEDRIVE");
+			var homePath  = Sys.getEnv("HOMEPATH");
+			if (null == homeDrive && null == homePath)
+				print("Warning: Environment variables %HOMEDRIVE% and %HOMEPATH% are missing, using %HAXEPATH%");
+			else
+				config_file = homeDrive + homePath;
+		}
 		else
 			config_file = Sys.getEnv("HOME");
 		config_file += "/.haxelib";
