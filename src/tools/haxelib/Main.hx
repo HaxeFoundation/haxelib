@@ -881,7 +881,11 @@ class Main {
 				case "": //it is not a symlink
 					path;
 				case targetPath:
-					realPath(new Path(path).dir + "/" + targetPath);
+					if (targetPath.startsWith("/")) {
+						realPath(targetPath);
+					} else {
+						realPath(new Path(path).dir + "/" + targetPath);
+					}
 			}
 		}
 
