@@ -6,7 +6,7 @@ using StringTools;
 
 class HaxelibTests {
 	static function runCommand(cmd:String, args:Array<String>):Void {
-		Sys.println(cmd);
+		Sys.println('Command: $cmd $args');
 		var exitCode = Sys.command(cmd, args);
 		Sys.println('Command exited with $exitCode: $cmd $args');
 		if (exitCode != 0) {
