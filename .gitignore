@@ -5,3 +5,4 @@
 *.db
 server
 package
+test/libraries/*.zip

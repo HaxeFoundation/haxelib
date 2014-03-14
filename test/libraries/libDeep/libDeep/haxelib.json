@@ -1,0 +1,10 @@
+{
+	"name": "Deep",
+	"url" : "http://example.org",
+	"license": "Public",
+	"tags": ["deep", "test"],
+	"description": "This project's zip contains a folder that holds the lib.",
+	"version": "1.0.0",
+	"releasenote": "N/A",
+	"contributors": ["DeepAuthor", "AnotherGuy"]
+}

@@ -2,6 +2,9 @@ package tests;
 
 import haxe.ds.StringMap;
 import haxe.Json;
+import haxe.io.*;
+import haxe.zip.*;
+import sys.io.*;
 import tools.haxelib.Data;
 using StringTools;
 
@@ -46,15 +49,58 @@ class TestData extends haxe.unit.TestCase {
 	}
 	
 	public function testLocateBasePath() {
-		assertEquals( "", "" );
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		assertEquals( "", Data.locateBasePath(zip) );
+
+		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
+		assertEquals( "libDeep/", Data.locateBasePath(zip) );
 	}
 	
 	public function testReadDoc() {
-		assertEquals( "", "" );
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		assertEquals( null, Data.readDoc(zip) );
+
+		//TODO
 	}
 	
 	public function testReadInfos() {
-		assertEquals( "", "" );
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var info = Data.readInfos(zip, true);
+		assertEquals( "haxelib_client", info.project );
+		assertEquals( "GPL", info.license );
+
+		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
+		var info = Data.readInfos(zip, true);
+		assertEquals( "Deep", info.project );
+		assertEquals( "http://example.org", info.website );
+		assertEquals( "Public", info.license );
+		assertEquals( "deep, test", info.tags.join(", ") );
+		assertEquals( "This project's zip contains a folder that holds the lib.", info.desc );
+		assertEquals( "1.0.0", info.version );
+		assertEquals( "N/A", info.versionComments );
+		assertEquals( "DeepAuthor, AnotherGuy", info.developers.join(", ") );
+	}
+	
+	public function testCheckClassPath() {
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var info = Data.readInfos(zip, true);
+		var ok:Dynamic = try {
+			Data.checkClassPath(zip,info);
+			true;
+		} catch (e:Dynamic) {
+			e;
+		}
+		assertEquals( ok, true );
+		
+		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
+		var info = Data.readInfos(zip, true);
+		var ok:Dynamic = try {
+			Data.checkClassPath(zip,info);
+			true;
+		} catch (e:Dynamic) {
+			e;
+		}
+		assertEquals( ok, true );
 	}
 	
 	public function testReadDataWithCheck() {

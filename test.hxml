@@ -2,3 +2,4 @@
 -cp test
 -neko bin/test.n
 -main HaxelibTests
+-debug

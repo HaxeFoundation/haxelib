@@ -86,7 +86,12 @@ class Data {
 		return safe(lib)+"-"+safe(ver)+".zip";
 	}
 
-	public static function locateBasePath( zip : List<Entry> ) {
+	/**
+		Return the directory that contains *haxelib.json*.
+		If it is at the root, `""`.
+		If it is in a folder, the path including a trailing slash is returned.
+	*/
+	public static function locateBasePath( zip : List<Entry> ):String {
 		for( f in zip ) {
 			if( StringTools.endsWith(f.fileName,JSON) ) {
 				return f.fileName.substr(0,f.fileName.length - JSON.length);
