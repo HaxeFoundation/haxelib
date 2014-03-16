@@ -20,4 +20,4 @@ RewriteRule ^(.*)$ index.n/$1 [L]
 # Get our stuff gzipped
 
 SetOutputFilter DEFLATE
-AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/json application/javascript
