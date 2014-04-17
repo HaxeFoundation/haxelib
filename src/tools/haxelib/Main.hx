@@ -156,7 +156,7 @@ class Main {
 		addCommand("remove", remove, "remove a given library/version", Basic, false);
 		addCommand("list", list, "list all installed libraries", Basic, false);
 		addCommand("set", set, "set the current version for a library", Basic, false);
-		
+
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
 		addCommand("user", user, "list information on a given user", Information);
@@ -168,7 +168,7 @@ class Main {
 		addCommand("local", local, "install the specified package locally", Development, false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		addCommand("git", git, "use git repository as library", Development);
-		
+
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
@@ -716,7 +716,12 @@ class Main {
 			File.getContent("/etc/.haxelib")
 		catch( e : Dynamic ) {
 			if( setup ) {
-				(win ? haxepath : "/usr/lib/haxe/")+REPNAME;
+				(if (win)
+					haxepath;
+				else if (FileSystem.exists("/usr/share/haxe"))
+					"/usr/share/haxe";
+				else
+					"/usr/lib/haxe")+REPNAME;
 			} else if( win ) {
 				// Windows have a default directory (no need for setup)
 				if( haxepath == null )
@@ -903,7 +908,7 @@ class Main {
 				var haxepath =
 					if (win) Sys.getEnv("HAXEPATH");
 					else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
-				
+
 				if (haxepath == null)
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else
