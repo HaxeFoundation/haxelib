@@ -654,6 +654,11 @@ class Main {
 
 		// process dependencies
 		doInstallDependencies(infos.dependencies);
+
+		// New dependencies
+		if (infos.requirements != null) {
+			doInstallRequirements(infos.requirements);
+		}
 	}
 
 	function doInstallDependencies( dependencies:List<{ project: String, version : String }> )
@@ -663,6 +668,36 @@ class Main {
 			if( d.version == "" )
 				d.version = site.infos(d.project).curversion;
 			doInstall(d.project,d.version,false);
+		}
+	}
+
+	/**
+	 * Install all dependencies from haxelib.json's "requirements"
+	 * @param  requirements: Array<RequirementsInfos> All library's requirements (from "requirements" key) 
+	 */
+	function doInstallRequirements (requirements: Array<RequirementsInfos>) : Void
+	{
+		for (req in requirements.iterator()) {
+			// Type haxelib, download uses haxelib repository
+			if ("haxelib" == req.type) {
+				// Last version
+				if (null == req.version) {
+					req.version = site.infos(req.name).curversion;
+				}
+
+				doInstall(req.name, req.version, false);
+			}
+			// Git type, download from git
+			else if ("git" == req.type) {
+				if (null == req.package) {
+					throw ("You need to provide package's informations for a GIT repository");
+				}
+
+				doGit(req.name, req.package.path, req.package.branch, req.package.subdirectory, req.version);
+			}
+			else {
+				throw "Type " + req.type + " is not supported in requirements ('git' and 'haxelib' allowed)";
+			}
 		}
 	}
 
@@ -1129,6 +1164,20 @@ class Main {
 		var branch = paramOpt();
 		var subDir = paramOpt();
 
+		doGit(libName, gitPath, branch, subDir);
+	}
+
+	/**
+	 * Gets data from GIT repository
+	 * Called by "haxelib git" command and when parsing "requirements"
+	 * @param  libName:  String  Library's name
+	 * @param  gitPath:  String  Git project's path
+	 * @param  ?branch:  String  Branch to checkout
+	 * @param  ?subDir:  String  Subdirectory from the git repository to get
+	 * @param  ?version: String  Tag to checkout
+	 */
+	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version: String) : Void
+	{
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
 
