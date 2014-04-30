@@ -56,10 +56,10 @@ typedef GitPackageInfos = {
 }
 
 typedef RequirementsInfos = {
-	var name 			   : String; // Library's name
-	var type 			   : String; // Library's type (git | haxelib)
-	@:optional var version : String;
-	@:optional var package : GitPackageInfos; // Package's infos
+	var name 			      : String; // Library's name
+	var type 			      : String; // Library's type (git | haxelib)
+	@:optional var version    : String;
+	@:optional var repository : GitPackageInfos; // Package's infos
 }
 
 typedef Infos = {
@@ -234,13 +234,13 @@ class Data {
 											if ("type" == key) {
 												if (Std.string(value) != "git" || Std.string(value) != "haxelib") {
 													throw "Only git and haxelib types are allowed as requirements type";
-												} else if ("package" == key && Std.string(value) != "git") {
-													throw "Package entry can only be used by git libraries";
+												} else if ("repository" == key && Std.string(value) != "git") {
+													throw "Repository entry can only be used by git libraries";
 												}
 											}
 											else if ("version" == key) {
 												try {
-													SemVer.ofString(val);
+													SemVer.ofString(value);
 												} catch(e:String) {
 													throw 'Requirement $field has an invalid version `$value`.';
 												}
@@ -251,12 +251,13 @@ class Data {
 												switch Type.typeof(value) {
 													case TClass(String):
 														continue;
-													default: throw 'Package $f has an invalid datatype';
+													default: throw 'Repository $f has an invalid datatype';
 												}
 											}
 										default: throw "Invalid requirements structure";
 									}
 								}
+							default: throw "Invalid requirements structure";
 						}
 					}
 				default: throw "requirements must be defined as array";
@@ -301,6 +302,11 @@ class Data {
 			}
 		} catch(e:Dynamic) {}
 
+		var reqs = new Array<RequirementsInfos>();
+		try {
+			reqs = cast doc.requirements;
+		} catch (e: Dynamic) {}
+
 		var website = ( doc.url!=null ) ? Std.string(doc.url) : "";
 		var desc = ( doc.description!=null ) ? Std.string(doc.description) : "";
 		var version = try SemVer.ofString(Std.string(doc.version)).toString() catch (e:Dynamic) "0.0.0";
@@ -318,7 +324,8 @@ class Data {
 			classPath : classPath,
 			tags : tags,
 			developers : devs,
-			dependencies : deps
+			dependencies : deps,
+			requirements : reqs
 		};
 	}
 

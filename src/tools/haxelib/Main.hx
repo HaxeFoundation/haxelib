@@ -689,11 +689,11 @@ class Main {
 			}
 			// Git type, download from git
 			else if ("git" == req.type) {
-				if (null == req.package) {
-					throw ("You need to provide package's informations for a GIT repository");
+				if (null == req.repository) {
+					throw ("You need to provide repository's informations for a GIT repository");
 				}
 
-				doGit(req.name, req.package.path, req.package.branch, req.package.subdirectory, req.version);
+				doGit(req.name, req.repository.path, req.repository.branch, req.repository.subdirectory, req.version);
 			}
 			else {
 				throw "Type " + req.type + " is not supported in requirements ('git' and 'haxelib' allowed)";
@@ -1153,12 +1153,6 @@ class Main {
 
 	function git() {
 		var libName = param("Library name");
-		var rep = getRepository();
-		var proj = rep + Data.safe(libName);
-		var libPath = proj + "/git";
-
-		if( FileSystem.exists(libPath) )
-			deleteRec(libPath);
 
 		var gitPath = param("Git path");
 		var branch = paramOpt();
@@ -1178,6 +1172,13 @@ class Main {
 	 */
 	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version: String) : Void
 	{
+		var rep = getRepository();
+		var proj = rep + Data.safe(libName);
+		var libPath = proj + "/git";
+
+		if( FileSystem.exists(libPath) )
+			deleteRec(libPath);
+
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
 
@@ -1195,6 +1196,17 @@ class Main {
 				return;
 			}
 		}
+
+		if (version != null) {
+			var ret = command("git", ["checkout", "tags/" + version]);
+			if (ret.code != 0)
+			{
+				print('Could not checkout tag "$version": ' +ret.out);
+				deleteRec(libPath);
+				return;
+			}
+		}
+
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
 		Sys.setCwd(proj);
@@ -1202,6 +1214,16 @@ class Main {
 		File.saveContent(".dev", devPath);
 		print('Library $libName set to use git.');
 		if ( branch!=null ) print('  Branch/Tag/Rev: $branch');
+		
+		Sys.setCwd(libPath);
+		if (FileSystem.exists("haxelib.json")) {
+			var doc = Data.readData(File.getContent("haxelib.json"), false);
+
+			if (null != doc.requirements) {
+				doInstallRequirements(doc.requirements);
+			}
+		}
+
 		print('  Path: $devPath');
 	}
 
