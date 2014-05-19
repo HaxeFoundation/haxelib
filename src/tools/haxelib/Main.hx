@@ -1055,7 +1055,7 @@ class Main {
 				dir = Path.addTrailingSlash( dir + cp );
 			}
 			Sys.println(dir);
-			Sys.println("-D "+d.project);
+			Sys.println("-D " + d.project + "="+d.info.version);
 		}
 	}
 
