@@ -49,6 +49,19 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
+typedef GitPackageInfos = {
+	var path                    : String; // Link to the repository
+	@:optional var branch       : String; // Git branch
+	@:optional var subdirectory : String; // Folder in the repository that would normally be bundled and submitted to haxelib
+}
+
+typedef RequirementsInfos = {
+	var name 			      : String; // Library's name
+	var type 			      : String; // Library's type (git | haxelib)
+	@:optional var version    : String;
+	@:optional var repository : GitPackageInfos; // Package's infos
+}
+
 typedef Infos = {
 	var project : String;
 	var website : String;
@@ -60,6 +73,7 @@ typedef Infos = {
 	var developers : List<String>;
 	var tags : List<String>;
 	var dependencies : List<{ project : String, version : String }>;
+	@:optional var requirements : Array<RequirementsInfos>; // To not break compatibilities with libs with "dependencies" only
 }
 
 class Data {
@@ -204,6 +218,51 @@ class Data {
 			case TNull: throw 'no releasenote specified';
 			default: throw 'releasenote should be string';
 		}
+
+		if (doc.requirements) {
+			switch Type.typeof(doc.requirements) {
+				case TClass(Array): 
+					var requirements : Array<Dynamic> = doc.requirements;
+					for (req in requirements.iterator()) {
+						switch Type.typeof(req) {
+							case TObject: 
+								for (field in Reflect.fields(req)) {
+									var value = Reflect.field(req, field);
+									switch Type.typeof(value) {
+										case TClass(String):
+											var key = Std.string(field);
+											if ("type" == key) {
+												if (Std.string(value) != "git" || Std.string(value) != "haxelib") {
+													throw "Only git and haxelib types are allowed as requirements type";
+												} else if ("repository" == key && Std.string(value) != "git") {
+													throw "Repository entry can only be used by git libraries";
+												}
+											}
+											else if ("version" == key) {
+												try {
+													SemVer.ofString(value);
+												} catch(e:String) {
+													throw 'Requirement $field has an invalid version `$value`.';
+												}
+											}
+										case TObject:
+											for (f in Reflect.fields(value)) {
+												var val = Reflect.field(value, f);
+												switch Type.typeof(value) {
+													case TClass(String):
+														continue;
+													default: throw 'Repository $f has an invalid datatype';
+												}
+											}
+										default: throw "Invalid requirements structure";
+									}
+								}
+							default: throw "Invalid requirements structure";
+						}
+					}
+				default: throw "requirements must be defined as array";
+			}
+		}
 	}
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
@@ -243,6 +302,11 @@ class Data {
 			}
 		} catch(e:Dynamic) {}
 
+		var reqs = new Array<RequirementsInfos>();
+		try {
+			reqs = cast doc.requirements;
+		} catch (e: Dynamic) {}
+
 		var website = ( doc.url!=null ) ? Std.string(doc.url) : "";
 		var desc = ( doc.description!=null ) ? Std.string(doc.description) : "";
 		var version = try SemVer.ofString(Std.string(doc.version)).toString() catch (e:Dynamic) "0.0.0";
@@ -260,7 +324,8 @@ class Data {
 			classPath : classPath,
 			tags : tags,
 			developers : devs,
-			dependencies : deps
+			dependencies : deps,
+			requirements : reqs
 		};
 	}
 
