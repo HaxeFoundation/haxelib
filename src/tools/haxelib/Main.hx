@@ -654,6 +654,8 @@ class Main {
 
 		// process dependencies
 		doInstallDependencies(infos.dependencies);
+		
+		return infos;
 	}
 
 	function doInstallDependencies( dependencies:List<{ project: String, version : String }> )
@@ -869,8 +871,8 @@ class Main {
 		if (!updateByName(prj))
 			print(prj + " is up to date");
 	}
-
-	function updateSelf() {
+	
+	function rebuildSelf() {
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
 			return
@@ -891,12 +893,7 @@ class Main {
 					}
 			}
 		}
-
-		if (updateByName('haxelib_client'))
-			print("Haxelib successfully updated.");
-		else
-			print("Haxelib was already up to date...");
-
+		
 		switch tryBuild() {
 			case None:
 				var win = Sys.systemName() == "Windows";
@@ -938,6 +935,17 @@ class Main {
 			case Some(error):
 				throw 'Error compiling haxelib client: $error';
 		}
+		
+	}
+	
+	function updateSelf() {
+		
+		if (updateByName('haxelib_client'))
+			print("Haxelib successfully updated.");
+		else
+			print("Haxelib was already up to date...");				
+		
+		rebuildSelf();
 	}
 
 	function deleteRec(dir) {
@@ -1191,9 +1199,12 @@ class Main {
 
 	function local() {
 		var file = param("Package");
-		doInstallFile(file,true,true);
+		if (doInstallFile(file, true, true).project == 'haxelib_client') 
+			if (ask('You have updated haxelib. Do you wish to rebuild it?') != No) {
+				rebuildSelf();
+			}
 	}
-
+ 
 	function command( cmd:String, args:Array<String> ) {
 		var p = new sys.io.Process(cmd, args);
 		var code = p.exitCode();
