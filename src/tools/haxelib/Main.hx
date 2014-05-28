@@ -1079,13 +1079,16 @@ class Main {
 				dir = dir.substr(0,-1);
 			}
 			dir = FileSystem.fullPath(dir);
-			try {
-				File.saveContent(devfile, dir);
-				print("Development directory set to "+dir);
-			}
-			catch (e:Dynamic) {
-				print('Could not write to $devfile');
-			}
+			if (!FileSystem.exists(dir))
+				print('Directory $dir does not exist');
+			else
+				try {
+					File.saveContent(devfile, dir);
+					print("Development directory set to "+dir);
+				}
+				catch (e:Dynamic) {
+					print('Could not write to $devfile');
+				}
 
 		}
 	}
