@@ -207,7 +207,12 @@ class Data {
 	}
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
-		var doc = try Json.parse(jsondata) catch( e : Dynamic ) {};
+		var doc = 
+			try Json.parse(jsondata) 
+			catch ( e : Dynamic ) 
+				if (check)
+					throw 'JSON parse error: $e';
+				else {}
 		
 		if( check )
 			doCheck(doc);
