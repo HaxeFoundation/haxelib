@@ -1025,7 +1025,8 @@ class Main {
 			if( p.project == prj ) {
 				if( p.version == version )
 					return;
-				throw "Library "+prj+" has two version included "+version+" and "+p.version;
+				else
+					l.remove(p); // keep the last given version only
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		var inf = Data.readData(json,false);
