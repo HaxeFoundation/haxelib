@@ -162,7 +162,7 @@ class Main {
 		addCommand("user", user, "list information on a given user", Information);
 		addCommand("config", config, "print the repository path", Information, false);
 		addCommand("path", path, "give paths to libraries", Information, false);
-		addCommand("where", where, "give path to library", Information, false);
+		addCommand("where", where, "give paths to libraries", Information, false);
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
@@ -1011,8 +1011,8 @@ class Main {
 		File.saveContent(pdir+"/.current",version);
 		print("Library "+prj+" current version is now "+version);
 	}
-
-	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }>, dependencies=true ) {
+	
+	function getDir( prj : String, version : String ):{ vdir:String, version:String } {
 		var pdir = getRepository() + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
@@ -1022,6 +1022,15 @@ class Main {
 			vdir = getDev(pdir);
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
+		
+		return { vdir: vdir, version: version };
+	}
+	
+	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
+		var dir = getDir(prj, version);
+		var vdir = dir.vdir;
+		var version = dir.version;
+		
 		for( p in l )
 			if( p.project == prj ) {
 				if( p.version == version )
@@ -1032,10 +1041,9 @@ class Main {
 		var inf = Data.readData(json,false);
 		l.add({ project : prj, version : version, info: inf });
 		
-		if( dependencies )
-			for( d in inf.dependencies )
-				if( !Lambda.exists(l, function(e) return e.project == d.project) )
-					checkRec(d.project,if( d.version == "" ) null else d.version,l);
+		for( d in inf.dependencies )
+			if( !Lambda.exists(l, function(e) return e.project == d.project) )
+				checkRec(d.project,if( d.version == "" ) null else d.version,l);
 	}
 
 	function path() {
@@ -1079,17 +1087,8 @@ class Main {
 		var list = new List();
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
-			checkRec(a[0],a[1],list, false);
-		}
-		var rep = getRepository();
-		for( d in list ) {
-			var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
-			var dir = rep + pdir;
-			try {
-				dir = getDev(rep+Data.safe(d.project));
-				dir = Path.addTrailingSlash(dir);
-				pdir = dir;
-			} catch( e : Dynamic ) {}
+			var dir = getDir(a[0], a[1]).vdir;
+			dir = Path.addTrailingSlash(dir);
 			Sys.println(dir);
 		}
 	}
