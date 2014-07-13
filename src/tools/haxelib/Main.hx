@@ -375,17 +375,16 @@ class Main {
 		var data = File.getBytes(file);
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
 		var infos = Data.readInfos(zip,true);
-		Data.checkClassPath(zip,infos);
-		var user:String;
-		if( infos.developers.length==1 ) {
-			user = infos.developers.first();
-		}
-		else {
+		Data.checkClassPath(zip, infos);
+		
+		var user:String = infos.contributors[0];
+		
+		if (infos.contributors.length > 1)
 			do {
-				print("Which of these users are you: " + infos.developers);
+				print("Which of these users are you: " + infos.contributors);
 				user = param("User");
-			} while ( !Lambda.has(infos.developers, user) );
-		}
+			} while ( !Lambda.has(infos.contributors, user) );
+			
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
@@ -398,11 +397,11 @@ class Main {
 				password = Md5.encode(param("Password",true));
 			}
 		}
-		site.checkDeveloper(infos.project,user);
+		site.checkDeveloper(infos.name,user);
 
 		// check dependencies validity
 		for( d in infos.dependencies ) {
-			var infos = site.infos(d.project);
+			var infos = site.infos(d.name);
 			if( d.version == "" )
 				continue;
 			var found = false;
@@ -412,12 +411,12 @@ class Main {
 					break;
 				}
 			if( !found )
-				throw "Library "+d.project+" does not have version "+d.version;
+				throw "Library " + d.name + " does not have version " + d.version;
 		}
 
 		// check if this version already exists
 
-		var sinfos = try site.infos(infos.project) catch( _ : Dynamic ) null;
+		var sinfos = try site.infos(infos.name) catch( _ : Dynamic ) null;
 		if( sinfos != null )
 			for( v in sinfos.versions )
 				if( v.name == infos.version.toString() && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
@@ -606,7 +605,7 @@ class Main {
 		f.close();
 		var infos = Data.readInfos(zip,false);
 		// create directories
-		var pdir = getRepository() + Data.safe(infos.project);
+		var pdir = getRepository() + Data.safe(infos.name);
 		safeDir(pdir);
 		pdir += "/";
 		var target = pdir + Data.safe(infos.version.toString());
@@ -660,13 +659,13 @@ class Main {
 		return infos;
 	}
 
-	function doInstallDependencies( dependencies:List<{ project: String, version : String }> )
+	function doInstallDependencies( dependencies:Array<Dependency> )
 	{
 		for( d in dependencies ) {
-			print("Installing dependency "+d.project+" "+d.version);
+			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
-				d.version = site.infos(d.project).curversion;
-			doInstall(d.project,d.version,false);
+				d.version = site.infos(d.name).curversion;
+			doInstall(d.name,d.version,false);
 		}
 	}
 
@@ -1028,8 +1027,8 @@ class Main {
 		var inf = Data.readData(json,false);
 		l.add({ project : prj, version : version, info: inf });
 		for( d in inf.dependencies )
-			if( !Lambda.exists(l, function(e) return e.project == d.project) )
-				checkRec(d.project,if( d.version == "" ) null else d.version,l);
+			if( !Lambda.exists(l, function(e) return e.project == d.name) )
+				checkRec(d.name,if( d.version == "" ) null else d.version,l);
 	}
 
 	function path() {
@@ -1186,22 +1185,27 @@ class Main {
 		Sys.setCwd(vdir);
 		
 		var cmd = 
-			switch try Data.readData(File.getContent(vdir + '/haxelib.json'), false) catch (e:Dynamic) null {
-				case null | { main: null } :
+			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), true), null] catch (e:Dynamic) [null, e] {
+				case [null, e]:
+					throw 'Error parsing haxelib.json for $project@$version: $e';
+				case [{ main: null }, _]:
 					if( !FileSystem.exists('$vdir/run.n') )
 						throw 'Library $project version $version does not have a run script';
 					"neko run.n";
-				case { main: cls, dependencies: _.array() => deps }:
-					deps.push( { project: project, version: '' } );
-					var args = [for (d in deps) '-lib ${d.project}' + if (d.version == '') '' else ':${d.version}'];
+				case [{ main: cls, dependencies: deps }, _]:
+					deps = switch deps { case null: []; default: deps.copy(); };
+					deps.push( { name: project, version: '' } );
+					var args = [for (d in deps) '-lib ${d.name}' + if (d.version == '') '' else ':${d.version}'];
 					args.unshift('haxe');
 					args.push('--run');
 					args.push(cls);
 					args.join(' ');
+				default: throw 'assert';
 			}
 		
 		for (i in argcur...args.length)
 			cmd += " "+escapeArg(args[i]);
+		
 		Sys.putEnv("HAXELIB_RUN", "1");
 		Sys.exit(Sys.command(cmd));
 	}
@@ -1214,7 +1218,7 @@ class Main {
 
 	function local() {
 		var file = param("Package");
-		if (doInstallFile(file, true, true).project == 'haxelib_client') 
+		if (doInstallFile(file, true, true).name == 'haxelib_client') 
 			if (ask('You have updated haxelib. Do you wish to rebuild it?') != No) {
 				rebuildSelf();
 			}

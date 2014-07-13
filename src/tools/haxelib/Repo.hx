@@ -135,7 +135,7 @@ class Repo implements SiteApi {
 		if( u == null || u.pass != pass )
 			throw "Invalid username or password";
 
-		var devs = infos.developers.map(function(user) {
+		var devs = infos.contributors.map(function(user) {
 			var u = User.manager.search({ name : user }).first();
 			if( u == null )
 				throw "Unknown user '"+user+"'";
@@ -145,14 +145,14 @@ class Repo implements SiteApi {
 		var tags = Lambda.array(infos.tags);
 		tags.sort(Reflect.compare);
 
-		var p = Project.manager.search({ name : infos.project }).first();
+		var p = Project.manager.search({ name : infos.name }).first();
 
 		// create project if needed
 		if( p == null ) {
 			p = new Project();
-			p.name = infos.project;
-			p.description = infos.desc;
-			p.website = infos.website;
+			p.name = infos.name;
+			p.description = infos.description;
+			p.website = infos.url;
 			p.license = infos.license;
 			p.owner = u;
 			p.insert();
@@ -185,11 +185,11 @@ class Repo implements SiteApi {
 		var curtags = otags.map(function(t) return t.tag).join(":");
 
 		// update public infos
-		if( infos.desc != p.description || p.website != infos.website || p.license != infos.license || pdevs.length != devs.length || tags.join(":") != curtags ) {
+		if( infos.description != p.description || p.website != infos.url || p.license != infos.license || pdevs.length != devs.length || tags.join(":") != curtags ) {
 			if( u.id != p.owner.id )
 				throw "Only project owner can modify project infos";
-			p.description = infos.desc;
-			p.website = infos.website;
+			p.description = infos.description;
+			p.website = infos.url;
 			p.license = infos.license;
 			p.update();
 			if( pdevs.length != devs.length ) {
@@ -259,7 +259,7 @@ class Repo implements SiteApi {
 		// update existing version
 		if( current != null ) {
 			current.documentation = doc;
-			current.comments = infos.versionComments;
+			current.comments = infos.releasenote;
 			current.update();
 			return "Version "+current.name+" (id#"+current.id+") updated";
 		}
@@ -273,7 +273,7 @@ class Repo implements SiteApi {
 		v.preview = semVer.preview;
 		v.previewNum = semVer.previewNum;
 		
-		v.comments = infos.versionComments;
+		v.comments = infos.releasenote;
 		v.downloads = 0;
 		v.date = Date.now().toString();
 		v.documentation = doc;
