@@ -419,7 +419,7 @@ class Main {
 		var sinfos = try site.infos(infos.name) catch( _ : Dynamic ) null;
 		if( sinfos != null )
 			for( v in sinfos.versions )
-				if( v.name == infos.version.toString() && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
+				if( v.name == infos.version && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
@@ -608,7 +608,7 @@ class Main {
 		var pdir = getRepository() + Data.safe(infos.name);
 		safeDir(pdir);
 		pdir += "/";
-		var target = pdir + Data.safe(infos.version.toString());
+		var target = pdir + Data.safe(infos.version);
 		safeDir(target);
 		target += "/";
 
@@ -644,7 +644,7 @@ class Main {
 
 		// set current version
 		if( setcurrent || !FileSystem.exists(pdir+".current") ) {
-			File.saveContent(pdir + ".current", infos.version.toString());
+			File.saveContent(pdir + ".current", infos.version);
 			print("  Current version is now "+infos.version);
 		}
 

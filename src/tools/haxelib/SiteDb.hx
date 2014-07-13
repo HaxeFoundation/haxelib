@@ -85,16 +85,16 @@ class Version extends Object {
 	@:nullable public var preview : SEnum<SemVer.Preview>;
 	public var previewNum : SNull<Int>;
 	@:skip public var name(get, never):String;
-	function get_name() return toSemver().toString();
+	function get_name():String return toSemver();
 	
 	public function toSemver():SemVer {
-		return new SemVer(
-			major,
-			minor,
-			patch,
-			preview,
-			previewNum
-		);
+		return {
+			major: this.major,
+			minor: this.minor,
+			patch: this.patch,
+			preview: this.preview,
+			previewNum: this.previewNum,
+		}
 	}
 	public var date : String; // sqlite does not have a proper 'date' type
 	public var comments : String;

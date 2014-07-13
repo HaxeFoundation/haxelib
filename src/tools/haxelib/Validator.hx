@@ -1,5 +1,7 @@
 package tools.haxelib;
 
+import haxe.ds.Option;
+
 #if macro
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -7,6 +9,10 @@ import haxe.macro.Context;
 
 using haxe.macro.Tools;
 #end
+
+typedef Validatable = {
+	function validate():Option<{ error: String }>;
+}
 
 class Validator {
 	#if macro
@@ -77,8 +83,15 @@ class Validator {
 						}
 					];
 					
-					//throw options;
-					macro if (!Lambda.has($a{options}, $IARG)) throw 'Invalid value ' + $IARG + ' for '+$v{a.name};
+					macro if (!Lambda.has($a { options }, $IARG)) throw 'Invalid value ' + $IARG + ' for ' + $v { a.name };
+					
+				case TAbstract(_.get() => a, _):
+					
+					macro @:pos(pos) switch ($IARG : tools.haxelib.Validator.Validatable).validate() {
+						case Some( { error: e } ): throw e;
+						case None:
+					}
+					
 				default: 
 					
 					throw t.toString();

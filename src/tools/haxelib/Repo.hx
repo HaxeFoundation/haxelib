@@ -55,14 +55,17 @@ class Repo implements SiteApi {
 		if( p == null )
 			throw "No such Project : "+project;
 		var vl = Version.manager.search($project == p.id);
-		var versions = new Array();
-		for( v in vl )
-			versions.push({ name : v.toSemver().toString(), comments : v.comments, date : v.date });
+		
 		return {
 			name : p.name,
-			curversion : if( p.version == null ) null else p.version.toSemver().toString(),
+			curversion : if( p.version == null ) null else p.version.toSemver(),
 			desc : p.description,
-			versions : versions,
+			versions: 
+				[for ( v in vl ) {
+					name : v.toSemver(), 
+					comments : v.comments, 
+					date : v.date
+				}],
 			owner : p.owner.name,
 			website : p.website,
 			license : p.license,
@@ -281,7 +284,7 @@ class Repo implements SiteApi {
 
 		p.version = v;
 		p.update();
-		return "Version " + v.toSemver().toString() + " (id#" + v.id + ") added";
+		return "Version " + v.toSemver() + " (id#" + v.id + ") added";
 	}
 
 	public function postInstall( project : String, version : String ) {

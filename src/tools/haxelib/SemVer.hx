@@ -1,5 +1,7 @@
 package tools.haxelib;
 
+import haxe.ds.Option;
+
 using Std;
 
 enum Preview {
@@ -8,51 +10,105 @@ enum Preview {
 	RC;	
 }
 
-
-class SemVer {
-	public var major:Int;
-	public var minor:Int;	
-	public var patch:Int;
-	public var preview:Null<Preview>;
-	public var previewNum:Null<Int>;
-	public function new(major, minor, patch, ?preview, ?previewNum) {
-		this.major = major;
-		this.minor = minor;
-		this.patch = patch;
-		this.preview = preview;
-		this.previewNum = previewNum;
-	}
+abstract SemVer(String) to String {
 	
-	public function toString():String {
-		var ret = '$major.$minor.$patch';
-		if (preview != null) {
-			ret += '-' + preview.getName().toLowerCase();
-			if (previewNum != null) 
-				ret += '.' + previewNum;
+	public var major(get, never):Int;
+	public var minor(get, never):Int;	
+	public var patch(get, never):Int;
+	public var preview(get, never):Null<Preview>;
+	public var previewNum(get, never):Null<Int>;	
+	public var data(get, never):SemVerData;
+	public var valid(get, never):Bool;		
+	
+	inline function new(s) this = s;
+	
+	@:to function toValidatable():Validator.Validatable 
+		return {
+			validate: 
+				function ():Option<{ error: String }>
+					return
+						try { 
+							get_data(); 
+							None; 
+						}
+						catch (e:Dynamic) 
+							Some({ 
+								error: Std.string(e) 
+							})			
 		}
-		return ret;
-	}
-	static var parse = ~/^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
 	
-	static public function ofString(s:String):SemVer 
+	inline function get_major()
+		return data.major;
+		
+	inline function get_minor()
+		return data.minor;
+		
+	inline function get_patch()
+		return data.patch;
+		
+	inline function get_preview()
+		return data.preview;
+		
+	inline function get_previewNum()
+		return data.previewNum;		
+		
+	inline function get_valid()
+		return this != null && FORMAT.match(this.toLowerCase());
+	
+	static var FORMAT = ~/^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
+	
+	static var cache = new Map();
+	
+	@:to function get_data():SemVerData {
+		if (!cache.exists(this))
+			cache[this] = getData();
+		return cache[this];
+	}
+	
+	@:from static function fromData(data:SemVerData)
+		return 
+			new SemVer(
+				data.major + '.' + data.minor + '.' + data.patch + 
+					if (data.preview == null) ''
+					else '-' + data.preview +
+						if (data.previewNum == null) '';
+						else '.' + data.previewNum
+			);
+	
+	function getData():SemVerData 
 		return
-			if (s!=null && parse.match(s.toLowerCase())) 
-				new SemVer(
-					parse.matched(1).parseInt(),
-					parse.matched(2).parseInt(),
-					parse.matched(3).parseInt(),
-					switch parse.matched(5) {
+			if (valid) {//RAPTORS: This query will already cause the matching.
+				major: FORMAT.matched(1).parseInt(),
+				minor: FORMAT.matched(2).parseInt(),
+				patch: FORMAT.matched(3).parseInt(),
+				preview: 
+					switch FORMAT.matched(5) {
 						case 'alpha': ALPHA;
 						case 'beta': BETA;
 						case 'rc': RC;
 						case v if (v == null): null;
 						case v: throw 'unrecognized preview tag $v';
 					},
-					switch parse.matched(7) {
+				previewNum:
+					switch FORMAT.matched(7) {
 						case v if (v == null): null;
 						case v: v.parseInt();
 					}
-				)
+			}
 			else 
-				throw '$s is not a valid version string';//TODO: include some URL for reference
+				throw '$this is not a valid version string';//TODO: include some URL for reference	
+	
+	static public function ofString(s:String) {
+		var ret = new SemVer(s);
+		ret.getData();
+		return ret;
+	}
+}
+
+typedef SemVerData =  {
+	major:Int,
+	minor:Int,
+	patch:Int,
+	preview:Null<Preview>,
+	previewNum:Null<Int>,
 }

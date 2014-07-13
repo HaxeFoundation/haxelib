@@ -67,7 +67,7 @@ typedef Infos = {
 	var url : String;
 	var description : String;
 	var license : License;
-	var version : String;
+	var version : SemVer;
 	@:optional var classPath : String;
 	var releasenote : String;
 	var contributors : Array<String>;
@@ -166,7 +166,7 @@ class Data {
 				else {
 					name : 'unknown',
 					url : '',
-					version : '0.0.0',
+					version : SemVer.ofString('0.0.0'),
 					releasenote: 'No haxelib.json found',
 					license: Mit,
 					description: 'No haxelib.json found',
