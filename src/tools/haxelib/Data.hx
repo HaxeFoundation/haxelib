@@ -50,10 +50,15 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
+@:enum abstract DependencyType(String) {
+	var Haxelib = null;
+	var Git = 'git';
+}
+
 typedef Dependency = {
 	name : String, 
 	?version : String,
-	?type: String, //this should be an @:enum abstract,
+	?type: DependencyType, //this should be an @:enum abstract,
 	?url: String,
 }
 
@@ -61,7 +66,7 @@ typedef Infos = {
 	var name : String;
 	var url : String;
 	var description : String;
-	var license : String;
+	var license : License;
 	var version : String;
 	@:optional var classPath : String;
 	var releasenote : String;
@@ -71,6 +76,14 @@ typedef Infos = {
 	@:optional var main:String;
 }
 
+@:enum abstract License(String) to String {
+	var Gpl = 'GPL';
+	var Lgpl = 'LGPL';
+	var Mit = 'MIT';
+	var Bsd = 'BSD';
+	var Public = 'Public';
+}
+
 class Data {
 
 	public static var JSON = "haxelib.json";
@@ -78,7 +91,6 @@ class Data {
 	public static var DOCXML = "haxedoc.xml";
 	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
-	static var LICENSES = ["GPL","LGPL","BSD","Public","MIT"];
 	static var RESERVED_NAMES = ["haxe","all"];
 
 	public static function safe( name : String ) {
@@ -156,7 +168,7 @@ class Data {
 					url : '',
 					version : '0.0.0',
 					releasenote: 'No haxelib.json found',
-					license: 'MIT',
+					license: Mit,
 					description: 'No haxelib.json found',
 					contributors: [],
 				}

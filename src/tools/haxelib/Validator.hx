@@ -66,8 +66,22 @@ class Validator {
 						for ($IARG in $IARG)
 							${doCheck(p, IARG)};
 					}
+				
+				case TAbstract(_.get() => a, _) if (a.meta.has(':enum')):
+					var name = a.module + '.' + a.name;
+					var options:Array<Expr> = [for (f in a.impl.get().statics.get()) 
+						switch f.kind {
+							case FVar(_, _):
+								macro @:pos(pos) $p{(name+'.'+f.name).split('.')};
+							default: //skip
+						}
+					];
 					
-				default: throw t.toString();
+					//throw options;
+					macro if (!Lambda.has($a{options}, $IARG)) throw 'Invalid value ' + $IARG + ' for '+$v{a.name};
+				default: 
+					
+					throw t.toString();
 			}
 	#end		
 	macro static public function validate(e:Expr) 
