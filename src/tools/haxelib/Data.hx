@@ -60,6 +60,7 @@ typedef Infos = {
 	var developers : List<String>;
 	var tags : List<String>;
 	var dependencies : List<{ project : String, version : String }>;
+	@:optional var main:String;
 }
 
 class Data {
@@ -265,7 +266,8 @@ class Data {
 			classPath : classPath,
 			tags : tags,
 			developers : devs,
-			dependencies : deps
+			dependencies : deps,
+			main: doc.main,
 		};
 	}
 

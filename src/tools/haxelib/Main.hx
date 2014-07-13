@@ -25,12 +25,14 @@ import haxe.crypto.Md5;
 import haxe.*;
 import haxe.io.Path;
 import haxe.zip.Reader;
+import sys.io.File;
 import tools.haxelib.Data;
 import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
 
 using StringTools;
+using Lambda;
 
 enum Answer {
 	Yes;
@@ -1178,14 +1180,27 @@ class Main {
 		pdir += "/";
 		var version = temp[1] != null ? temp[1] : getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
-		var vdir = dev!=null ? dev : pdir + Data.safe(version);
-		var rdir = vdir + "/run.n";
-		if( !FileSystem.exists(rdir) )
-			throw "Library "+project+" version "+version+" does not have a run script";
+		var vdir = dev != null ? dev : pdir + Data.safe(version);
+		
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
-		var cmd = "neko run.n";
-		for( i in argcur...args.length )
+		
+		var cmd = 
+			switch try Data.readData(File.getContent(vdir + '/haxelib.json'), false) catch (e:Dynamic) null {
+				case null | { main: null } :
+					if( !FileSystem.exists('$vdir/run.n') )
+						throw 'Library $project version $version does not have a run script';
+					"neko run.n";
+				case { main: cls, dependencies: _.array() => deps }:
+					deps.push( { project: project, version: '' } );
+					var args = [for (d in deps) '-lib ${d.project}' + if (d.version == '') '' else ':${d.version}'];
+					args.unshift('haxe');
+					args.push('--run');
+					args.push(cls);
+					args.join(' ');
+			}
+		
+		for (i in argcur...args.length)
 			cmd += " "+escapeArg(args[i]);
 		Sys.putEnv("HAXELIB_RUN", "1");
 		Sys.exit(Sys.command(cmd));
