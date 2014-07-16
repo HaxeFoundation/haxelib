@@ -1189,17 +1189,11 @@ class Main {
 			throw "Library "+project+" version "+version+" does not have a run script";
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
-		var cmd = "neko run.n";
+		var nekoArgs = [ "run.n" ];
 		for( i in argcur...args.length )
-			cmd += " "+escapeArg(args[i]);
+			nekoArgs.push(args[i]);
 		Sys.putEnv("HAXELIB_RUN", "1");
-		Sys.exit(Sys.command(cmd));
-	}
-
-	function escapeArg( a : String ) {
-		if( a.indexOf(" ") == -1 )
-			return a;
-		return '"'+a+'"';
+ 		Sys.exit(Sys.command("neko", nekoArgs));
 	}
 
 	function local() {
