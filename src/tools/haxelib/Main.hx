@@ -1189,36 +1189,35 @@ class Main {
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
 		
-		var cmd = 
+		var callArgs = 
 			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), true), null] catch (e:Dynamic) [null, e] {
 				case [null, e]:
 					throw 'Error parsing haxelib.json for $project@$version: $e';
 				case [{ main: null }, _]:
 					if( !FileSystem.exists('$vdir/run.n') )
 						throw 'Library $project version $version does not have a run script';
-					"neko run.n";
+					["neko", "run.n"];
 				case [{ main: cls, dependencies: deps }, _]:
 					deps = switch deps { case null: []; default: deps.copy(); };
 					deps.push( { name: project, version: '' } );
-					var args = [for (d in deps) '-lib ${d.name}' + if (d.version == '') '' else ':${d.version}'];
+					var args = [];
+					for (d in deps) {
+						args.push('-lib');
+						args.push(d.name + if (d.version == '') '' else ':${d.version}');
+					}
 					args.unshift('haxe');
 					args.push('--run');
 					args.push(cls);
-					args.join(' ');
+					args;
 				default: throw 'assert';
 			}
 		
 		for (i in argcur...args.length)
-			cmd += " "+escapeArg(args[i]);
+			callArgs.push(args[i]);
 		
 		Sys.putEnv("HAXELIB_RUN", "1");
-		Sys.exit(Sys.command(cmd));
-	}
-
-	function escapeArg( a : String ) {
-		if( a.indexOf(" ") == -1 )
-			return a;
-		return '"'+a+'"';
+		var cmd = callArgs.shift();
+ 		Sys.exit(Sys.command(cmd, callArgs));
 	}
 
 	function local() {
