@@ -188,7 +188,8 @@ class Data {
 		
 		if (doc.dependencies == null)
 			doc.dependencies = [];//TODO: since the field is actually @:optional it might be better to handle nullness instead
-			
+		if (doc.classPath == null)
+			doc.classPath = '';
 		return doc;	
 	}
 }
