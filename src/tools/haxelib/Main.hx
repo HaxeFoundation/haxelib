@@ -665,7 +665,13 @@ class Main {
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
 				d.version = site.infos(d.name).curversion;
-			doInstall(d.name,d.version,false);
+			
+			switch d.type {
+				case Haxelib:
+					doInstall(d.name, d.version, false);
+				case Git:
+					doGit(d.name, d.url, d.branch, d.subDir, d.version);
+			}
 		}
 	}
 
@@ -1133,18 +1139,22 @@ class Main {
 		print("Could not execute git, please make sure it is installed and available in your PATH.");
 	}
 
-	function git() {
-		var libName = param("Library name");
+	function git() 
+		doGit(
+			param("Library name"),
+			param("Git path"),
+			paramOpt(),
+			paramOpt(),
+			paramOpt()
+		);
+	
+	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
 		var libPath = proj + "/git";
 
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
-
-		var gitPath = param("Git path");
-		var branch = paramOpt();
-		var subDir = paramOpt();
 
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
@@ -1163,14 +1173,37 @@ class Main {
 				return;
 			}
 		}
+		
+		if (version != null) {
+			var ret = command("git", ["checkout", "tags/" + version]);
+			if (ret.code != 0)
+			{
+				print('Could not checkout tag "$version": ' +ret.out);
+				deleteRec(libPath);
+				return;
+			}
+		}
+		
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
 		Sys.setCwd(proj);
+		
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
+		
 		print('Library $libName set to use git.');
-		if ( branch!=null ) print('  Branch/Tag/Rev: $branch');
+		
+		if ( branch != null ) 
+			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
+		
+		Sys.setCwd(libPath);
+		
+		if (FileSystem.exists("haxelib.json")) 
+			doInstallDependencies(
+				Data.readData(File.getContent("haxelib.json"), false).dependencies
+			);
+		
 	}
 
 	function run() {

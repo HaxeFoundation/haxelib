@@ -60,6 +60,8 @@ typedef Dependency = {
 	?version : String,
 	?type: DependencyType, //this should be an @:enum abstract,
 	?url: String,
+	?subDir: String,
+	?branch: String,
 }
 
 typedef Infos = {
