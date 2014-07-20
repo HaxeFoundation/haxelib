@@ -53,7 +53,7 @@ abstract SemVer(String) to String {
 		return data.previewNum;		
 		
 	inline function get_valid()
-		return this != null && FORMAT.match(this.toLowerCase());
+		return isValid(this);
 	
 	static var FORMAT = ~/^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
 	
@@ -70,7 +70,7 @@ abstract SemVer(String) to String {
 			new SemVer(
 				data.major + '.' + data.minor + '.' + data.patch + 
 					if (data.preview == null) ''
-					else '-' + data.preview +
+					else '-' + data.preview.getName().toLowerCase() +
 						if (data.previewNum == null) '';
 						else '.' + data.previewNum
 			);
@@ -91,18 +91,23 @@ abstract SemVer(String) to String {
 					},
 				previewNum:
 					switch FORMAT.matched(7) {
-						case v if (v == null): null;
+						case null: null;
 						case v: v.parseInt();
 					}
 			}
 			else 
 				throw '$this is not a valid version string';//TODO: include some URL for reference	
 	
+	static public function isValid(s:String)
+		return Std.is(s, String) && FORMAT.match(s.toLowerCase());
+				
 	static public function ofString(s:String) {
 		var ret = new SemVer(s);
 		ret.getData();
 		return ret;
 	}
+	
+	static public var DEFAULT(default, null) = new SemVer('0.0.0');
 }
 
 typedef SemVerData =  {

@@ -38,8 +38,14 @@ class Validator {
 	
 	function enforce(type:String)
 		return 
-			macro @:pos(pos) Std.is($i{ARG}, $i{type});
-		
+			macro @:pos(pos) if (!Std.is($i{ARG}, $i{type})) throw '$type expected';
+	
+	function rename(e:Expr) 
+		return switch e {
+			case macro $i{name} if (name == '_'): IARG;
+			default: e.map(rename);
+		}
+			
 	function makeCheck(t:Type):Expr 
 		return
 			switch Context.follow(t) {
@@ -50,6 +56,42 @@ class Validator {
 							case FVar(AccNormal, _):
 								var name = f.name;
 								var rec = doCheck(f.type, macro @:pos(pos) $IARG.$name);
+								
+								if (f.meta.has(':requires')) {
+									var body = [];
+									for (m in f.meta.get()) 
+										if (m.name == ':requires')
+											for (p in m.params) 
+												switch p {
+													case macro $msg => $p:
+														body.push(rename(
+															macro @:pos(pos) if (!$p) throw $msg
+														));
+													default: 
+														Context.error('Should be "<message>" =>" <condition>', p.pos);	
+												}
+											//{
+												//p = rename(p);
+												//cond = macro @:pos(pos) $p && $cond;
+											//}
+									
+									var t = f.type.toComplexType();
+									rec = macro @:pos(pos) {
+										$rec;
+										(function($ARG : $t) $b{body})($IARG.$name);
+									}
+								}								
+								
+								if (f.meta.has(':optional')) {
+									rec = macro @:pos(pos) if (Reflect.hasField($IARG, $v{name}) && $IARG.$name != null) $rec;
+								}
+								else
+									rec = macro @:pos(pos) 
+										if (!Reflect.hasField($IARG, $v{name})) 
+											throw ("missing field " + $v{name});
+										else 
+											$rec;
+								
 								rec;
 							default: //skip
 						}

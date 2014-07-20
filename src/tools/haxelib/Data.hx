@@ -20,9 +20,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 package tools.haxelib;
+import haxe.ds.Option;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
+import tools.haxelib.Validator;
 
 using StringTools;
 
@@ -50,6 +52,25 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
+abstract DependencyVersion(String) to String {
+	inline function new(s:String) 
+		this = s;
+	
+	@:to function toValidatable():Validatable
+		return {
+			validate : function () return 
+				if (this == '') 
+					None
+				else 
+					@:privateAccess new SemVer(this).toValidatable().validate()//not exactly pretty
+		}
+		
+	static public function isValid(s:String)
+		return toValidatable(s).validate() == None;
+		
+	static public var DEFAULT(default, null) = new DependencyVersion('');
+}
+
 @:enum abstract DependencyType(String) {
 	var Haxelib = null;
 	var Git = 'git';
@@ -57,7 +78,7 @@ typedef ProjectInfos = {
 
 typedef Dependency = {
 	name : String, 
-	?version : String,
+	?version : DependencyVersion,
 	?type: DependencyType, //this should be an @:enum abstract,
 	?url: String,
 	?subDir: String,
@@ -65,13 +86,14 @@ typedef Dependency = {
 }
 
 typedef Infos = {
-	var name : String;
-	var url : String;
-	var description : String;
+	var name : ProjectName;
+	@:optional var url : String;
+	@:optional var description : String;
 	var license : License;
 	var version : SemVer;
 	@:optional var classPath : String;
 	var releasenote : String;
+	@:requires('Specify at least one contributor' => _.length > 0)
 	var contributors : Array<String>;
 	@:optional var tags : Array<String>;
 	@:optional var dependencies : Array<Dependency>;
@@ -86,6 +108,63 @@ typedef Infos = {
 	var Public = 'Public';
 }
 
+abstract ProjectName(String) to String {
+	static var RESERVED_NAMES = ["haxe", "all"];
+	static var RESERVED_EXTENSIONS = ['.zip', '.hxml'];
+	inline function new(s:String) 
+		this = s;
+	
+	@:to function toValidatable():Validatable 
+		return {
+			validate: 
+				function ():Option<{ error: String }> {
+					for (r in rules)
+						if (!r.check(this))
+							return Some( { 
+								error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
+							});
+						return None;
+				}
+		}		
+	
+	static var rules = {//using an array because order might matter
+		var a = new Array<{ msg: String, check:String->Bool }>();
+		
+		function add(m, r)
+			a.push( { msg: m, check: r } );
+			
+		add("%VALUE is not a String", Std.is.bind(_, String));
+		add("%VALUE is too short", function (s) return s.length >= 3);
+		add("%VALUE contains invalid characters", Data.alphanum.match);
+		add("%VALUE is a reserved name", function(s) return RESERVED_NAMES.indexOf(s.toLowerCase()) == -1);
+		add("%VALUE ends with a reserved suffix", function(s) {
+			s = s.toLowerCase();
+			for (ext in RESERVED_EXTENSIONS)
+				if (s.endsWith(ext)) return false;
+			return true;
+		});
+		
+		a;
+	}
+		
+	static public function validate(s:String) {
+		for (r in rules)
+			if (!r.check(s))
+				return Some( { 
+					error: r.msg.replace('%VALUE', '`' + Json.stringify(s) + '`')
+				});
+		return None;
+	}	
+	
+	static public function ofString(s:String) 
+		return switch new ProjectName(s) {
+			case _.toValidatable().validate() => Some({ error: e }): throw e;
+			case v: v;
+		}
+		
+	static public var DEFAULT(default, null) = new ProjectName('unknown');
+}
+
 class Data {
 
 	public static var JSON = "haxelib.json";
@@ -93,7 +172,7 @@ class Data {
 	public static var DOCXML = "haxedoc.xml";
 	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
-	static var RESERVED_NAMES = ["haxe","all"];
+	
 
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
@@ -166,9 +245,9 @@ class Data {
 				if (check)
 					throw 'JSON parse error: $e';
 				else {
-					name : 'unknown',
+					name : ProjectName.DEFAULT,
 					url : '',
-					version : SemVer.ofString('0.0.0'),
+					version : SemVer.DEFAULT,
 					releasenote: 'No haxelib.json found',
 					license: Mit,
 					description: 'No haxelib.json found',
@@ -187,11 +266,32 @@ class Data {
 				
 		if (check)
 			doCheck(doc);
+		else {
+			if (!doc.version.valid)
+				doc.version = SemVer.DEFAULT;
+		}
 		
+		//TODO: we have really weird ways to go about nullability and defaults
+			
 		if (doc.dependencies == null)
-			doc.dependencies = [];//TODO: since the field is actually @:optional it might be better to handle nullness instead
+			doc.dependencies = [];
+			
+		for (dep in doc.dependencies)
+			if (!DependencyVersion.isValid(dep.version))
+				dep.version = DependencyVersion.DEFAULT;		
+			
 		if (doc.classPath == null)
 			doc.classPath = '';
+			
+		if (doc.name.validate() != None)
+			doc.name = ProjectName.DEFAULT;
+		
+		if (doc.description == null)
+			doc.description = '';		
+		
+		if (doc.url == null)
+			doc.url = '';
+		
 		return doc;	
 	}
 }

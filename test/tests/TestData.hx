@@ -66,19 +66,19 @@ class TestData extends haxe.unit.TestCase {
 	public function testReadInfos() {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
 		var info = Data.readInfos(zip, true);
-		assertEquals( "haxelib_client", info.project );
+		assertEquals( "haxelib_client", info.name );
 		assertEquals( "GPL", info.license );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
 		var info = Data.readInfos(zip, true);
-		assertEquals( "Deep", info.project );
-		assertEquals( "http://example.org", info.website );
+		assertEquals( "Deep", info.name );
+		assertEquals( "http://example.org", info.url );
 		assertEquals( "Public", info.license );
 		assertEquals( "deep, test", info.tags.join(", ") );
-		assertEquals( "This project's zip contains a folder that holds the lib.", info.desc );
+		assertEquals( "This project's zip contains a folder that holds the lib.", info.description );
 		assertEquals( "1.0.0", info.version );
-		assertEquals( "N/A", info.versionComments );
-		assertEquals( "DeepAuthor, AnotherGuy", info.developers.join(", ") );
+		assertEquals( "N/A", info.releasenote );
+		assertEquals( "DeepAuthor, AnotherGuy", info.contributors.join(", ") );
 	}
 	
 	public function testCheckClassPath() {
@@ -105,12 +105,13 @@ class TestData extends haxe.unit.TestCase {
 	
 	public function testReadDataWithCheck() {
 		assertFalse( readDataOkay("bad json") );
-
+		
 		assertTrue( readDataOkay(getJsonInfos()) );
 		
 		// Names
 		assertFalse( readDataOkay("{}") );
 		assertFalse( readDataOkay(getJsonInfos({ name: null })) );
+		
 		assertFalse( readDataOkay(getJsonInfos({ name: '' })) );
 		assertFalse( readDataOkay(getJsonInfos({ name: 'haxe' })) );
 		assertFalse( readDataOkay(getJsonInfos({ name: 'haXe' })) );
@@ -155,11 +156,13 @@ class TestData extends haxe.unit.TestCase {
 
 		// Dependencies (optional)
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: null })) );
-		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"" } })) );
-		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"1.3.0" } })) );
-		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:"nonsemver" } })) );
-		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:null } })) );
-		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib:0 } })) );
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: [ { name : "somelib", version: "" } ] })) );
+		assertTrue( readDataOkay(getJsonInfos( { dependencies: [ { name : "somelib" } ] } )) );
+		
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: [ { name : "somelib", version:"1.3.0" } ]}) ));
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: [{ name : "somelib", version :"nonsemver" } ]})) );
+
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: [{ name : "somelib", version :0 } ]})) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: "somelib" })) );
 
 		// ReleaseNote
@@ -176,24 +179,25 @@ class TestData extends haxe.unit.TestCase {
 	}
 	
 	public function testReadDataWithoutCheck() {
-		assertEquals( "", Data.readData("bad json",false).project );
+		assertEquals( ProjectName.DEFAULT, Data.readData("bad json",false).name );
 		assertEquals( "0.0.0", Data.readData("bad json",false).version );
 
-		assertEquals( "mylib", Data.readData(getJsonInfos(),false).project );
+		assertEquals( "mylib", Data.readData(getJsonInfos(),false).name );
 		assertEquals( "0.1.2", Data.readData(getJsonInfos(),false).version );
 		
 		// Names
-		assertEquals( "", Data.readData("{}",false).project );
-		assertEquals( "", Data.readData(getJsonInfos({ name: null }),false).project );
-		assertEquals( "", Data.readData(getJsonInfos({ name: '' }),false).project );
-		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).project );
-		assertEquals( "", Data.readData(getJsonInfos([ "name" ]),false).project ); // remove the field altogether
-
+		assertEquals( ProjectName.DEFAULT, Data.readData("{}",false).name );
+		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: null }),false).name );
+		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: '' }),false).name );
+		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).name );
+		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos([ "name" ]), false).name ); // remove the field altogether
+		
+		/*
 		// Description (optional)
-		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).desc );
-		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).desc );
-		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).desc );
-		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).desc ); // remove the field altogether
+		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).description );
+		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).description );
+		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).description );
+		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).description ); // remove the field altogether
 
 		// Licence
 		assertEquals( "BSD", Data.readData(getJsonInfos({ license: 'BSD' }),false).license );
@@ -203,13 +207,13 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "Unknown", Data.readData(getJsonInfos([ "license" ]),false).license ); // remove the field altogether
 
 		// Contibutors
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).developers.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: null }),false).developers.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: "jason" }),false).developers.length );
-		assertEquals( 1, Data.readData(getJsonInfos({ contributors: ["jason"] }),false).developers.length );
-		assertEquals( 2, Data.readData(getJsonInfos({ contributors: ["jason","juraj"] }),false).developers.length );
-		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).developers.length ); // remove the field altogether
-
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).contributors.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: null }),false).contributors.length );
+		assertEquals( 0, Data.readData(getJsonInfos({ contributors: "jason" }),false).contributors.length );
+		assertEquals( 1, Data.readData(getJsonInfos({ contributors: ["jason"] }),false).contributors.length );
+		assertEquals( 2, Data.readData(getJsonInfos({ contributors: ["jason","juraj"] }),false).contributors.length );
+		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).contributors.length ); // remove the field altogether
+		*/
 		// Version
 		assertEquals( "0.1.2-rc.0", Data.readData(getJsonInfos({ version: "0.1.2-rc.0" }),false).version );
 		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: "non-semver" }),false).version );
@@ -217,25 +221,28 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: null }),false).version );
 		assertEquals( "0.0.0", Data.readData(getJsonInfos([ "version" ]),false).version ); // remove the field altogether
 
+		/*
 		// Tags (optional)
 		assertEquals( 2, Data.readData(getJsonInfos({ tags: ["tag1","tag2"] }),false).tags.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: null }),false).tags.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: "mytag" }),false).tags.length );
-
+		*/
+		
 		// Dependencies (optional)
 		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.length );
-		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.first().project );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.first().version );
-		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies.first().version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.first().version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.first().version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:0 } }),false).dependencies.first().version );
-
+		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies[0].name );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies[0].version );
+		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies[0].version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies[0].version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies[0].version );
+		assertEquals( "", Data.readData(getJsonInfos( { dependencies: { somelib:0 } } ), false).dependencies[0].version );
+		
+		/*
 		// ReleaseNote
-		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).versionComments );
-		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).versionComments );
-		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).versionComments ); // remove the field altogether
-
+		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).releasenote );
+		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).releasenote );
+		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).releasenote ); // remove the field altogether
+		*/
 		// ClassPath
 		assertEquals( "src", Data.readData(getJsonInfos({ classPath: 'src' }), false).classPath );
 		assertEquals( "", Data.readData(getJsonInfos({ classPath: '' }), false).classPath );
@@ -247,7 +254,8 @@ class TestData extends haxe.unit.TestCase {
 			Data.readData( json,true ); 
 			return true; 
 		} 
-		catch(e:String) return false;
+		catch (e:String) 
+			return false;
 	}
 
 	function getJsonInfos( ?remove:Array<String>, ?change:Dynamic ) {
