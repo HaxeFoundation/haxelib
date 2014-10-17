@@ -106,6 +106,7 @@ typedef Infos = {
 	var Mit = 'MIT';
 	var Bsd = 'BSD';
 	var Public = 'Public';
+	var Apache = 'Apache';
 }
 
 abstract ProjectName(String) to String {
