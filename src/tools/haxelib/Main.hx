@@ -695,7 +695,7 @@ class Main {
 		} catch (e:Dynamic) {
 			if( Sys.systemName() == "Windows") {
 				try {
-					Sys.command("attrib -R \"" +file+ "\"");
+					Sys.command("attrib", ["-R", file]);
 					FileSystem.deleteFile(file);
 					return true;
 				} catch (e:Dynamic) {
@@ -843,17 +843,17 @@ class Main {
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
 			var doGitPull = true;
-			if ( 0 != Sys.command("git diff --exit-code") || 0 != Sys.command("git diff --cached --exit-code") ) {
+			if ( 0 != Sys.command("git" ,["diff", "--exit-code"]) || 0 != Sys.command("git", ["diff", "--cached", "--exit-code"]) ) {
 				switch ask("Reset changes to "+p+" git repo so we can pull latest version?") {
 					case Yes | Always:
-						Sys.command("git reset --hard");
+						Sys.command("git", ["reset", "--hard"]);
 					case No:
 						doGitPull = false;
 						print("Git repo left untouched");
 				}
 			}
 			if (doGitPull) {
-				Sys.command("git pull");
+				Sys.command("git", ["pull"]);
 			}
 			state.updated = true;
 			Sys.setCwd(oldCwd);
@@ -1159,7 +1159,7 @@ class Main {
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
 
-		if( Sys.command("git clone \"" +gitPath + "\" \"" +libPath + "\"") != 0 ) {
+		if( Sys.command("git", ["clone", gitPath, libPath]) != 0 ) {
 			print("Could not clone git repository");
 			return;
 		}

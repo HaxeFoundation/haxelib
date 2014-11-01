@@ -51,49 +51,49 @@ class Validator {
 			switch Context.follow(t) {
 				case TAnonymous(_.get().fields => fields): 
 					
-					var block:Array<Expr> = [for (f in fields) 
-						switch f.kind {
-							case FVar(AccNormal, _):
-								var name = f.name;
-								var rec = doCheck(f.type, macro @:pos(pos) $IARG.$name);
+					var block:Array<Expr> = [
+						for (f in fields)
+						if (f.kind.match(FVar(AccNormal, _)))
+						{
+							var name = f.name;
+							var rec = doCheck(f.type, macro @:pos(pos) $IARG.$name);
+							
+							if (f.meta.has(':requires')) {
+								var body = [];
+								for (m in f.meta.get()) 
+									if (m.name == ':requires')
+										for (p in m.params) 
+											switch p {
+												case macro $msg => $p:
+													body.push(rename(
+														macro @:pos(pos) if (!$p) throw $msg
+													));
+												default: 
+													Context.error('Should be "<message>" =>" <condition>', p.pos);	
+											}
+										//{
+											//p = rename(p);
+											//cond = macro @:pos(pos) $p && $cond;
+										//}
 								
-								if (f.meta.has(':requires')) {
-									var body = [];
-									for (m in f.meta.get()) 
-										if (m.name == ':requires')
-											for (p in m.params) 
-												switch p {
-													case macro $msg => $p:
-														body.push(rename(
-															macro @:pos(pos) if (!$p) throw $msg
-														));
-													default: 
-														Context.error('Should be "<message>" =>" <condition>', p.pos);	
-												}
-											//{
-												//p = rename(p);
-												//cond = macro @:pos(pos) $p && $cond;
-											//}
-									
-									var t = f.type.toComplexType();
-									rec = macro @:pos(pos) {
-										$rec;
-										(function($ARG : $t) $b{body})($IARG.$name);
-									}
-								}								
-								
-								if (f.meta.has(':optional')) {
-									rec = macro @:pos(pos) if (Reflect.hasField($IARG, $v{name}) && $IARG.$name != null) $rec;
+								var t = f.type.toComplexType();
+								rec = macro @:pos(pos) {
+									$rec;
+									(function($ARG : $t) $b{body})($IARG.$name);
 								}
-								else
-									rec = macro @:pos(pos) 
-										if (!Reflect.hasField($IARG, $v{name})) 
-											throw ("missing field " + $v{name});
-										else 
-											$rec;
-								
-								rec;
-							default: //skip
+							}								
+							
+							if (f.meta.has(':optional')) {
+								rec = macro @:pos(pos) if (Reflect.hasField($IARG, $v{name}) && $IARG.$name != null) $rec;
+							}
+							else
+								rec = macro @:pos(pos) 
+									if (!Reflect.hasField($IARG, $v{name})) 
+										throw ("missing field " + $v{name});
+									else 
+										$rec;
+							
+							rec;
 						}
 					];
 					
@@ -117,12 +117,10 @@ class Validator {
 				
 				case TAbstract(_.get() => a, _) if (a.meta.has(':enum')):
 					var name = a.module + '.' + a.name;
-					var options:Array<Expr> = [for (f in a.impl.get().statics.get()) 
-						switch f.kind {
-							case FVar(_, _):
-								macro @:pos(pos) $p{(name+'.'+f.name).split('.')};
-							default: //skip
-						}
+					var options:Array<Expr> = [
+						for (f in a.impl.get().statics.get()) 
+						if (f.kind.match(FVar(_, _)))
+						macro @:pos(pos) $p{(name+'.'+f.name).split('.')}
 					];
 					
 					macro if (!Lambda.has($a { options }, $IARG)) throw 'Invalid value ' + $IARG + ' for ' + $v { a.name };

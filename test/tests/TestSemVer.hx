@@ -29,7 +29,7 @@ class TestSemVer extends haxe.unit.TestCase {
 		assertEquals( "0.1.2", make(0,1,2,null,0) );
 		
 		// Multiple characters
-		assertEquals( "100.200.300-rc.400", make(0100,0200,0300,RC,0400) );
+		assertEquals( "100.200.300-rc.400", make(100,200,300,RC,400) );
 	}
 	
 	public function testOfString() {

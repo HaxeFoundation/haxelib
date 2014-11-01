@@ -52,7 +52,7 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
-abstract DependencyVersion(String) to String {
+abstract DependencyVersion(String) to String from String {
 	inline function new(s:String) 
 		this = s;
 	
