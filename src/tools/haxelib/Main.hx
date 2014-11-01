@@ -1223,7 +1223,7 @@ class Main {
 		Sys.setCwd(vdir);
 		
 		var callArgs = 
-			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), true), null] catch (e:Dynamic) [null, e] {
+			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), false), null] catch (e:Dynamic) [null, e] {
 				case [null, e]:
 					throw 'Error parsing haxelib.json for $project@$version: $e';
 				case [{ main: null }, _]:
