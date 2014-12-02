@@ -146,12 +146,12 @@ abstract ProjectName(String) to String {
 
 		a;
 	}
-		
-	static public function validate(s:String) {
+
+	public function validate() {
 		for (r in rules)
-			if (!r.check(s))
-				return Some( { 
-					error: r.msg.replace('%VALUE', '`' + Json.stringify(s) + '`')
+			if (!r.check(this))
+				return Some( {
+					error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
 				});
 		return None;
 	}
