@@ -53,21 +53,21 @@ typedef ProjectInfos = {
 }
 
 abstract DependencyVersion(String) to String from String {
-	inline function new(s:String) 
+	inline function new(s:String)
 		this = s;
-	
+
 	@:to function toValidatable():Validatable
 		return {
-			validate : function () return 
-				if (this == '') 
+			validate : function () return
+				if (this == '')
 					None
-				else 
+				else
 					@:privateAccess new SemVer(this).toValidatable().validate()//not exactly pretty
 		}
-		
+
 	static public function isValid(s:String)
 		return toValidatable(s).validate() == None;
-		
+
 	static public var DEFAULT(default, null) = new DependencyVersion('');
 }
 
@@ -77,7 +77,7 @@ abstract DependencyVersion(String) to String from String {
 }
 
 typedef Dependency = {
-	name : String, 
+	name : String,
 	?version : DependencyVersion,
 	?type: DependencyType, //this should be an @:enum abstract,
 	?url: String,
@@ -111,28 +111,28 @@ typedef Infos = {
 abstract ProjectName(String) to String {
 	static var RESERVED_NAMES = ["haxe", "all"];
 	static var RESERVED_EXTENSIONS = ['.zip', '.hxml'];
-	inline function new(s:String) 
+	inline function new(s:String)
 		this = s;
-	
-	@:to function toValidatable():Validatable 
+
+	@:to function toValidatable():Validatable
 		return {
-			validate: 
+			validate:
 				function ():Option<{ error: String }> {
 					for (r in rules)
 						if (!r.check(this))
-							return Some( { 
+							return Some( {
 								error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
 							});
 						return None;
 				}
-		}		
-	
+		}
+
 	static var rules = {//using an array because order might matter
 		var a = new Array<{ msg: String, check:String->Bool }>();
-		
+
 		function add(m, r)
 			a.push( { msg: m, check: r } );
-			
+
 		add("%VALUE is not a String", Std.is.bind(_, String));
 		add("%VALUE is too short", function (s) return s.length >= 3);
 		add("%VALUE contains invalid characters", Data.alphanum.match);
@@ -143,7 +143,7 @@ abstract ProjectName(String) to String {
 				if (s.endsWith(ext)) return false;
 			return true;
 		});
-		
+
 		a;
 	}
 		
@@ -154,14 +154,14 @@ abstract ProjectName(String) to String {
 					error: r.msg.replace('%VALUE', '`' + Json.stringify(s) + '`')
 				});
 		return None;
-	}	
-	
-	static public function ofString(s:String) 
+	}
+
+	static public function ofString(s:String)
 		return switch new ProjectName(s) {
 			case _.toValidatable().validate() => Some({ error: e }): throw e;
 			case v: v;
 		}
-		
+
 	static public var DEFAULT(default, null) = new ProjectName('unknown');
 }
 
@@ -172,7 +172,7 @@ class Data {
 	public static var DOCXML = "haxedoc.xml";
 	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
-	
+
 
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
@@ -218,7 +218,7 @@ class Data {
 			}
 		if( infodata == null )
 			throw JSON + " not found in package";
-		
+
 		return readData(infodata,check);
 	}
 
@@ -228,20 +228,20 @@ class Data {
 			var cp = basePath + infos.classPath;
 
 			for( f in zip ) {
-				if( StringTools.startsWith(f.fileName,cp) ) 
+				if( StringTools.startsWith(f.fileName,cp) )
 					return;
 			}
 			throw 'Class path `${infos.classPath}` not found';
 		}
 	}
 
-	static function doCheck(doc:Infos) 
+	static function doCheck(doc:Infos)
 		return Validator.validate(doc);
 
 	public static function readData( jsondata: String, check : Bool ) : Infos {
-		var doc:Infos = 
-			try Json.parse(jsondata) 
-			catch ( e : Dynamic ) 
+		var doc:Infos =
+			try Json.parse(jsondata)
+			catch ( e : Dynamic )
 				if (check)
 					throw 'JSON parse error: $e';
 				else {
@@ -253,8 +253,8 @@ class Data {
 					description: 'No haxelib.json found',
 					contributors: [],
 				}
-		
-		if (Type.typeof(doc.dependencies) == TObject) 
+
+		if (Type.typeof(doc.dependencies) == TObject)
 			if (check) {
 				throw 'Dependency format has changed';
 			}
@@ -263,35 +263,35 @@ class Data {
 					name: f,
 					version: Reflect.field(doc.dependencies, f),
 				}];
-				
+
 		if (check)
 			doCheck(doc);
 		else {
 			if (!doc.version.valid)
 				doc.version = SemVer.DEFAULT;
 		}
-		
+
 		//TODO: we have really weird ways to go about nullability and defaults
-			
+
 		if (doc.dependencies == null)
 			doc.dependencies = [];
-			
+
 		for (dep in doc.dependencies)
 			if (!DependencyVersion.isValid(dep.version))
-				dep.version = DependencyVersion.DEFAULT;		
-			
+				dep.version = DependencyVersion.DEFAULT;
+
 		if (doc.classPath == null)
 			doc.classPath = '';
-			
+
 		if (doc.name.validate() != None)
 			doc.name = ProjectName.DEFAULT;
-		
+
 		if (doc.description == null)
-			doc.description = '';		
-		
+			doc.description = '';
+
 		if (doc.url == null)
 			doc.url = '';
-		
-		return doc;	
+
+		return doc;
 	}
 }
