@@ -134,6 +134,7 @@ class Main {
 	static var VERSION = SemVer.ofString('3.1.0-rc.4');
 	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
+	static var REPODIR = ".haxelib";
 	static var SERVER = {
 		host : "lib.haxe.org",
 		port : 80,
@@ -158,6 +159,9 @@ class Main {
 		addCommand("remove", remove, "remove a given library/version", Basic, false);
 		addCommand("list", list, "list all installed libraries", Basic, false);
 		addCommand("set", set, "set the current version for a library", Basic, false);
+
+		addCommand("new", newRepo, "create a new local repository", Basic, false);
+		addCommand("delete", deleteRepo, "delete the local repository", Basic, false);
 
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
@@ -376,15 +380,15 @@ class Main {
 		var zip = Reader.readZip(new haxe.io.BytesInput(data));
 		var infos = Data.readInfos(zip,true);
 		Data.checkClassPath(zip, infos);
-		
+
 		var user:String = infos.contributors[0];
-		
+
 		if (infos.contributors.length > 1)
 			do {
 				print("Which of these users are you: " + infos.contributors);
 				user = param("User");
 			} while ( !Lambda.has(infos.contributors, user) );
-			
+
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
@@ -655,7 +659,7 @@ class Main {
 
 		// process dependencies
 		doInstallDependencies(infos.dependencies);
-		
+
 		return infos;
 	}
 
@@ -665,7 +669,7 @@ class Main {
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
 				d.version = site.infos(d.name).curversion;
-			
+
 			switch d.type {
 				case Haxelib:
 					doInstall(d.name, d.version, false);
@@ -706,6 +710,10 @@ class Main {
 	}
 
 	function getRepository( ?setup : Bool ) {
+
+		if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) )
+			return Path.addTrailingSlash(FileSystem.absPath(REPODIR));
+
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
 		if( haxepath != null )
@@ -883,7 +891,7 @@ class Main {
 		if (!updateByName(prj))
 			print(prj + " is up to date");
 	}
-	
+
 	function rebuildSelf() {
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
@@ -905,7 +913,7 @@ class Main {
 					}
 			}
 		}
-		
+
 		switch tryBuild() {
 			case None:
 				var win = Sys.systemName() == "Windows";
@@ -947,16 +955,16 @@ class Main {
 			case Some(error):
 				throw 'Error compiling haxelib client: $error';
 		}
-		
+
 	}
-	
+
 	function updateSelf() {
-		
+
 		if (updateByName('haxelib_client'))
 			print("Haxelib successfully updated.");
 		else
-			print("Haxelib was already up to date...");				
-		
+			print("Haxelib was already up to date...");
+
 		rebuildSelf();
 	}
 
@@ -1139,7 +1147,7 @@ class Main {
 		print("Could not execute git, please make sure it is installed and available in your PATH.");
 	}
 
-	function git() 
+	function git()
 		doGit(
 			param("Library name"),
 			param("Git path"),
@@ -1147,7 +1155,7 @@ class Main {
 			paramOpt(),
 			paramOpt()
 		);
-	
+
 	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
@@ -1173,7 +1181,7 @@ class Main {
 				return;
 			}
 		}
-		
+
 		if (version != null) {
 			var ret = command("git", ["checkout", "tags/" + version]);
 			if (ret.code != 0)
@@ -1183,27 +1191,27 @@ class Main {
 				return;
 			}
 		}
-		
+
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
 		Sys.setCwd(proj);
-		
+
 		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
-		
+
 		print('Library $libName set to use git.');
-		
-		if ( branch != null ) 
+
+		if ( branch != null )
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
-		
+
 		Sys.setCwd(libPath);
-		
-		if (FileSystem.exists("haxelib.json")) 
+
+		if (FileSystem.exists("haxelib.json"))
 			doInstallDependencies(
 				Data.readData(File.getContent("haxelib.json"), false).dependencies
 			);
-		
+
 	}
 
 	function run() {
@@ -1218,11 +1226,11 @@ class Main {
 		var version = temp[1] != null ? temp[1] : getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
-		
+
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
-		
-		var callArgs = 
+
+		var callArgs =
 			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), false), null] catch (e:Dynamic) [null, e] {
 				case [null, e]:
 					throw 'Error parsing haxelib.json for $project@$version: $e';
@@ -1244,10 +1252,10 @@ class Main {
 					args;
 				default: throw 'assert';
 			}
-		
+
 		for (i in argcur...args.length)
 			callArgs.push(args[i]);
-		
+
 		Sys.putEnv("HAXELIB_RUN", "1");
 		var cmd = callArgs.shift();
  		Sys.exit(Sys.command(cmd, callArgs));
@@ -1255,12 +1263,12 @@ class Main {
 
 	function local() {
 		var file = param("Package");
-		if (doInstallFile(file, true, true).name == 'haxelib_client') 
+		if (doInstallFile(file, true, true).name == 'haxelib_client')
 			if (ask('You have updated haxelib. Do you wish to rebuild it?') != No) {
 				rebuildSelf();
 			}
 	}
- 
+
 	function command( cmd:String, args:Array<String> ) {
 		var p = new sys.io.Process(cmd, args);
 		var code = p.exitCode();
@@ -1318,6 +1326,43 @@ class Main {
 
 		File.saveContent(jsonFile, jsonString);
 		print('Saved to $jsonFile');
+	}
+
+	function newRepo() {
+		if( FileSystem.exists(REPODIR) ) {
+			if( !FileSystem.isDirectory(REPODIR) ) {
+				print('$REPODIR exists already but is not a directory, delete it fist');
+				Sys.exit(1);
+			}
+			try {
+				sys.io.File.saveContent(REPODIR+"/checkWrite.txt","CHECK WRITE");
+			} catch( e : Dynamic ) {
+				print('$REPODIR exists but is not writeable, chmod it');
+				Sys.exit(2);
+			}
+			FileSystem.deleteFile(REPODIR+"/checkWrite.txt");
+		} else {
+			try {
+				FileSystem.createDirectory(REPODIR);
+			} catch( e : Dynamic ) {
+				print('Failed to create ./$REPODIR');
+				Sys.exit(3);
+			}
+		}
+	}
+
+	function deleteRepo() {
+		if( !FileSystem.exists(REPODIR) )
+			return;
+		function deleteRec(path) {
+			if( FileSystem.isDirectory(path) ) {
+				for( f in FileSystem.readDirectory(path) )
+					deleteRec(path + "/" + f);
+				FileSystem.deleteDirectory(path);
+			} else
+				FileSystem.deleteFile(path);
+		}
+		deleteRec(REPODIR);
 	}
 
 	// ----------------------------------
