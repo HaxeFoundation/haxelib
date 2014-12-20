@@ -1331,7 +1331,7 @@ class Main {
 	function newRepo() {
 		if( FileSystem.exists(REPODIR) ) {
 			if( !FileSystem.isDirectory(REPODIR) ) {
-				print('$REPODIR exists already but is not a directory, delete it fist');
+				print('$REPODIR exists already but is not a directory, delete it first');
 				Sys.exit(1);
 			}
 			try {
