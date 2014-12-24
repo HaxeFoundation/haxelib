@@ -20,6 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 package tools.haxelib;
+
 import haxe.ds.Option;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
@@ -57,18 +58,27 @@ abstract DependencyVersion(String) to String from String {
 		this = s;
 
 	@:to function toValidatable():Validatable
-		return {
-			validate : function () return
-				if (this == '')
-					None
-				else
-					@:privateAccess new SemVer(this).toValidatable().validate()//not exactly pretty
-		}
+		return 
+			if (this == '') { validate: function () return None }
+			else @:privateAccess new SemVer(this);
 
 	static public function isValid(s:String)
 		return toValidatable(s).validate() == None;
 
 	static public var DEFAULT(default, null) = new DependencyVersion('');
+}
+
+abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion> {
+	@:to public function toArray():Array<Dependency> {
+		var fields = Reflect.fields(this);
+		fields.sort(Reflect.compare);
+		return [for (f in fields) {
+			name: f,
+			version: (Reflect.field(this, f) : DependencyVersion),
+		}];
+	}
+	public inline function iterator()
+		return toArray().iterator();
 }
 
 @:enum abstract DependencyType(String) {
@@ -96,7 +106,7 @@ typedef Infos = {
 	@:requires('Specify at least one contributor' => _.length > 0)
 	var contributors : Array<String>;
 	@:optional var tags : Array<String>;
-	@:optional var dependencies : Array<Dependency>;
+	@:optional var dependencies : Dependencies;
 	@:optional var main:String;
 }
 
@@ -147,14 +157,8 @@ abstract ProjectName(String) to String {
 		a;
 	}
 
-	public function validate() {
-		for (r in rules)
-			if (!r.check(this))
-				return Some( {
-					error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
-				});
-		return None;
-	}
+	public function validate() 
+		return toValidatable().validate();
 
 	static public function ofString(s:String)
 		return switch new ProjectName(s) {
@@ -254,15 +258,15 @@ class Data {
 					contributors: [],
 				}
 
-		if (Type.typeof(doc.dependencies) == TObject)
-			if (check) {
-				throw 'Dependency format has changed';
-			}
-			else
-				doc.dependencies = [for (f in Reflect.fields(doc.dependencies)) {
-					name: f,
-					version: Reflect.field(doc.dependencies, f),
-				}];
+		//if (Type.typeof(doc.dependencies) == TObject)
+			//if (check) {
+				//throw 'Dependency format has changed';
+			//}
+			//else
+				//doc.dependencies = [for (f in Reflect.fields(doc.dependencies)) {
+					//name: f,
+					//version: Reflect.field(doc.dependencies, f),
+				//}];
 
 		if (check)
 			doCheck(doc);
@@ -274,7 +278,7 @@ class Data {
 		//TODO: we have really weird ways to go about nullability and defaults
 
 		if (doc.dependencies == null)
-			doc.dependencies = [];
+			doc.dependencies = {};
 
 		for (dep in doc.dependencies)
 			if (!DependencyVersion.isValid(dep.version))

@@ -115,6 +115,10 @@ class Validator {
 							${doCheck(p, IARG)};
 					}
 				
+				case TAbstract(_.get() => { from: [ { t: t, field: null } ] }, _):
+					
+					makeCheck(t);
+					
 				case TAbstract(_.get() => a, _) if (a.meta.has(':enum')):
 					var name = a.module + '.' + a.name;
 					var options:Array<Expr> = [
@@ -132,8 +136,17 @@ class Validator {
 						case None:
 					}
 					
-				default: 
-					
+				case TDynamic(k):
+					var checker = makeCheck(k);
+					macro @:pos(pos) {
+						if (!Reflect.isObject($i{ARG})) {
+							for (f in Reflect.fields($i{ARG})) {
+								var $ARG = Reflect.field($i{ARG}, f);
+								$checker;
+							}
+						}
+					}
+				case v: 
 					throw t.toString();
 			}
 	#end		

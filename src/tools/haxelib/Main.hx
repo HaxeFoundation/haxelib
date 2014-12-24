@@ -160,8 +160,8 @@ class Main {
 		addCommand("list", list, "list all installed libraries", Basic, false);
 		addCommand("set", set, "set the current version for a library", Basic, false);
 
-		addCommand("new", newRepo, "create a new local repository", Basic, false);
-		addCommand("delete", deleteRepo, "delete the local repository", Basic, false);
+		//addCommand("new", newRepo, "create a new local repository", Basic, false);
+		//addCommand("delete", deleteRepo, "delete the local repository", Basic, false);
 
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
@@ -711,8 +711,8 @@ class Main {
 
 	function getRepository( ?setup : Bool ) {
 
-		if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) )
-			return Path.addTrailingSlash(FileSystem.absPath(REPODIR));
+		//if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) )
+			//return Path.addTrailingSlash(FileSystem.absPath(REPODIR));
 
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
@@ -1238,7 +1238,7 @@ class Main {
 					if( !FileSystem.exists('$vdir/run.n') )
 						throw 'Library $project version $version does not have a run script';
 					["neko", "run.n"];
-				case [{ main: cls, dependencies: deps }, _]:
+				case [{ main: cls, dependencies: _.toArray() => deps }, _]:
 					deps = switch deps { case null: []; default: deps.copy(); };
 					deps.push( { name: project, version: '' } );
 					var args = [];
