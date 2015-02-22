@@ -712,7 +712,7 @@ class Main {
 	function getRepository( ?setup : Bool ) {
 
 		if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) )
-			return Path.addTrailingSlash(FileSystem.absPath(REPODIR));
+			return Path.addTrailingSlash(FileSystem.absolutePath(REPODIR));
 
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
