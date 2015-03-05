@@ -151,7 +151,30 @@ class Main {
 
 	function new() {
 		args = Sys.args();
-
+		
+		if (args.length == 0 || (args[0] != "-redirect" && args[0] != "setup")) {
+			try {
+				var rep = getRepository ();
+				var list = new List ();
+				checkRec ("haxelib_client", null, list);
+				var d = list.pop ();
+				if (d != null) {
+					var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
+					var dir = rep + pdir;
+					try {
+						dir = getDev(rep+Data.safe(d.project));
+						dir = Path.addTrailingSlash(dir);
+						pdir = dir;
+					} catch ( e : Dynamic ) { }
+					var n = pdir + "/bin/haxelib.n";
+					if (FileSystem.exists (n)) {
+						var code = Sys.command ("neko", [ n, "-redirect" ].concat (args));
+						Sys.exit (code);
+					}
+				}
+			} catch (e:Dynamic) {}
+		}
+		
 		commands = new List();
 		addCommand("install", install, "install a given library, or all libraries from a hxml file", Basic);
 		addCommand("upgrade", upgrade, "upgrade all installed libraries", Basic);
@@ -264,6 +287,7 @@ class Main {
 			if( a == null )
 				break;
 			switch( a ) {
+			case "-redirect":
 			case "-debug":
 				debug = true;
 			case "-notimeout":
