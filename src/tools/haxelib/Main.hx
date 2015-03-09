@@ -23,8 +23,9 @@ package tools.haxelib;
 
 import haxe.crypto.Md5;
 import haxe.*;
+import haxe.io.BytesOutput;
 import haxe.io.Path;
-import haxe.zip.Reader;
+import haxe.zip.*;
 import sys.io.File;
 import tools.haxelib.Data;
 import sys.FileSystem;
@@ -375,9 +376,41 @@ class Main {
 	}
 
 	function submit() {
-		var file = param("Package");
-		var data = File.getBytes(file);
-		var zip = Reader.readZip(new haxe.io.BytesInput(data));
+		var file = param("Package"),
+			data = null;
+		var zip =	
+			if (FileSystem.isDirectory(file)) {
+				var ret = new List<Entry>(),
+					out = new BytesOutput();
+				function seek(dir:String) {
+					for (name in FileSystem.readDirectory(dir)) if (!name.startsWith('.')) {
+						var full = '$dir/$name';
+						if (FileSystem.isDirectory(full)) seek(full);
+						else {
+							var blob = File.getBytes(full);
+							ret.push({ 
+								fileName: full.substr(file.length+1),
+								fileSize : blob.length,
+								fileTime : FileSystem.stat(full).mtime,
+								compressed : false,
+								dataSize : blob.length,
+								data : blob,
+								crc32: null,//TODO: consider calculating this one
+							});
+						}
+					}
+				}
+				seek(file);
+				new Writer(out).write(ret);
+				data = out.getBytes();
+				File.saveBytes('tmp.zip', data);
+				ret;
+			}
+			else { 
+				data = File.getBytes(file);
+				Reader.readZip(File.read(file, true));
+			}
+			
 		var infos = Data.readInfos(zip,true);
 		Data.checkClassPath(zip, infos);
 
