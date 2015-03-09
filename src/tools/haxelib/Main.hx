@@ -433,7 +433,7 @@ class Main {
 		var h = new Http("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) { throw e; };
 		h.onData = print;
-		h.fileTransfert("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
+		h.fileTransfer("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
 		print("Sending data.... ");
 		h.request(true);
 
