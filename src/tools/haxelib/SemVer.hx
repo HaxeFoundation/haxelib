@@ -22,7 +22,7 @@ abstract SemVer(String) to String {
 	
 	inline function new(s) this = s;
 	
-	@:to function toValidatable():Validator.Validatable 
+	@:to public function toValidatable():Validator.Validatable 
 		return {
 			validate: 
 				function ():Option<{ error: String }>
