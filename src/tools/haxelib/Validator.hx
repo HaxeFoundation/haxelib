@@ -138,12 +138,12 @@ class Validator {
 					
 				case TDynamic(k):
 					var checker = makeCheck(k);
+					var ct = k.toComplexType();
 					macro @:pos(pos) {
-						if (!Reflect.isObject($i{ARG})) {
-							for (f in Reflect.fields($i{ARG})) {
-								var $ARG = Reflect.field($i{ARG}, f);
-								$checker;
-							}
+						if (!Reflect.isObject($i{ARG})) throw 'object expected';
+						for (f in Reflect.fields($i{ARG})) {
+							var $ARG:$ct = Reflect.field($i{ARG}, f);
+							$checker;
 						}
 					}
 				case v: 
