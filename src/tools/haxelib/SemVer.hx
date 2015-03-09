@@ -22,6 +22,27 @@ abstract SemVer(String) to String {
 	
 	inline function new(s) this = s;
 	
+	static public function compare(a:SemVer, b:SemVer) {
+		function toArray(data:SemVerData)
+			return [
+				data.major, 
+				data.minor, 
+				data.patch, 
+				if (data.preview == null) 100 else data.preview.getIndex(),
+				if (data.previewNum == null) -1 else data.previewNum
+			];
+			
+		var a = toArray(a.data),
+			b = toArray(b.data);
+			
+		for (i in 0...a.length)
+			switch Reflect.compare(a[i], b[i]) {
+				case 0:
+				case v: return v;
+			}
+			
+		return 0;
+	}
 	@:to public function toValidatable():Validator.Validatable 
 		return {
 			validate: 
