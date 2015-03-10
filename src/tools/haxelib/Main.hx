@@ -27,13 +27,13 @@ import haxe.io.BytesOutput;
 import haxe.io.Path;
 import haxe.zip.*;
 import sys.io.File;
-import tools.haxelib.Data;
 import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
 
 using StringTools;
 using Lambda;
+using tools.haxelib.Data;
 
 enum Answer {
 	Yes;
@@ -149,7 +149,7 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
-
+	
 	function new() {
 		args = Sys.args();
 
@@ -337,7 +337,7 @@ class Main {
 		print("Website: "+inf.website);
 		print("License: "+inf.license);
 		print("Owner: "+inf.owner);
-		print("Version: "+inf.curversion);
+		print("Version: "+inf.getLatest());
 		print("Releases: ");
 		if( inf.versions.length == 0 )
 			print("  (no version released yet)");
@@ -403,7 +403,6 @@ class Main {
 				seek(file);
 				new Writer(out).write(ret);
 				data = out.getBytes();
-				File.saveBytes('tmp.zip', data);
 				ret;
 			}
 			else { 
@@ -507,14 +506,14 @@ class Main {
 		var inf = site.infos(prj);
 		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
-		doInstall(inf.name,version,version == inf.curversion);
+		doInstall(inf.name,version,version == inf.getLatest());
 	}
 
 	function getVersion( inf:ProjectInfos, ?reqversion:String )
 	{
-		if( inf.curversion == null )
+		if( inf.versions.length == 0 )
 			throw "The library "+inf.name+" has not yet released a version";
-		var version = if( reqversion != null ) reqversion else inf.curversion;
+		var version = if( reqversion != null ) reqversion else inf.getLatest();
 		var found = false;
 		for( v in inf.versions )
 			if( v.name == version ) {
@@ -701,7 +700,7 @@ class Main {
 		for( d in dependencies ) {
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
-				d.version = site.infos(d.name).curversion;
+				d.version = site.infos(d.name).getLatest();
 
 			switch d.type {
 				case Haxelib:
@@ -900,18 +899,18 @@ class Main {
 			Sys.setCwd(oldCwd);
 		} else {
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
-			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.curversion)) ) {
+			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.getLatest())) ) {
 				if( state.prompt )
-					switch ask("Upgrade "+p+" to "+inf.curversion) {
+					switch ask("Update "+p+" to "+inf.getLatest()) {
 					case Yes:
 					case Always: state.prompt = false;
 					case No:
 						return;
 					}
-				doInstall(p,inf.curversion,true);
+				doInstall(p,inf.getLatest(),true);
 				state.updated = true;
 			} else
-				setCurrent(p, inf.curversion, true);
+				setCurrent(p, inf.getLatest(), true);
 		}
 	}
 	function updateByName(prj:String) {
@@ -1273,7 +1272,7 @@ class Main {
 					["neko", "run.n"];
 				case [{ main: cls, dependencies: _.toArray() => deps }, _]:
 					deps = switch deps { case null: []; default: deps.copy(); };
-					deps.push( { name: project, version: '' } );
+					deps.push( { name: project, version: DependencyVersion.DEFAULT } );
 					var args = [];
 					for (d in deps) {
 						args.push('-lib');
