@@ -229,13 +229,13 @@ class TestData extends haxe.unit.TestCase {
 		*/
 		
 		// Dependencies (optional)
-		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.length );
-		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies[0].name );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies[0].version );
-		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies[0].version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies[0].version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies[0].version );
-		assertEquals( "", Data.readData(getJsonInfos( { dependencies: { somelib:0 } } ), false).dependencies[0].version );
+		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.toArray().length );
+		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.toArray()[0].name );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.toArray()[0].version );
+		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies.toArray()[0].version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.toArray()[0].version );
+		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.toArray()[0].version );
+		assertEquals( "", Data.readData(getJsonInfos( { dependencies: { somelib:0 } } ), false).dependencies.toArray()[0].version );
 		
 		/*
 		// ReleaseNote
