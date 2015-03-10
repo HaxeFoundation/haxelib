@@ -15,7 +15,7 @@ class HaxelibTests {
 	}
 
 	static function prepare():Void {
-		runCommand("./package.sh", []);
+		runCommand("haxe", ["--run", "Package"]);
 
 		/*
 			(re)package the dummy libraries
