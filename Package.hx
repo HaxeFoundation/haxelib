@@ -1,6 +1,7 @@
 import Sys.*;
 import sys.*;
 import sys.io.*;
+import haxe.io.*;
 
 class Package {
 	static function cp(srcFile:String, destFile:String):Void {
@@ -16,11 +17,29 @@ class Package {
 		}
 	}
 
-	static function main():Void {
-		var folder = "package/src/tools/haxelib";
-		if (!FileSystem.exists("package")) {
-			FileSystem.createDirectory("folder");
+	/**
+		Make directory recursively.
+		It is needed for Haxe 3.1.3, which FileSystem.createDirectory is not recursive.
+	*/
+	static function mkdir(path:String):Void {
+		#if (haxe_ver < 3.2)
+		path = Path.normalize(path);
+
+		if (FileSystem.exists(path)) {
+			return;
 		}
+
+		var parent = path.substring(0, path.lastIndexOf("/"));
+		if (parent != "")
+			mkdir(parent);
+		#end
+		
+		FileSystem.createDirectory(path);
+	}
+
+	static function main():Void {
+		mkdir("package/src/tools/haxelib");
+
 		for (file in [
 			"Data.hx",
 			"Main.hx",
