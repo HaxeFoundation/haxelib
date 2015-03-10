@@ -1,0 +1,10 @@
+version: "{build}"
+
+install:
+    - cinst haxe -y
+
+build_script:
+    - haxe test.hxml
+
+test_script:
+    - neko bin/test.n

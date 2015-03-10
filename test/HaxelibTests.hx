@@ -32,7 +32,13 @@ class HaxelibTests {
 				FileSystem.deleteFile(zipUri);
 			}
 			Sys.setCwd('test/libraries/${item}');
-			runCommand("zip", ["-r", '../${item}.zip', "."]);
+			switch (Sys.systemName()) {
+				case "Linux", "Mac":
+					runCommand("zip", ["-r", '../${item}.zip', "."]);
+				case "Windows":
+					runCommand("7za", ["a", "-tzip", "-r", '../${item}.zip', "."]);
+			}
+			
 			Sys.setCwd('../../..');
 		}
 	}
