@@ -89,7 +89,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 typedef Dependency = {
 	name : String,
 	?version : DependencyVersion,
-	?type: DependencyType, //this should be an @:enum abstract,
+	?type: DependencyType,
 	?url: String,
 	?subDir: String,
 	?branch: String,
@@ -287,7 +287,7 @@ class Data {
 
 		for (dep in doc.dependencies)
 			if (!DependencyVersion.isValid(dep.version))
-				dep.version = DependencyVersion.DEFAULT;
+				Reflect.setField(doc.dependencies, dep.name, DependencyVersion.DEFAULT);//TODO: this is pure evil
 
 		if (doc.classPath == null)
 			doc.classPath = '';
