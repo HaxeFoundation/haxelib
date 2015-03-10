@@ -197,11 +197,14 @@ class Data {
 		if (info.versions.length == 0) return null;
 		if (preview == null)
 			preview = function (p) return p == null;
-		for (i in 0...info.versions.length) {
-			var v = info.versions[info.versions.length - i - 1];
+		
+		var versions = info.versions.copy();
+		versions.sort(function (a, b) return -SemVer.compare(a.name, b.name));
+		
+		for (v in versions) 
 			if (preview(v.name.preview)) return v.name;
-		}
-		return info.versions[info.versions.length - 1].name;
+			
+		return info.versions[0].name;
 	}
 
 	/**
