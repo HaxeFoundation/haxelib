@@ -156,13 +156,12 @@ class TestData extends haxe.unit.TestCase {
 
 		// Dependencies (optional)
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: null })) );
-		assertTrue( readDataOkay(getJsonInfos({ dependencies: [ { name : "somelib", version: "" } ] })) );
-		assertTrue( readDataOkay(getJsonInfos( { dependencies: [ { name : "somelib" } ] } )) );
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib: "" } })) );
 		
-		assertTrue( readDataOkay(getJsonInfos({ dependencies: [ { name : "somelib", version:"1.3.0" } ]}) ));
-		assertFalse( readDataOkay(getJsonInfos({ dependencies: [{ name : "somelib", version :"nonsemver" } ]})) );
+		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"1.3.0" } }) ));
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib: "nonsemver" }})) );
 
-		assertFalse( readDataOkay(getJsonInfos({ dependencies: [{ name : "somelib", version :0 } ]})) );
+		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib: 0 } })) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: "somelib" })) );
 
 		// ReleaseNote
@@ -254,8 +253,9 @@ class TestData extends haxe.unit.TestCase {
 			Data.readData( json,true ); 
 			return true; 
 		} 
-		catch (e:String) 
+		catch (e:String) {
 			return false;
+		}
 	}
 
 	function getJsonInfos( ?remove:Array<String>, ?change:Dynamic ) {
