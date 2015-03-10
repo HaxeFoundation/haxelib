@@ -213,33 +213,46 @@ class Data {
 		If it is in a folder, the path including a trailing slash is returned.
 	*/
 	public static function locateBasePath( zip : List<Entry> ):String {
-		for( f in zip ) {
-			if( StringTools.endsWith(f.fileName,JSON) ) {
-				return f.fileName.substr(0,f.fileName.length - JSON.length);
-			}
+		var f = getJson(zip);
+		return f.fileName.substr(0, f.fileName.length - JSON.length);
+	}
+	
+	static function getJson(zip:List<Entry>)
+		return switch topmost(zip, fileNamed(JSON)) {
+			case Some(f): f;
+			default: throw 'No $JSON found';
 		}
-		throw "No "+JSON+" found";
+	
+	static function fileNamed(name:String)
+		return function (f:Entry) return f.fileName.endsWith(name);
+	
+	static function topmost(zip:List<Entry>, predicate:Entry->Bool):Option<Entry> {
+		var best:Entry = null,
+			bestDepth = 0xFFFF;
+			
+		for (f in zip) 
+			if (predicate(f)) {
+				var depth = f.fileName.replace('\\', '/').split('/').length;//TODO: consider Path.normalize
+				if ((depth == bestDepth && f.fileName < best.fileName) || depth < bestDepth)
+					best = f;
+			}		
+			
+		return
+			if (best == null) 
+				None;
+			else
+				Some(best);
 	}
+	
+	public static function readDoc( zip : List<Entry> ) : Null<String> 
+		return switch topmost(zip, fileNamed(DOCXML)) {
+			case Some(f): Reader.unzip(f).toString();
+			case None: null;
+		}
+	
 
-	public static function readDoc( zip : List<Entry> ) : String {
-		for( f in zip )
-			if( StringTools.endsWith(f.fileName,DOCXML) )
-				return Reader.unzip(f).toString();
-		return null;
-	}
-
-	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos {
-		var infodata = null;
-		for( f in zip )
-			if( StringTools.endsWith(f.fileName,JSON) ) {
-				infodata = Reader.unzip(f).toString();
-				break;
-			}
-		if( infodata == null )
-			throw JSON + " not found in package";
-
-		return readData(infodata,check);
-	}
+	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos 
+		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
 	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
 		if ( infos.classPath != "" ) {
