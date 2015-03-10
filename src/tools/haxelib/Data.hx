@@ -38,7 +38,7 @@ typedef UserInfos = {
 
 typedef VersionInfos = {
 	var date : String;
-	var name : String;
+	var name : SemVer;//TODO: this should eventually be called `number`
 	var comments : String;
 }
 
@@ -53,7 +53,7 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
-abstract DependencyVersion(String) to String from String {
+abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
 
@@ -192,6 +192,17 @@ class Data {
 	public static function fileName( lib : String, ver : String ) {
 		return safe(lib)+"-"+safe(ver)+".zip";
 	}
+	
+	static public function getLatest(info:ProjectInfos, ?preview:SemVer.Preview->Bool):Null<SemVer> {
+		if (info.versions.length == 0) return null;
+		if (preview == null)
+			preview = function (p) return p == null;
+		for (i in 0...info.versions.length) {
+			var v = info.versions[info.versions.length - i - 1];
+			if (preview(v.name.preview)) return v.name;
+		}
+		return info.versions[info.versions.length - 1].name;
+	}
 
 	/**
 		Return the directory that contains *haxelib.json*.
@@ -258,16 +269,6 @@ class Data {
 					description: 'No haxelib.json found',
 					contributors: [],
 				}
-
-		//if (Type.typeof(doc.dependencies) == TObject)
-			//if (check) {
-				//throw 'Dependency format has changed';
-			//}
-			//else
-				//doc.dependencies = [for (f in Reflect.fields(doc.dependencies)) {
-					//name: f,
-					//version: Reflect.field(doc.dependencies, f),
-				//}];
 
 		if (check)
 			doCheck(doc);
