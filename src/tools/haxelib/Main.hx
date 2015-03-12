@@ -169,6 +169,7 @@ class Main {
 		addCommand("user", user, "list information on a given user", Information);
 		addCommand("config", config, "print the repository path", Information, false);
 		addCommand("path", path, "give paths to libraries", Information, false);
+		addCommand("version", version, "print the currently using haxelib version", Information, false);
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
@@ -235,6 +236,10 @@ class Main {
 
 	function addCommand( name, f, doc, cat, ?net = true ) {
 		commands.add({ name : name, doc : doc, f : f, net : net, cat : cat });
+	}
+
+	function version() {
+		print(VERSION);
 	}
 
 	function usage() {
