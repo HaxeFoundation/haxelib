@@ -170,6 +170,7 @@ class Main {
 		addCommand("config", config, "print the repository path", Information, false);
 		addCommand("path", path, "give paths to libraries", Information, false);
 		addCommand("version", version, "print the currently using haxelib version", Information, false);
+		addCommand("help", usage, "display this list of options", Information, false);
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
@@ -259,7 +260,6 @@ class Main {
 				print("    " + StringTools.rpad(c.name, " ", maxLength) + ": " +c.doc);
 			}
 		}
-		Sys.exit(1);
 	}
 
 	function process() {
@@ -291,8 +291,10 @@ class Main {
 			}
 		}
 		var cmd = args[argcur++];
-		if( cmd == null )
+		if( cmd == null ) {
 			usage();
+			Sys.exit(1);
+		}
 		for( c in commands )
 			if( c.name == cmd ) {
 				try {
@@ -321,6 +323,7 @@ class Main {
 			}
 		print("Unknown command "+cmd);
 		usage();
+		Sys.exit(1);
 	}
 
 	// ---- COMMANDS --------------------
