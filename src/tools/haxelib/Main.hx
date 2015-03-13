@@ -246,8 +246,6 @@ class Main {
 	}
 
 	function usage() {
-		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
-		print("  Usage: haxelib [command] [options]");
 		var cats = [];
 		var maxLength = 0;
 		for( c in commands ) {
@@ -256,6 +254,15 @@ class Main {
 			if (cats[i] == null) cats[i] = [c];
 			else cats[i].push(c);
 		}
+		
+		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
+		print("  Usage: haxelib [command] [options]");
+		print("  Available switches");
+		
+		for (f in Reflect.fields(ABOUT_SETTINGS))
+			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
+			
+
 		for (cat in cats) {
 			print("  " + cat[0].cat.getName());
 			for (c in cat) {
@@ -263,37 +270,79 @@ class Main {
 			}
 		}
 	}
-
+	static var ABOUT_SETTINGS = {
+		debug  : "run in debug mode", 
+		flat   : "do not use --recursive cloning for git", 
+		always : "answer all questions with yes",
+		never  : "answer all questions with no"		
+	}
+	var settings: { 
+		debug  : Bool, 
+		flat   : Bool, 
+		always : Bool, 
+		never  : Bool
+	};
 	function process() {
-		var debug = false;
 		argcur = 0;
-		while( true ) {
+		var rest = [];
+		settings = {
+			debug: false,
+			always: false,
+			never: false,
+			flat: false,
+		};
+		
+		function parseSwitch(s:String) {
+			return 
+				if (s.startsWith('--')) 
+					Some(s.substr(2));
+				else
+					None;
+		}
+		
+		while ( argcur < args.length) {
 			var a = args[argcur++];
-			if( a == null )
-				break;
 			switch( a ) {
-			case '-always': defaultAnswer = Yes;
-			case '-never': defaultAnswer = No;
-			case "-debug":
-				debug = true;
-			case "-notimeout":
-				haxe.remoting.HttpConnection.TIMEOUT = 0;
-			case "-R":
-				var path = args[argcur++];
-				var r = ~/^(http:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
-				if( !r.match(path) )
-					throw "Invalid repository format '"+path+"'";
-				SERVER.host = r.matched(2);
-				if( r.matched(3) != null )
-					SERVER.port = Std.parseInt(r.matched(3).substr(1));
-				SERVER.dir = r.matched(4);
-				if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
-				initSite();
-			default:
-				argcur--;
-				break;
+				case '-always': defaultAnswer = Yes;
+				case '-never': defaultAnswer = No;
+				case "-notimeout":
+					haxe.remoting.HttpConnection.TIMEOUT = 0;
+				case "-R":
+					var path = args[argcur++];
+					var r = ~/^(http:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
+					if( !r.match(path) )
+						throw "Invalid repository format '"+path+"'";
+					SERVER.host = r.matched(2);
+					if( r.matched(3) != null )
+						SERVER.port = Std.parseInt(r.matched(3).substr(1));
+					SERVER.dir = r.matched(4);
+					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
+					initSite();
+				case parseSwitch(_) => Some(s):
+					if (!Reflect.hasField(settings, s)) {
+						print('unknown switch $a');
+						Sys.exit(1);
+					}
+					Reflect.setField(settings, s, true);
+				default:
+					rest.push(a);
 			}
 		}
+		
+		defaultAnswer = 
+			switch [settings.always, settings.never] {
+				case [true, true]: 
+					print('--always and --never are mutually exclusive');
+					Sys.exit(1);
+					null;
+				case [true, _]: Yes;
+				case [_, true]: No;
+				default: null;
+			}
+			
+		argcur = 0;
+		args = rest;
+		
 		var cmd = args[argcur++];
 		if( cmd == null ) {
 			usage();
@@ -318,7 +367,7 @@ class Main {
 						print("Http connection timeout. Try running haxelib -notimeout <command> to disable timeout");
 						Sys.exit(1);
 					}
-					if( debug )
+					if( settings.debug )
 						neko.Lib.rethrow(e);
 					print(Std.string(e));
 					Sys.exit(1);
@@ -1210,8 +1259,12 @@ class Main {
 
 		print("Installing " +libName + " from " +gitPath);
 		checkGit();
-
-		if( Sys.command("git", ["clone", gitPath, libPath]) != 0 ) {
+		
+		var gitArgs = ["clone", gitPath, libPath];
+		if (!settings.flat)
+			gitArgs.push('--recursive');
+			
+		if( Sys.command("git", gitArgs) != 0 ) {
 			print("Could not clone git repository");
 			return;
 		}
