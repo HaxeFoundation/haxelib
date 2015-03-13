@@ -929,18 +929,23 @@ class Main {
 				continue;
 			var p = Data.unsafe(p);
 			print("Checking " + p);
-			doUpdate(p,state);
+			try doUpdate(p, state)
+			catch (e:Dynamic)
+				if (e != GIT_UNAVAILABLE) neko.Lib.rethrow(e);
 		}
 		if( state.updated )
 			print("Done");
 		else
 			print("All libraries are up-to-date");
 	}
-
+	
+	static var GIT_UNAVAILABLE = 'Git unavailable';
 	function doUpdate( p : String, state ) {
 		var rep = state.rep;
 		if( FileSystem.exists(rep + "/" + p + "/git") && FileSystem.isDirectory(rep + "/" + p + "/git") ) {
 			checkGit();
+			if (!gitExists())
+				throw GIT_UNAVAILABLE;
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/git");
 			var doGitPull = true;
@@ -1213,10 +1218,15 @@ class Main {
 
 		}
 	}
+	function gitExists()
+		return
+			try { 
+				command("git", []); 
+				true; 
+			}	 
+			catch (e:Dynamic) false;
 
 	function checkGit() {
-		var gitExists = function()
-			try { command("git", []); return true; } catch (e:Dynamic) return false;
 		if( gitExists() )
 			return;
 		// if we have already msys git/cmd in our PATH
