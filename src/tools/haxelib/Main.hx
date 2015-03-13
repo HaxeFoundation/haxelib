@@ -1096,7 +1096,6 @@ class Main {
 
 	function path() {
 		var list = new List();
-		throw args;
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
 			checkRec(a[0],a[1],list);
