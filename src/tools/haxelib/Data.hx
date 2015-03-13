@@ -204,7 +204,7 @@ class Data {
 		for (v in versions) 
 			if (preview(v.name.preview)) return v.name;
 			
-		return info.versions[0].name;
+		return versions[0].name;
 	}
 
 	/**
