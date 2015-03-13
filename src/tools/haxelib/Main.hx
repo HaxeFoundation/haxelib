@@ -149,7 +149,7 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
-	
+	var defaultAnswer:Answer;
 	function new() {
 		args = Sys.args();
 
@@ -213,6 +213,8 @@ class Main {
 	}
 
 	function ask( question ) {
+		if (defaultAnswer != null)
+			return defaultAnswer;
 		while( true ) {
 			Sys.print(question+" [y/n/a] ? ");
 			try {
@@ -270,6 +272,8 @@ class Main {
 			if( a == null )
 				break;
 			switch( a ) {
+			case '-always': defaultAnswer = Yes;
+			case '-never': defaultAnswer = No;
 			case "-debug":
 				debug = true;
 			case "-notimeout":
@@ -1092,6 +1096,7 @@ class Main {
 
 	function path() {
 		var list = new List();
+		throw args;
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
 			checkRec(a[0],a[1],list);
