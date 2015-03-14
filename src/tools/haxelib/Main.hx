@@ -301,8 +301,7 @@ class Main {
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
-				case '-always': defaultAnswer = Yes;
-				case '-never': defaultAnswer = No;
+				case '-cwd': Sys.setCwd(args[argcur++]);
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
