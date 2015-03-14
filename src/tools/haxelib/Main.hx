@@ -176,8 +176,8 @@ class Main {
 		addCommand("git", git, "use git repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
-		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
-		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
+//		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
+//		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
