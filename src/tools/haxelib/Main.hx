@@ -1192,7 +1192,6 @@ class Main {
 		var proj = rep + Data.safe(project);
 		if( !FileSystem.exists(proj) ) {
 			FileSystem.createDirectory(proj);
-			File.saveContent(proj + "/.current", "dev");
 		}
 		var devfile = proj+"/.dev";
 		if( dir == null ) {
@@ -1303,7 +1302,6 @@ class Main {
 
 		Sys.setCwd(proj);
 
-		File.saveContent(".current", "dev");
 		File.saveContent(".dev", devPath);
 
 		print('Library $libName set to use git.');
