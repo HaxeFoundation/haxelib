@@ -868,7 +868,7 @@ class Main {
 			rep = try FileSystem.fullPath(rep) catch( e : Dynamic ) rep;
 			File.saveContent(config_file, rep);
 		} else if( !FileSystem.exists(rep) ) {
-			throw "haxelib Repository "+rep+" does not exists. Please run `haxelib setup` again";
+			throw "haxelib Repository "+rep+" does not exist. Please run `haxelib setup` again";
 		} else if ( !FileSystem.isDirectory(rep) ) {
 			throw "haxelib Repository "+rep+" exists, but was a file, not a directory.  Please remove it and run `haxelib setup` again.";
 		}
