@@ -161,9 +161,6 @@ class Main {
 		addCommand("list", list, "list all installed libraries", Basic, false);
 		addCommand("set", set, "set the current version for a library", Basic, false);
 
-		//addCommand("new", newRepo, "create a new local repository", Basic, false);
-		//addCommand("delete", deleteRepo, "delete the local repository", Basic, false);
-
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
 		addCommand("user", user, "list information on a given user", Information);
@@ -179,6 +176,8 @@ class Main {
 		addCommand("git", git, "use git repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
+		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
+		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
@@ -804,8 +803,10 @@ class Main {
 
 	function getRepository( ?setup : Bool ) {
 
-		//if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) )
-			//return Path.addTrailingSlash(FileSystem.absPath(REPODIR));
+		if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
+			var absolutePath = Path.join([Sys.getCwd(),REPODIR]);
+			return Path.addTrailingSlash(absolutePath);
+		}
 
 		var win = Sys.systemName() == "Windows";
 		var haxepath = Sys.getEnv("HAXEPATH");
