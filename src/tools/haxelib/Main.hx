@@ -256,11 +256,6 @@ class Main {
 		
 		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
 		print("  Usage: haxelib [command] [options]");
-		print("  Available switches");
-		
-		for (f in Reflect.fields(ABOUT_SETTINGS))
-			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
-			
 
 		for (cat in cats) {
 			print("  " + cat[0].cat.getName());
@@ -268,6 +263,10 @@ class Main {
 				print("    " + StringTools.rpad(c.name, " ", maxLength) + ": " +c.doc);
 			}
 		}
+
+		print("  Available switches");
+		for (f in Reflect.fields(ABOUT_SETTINGS))
+			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
 	}
 	static var ABOUT_SETTINGS = {
 		debug  : "run in debug mode", 
