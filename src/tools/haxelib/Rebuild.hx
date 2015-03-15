@@ -27,8 +27,16 @@ class Rebuild {
 			]);
 			run('nekotools', 'booting haxe', ['boot', file]);
 			FileSystem.deleteFile(file);
-			Sys.println('Update successful');
-			Sys.sleep(5.0);
+			var oldMode = FileSystem.exists('update.hxml');
+			if (oldMode)
+				FileSystem.deleteFile('update.hxml');
+				
+			Sys.println('Update successful.');
+			
+			if (!oldMode) {
+				Sys.println('Window will close in 5 seconds.');
+				Sys.sleep(5.0);
+			}
 		}
 		catch (e:Dynamic) {
 			Sys.println(Std.string(e));
