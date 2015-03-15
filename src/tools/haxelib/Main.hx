@@ -320,11 +320,11 @@ class Main {
 					SERVER.dir = r.matched(4);
 					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
 					initSite();
-				case parseSwitch(_) => Some(s):
-					if (!Reflect.hasField(settings, s)) {
-						print('unknown switch $a');
-						Sys.exit(1);
-					}
+				case parseSwitch(_) => Some(s) if (Reflect.hasField(settings, s)):
+					//if (!Reflect.hasField(settings, s)) {
+						//print('unknown switch $a');
+						//Sys.exit(1);
+					//}
 					Reflect.setField(settings, s, true);
 				default:
 					rest.push(a);
