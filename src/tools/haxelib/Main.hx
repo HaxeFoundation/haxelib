@@ -295,10 +295,10 @@ class Main {
 		
 		function parseSwitch(s:String) {
 			return 
-				if (s.startsWith('-')) 
-					Some(s.substr(1));
-				else if (s.startsWith('--')) 
+				if (s.startsWith('--')) 
 					Some(s.substr(2));
+				else if (s.startsWith('-')) 
+					Some(s.substr(1));
 				else
 					None;
 		}
