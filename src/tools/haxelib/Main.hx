@@ -132,7 +132,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('3.1.0-rc.4');
+	static var VERSION = SemVer.ofString('3.2.0-rc.1');
 	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
@@ -176,8 +176,8 @@ class Main {
 		addCommand("git", git, "use git repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
-//		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
-//		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
+		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
+		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
@@ -254,7 +254,7 @@ class Main {
 			else cats[i].push(c);
 		}
 		
-		print("Haxe Library Manager " + VERSION + " - (c)2006-2013 Haxe Foundation");
+		print("Haxe Library Manager " + VERSION + " - (c)2006-2015 Haxe Foundation");
 		print("  Usage: haxelib [command] [options]");
 
 		for (cat in cats) {
@@ -269,6 +269,7 @@ class Main {
 			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
 	}
 	static var ABOUT_SETTINGS = {
+		global : "force global repo if a local one exists",
 		debug  : "run in debug mode", 
 		flat   : "do not use --recursive cloning for git", 
 		always : "answer all questions with yes",
@@ -278,7 +279,8 @@ class Main {
 		debug  : Bool, 
 		flat   : Bool, 
 		always : Bool, 
-		never  : Bool
+		never  : Bool,
+		global : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -288,11 +290,14 @@ class Main {
 			always: false,
 			never: false,
 			flat: false,
+			global: false,
 		};
 		
 		function parseSwitch(s:String) {
 			return 
-				if (s.startsWith('--')) 
+				if (s.startsWith('-')) 
+					Some(s.substr(1));
+				else if (s.startsWith('--')) 
 					Some(s.substr(2));
 				else
 					None;
@@ -801,8 +806,8 @@ class Main {
 
 	function getRepository( ?setup : Bool ) {
 
-		if( !setup && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = Path.join([Sys.getCwd(),REPODIR]);
+		if( !setup && !settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
+			var absolutePath = Path.join([Sys.getCwd(), REPODIR]);//TODO: we actually might want to get the real path here
 			return Path.addTrailingSlash(absolutePath);
 		}
 
@@ -988,35 +993,38 @@ class Main {
 		if (!updateByName(prj))
 			print(prj + " is up to date");
 	}
+	
+	//recursively follow symlink
+	static function realPath(path:String):String {
+		return switch (new Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]).stdout.readAll().toString()) {
+			case "": //it is not a symlink
+				path;
+			case targetPath:
+				if (targetPath.startsWith("/")) {
+					realPath(targetPath);
+				} else {
+					realPath(new Path(path).dir + "/" + targetPath);
+				}
+		}
+	}
 
 	function rebuildSelf() {
+		var win = Sys.systemName() == "Windows";
+		var haxepath =
+			if (win) Sys.getEnv("HAXEPATH");
+			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
+		
+		Sys.setCwd(haxepath);
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
 			return
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
-
-		//recursively follow symlink
-		function realPath(path:String):String {
-			return switch (new Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]).stdout.readAll().toString()) {
-				case "": //it is not a symlink
-					path;
-				case targetPath:
-					if (targetPath.startsWith("/")) {
-						realPath(targetPath);
-					} else {
-						realPath(new Path(path).dir + "/" + targetPath);
-					}
-			}
-		}
+		
 
 		switch tryBuild() {
 			case None:
-				var win = Sys.systemName() == "Windows";
-				var haxepath =
-					if (win) Sys.getEnv("HAXEPATH");
-					else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
 
 				if (haxepath == null)
 					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
@@ -1024,8 +1032,8 @@ class Main {
 					haxepath = Path.addTrailingSlash(haxepath);
 
 				if (win) {
-					File.saveContent('update.hxml', '-lib haxelib_client\n--run tools.haxelib.Rebuild');
-					Sys.println('Please run haxe update.hxml');
+					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'tools.haxelib.Rebuild']);
+					print('rebuild launched');
 				}
 				else {
 					var p = new Process('haxelib', ['path', 'haxelib_client']);
@@ -1056,7 +1064,7 @@ class Main {
 	}
 
 	function updateSelf() {
-
+		settings.global = true;
 		if (updateByName('haxelib_client'))
 			print("Haxelib successfully updated.");
 		else
