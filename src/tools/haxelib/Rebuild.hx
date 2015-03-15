@@ -34,7 +34,7 @@ class Rebuild {
 			Sys.println('Update successful.');
 			
 			if (!oldMode) {
-				Sys.println('Window will close in 5 seconds.');
+				Sys.println('Rebuild will exit in 5 seconds.');
 				Sys.sleep(5.0);
 			}
 		}
