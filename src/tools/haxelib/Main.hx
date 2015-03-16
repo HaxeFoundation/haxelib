@@ -326,6 +326,9 @@ class Main {
 						//Sys.exit(1);
 					//}
 					Reflect.setField(settings, s, true);
+				case 'run':
+					rest = rest.concat(args.slice(argcur - 1));
+					break;
 				default:
 					rest.push(a);
 			}
@@ -491,9 +494,12 @@ class Main {
 			password = doRegister(user);
 		} else {
 			password = Md5.encode(param("Password",true));
-			while ( !site.checkPassword(user,password) ) {
-				print ("Invalid password for "+user);
-				password = Md5.encode(param("Password",true));
+			var attempts = 5;
+			while ( !site.checkPassword(user, password)) {
+				print ("Invalid password for " + user);
+				if (--attempts == 0) 
+					throw 'Failed to input correct password';
+				password = Md5.encode(param('Password ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
 			}
 		}
 		site.checkDeveloper(infos.name,user);
