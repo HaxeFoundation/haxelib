@@ -1,2 +1,4 @@
 #!/bin/sh
-exec haxe --run tools.haxelib.Main "$@"
+OLDCWD=`pwd`
+cd src
+exec haxe --run tools.haxelib.Main -cwd $OLDCWD $@
