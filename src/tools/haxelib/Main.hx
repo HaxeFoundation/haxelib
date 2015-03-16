@@ -1039,18 +1039,22 @@ class Main {
 					var p = new Process('haxelib', ['path', 'haxelib_client']);
 					if (p.exitCode() == 0) {
 						var args = [];
+						var classPath = "";
 						for (arg in p.stdout.readAll().toString().split('\n')) {
 							arg = arg.trim();
 							if (arg.charAt(0) == '-')
 								args.push(arg);
 							else if (arg.length > 0)
-								args.push('-cp "$arg"');
+								classPath = arg;
 						};
 
 						var file = haxepath+'haxelib';
 						try File.saveContent(
 							file,
-							'#!/bin/sh\nexec haxe '+args.join(' ')+' --run tools.haxelib.Main "$@"'
+							'#!/bin/sh'
+							+'\n'+'OLDCWD=`pwd`'
+							+'\n'+'cd $classPath'
+							+'\n'+'exec haxe '+args.join(' ')+" --run tools.haxelib.Main -cwd $OLDCWD $@"
 						)
 						catch (e:Dynamic)
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
