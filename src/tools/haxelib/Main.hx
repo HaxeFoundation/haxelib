@@ -132,7 +132,7 @@ class ProgressIn extends haxe.io.Input {
 
 class Main {
 
-	static var VERSION = SemVer.ofString('3.2.0-rc.1');
+	static var VERSION = SemVer.ofString('3.2.0-rc.3');
 	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";

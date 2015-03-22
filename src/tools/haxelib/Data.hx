@@ -233,8 +233,10 @@ class Data {
 		for (f in zip) 
 			if (predicate(f)) {
 				var depth = f.fileName.replace('\\', '/').split('/').length;//TODO: consider Path.normalize
-				if ((depth == bestDepth && f.fileName < best.fileName) || depth < bestDepth)
+				if ((depth == bestDepth && f.fileName < best.fileName) || depth < bestDepth) {
 					best = f;
+					bestDepth = depth;
+				}
 			}		
 			
 		return
