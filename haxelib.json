@@ -6,6 +6,6 @@
 	"description": "The haxelib client",
 	"classPath": "src",
 	"version": "3.2.0-rc.3",
-	"releasenote": "Correct behavior Form locating base path",
+	"releasenote": "Correct behavior for locating base path",
 	"contributors": ["back2dos", "ncannasse", "jason", "Simn"]
 }
