@@ -38,7 +38,6 @@ using tools.haxelib.Data;
 enum Answer {
 	Yes;
 	No;
-	Always;
 }
 
 private enum CommandCategory {
@@ -220,7 +219,7 @@ class Main {
 				switch( Sys.stdin().readLine() ) {
 				case "n": return No;
 				case "y": return Yes;
-				case "a": return Always;
+				case "a": return defaultAnswer = Yes;
 				}
 			} catch(e:haxe.io.Eof) {
 				Sys.println("n");
@@ -972,7 +971,7 @@ class Main {
 			var doGitPull = true;
 			if ( 0 != Sys.command("git" ,["diff", "--exit-code"]) || 0 != Sys.command("git", ["diff", "--cached", "--exit-code"]) ) {
 				switch ask("Reset changes to "+p+" git repo so we can pull latest version?") {
-					case Yes | Always:
+					case Yes:
 						Sys.command("git", ["reset", "--hard"]);
 					case No:
 						doGitPull = false;
@@ -990,7 +989,6 @@ class Main {
 				if( state.prompt )
 					switch ask("Update "+p+" to "+inf.getLatest()) {
 					case Yes:
-					case Always: state.prompt = false;
 					case No:
 						return;
 					}
