@@ -173,6 +173,7 @@ class Main {
 		addCommand("local", local, "install the specified package locally", Development, false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		addCommand("git", git, "use git repository as library", Development);
+		addCommand("hg", hg, "use Mercurial (hg) repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
@@ -1344,6 +1345,74 @@ class Main {
 			);
 
 	}
+
+	function hg()
+	doHg(
+		param("Library name"),
+		param("Mercurial (hg) path"),
+		paramOpt(),
+		paramOpt(),
+		paramOpt()
+	);
+
+	function doHg(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
+		var rep = getRepository();
+		var proj = rep + Data.safe(libName);
+		var libPath = proj + "/hg";
+
+		if( FileSystem.exists(proj + "/git") )
+			deleteRec(proj + "/git");
+
+		if( FileSystem.exists(libPath) )
+			deleteRec(libPath);
+
+		print("Installing " +libName + " from " +vcsPath);
+		//TODO:
+		checkHg();
+		//checkGit();
+
+		var vcsArgs = ["clone", vcsPath, libPath];
+		/*TODO: similar for hg?
+		if (!settings.flat)
+			vcsArgs.push('--recursive');
+			*/
+
+		if (branch != null) {
+			vcsArgs.push("--branch");
+			vcsArgs.push(branch);
+		}
+
+		if (version != null) {
+			vcsArgs.push("--rev");
+			vcsArgs.push(version);
+		}
+
+		if( Sys.command("hg", vcsArgs) != 0 ) {
+			print("Could not clone hg repository");
+			return;
+		}
+
+		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
+
+		Sys.setCwd(proj);
+
+		File.saveContent(".dev", devPath);
+
+		print('Library $libName set to use hg.');
+
+		if ( branch != null )
+			print('  Branch/Tag/Rev: $branch');
+		print('  Path: $devPath');
+
+		Sys.setCwd(libPath);
+
+		if (FileSystem.exists("haxelib.json"))
+			doInstallDependencies(
+				Data.readData(File.getContent("haxelib.json"), false).dependencies
+			);
+	}
+
+
 
 	function run() {
 		var rep = getRepository();
