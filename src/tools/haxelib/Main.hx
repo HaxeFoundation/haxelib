@@ -30,6 +30,7 @@ import sys.io.File;
 import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
+import tools.haxelib.Vcs;
 
 using StringTools;
 using Lambda;
@@ -253,7 +254,7 @@ class Main {
 			if (cats[i] == null) cats[i] = [c];
 			else cats[i].push(c);
 		}
-		
+
 		print("Haxe Library Manager " + VERSION + " - (c)2006-2015 Haxe Foundation");
 		print("  Usage: haxelib [command] [options]");
 
@@ -270,15 +271,15 @@ class Main {
 	}
 	static var ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
-		debug  : "run in debug mode", 
-		flat   : "do not use --recursive cloning for git", 
+		debug  : "run in debug mode",
+		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
-		never  : "answer all questions with no"		
+		never  : "answer all questions with no"
 	}
-	var settings: { 
-		debug  : Bool, 
-		flat   : Bool, 
-		always : Bool, 
+	var settings: {
+		debug  : Bool,
+		flat   : Bool,
+		always : Bool,
 		never  : Bool,
 		global : Bool,
 	};
@@ -292,17 +293,17 @@ class Main {
 			flat: false,
 			global: false,
 		};
-		
+
 		function parseSwitch(s:String) {
-			return 
-				if (s.startsWith('--')) 
+			return
+				if (s.startsWith('--'))
 					Some(s.substr(2));
-				else if (s.startsWith('-')) 
+				else if (s.startsWith('-'))
 					Some(s.substr(1));
 				else
 					None;
 		}
-		
+
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
@@ -333,10 +334,10 @@ class Main {
 					rest.push(a);
 			}
 		}
-		
-		defaultAnswer = 
+
+		defaultAnswer =
 			switch [settings.always, settings.never] {
-				case [true, true]: 
+				case [true, true]:
 					print('--always and --never are mutually exclusive');
 					Sys.exit(1);
 					null;
@@ -344,10 +345,10 @@ class Main {
 				case [_, true]: No;
 				default: null;
 			}
-			
+
 		argcur = 0;
 		args = rest;
-		
+
 		var cmd = args[argcur++];
 		if( cmd == null ) {
 			usage();
@@ -444,7 +445,7 @@ class Main {
 	function submit() {
 		var file = param("Package"),
 			data = null;
-		var zip =	
+		var zip =
 			if (FileSystem.isDirectory(file)) {
 				var ret = new List<Entry>(),
 					out = new BytesOutput();
@@ -454,7 +455,7 @@ class Main {
 						if (FileSystem.isDirectory(full)) seek(full);
 						else {
 							var blob = File.getBytes(full);
-							ret.push({ 
+							ret.push({
 								fileName: full.substr(file.length+1),
 								fileSize : blob.length,
 								fileTime : FileSystem.stat(full).mtime,
@@ -471,11 +472,11 @@ class Main {
 				data = out.getBytes();
 				ret;
 			}
-			else { 
+			else {
 				data = File.getBytes(file);
 				Reader.readZip(File.read(file, true));
 			}
-			
+
 		var infos = Data.readInfos(zip,true);
 		Data.checkClassPath(zip, infos);
 
@@ -497,7 +498,7 @@ class Main {
 			var attempts = 5;
 			while ( !site.checkPassword(user, password)) {
 				print ("Invalid password for " + user);
-				if (--attempts == 0) 
+				if (--attempts == 0)
 					throw 'Failed to input correct password';
 				password = Md5.encode(param('Password ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
 			}
@@ -600,27 +601,27 @@ class Main {
 		var hxml = sys.io.File.getContent(path);
 		var lines = hxml.split("\n");
 		var targets  = [
-			'-java ' => 'hxjava', 
-			'-cpp ' => 'hxcpp', 
+			'-java ' => 'hxjava',
+			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
 		var libsToInstall = new Map<String, {name:String,version:String}>();
 		for (l in lines) {
 			l = l.trim();
-			for (target in targets.keys()) 
+			for (target in targets.keys())
 				if (l.startsWith(target)) {
 					var lib = targets[target];
 					if (!libsToInstall.exists(lib))
 						libsToInstall[lib] = { name: lib, version: null }
 				}
-			
+
 			if (l.startsWith("-lib"))
 			{
 				var key = l.substr(5);
 				var parts = key.split(":");
 				var libName = parts[0].trim();
 				var libVersion = if (parts.length > 1) parts[1].trim() else null;
-				
+
 				switch libsToInstall[key] {
 					case null, { version: null } :
 						libsToInstall.set(key, { name:libName, version:libVersion } );
@@ -959,10 +960,13 @@ class Main {
 		else
 			print("All libraries are up-to-date");
 	}
-	
+
 	static var GIT_UNAVAILABLE = 'Git unavailable';
+
+
 	function doUpdate( p : String, state ) {
 		var rep = state.rep;
+		var vcs = Vcs.getVcsForDevLib(rep + "/" + p);
 		if( FileSystem.exists(rep + "/" + p + "/git") && FileSystem.isDirectory(rep + "/" + p + "/git") ) {
 			checkGit();
 			if (!gitExists())
@@ -1009,7 +1013,7 @@ class Main {
 		if (!updateByName(prj))
 			print(prj + " is up to date");
 	}
-	
+
 	//recursively follow symlink
 	static function realPath(path:String):String {
 		return switch (new Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]).stdout.readAll().toString()) {
@@ -1029,7 +1033,7 @@ class Main {
 		var haxepath =
 			if (win) Sys.getEnv("HAXEPATH");
 			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
-		
+
 		Sys.setCwd(haxepath);
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
@@ -1037,7 +1041,7 @@ class Main {
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
 		}
-		
+
 
 		switch tryBuild() {
 			case None:
@@ -1244,36 +1248,17 @@ class Main {
 
 		}
 	}
-	function gitExists()
-		return
-			try { 
-				command("git", []); 
-				true; 
-			}	 
-			catch (e:Dynamic) false;
 
-	function checkGit() {
-		if( gitExists() )
+	function checkVcs(vcs:Vcs)
+	{
+		if(vcs == null)
 			return;
-		// if we have already msys git/cmd in our PATH
-		var match = ~/(.*)git([\\|\/])cmd$/ ;
-		for (path in Sys.getEnv("PATH").split(";"))	{
-			if (match.match(path.toLowerCase()))
-			{
-				var newPath = match.matched(1) + "git" +match.matched(2) + "bin";
-				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" +newPath);
-			}
-		}
-		if( gitExists() )
-			return;
-		// look at a few default paths
-		for( path in ["C:\\Program Files (x86)\\Git\\bin","C:\\Progra~1\\Git\\bin"] )
-			if( FileSystem.exists(path) ) {
-				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" +path);
-				if( gitExists() )
-					return;
-			}
-		print("Could not execute git, please make sure it is installed and available in your PATH.");
+
+		//TODO: only if debug
+		print('checkVcs: vcs: "${vcs.name}".');
+
+		if(!vcs.exists)
+			print('Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.');
 	}
 
 	function git()
@@ -1288,18 +1273,29 @@ class Main {
 	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
-		var libPath = proj + "/git";
 
+		// find existing repo
+		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
+		// remove existing repo
+		if(vcs != null)
+			deleteRec(proj + "/" + vcs.directory);
+
+		// get git
+		vcs = Vcs.git;
+		checkVcs(vcs);
+
+		var libPath = proj + "/" + vcs.directory;
+
+		// prepare for new repo
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
 
 		print("Installing " +libName + " from " +gitPath);
-		checkGit();
-		
+
 		var gitArgs = ["clone", gitPath, libPath];
 		if (!settings.flat)
 			gitArgs.push('--recursive');
-			
+
 		if( Sys.command("git", gitArgs) != 0 ) {
 			print("Could not clone git repository");
 			return;
@@ -1358,18 +1354,27 @@ class Main {
 	function doHg(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
-		var libPath = proj + "/hg";
 
-		if( FileSystem.exists(proj + "/git") )
-			deleteRec(proj + "/git");
+		// find existing repo
+		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
+		// remove existing repo
+		if(vcs != null)
+			deleteRec(proj + "/" + vcs.directory);
 
-		if( FileSystem.exists(libPath) )
+
+		// get hg
+		vcs = Vcs.hg;
+		checkVcs(vcs);
+
+		var libPath = proj + "/" + vcs.directory;
+
+		// prepare for new repo
+		if(FileSystem.exists(libPath))
 			deleteRec(libPath);
 
+
 		print("Installing " +libName + " from " +vcsPath);
-		//TODO:
-		checkHg();
-		//checkGit();
+
 
 		var vcsArgs = ["clone", vcsPath, libPath];
 		/*TODO: similar for hg?
