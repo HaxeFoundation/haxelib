@@ -1247,9 +1247,6 @@ class Main {
 		if(vcs == null)
 			return;
 
-		//TODO: only if debug
-		print('checkVcs: vcs: "${vcs.name}".');
-
 		if(!vcs.exists)
 			print('Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.');
 	}
