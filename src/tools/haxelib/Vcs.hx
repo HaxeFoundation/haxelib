@@ -1,5 +1,6 @@
 package tools.haxelib;
 
+import tools.haxelib.Main;
 import sys.FileSystem;
 
 class Vcs
@@ -89,7 +90,15 @@ class Vcs
 		return {code:code, out:code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString()};
 	}
 
-	//public function clone(parrentDir, )
+	public function cloneToCwd()
+	{
+
+	}
+
+	public function updateInCwd(libName:String):Bool
+	{
+		return false;
+	}
 }
 
 
@@ -132,6 +141,27 @@ class Git extends Vcs
 					return;
 			}
 	}
+
+	override public function updateInCwd(libName:String):Bool
+	{
+		var doPull = true;
+
+		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
+		{
+			switch Main.ask("Reset changes to " + libName + " git repo so we can pull latest version?")
+			{
+				case Yes:
+					Sys.command(executable, ["reset", "--hard"]);
+				case No:
+					doPull = false;
+					Main.print("Git repo left untouched");
+			}
+		}
+		if(doPull){
+			Sys.command("git", ["pull"]);
+		}
+		return doPull;
+	}
 }
 
 class Mercurial extends Vcs
@@ -163,5 +193,42 @@ class Mercurial extends Vcs
 			}
 		}
 		checkExecutable();
+	}
+
+	override public function updateInCwd(libName:String):Bool
+	{
+		var changed = false;
+		cmd(executable, ["pull"]);
+		var summary = cmd(executable, ["summary"]).out;
+		var diff = cmd(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var status = cmd(executable, ["status"]);
+
+		// get new pulled changesets:
+		// (and search num of sets)
+		summary = summary.substr(0, summary.length - 1);
+		summary = summary.substr(summary.lastIndexOf("\n") + 1);
+		// we don't know any about locale then taking only Digit-exising:s
+		changed = ~/(\d)/.match(summary);
+		if(changed)
+			// print new pulled changesets:
+			Main.print(summary);
+
+
+		if(diff.code + status.code + diff.out.length + status.out.length != 0)
+		{
+			Main.print(diff.out);
+			switch Main.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
+			{
+				case Yes:
+					Sys.command(executable, ["update", "--clean"]);
+				case No:
+					changed = false;
+					Main.print(name + " repo left untouched");
+			}
+		}
+		else if(changed)
+			Sys.command(executable, ["update"]);
+
+		return changed;
 	}
 }

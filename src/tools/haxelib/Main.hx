@@ -149,7 +149,7 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
-	var defaultAnswer:Answer;
+	static var defaultAnswer:Answer;
 	function new() {
 		args = Sys.args();
 
@@ -212,7 +212,7 @@ class Main {
 		return Sys.stdin().readLine();
 	}
 
-	function ask( question ) {
+	static public function ask( question ) {
 		if (defaultAnswer != null)
 			return defaultAnswer;
 		while( true ) {
@@ -953,7 +953,7 @@ class Main {
 			print("Checking " + p);
 			try doUpdate(p, state)
 			catch (e:Dynamic)
-				if (e != GIT_UNAVAILABLE) neko.Lib.rethrow(e);
+				if (e != VCS_UNAVAILABLE) neko.Lib.rethrow(e);
 		}
 		if( state.updated )
 			print("Done");
@@ -961,34 +961,27 @@ class Main {
 			print("All libraries are up-to-date");
 	}
 
-	static var GIT_UNAVAILABLE = 'Git unavailable';
-
-
+	static var VCS_UNAVAILABLE = 'Git unavailable';
 	function doUpdate( p : String, state ) {
 		var rep = state.rep;
-		var vcs = Vcs.getVcsForDevLib(rep + "/" + p);
-		if( FileSystem.exists(rep + "/" + p + "/git") && FileSystem.isDirectory(rep + "/" + p + "/git") ) {
-			checkGit();
-			if (!gitExists())
-				throw GIT_UNAVAILABLE;
+
+		//TODO: get content from `.current` and use vcs only if there "dev".
+
+		var vcs:Vcs = Vcs.getVcsForDevLib(rep + "/" + p);
+		if(vcs != null)
+		{
+			if(!vcs.exists)
+				throw VCS_UNAVAILABLE;
+
 			var oldCwd = Sys.getCwd();
-			Sys.setCwd(rep + "/" + p + "/git");
-			var doGitPull = true;
-			if ( 0 != Sys.command("git" ,["diff", "--exit-code"]) || 0 != Sys.command("git", ["diff", "--cached", "--exit-code"]) ) {
-				switch ask("Reset changes to "+p+" git repo so we can pull latest version?") {
-					case Yes:
-						Sys.command("git", ["reset", "--hard"]);
-					case No:
-						doGitPull = false;
-						print("Git repo left untouched");
-				}
-			}
-			if (doGitPull) {
-				Sys.command("git", ["pull"]);
-			}
-			state.updated = true;
+			Sys.setCwd(rep + "/" + p + "/" + vcs.directory);
+			var success = vcs.updateInCwd(p);
+
+			state.updated = success;
 			Sys.setCwd(oldCwd);
-		} else {
+		}
+		else
+		{
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
 			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.getLatest())) ) {
 				if( state.prompt )
@@ -1377,10 +1370,8 @@ class Main {
 
 
 		var vcsArgs = ["clone", vcsPath, libPath];
-		/*TODO: similar for hg?
-		if (!settings.flat)
-			vcsArgs.push('--recursive');
-			*/
+
+		//TODO: "--subrepos" need?
 
 		if (branch != null) {
 			vcsArgs.push("--branch");
@@ -1572,7 +1563,7 @@ class Main {
 
 	// ----------------------------------
 
-	static function print(str) {
+	static public function print(str) {
 		Sys.print(str+"\n");
 	}
 
