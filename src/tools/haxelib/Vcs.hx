@@ -1,10 +1,119 @@
 package tools.haxelib;
 
+import haxe.ds.StringMap;
 import tools.haxelib.Main;
 import sys.FileSystem;
 
+
+#if macro
+import Type.enumParameters in ep;
+import haxe.macro.TypeTools;
+import haxe.macro.Type.BaseType;
+import haxe.macro.Context;
+import haxe.macro.Expr;
+import haxe.macro.Type in MType;
+#end
+
+
+enum VcsError
+{
+	VcsUnavailable(vcs:Vcs);
+}
+
+
+#if !macro
+@:autoBuild(tools.haxelib.Vcs.staticRegistration()) #end
 class Vcs
 {
+	#if macro
+	static public function staticRegistration():Array<Field>
+	{
+		var type = Context.getLocalType();
+		var typeRef:String = Type.enumParameters(type)[0];
+		//var classType = switch (type) { case TInst(_.get() => cl, _): cl; default: throw false; };
+		var classType = TypeTools.getClass(type);
+		var fields = Context.getBuildFields();
+		var lines = [];
+
+		// get current executable:
+		var constructor:Function;
+		for(field in fields)
+			if(field.name == "new" && field.kind.match(FieldType.FFun))
+				constructor = ep(field.kind)[0];
+
+		// without constructor:
+		if(constructor == null)
+			Context.error('${typeRef} should contain a constructor like all other subclasses of Vcs.', Context.currentPos());
+		// constructor with args:
+		if(constructor.args.length > 0)
+			Context.error('Constructor of ${typeRef} should not require arguments', Context.currentPos());
+
+
+		// get super call in constructor:
+		var superCallExpr:ExprDef;
+		function searchSuperCall(expr:ExprDef, next:Dynamic):Null<ExprDef>
+		{
+			switch(expr)
+			{
+				case ExprDef.EBlock(exprs):
+					for(e in exprs)
+					{
+						var result = next(e.expr, next);
+						if(result != null)
+							return result;
+					}
+
+				case ExprDef.ECall(e, params):
+					if(e.expr.match(ExprDef.EConst))
+					{
+						var c:Constant = ep(e.expr)[0];
+						if(c.match(Constant.CIdent) && ep(c)[0] == "super")
+							return expr;
+					}
+				default: return null;
+			}
+			return null;
+		}
+		superCallExpr = searchSuperCall(constructor.expr.expr, searchSuperCall);
+
+		// without super Call:
+		if(superCallExpr == null)
+			Context.error('Constructor of ${typeRef} should call super.', Context.currentPos());
+
+		// get first arg of super call:
+		//XXX: optimize it:
+		var vcsName:String = ep(ep(ep(superCallExpr)[1][0].expr)[0])[0];
+		var typePath:TypePath = {name:classType.name, pack:classType.pack};
+		var factory = macro function():Vcs
+		{
+			var result:Vcs = $p{["Vcs", "reg_inst"]}.get('$vcsName');
+			if(result != null)
+				return result;
+			else
+			{
+				result = new $typePath();
+				$p{["Vcs", "reg_inst"]}.set('$vcsName', result);
+			}
+			return result;
+		}
+
+		var regCall = macro $p{["Vcs", "reg"]}.set('$vcsName', $factory);
+		lines.push(regCall);
+		fields.push({
+			            name: "__init__",
+			            access: [APublic, AStatic],
+			            pos: Context.currentPos(),
+			            kind: FFun({
+				                       args: [],
+				                       expr: $b{lines[0]},
+				                       params: [],
+				                       ret: null
+			                       })
+		            });
+		return fields;
+	}
+	#end
+
 	//----------- properties, fields ------------//
 
 	public var name(default, null):String;
@@ -15,38 +124,45 @@ class Vcs
 	private var existingChecked:Bool = false;
 	private var executableSearched:Bool = false;
 
-	public static var git(get_git, null):Vcs;
-	public static var hg(get_hg, null):Vcs;
+	public static var reg:Map<String, Void -> Vcs>;
+	public static var reg_inst:Map<String, Vcs>;
+	//public static var reg:Map<String, String>;
 
 	//--------------- constructor ---------------//
 
-	public function new()
+	public static function __init__()
 	{
-		// set defaults:
+		//reg = [];
+		reg = new StringMap();
+		reg_inst = new StringMap();
+	}
+
+
+	private function new(directory:String, executable:String, name:String)
+	{
+		this.name = name;
+		this.directory = directory;
+		this.executable = executable;
 	}
 
 
 	//----------------- static ------------------//
 
+	public static function get(executable:String):Null<Vcs>
+	{
+		if(reg.exists(executable))
+			return reg.get(executable)();
+		else return null;
+	}
+
 	public static function getVcsForDevLib(libPath:String):Null<Vcs>
 	{
-		return
-			if(FileSystem.exists(libPath + "/git") && FileSystem.isDirectory(libPath + "/git"))
-				git;
-			else if(FileSystem.exists(libPath + "/hg") && FileSystem.isDirectory(libPath + "/hg"))
-				hg;
-			else
-				null;
-	}
-
-	static function get_git():Vcs
-	{
-		return git == null ? (git = new Git()) : git;
-	}
-
-	static function get_hg():Vcs
-	{
-		return hg == null ? (hg = new Mercurial()) : hg;
+		for(k in reg.keys())
+		{
+			if(FileSystem.exists(libPath + "/" + k) && FileSystem.isDirectory(libPath + "/" + k))
+				return reg.get(k)();
+		}
+		return null;
 	}
 
 
@@ -92,12 +208,19 @@ class Vcs
 
 	public function cloneToCwd()
 	{
-
+		throw "This method must be overriden.";
 	}
 
 	public function updateInCwd(libName:String):Bool
 	{
+		throw "This method must be overriden.";
 		return false;
+	}
+
+
+	public function toString():String
+	{
+		return Type.getClassName(Type.getClass(this));
 	}
 }
 
@@ -105,13 +228,7 @@ class Vcs
 class Git extends Vcs
 {
 	public function new()
-	{
-		super();
-
-		name = "Git";
-		directory = "git";
-		executable = "git";
-	}
+		super("git", "git", "Git");
 
 	override private function searchExecutable():Void
 	{
@@ -150,9 +267,9 @@ class Git extends Vcs
 		{
 			switch Main.ask("Reset changes to " + libName + " git repo so we can pull latest version?")
 			{
-				case Yes:
+				case Answer.Yes:
 					Sys.command(executable, ["reset", "--hard"]);
-				case No:
+				case Answer.No:
 					doPull = false;
 					Main.print("Git repo left untouched");
 			}
@@ -168,11 +285,7 @@ class Mercurial extends Vcs
 {
 	public function new()
 	{
-		super();
-
-		name = "Mercurial";
-		directory = "hg";
-		executable = "hg";
+		super("hg", "hg", "Mercurial");
 	}
 
 	override private function searchExecutable():Void
@@ -219,9 +332,9 @@ class Mercurial extends Vcs
 			Main.print(diff.out);
 			switch Main.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
 			{
-				case Yes:
+				case Answer.Yes:
 					Sys.command(executable, ["update", "--clean"]);
-				case No:
+				case Answer.No:
 					changed = false;
 					Main.print(name + " repo left untouched");
 			}
