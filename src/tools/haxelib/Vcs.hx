@@ -97,6 +97,7 @@ class Vcs
 			return result;
 		}
 
+		//TODO: search existing `__init__` => add to top of it's block.
 		var regCall = macro $p{["Vcs", "reg"]}.set('$vcsName', $factory);
 		lines.push(regCall);
 		fields.push({
@@ -120,19 +121,17 @@ class Vcs
 	public var directory(default, null):String;
 	public var executable(default, null):String;
 
-	public var exists(get_exists, null):Bool;
-	private var existingChecked:Bool = false;
+	public var available(get_available, null):Bool;
+	private var availabilityChecked:Bool = false;
 	private var executableSearched:Bool = false;
 
-	public static var reg:Map<String, Void -> Vcs>;
-	public static var reg_inst:Map<String, Vcs>;
-	//public static var reg:Map<String, String>;
+	private static var reg:Map<String, Void -> Vcs>;
+	private static var reg_inst:Map<String, Vcs>;
 
 	//--------------- constructor ---------------//
 
 	public static function __init__()
 	{
-		//reg = [];
 		reg = new StringMap();
 		reg_inst = new StringMap();
 	}
@@ -175,26 +174,26 @@ class Vcs
 
 	private function checkExecutable():Bool
 	{
-		exists =
+		available =
 		executable != null && try
 		{
 			cmd(executable, []);
 			true;
 		}
 		catch(e:Dynamic) false;
-		existingChecked = true;
+		availabilityChecked = true;
 
-		if(!exists && !executableSearched)
+		if(!available && !executableSearched)
 			searchExecutable();
 
-		return exists;
+		return available;
 	}
 
-	@:final function get_exists():Bool
+	@:final function get_available():Bool
 	{
-		if(!existingChecked)
+		if(!availabilityChecked)
 			checkExecutable();
-		return this.exists;
+		return this.available;
 	}
 
 	//----------------- ctrl -------------------//
@@ -234,7 +233,7 @@ class Git extends Vcs
 	{
 		super.searchExecutable();
 
-		if(exists)
+		if(available)
 			return;
 
 		// if we have already msys git/cmd in our PATH
@@ -292,7 +291,7 @@ class Mercurial extends Vcs
 	{
 		super.searchExecutable();
 
-		if(exists)
+		if(available)
 			return;
 
 		// if we have already msys git/cmd in our PATH

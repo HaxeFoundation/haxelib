@@ -953,7 +953,7 @@ class Main {
 			print("Checking " + p);
 			try doUpdate(p, state)
 			catch (e:Dynamic)
-				if (e != VCS_UNAVAILABLE) neko.Lib.rethrow(e);
+				if (e != VcsError.VcsUnavailable) neko.Lib.rethrow(e);
 		}
 		if( state.updated )
 			print("Done");
@@ -961,7 +961,6 @@ class Main {
 			print("All libraries are up-to-date");
 	}
 
-	static var VCS_UNAVAILABLE = 'Git unavailable';
 	function doUpdate( p : String, state ) {
 		var rep = state.rep;
 
@@ -970,8 +969,8 @@ class Main {
 		var vcs:Vcs = Vcs.getVcsForDevLib(rep + "/" + p);
 		if(vcs != null)
 		{
-			if(!vcs.exists)
-				throw VCS_UNAVAILABLE;
+			if(!vcs.available)
+				throw VcsError.VcsUnavailable;
 
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/" + vcs.directory);
@@ -1247,31 +1246,74 @@ class Main {
 		if(vcs == null)
 			return;
 
-		if(!vcs.exists)
+		if(!vcs.available)
 			print('Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.');
 	}
 
-	function git()
-		doGit(
-			param("Library name"),
-			param("Git path"),
-			paramOpt(),
-			paramOpt(),
-			paramOpt()
-		);
-
-	function doGit(libName: String, gitPath: String, ?branch : String, ?subDir: String, ?version:String) {
-		var rep = getRepository();
-		var proj = rep + Data.safe(libName);
+	function removeExistingDevLib(proj:String):Void
+	{
+		//TODO: ask if existing repo have changes.
 
 		// find existing repo
 		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
 		// remove existing repo
 		if(vcs != null)
 			deleteRec(proj + "/" + vcs.directory);
+	}
+
+	function git()
+	{
+		doVcsClone(
+			Vcs.get("git"),
+			param("Library name"),
+		//XXX: need to optimize:
+			param(Vcs.get("git").name + " path"),
+			paramOpt(),
+			paramOpt(),
+			paramOpt()
+		);
+		/*doGit( param("Library name"), param("Git path"), paramOpt(), paramOpt(), paramOpt() );*/
+	}
+
+	function hg()
+	{
+		doVcsClone(
+			Vcs.get("hg"),
+			param("Library name"),
+		//XXX: need to optimize:
+			param(Vcs.get("hg").name + " path"),
+			paramOpt(),
+			paramOpt(),
+			paramOpt()
+		);
+		/*doHg( param("Library name"), param("Mercurial (hg) path"), paramOpt(), paramOpt(), paramOpt() );*/
+	}
+
+	function doVcsClone(vcs:Vcs, libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String)
+	{
+		var rep = getRepository();
+		var proj = rep + Data.safe(libName);
+
+		// find & remove all existing repos:
+		removeExistingDevLib(proj);
+
+		//...
+	}
+
+	function doGit(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
+		var rep = getRepository();
+		var proj = rep + Data.safe(libName);
+
+		removeExistingDevLib(proj);
+
+		/*// find existing repo
+		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
+		// remove existing repo
+		if(vcs != null)
+			deleteRec(proj + "/" + vcs.directory);*/
 
 		// get git
-		vcs = Vcs.git;
+		var vcs = Vcs.get("git");
 		checkVcs(vcs);
 
 		var libPath = proj + "/" + vcs.directory;
@@ -1280,9 +1322,9 @@ class Main {
 		if( FileSystem.exists(libPath) )
 			deleteRec(libPath);
 
-		print("Installing " +libName + " from " +gitPath);
+		print("Installing " +libName + " from " +vcsPath);
 
-		var gitArgs = ["clone", gitPath, libPath];
+		var gitArgs = ["clone", vcsPath, libPath];
 		if (!settings.flat)
 			gitArgs.push('--recursive');
 
@@ -1332,15 +1374,6 @@ class Main {
 
 	}
 
-	function hg()
-	doHg(
-		param("Library name"),
-		param("Mercurial (hg) path"),
-		paramOpt(),
-		paramOpt(),
-		paramOpt()
-	);
-
 	function doHg(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
@@ -1353,7 +1386,7 @@ class Main {
 
 
 		// get hg
-		vcs = Vcs.hg;
+		vcs = Vcs.get("hg");
 		checkVcs(vcs);
 
 		var libPath = proj + "/" + vcs.directory;
