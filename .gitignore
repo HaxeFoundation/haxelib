@@ -6,3 +6,5 @@
 server
 package
 test/libraries/*.zip
+.idea
+dump

@@ -25,18 +25,21 @@ interface IVcs
 	public var available(get_available, null):Bool;
 
 
-	// clone repo into CWD/{directory}
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?cwd:String):Void;
-
-	// check available updates for repo in CWD/{directory}
-	public function updatable(?cwd:String):Void;
 
 	/**
-		Update to HEAD repo in `cwd` or `cwd`/{directory}.
-		@param cwd is optional and if not passed it will work in current CWD.
-		Otherwise CWD will be temporally changed to `cwd` and restored when job is complete.
+		Clone repo into CWD.
+		CWD must be like "...haxelib-repo/lib/git" for Git.
 	**/
-	public function update(?cwd:String):Void;
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
+
+	// check available updates for repo in CWD/{directory}
+	public function updatable(libName:String):Void;
+
+	/**
+		Update to HEAD repo contains in CWD or CWD/`Vcs.directory`.
+		CWD must be like "...haxelib-repo/lib/git" for Git.
+	**/
+	public function update(libName:String):Void;
 
 	// reset all changes in repo in CWD/{directory}
 	public function reset(?cwd:String):Void;
@@ -253,12 +256,12 @@ class Vcs
 		return {code:code, out:code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString()};
 	}
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?cwd:String):Void
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void
 	{
 		throw "This method must be overriden.";
 	}
 
-	public function updateInCwd(libName:String):Bool
+	public function update(libName:String):Bool
 	{
 		throw "This method must be overriden.";
 		return false;
@@ -306,7 +309,7 @@ class Git extends Vcs
 			}
 	}
 
-	override public function updateInCwd(libName:String):Bool
+	override public function update(libName:String):Bool
 	{
 		var doPull = true;
 
@@ -327,7 +330,7 @@ class Git extends Vcs
 		return doPull;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?cwd:String):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 
@@ -393,7 +396,7 @@ class Mercurial extends Vcs// implements IVcs
 		checkExecutable();
 	}
 
-	override public function updateInCwd(libName:String):Bool
+	override public function update(libName:String):Bool
 	{
 		var changed = false;
 		cmd(executable, ["pull"]);
@@ -430,7 +433,7 @@ class Mercurial extends Vcs// implements IVcs
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?cwd:String):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 

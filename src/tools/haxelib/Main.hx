@@ -983,7 +983,7 @@ class Main {
 
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(rep + "/" + p + "/" + vcs.directory);
-			var success = vcs.updateInCwd(p);
+			var success = vcs.update(p);
 
 			state.updated = success;
 			Sys.setCwd(oldCwd);
