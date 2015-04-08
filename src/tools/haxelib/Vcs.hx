@@ -348,7 +348,10 @@ class Git extends Vcs//TODO: implements IVcs
 			return;
 		}
 
-		Sys.setCwd(libPath);
+
+		var cwd = cli.cwd;
+
+		cli.cwd = libPath;
 		if(branch != null)
 		{
 			var ret = cli.command("git", ["checkout", branch]);
@@ -362,6 +365,9 @@ class Git extends Vcs//TODO: implements IVcs
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
+
+		// return prev. cwd:
+		cli.cwd = cwd;
 	}
 }
 
