@@ -386,8 +386,7 @@ class Main {
 		never  : "answer all questions with no"
 	}
 
-	//TODO: unmake it `public static` > `private`
-	public static var settings: {
+	var settings: {
 		debug  : Bool,
 		flat   : Bool,
 		always : Bool,
@@ -1411,7 +1410,7 @@ class Main {
 
 		try
 		{
-			vcs.clone(libPath, url, branch, version);
+			vcs.clone(libPath, url, branch, version, settings.flat);
 		}
 		catch(error:VcsError)
 		{

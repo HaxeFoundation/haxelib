@@ -251,7 +251,7 @@ class Vcs
 
 	//----------------- ctrl -------------------//
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?flat:Bool):Void
 	{
 		throw "This method must be overriden.";
 	}
@@ -270,7 +270,7 @@ class Vcs
 }
 
 
-class Git extends Vcs
+class Git extends Vcs//TODO: implements IVcs
 {
 	public function new()
 		super("git", "git", "Git");
@@ -325,11 +325,11 @@ class Git extends Vcs
 		return doPull;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?flat:Bool):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 
-		if(!Main.settings.flat)
+		if(!flat)
 			vcsArgs.push('--recursive');
 
 		//TODO: move to Vcs.run(vcsArgs)
@@ -357,7 +357,7 @@ class Git extends Vcs
 }
 
 
-class Mercurial extends Vcs// implements IVcs
+class Mercurial extends Vcs//TODO: implements IVcs
 {
 	public function new()
 		super("hg", "hg", "Mercurial");
@@ -419,7 +419,7 @@ class Mercurial extends Vcs// implements IVcs
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?flat:Bool):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 
