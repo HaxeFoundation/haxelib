@@ -173,7 +173,8 @@ class Main {
 		addCommand("register", register, "register a new user", Development);
 		addCommand("local", local, "install the specified package locally", Development, false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
-		addCommand("git", git, "use git repository as library", Development);
+		//TODO: generate command about VCS by Vcs.getAll()
+		addCommand("git", git, "use Git repository as library", Development);
 		addCommand("hg", hg, "use Mercurial (hg) repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
@@ -1244,7 +1245,7 @@ class Main {
 	}
 
 	//XXX: handy inlined into doInstallVcs():
-	//XXX: delete me!
+	//XXX: delete me, plz!
 	function checkVcs(vcs:Vcs)
 	{
 		if(vcs == null)
@@ -1312,8 +1313,7 @@ class Main {
 		print("Installing " +libName + " from " +vcsPath);
 
 
-		//XXX: // TEMP TEMP TEMP //
-
+		//XXX: вот тут вся разница! :)
 		switch(vcs.executable)
 		{
 			case VcsID.Hg: doHg(libPath, vcsPath, branch, subDir, version);
