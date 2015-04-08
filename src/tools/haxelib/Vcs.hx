@@ -61,6 +61,14 @@ enum VcsError
 }
 
 
+typedef Settings =
+{
+	var flat:Bool;
+	@:optional var quiet:Bool;
+	@:optional var debug:Bool;
+};
+
+
 #if !macro
 @:autoBuild(tools.haxelib.Vcs.staticRegistration()) #end
 class Vcs
@@ -251,12 +259,12 @@ class Vcs
 
 	//----------------- ctrl -------------------//
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?flat:Bool):Void
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?settings:Settings):Void
 	{
 		throw "This method must be overriden.";
 	}
 
-	public function update(libName:String):Bool
+	public function update(libName:String, ?settings:Settings):Bool
 	{
 		throw "This method must be overriden.";
 		return false;
@@ -304,7 +312,7 @@ class Git extends Vcs//TODO: implements IVcs
 			}
 	}
 
-	override public function update(libName:String):Bool
+	override public function update(libName:String, ?settings:Settings):Bool
 	{
 		var doPull = true;
 
@@ -325,14 +333,15 @@ class Git extends Vcs//TODO: implements IVcs
 		return doPull;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?flat:Bool):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 
-		if(!flat)
+		if(settings == null || !settings.flat)
 			vcsArgs.push('--recursive');
 
 		//TODO: move to Vcs.run(vcsArgs)
+		//TODO: use settings.quiet
 		if(Sys.command("git", vcsArgs) != 0)
 		{
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
@@ -382,7 +391,7 @@ class Mercurial extends Vcs//TODO: implements IVcs
 		checkExecutable();
 	}
 
-	override public function update(libName:String):Bool
+	override public function update(libName:String, ?settings:Settings):Bool
 	{
 		var changed = false;
 		cli.command(executable, ["pull"]);
@@ -419,7 +428,7 @@ class Mercurial extends Vcs//TODO: implements IVcs
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?flat:Bool):Void
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void
 	{
 		var vcsArgs = ["clone", url, libPath];
 

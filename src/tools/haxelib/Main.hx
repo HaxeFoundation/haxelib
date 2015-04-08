@@ -1087,7 +1087,7 @@ class Main {
 
 			var oldCwd = cli.cwd;
 			cli.cwd = (rep + "/" + p + "/" + vcs.directory);
-			var success = vcs.update(p);
+			var success = vcs.update(p, cast settings);
 
 			state.updated = success;
 			cli.cwd = oldCwd;
@@ -1410,7 +1410,7 @@ class Main {
 
 		try
 		{
-			vcs.clone(libPath, url, branch, version, settings.flat);
+			vcs.clone(libPath, url, branch, version, cast settings);
 		}
 		catch(error:VcsError)
 		{
