@@ -177,7 +177,7 @@ class Vcs
 	private static var reg_inst:Map<String, Vcs>;
 
 
-	//private var cwd(get_cwd, set_cwd):String;
+	private var cli(default, null):Cli;
 
 	//--------------- constructor ---------------//
 
@@ -193,6 +193,8 @@ class Vcs
 		this.name = name;
 		this.directory = directory;
 		this.executable = executable;
+
+		cli = new Cli();
 	}
 
 
@@ -228,7 +230,7 @@ class Vcs
 		available =
 		executable != null && try
 		{
-			cmd(executable, []);
+			cli.command(executable, []);
 			true;
 		}
 		catch(e:Dynamic) false;
@@ -248,13 +250,6 @@ class Vcs
 	}
 
 	//----------------- ctrl -------------------//
-
-	private function cmd(cmd:String, args:Array<String>)
-	{
-		var p = new sys.io.Process(cmd, args);
-		var code = p.exitCode();
-		return {code:code, out:code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString()};
-	}
 
 	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void
 	{
@@ -315,13 +310,13 @@ class Git extends Vcs
 
 		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
 		{
-			switch Main.ask("Reset changes to " + libName + " git repo so we can pull latest version?")
+			switch cli.ask("Reset changes to " + libName + " git repo so we can pull latest version?")
 			{
 				case Answer.Yes:
 					Sys.command(executable, ["reset", "--hard"]);
 				case Answer.No:
 					doPull = false;
-					Main.print("Git repo left untouched");
+					cli.print("Git repo left untouched");
 			}
 		}
 		if(doPull){
@@ -340,7 +335,6 @@ class Git extends Vcs
 		//TODO: move to Vcs.run(vcsArgs)
 		if(Sys.command("git", vcsArgs) != 0)
 		{
-			//TODO: Main.print("Could not clone git repository");
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 			return;
 		}
@@ -348,24 +342,16 @@ class Git extends Vcs
 		Sys.setCwd(libPath);
 		if(branch != null)
 		{
-			var ret = cmd("git", ["checkout", branch]);
+			var ret = cli.command("git", ["checkout", branch]);
 			if(ret.code != 0)
-			{
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-				//TODO: Main.print('Could not checkout branch, tag or path "$branch": ' + ret.out);
-				//TODO: Main.deleteRec(libPath);
-			}
 		}
 
 		if(version != null)
 		{
-			var ret = cmd("git", ["checkout", "tags/" + version]);
+			var ret = cli.command("git", ["checkout", "tags/" + version]);
 			if(ret.code != 0)
-			{
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
-				//TODO: Main.print('Could not checkout tag "$version": ' + ret.out);
-				//TODO: Main.deleteRec(libPath);
-			}
 		}
 	}
 }
@@ -399,10 +385,10 @@ class Mercurial extends Vcs// implements IVcs
 	override public function update(libName:String):Bool
 	{
 		var changed = false;
-		cmd(executable, ["pull"]);
-		var summary = cmd(executable, ["summary"]).out;
-		var diff = cmd(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
-		var status = cmd(executable, ["status"]);
+		cli.command(executable, ["pull"]);
+		var summary = cli.command(executable, ["summary"]).out;
+		var diff = cli.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var status = cli.command(executable, ["status"]);
 
 		// get new pulled changesets:
 		// (and search num of sets)
@@ -412,19 +398,19 @@ class Mercurial extends Vcs// implements IVcs
 		changed = ~/(\d)/.match(summary);
 		if(changed)
 			// print new pulled changesets:
-			Main.print(summary);
+			cli.print(summary);
 
 
 		if(diff.code + status.code + diff.out.length + status.out.length != 0)
 		{
-			Main.print(diff.out);
-			switch Main.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
+			cli.print(diff.out);
+			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
 			{
 				case Answer.Yes:
 					Sys.command(executable, ["update", "--clean"]);
 				case Answer.No:
 					changed = false;
-					Main.print(name + " repo left untouched");
+					cli.print(name + " repo left untouched");
 			}
 		}
 		else if(changed)
@@ -449,11 +435,7 @@ class Mercurial extends Vcs// implements IVcs
 			vcsArgs.push(version);
 		}
 
-		//TODO: move to Vcs.run(vcsArgs)
 		if(Sys.command("hg", vcsArgs) != 0)
-		{
-			//TODO: Main.print("Could not clone hg repository");
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-		}
 	}
 }

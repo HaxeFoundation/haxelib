@@ -130,9 +130,129 @@ class ProgressIn extends haxe.io.Input {
 
 }
 
+enum CliError
+{
+	CwdUnavailable(pwd:String);
+	CantSetSwd_DirNotExist(dir:String);
+}
+
+class Cli
+{
+	public var defaultAnswer(get, set):Answer;
+	private static var defaultAnswer_global:Answer;
+
+	public var cwd(get_cwd, set_cwd):String;
+	private static var cwd_cache:String = null;
+
+
+	public function new()
+		defaultAnswer = null;
+
+
+	function get_cwd():String
+	{
+		var result:String = null;
+
+		try
+		{
+			cwd_cache = Sys.getCwd();
+		}
+		catch(error:String)
+			tryFixGetCwdError(error);
+
+		return cwd_cache;
+	}
+
+	function set_cwd(value:String):String
+	{
+		//TODO: For call `FileSystem.isDirectory(value)` we can get an exeption "std@sys_file_type":
+		if(value != null && cwd_cache != value && FileSystem.exists(value) && FileSystem.isDirectory(value))
+			Sys.setCwd(cwd_cache = value);
+		else
+			throw CliError.CantSetSwd_DirNotExist(value);
+		return cwd_cache;
+	}
+
+
+	function tryFixGetCwdError(error:String)
+	{
+		switch(error)
+		{
+			case "std@get_cwd" | "std@file_path" | "std@file_full_path":
+				{
+					var pwd = Sys.getEnv("PWD");
+					// This is a magic for issue #196:
+					// if we have $PWD then we can re-set it again.
+					// Works for case: `$ mkdir temp; cd temp; rm -r ../temp; mkdir ../temp; haxelib upgrade;`
+					if(pwd != null)
+					{
+						if(FileSystem.exists(pwd) && FileSystem.isDirectory(pwd))
+							// Trying fix it: setting cwd to pwd
+							Sys.setCwd(cwd_cache = pwd);
+						else
+							// Can't fix it.
+							throw CliError.CwdUnavailable(pwd);
+					}
+					else throw CliError.CwdUnavailable(pwd);
+				}
+			default: throw error;
+		}
+	}
+
+
+	function get_defaultAnswer():Answer
+	{
+		return defaultAnswer_global;
+	}
+
+	function set_defaultAnswer(value:Answer):Answer
+	{
+		defaultAnswer_global = value;
+		return defaultAnswer_global;
+	}
+
+
+	public function ask(question):Answer
+	{
+		if(defaultAnswer != null)
+			return defaultAnswer;
+
+		while(true)
+		{
+			Sys.print(question + " [y/n/a] ? ");
+			try{
+				switch(Sys.stdin().readLine())
+				{
+					case "n": return No;
+					case "y": return Yes;
+					case "a": return defaultAnswer = Yes;
+				}
+			}
+			catch(e:haxe.io.Eof)
+			{
+				Sys.println("n");
+				return No;
+			}
+		}
+		return null;
+	}
+
+	public function command(cmd:String, args:Array<String>)
+	{
+		var p = new sys.io.Process(cmd, args);
+		var code = p.exitCode();
+		return {code:code, out:(code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString())};
+	}
+
+	public function print(str):Void
+	{
+		Sys.print(str + "\n");
+	}
+}
+
 class Main {
 
-	static var VERSION = SemVer.ofString('3.2.0-rc.3');
+	static var VERSION = SemVer.ofString('3.2.0-rc.4');
 	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
@@ -144,16 +264,17 @@ class Main {
 		apiVersion : APIVERSION.major+"."+APIVERSION.minor,
 	};
 
+	var cli:Cli;
 	var argcur : Int;
 	var args : Array<String>;
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
-	//TODO: unmake it `static`
-	static var defaultAnswer:Answer;
 
 
-	function new() {
+	function new()
+	{
+		cli = new Cli();
 		args = Sys.args();
 
 		commands = new List();
@@ -216,24 +337,8 @@ class Main {
 		return Sys.stdin().readLine();
 	}
 
-	static public function ask( question ) {
-		if (defaultAnswer != null)
-			return defaultAnswer;
-		while( true ) {
-			Sys.print(question+" [y/n/a] ? ");
-			try {
-				switch( Sys.stdin().readLine() ) {
-				case "n": return No;
-				case "y": return Yes;
-				case "a": return defaultAnswer = Yes;
-				}
-			} catch(e:haxe.io.Eof) {
-				Sys.println("n");
-				return No;
-			}
-		}
-		return null;
-	}
+	inline function ask(question)
+		return cli.ask(question);
 
 	function paramOpt() {
 		if( args.length > argcur )
@@ -313,7 +418,7 @@ class Main {
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
-				case '-cwd': Sys.setCwd(args[argcur++]);
+				case '-cwd': cli.cwd = args[argcur++];
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
@@ -341,7 +446,7 @@ class Main {
 			}
 		}
 
-		defaultAnswer =
+		cli.defaultAnswer =
 			switch [settings.always, settings.never] {
 				case [true, true]:
 					print('--always and --never are mutually exclusive');
@@ -640,7 +745,7 @@ class Main {
 
 	function installFromAllHxml()
 	{
-		var hxmlFiles = sys.FileSystem.readDirectory(Sys.getCwd()).filter(function (f) return f.endsWith(".hxml"));
+		var hxmlFiles = sys.FileSystem.readDirectory(cli.cwd).filter(function (f) return f.endsWith(".hxml"));
 		if (hxmlFiles.length > 0)
 		{
 			for (file in hxmlFiles)
@@ -648,7 +753,7 @@ class Main {
 				if (file.endsWith(".hxml"))
 				{
 					print('Installing all libraries from $file:');
-					installFromHxml(Sys.getCwd()+file);
+					installFromHxml(cli.cwd+file);
 				}
 			}
 		}
@@ -834,7 +939,7 @@ class Main {
 	function getRepository( ?setup : Bool ) {
 
 		if( !setup && !settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = Path.join([Sys.getCwd(), REPODIR]);//TODO: we actually might want to get the real path here
+			var absolutePath = Path.join([cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
 			return Path.addTrailingSlash(absolutePath);
 		}
 
@@ -981,12 +1086,12 @@ class Main {
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable;
 
-			var oldCwd = Sys.getCwd();
-			Sys.setCwd(rep + "/" + p + "/" + vcs.directory);
+			var oldCwd = cli.cwd;
+			cli.cwd = (rep + "/" + p + "/" + vcs.directory);
 			var success = vcs.update(p);
 
 			state.updated = success;
-			Sys.setCwd(oldCwd);
+			cli.cwd = oldCwd;
 		}
 		else
 		{
@@ -1035,7 +1140,7 @@ class Main {
 			if (win) Sys.getEnv("HAXEPATH");
 			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
 
-		Sys.setCwd(haxepath);
+		cli.cwd = haxepath;
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
 			return
@@ -1329,7 +1434,7 @@ class Main {
 		// finish it!
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
-		Sys.setCwd(proj);
+		cli.cwd = proj;
 
 		File.saveContent(".dev", devPath);
 
@@ -1339,7 +1444,7 @@ class Main {
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 
-		Sys.setCwd(libPath);
+		cli.cwd = libPath;
 
 		if(FileSystem.exists("haxelib.json"))
 			doInstallDependencies(
@@ -1361,8 +1466,8 @@ class Main {
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
-		args.push(Sys.getCwd());
-		Sys.setCwd(vdir);
+		args.push(cli.cwd);
+		cli.cwd = vdir;
 
 		var callArgs =
 			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), false), null] catch (e:Dynamic) [null, e] {
@@ -1403,11 +1508,8 @@ class Main {
 			}
 	}
 
-	function command( cmd:String, args:Array<String> ) {
-		var p = new sys.io.Process(cmd, args);
-		var code = p.exitCode();
-		return { code:code, out: code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString() };
-	}
+	inline function command(cmd:String, args:Array<String>)
+		return cli.command(cmd, args);
 
 	function proxy() {
 		var rep = getRepository();
@@ -1444,7 +1546,7 @@ class Main {
 	}
 
 	function convertXml() {
-		var cwd = Sys.getCwd();
+		var cwd = cli.cwd;
 		var xmlFile = cwd + "haxelib.xml";
 		var jsonFile = cwd + "haxelib.json";
 
@@ -1501,10 +1603,8 @@ class Main {
 
 	// ----------------------------------
 
-	//TODO: unmake it `static`
-	static public function print(str) {
-		Sys.print(str+"\n");
-	}
+	inline function print(str)
+		cli.print(str);
 
 	static function main() {
 		new Main().process();
