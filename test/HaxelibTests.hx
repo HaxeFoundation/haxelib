@@ -5,13 +5,18 @@ import tests.*;
 using StringTools;
 
 class HaxelibTests {
-	static function runCommand(cmd:String, args:Array<String>):Void {
-		Sys.println('Command: $cmd $args');
+	public static function runCommand(cmd:String, args:Array<String>, ?quiet:Bool):Void
+	{
+		if(!quiet)
+			Sys.println('Command: $cmd $args');
+
 		var exitCode = Sys.command(cmd, args);
-		Sys.println('Command exited with $exitCode: $cmd $args');
-		if (exitCode != 0) {
+
+		if(!quiet)
+			Sys.println('Command exited with $exitCode: $cmd $args');
+
+		if(exitCode != 0)
 			Sys.exit(exitCode);
-		}
 	}
 
 	static function prepare():Void {
@@ -50,7 +55,9 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
-		
+		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Hg, "https://bitbucket.org/fzzr/hx.signal"));
+		//r.add(new TestCli());
+
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);
 	}
