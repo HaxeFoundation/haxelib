@@ -26,7 +26,7 @@ interface IVcs
 
 
 	// clone repo into CWD/{directory}
-	public function clone(?cwd:String):Void;
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?cwd:String):Void;
 
 	// check available updates for repo in CWD/{directory}
 	public function updatable(?cwd:String):Void;
@@ -52,6 +52,9 @@ interface IVcs
 enum VcsError
 {
 	VcsUnavailable(vcs:Vcs);
+	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
+	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
+	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
 }
 
 
@@ -250,7 +253,7 @@ class Vcs
 		return {code:code, out:code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString()};
 	}
 
-	public function cloneToCwd()
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?cwd:String):Void
 	{
 		throw "This method must be overriden.";
 	}
@@ -323,14 +326,52 @@ class Git extends Vcs
 		}
 		return doPull;
 	}
+
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?cwd:String):Void
+	{
+		var vcsArgs = ["clone", url, libPath];
+
+		if(!Main.settings.flat)
+			vcsArgs.push('--recursive');
+
+		//TODO: move to Vcs.run(vcsArgs)
+		if(Sys.command("git", vcsArgs) != 0)
+		{
+			//TODO: Main.print("Could not clone git repository");
+			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+			return;
+		}
+
+		Sys.setCwd(libPath);
+		if(branch != null)
+		{
+			var ret = cmd("git", ["checkout", branch]);
+			if(ret.code != 0)
+			{
+				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
+				//TODO: Main.print('Could not checkout branch, tag or path "$branch": ' + ret.out);
+				//TODO: Main.deleteRec(libPath);
+			}
+		}
+
+		if(version != null)
+		{
+			var ret = cmd("git", ["checkout", "tags/" + version]);
+			if(ret.code != 0)
+			{
+				throw VcsError.CantCheckoutVersion(this, version, ret.out);
+				//TODO: Main.print('Could not checkout tag "$version": ' + ret.out);
+				//TODO: Main.deleteRec(libPath);
+			}
+		}
+	}
 }
+
 
 class Mercurial extends Vcs// implements IVcs
 {
 	public function new()
-	{
 		super("hg", "hg", "Mercurial");
-	}
 
 	override private function searchExecutable():Void
 	{
@@ -387,5 +428,29 @@ class Mercurial extends Vcs// implements IVcs
 			Sys.command(executable, ["update"]);
 
 		return changed;
+	}
+
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?cwd:String):Void
+	{
+		var vcsArgs = ["clone", url, libPath];
+
+		if(branch != null)
+		{
+			vcsArgs.push("--branch");
+			vcsArgs.push(branch);
+		}
+
+		if(version != null)
+		{
+			vcsArgs.push("--rev");
+			vcsArgs.push(version);
+		}
+
+		//TODO: move to Vcs.run(vcsArgs)
+		if(Sys.command("hg", vcsArgs) != 0)
+		{
+			//TODO: Main.print("Could not clone hg repository");
+			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+		}
 	}
 }

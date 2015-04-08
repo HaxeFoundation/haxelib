@@ -149,7 +149,10 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
+	//TODO: unmake it `static`
 	static var defaultAnswer:Answer;
+
+
 	function new() {
 		args = Sys.args();
 
@@ -277,7 +280,9 @@ class Main {
 		always : "answer all questions with yes",
 		never  : "answer all questions with no"
 	}
-	var settings: {
+
+	//TODO: unmake it `public static` > `private`
+	public static var settings: {
 		debug  : Bool,
 		flat   : Bool,
 		always : Bool,
@@ -1301,10 +1306,8 @@ class Main {
 		// currently we already kill all dev-repos for all supported Vcs.
 
 
-
 		var libPath = proj + "/" + vcs.directory;
 
-		//TODO: move to Vcs:
 		// prepare for new repo
 		if(FileSystem.exists(libPath))
 			deleteRec(libPath);
@@ -1312,12 +1315,25 @@ class Main {
 
 		print("Installing " +libName + " from " +vcsPath);
 
-
-		//XXX: вот тут вся разница! :)
-		switch(vcs.executable)
+		try
 		{
-			case VcsID.Hg: doHg(libPath, vcsPath, branch, subDir, version);
-			case VcsID.Git: doGit(libPath, vcsPath, branch, subDir, version);
+			vcs.clone(libPath, vcsPath, branch, version);
+		}
+		catch(error:VcsError)
+		{
+			var message = switch(error)
+			{
+				case VcsError.VcsUnavailable(vcs):
+					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
+				case VcsError.CantCloneRepo(vcs, repo, stderr):
+					'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
+				case VcsError.CantCheckoutBranch(vcs, branch, stderr):
+					'Could not checkout branch, tag or path "$branch": ' + stderr;
+				case VcsError.CantCheckoutVersion(vcs, version, stderr):
+					'Could not checkout tag "$version": ' + stderr;
+			}
+			print(message);
+			deleteRec(libPath);
 		}
 
 
@@ -1342,30 +1358,15 @@ class Main {
 			);
 	}
 
-	function doHg(libPath:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
+	//FIXME: conflict with `function doInstallDependencies`: arg `libPath`  !=  `libName`.
+	function doHg(libName:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
 	{
-		var vcsArgs = ["clone", vcsPath, libPath];
-
-		if(branch != null)
-		{
-			vcsArgs.push("--branch");
-			vcsArgs.push(branch);
-		}
-
-		if(version != null)
-		{
-			vcsArgs.push("--rev");
-			vcsArgs.push(version);
-		}
-
-		if(Sys.command("hg", vcsArgs) != 0)
-		{
-			print("Could not clone hg repository");
-			return;
-		}
+		//var libPath = proj + "/" + vcs.directory;
+		//vcs.clone(libPath, vcsPath, branch, version);// CWD?
+		throw "Breaked. I have to fix it.";
 	}
 
-
+	//FIXME: conflict with `function doInstallDependencies`: arg `libPath`  !=  `libName`.
 	function doGit(libPath:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		var vcsArgs = ["clone", vcsPath, libPath];
@@ -1558,6 +1559,7 @@ class Main {
 
 	// ----------------------------------
 
+	//TODO: unmake it `static`
 	static public function print(str) {
 		Sys.print(str+"\n");
 	}
