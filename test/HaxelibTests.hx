@@ -55,7 +55,8 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
-		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Hg, "https://bitbucket.org/fzzr/hx.signal"));
+		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
+		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "2feb147"));
 		//r.add(new TestCli());
 
 		var success = r.run();
