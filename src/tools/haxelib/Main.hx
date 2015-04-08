@@ -177,8 +177,8 @@ class Main {
 		addCommand("local", local, "install the specified package locally", Development, false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
-		addCommand("git", git, "use Git repository as library", Development);
-		addCommand("hg", hg, "use Mercurial (hg) repository as library", Development);
+		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
+		addCommand("hg", function()doVcs(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
@@ -1250,16 +1250,6 @@ class Main {
 		}
 	}
 
-	//XXX: handy inlined into doInstallVcs():
-	//XXX: delete me, plz!
-	function checkVcs(vcs:Vcs)
-	{
-		if(vcs == null)
-			return;
-
-		if(!vcs.available)
-			print('Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.');
-	}
 
 	function removeExistingDevLib(proj:String):Void
 	{
@@ -1275,10 +1265,6 @@ class Main {
 		}
 	}
 
-
-	inline function hg() doVcs(VcsID.Hg);
-	inline function git() doVcs(VcsID.Git);
-
 	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		// Prepare check vcs.available:
@@ -1286,7 +1272,7 @@ class Main {
 		if(vcs == null || !vcs.available)
 			return print('Could not use $id, please make sure it is installed and available in your PATH.');
 
-
+		// if called with known values:
 		if(libName != null && url != null)
 			doVcsInstall(vcs, libName, url, branch, subDir, version);
 		else
