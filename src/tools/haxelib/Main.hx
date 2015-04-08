@@ -793,9 +793,10 @@ class Main {
 				case Haxelib:
 					doInstall(d.name, d.version, false);
 				case Git:
-					doGit(d.name, d.url, d.branch, d.subDir, d.version);
-				//case Hg & Any Vcs:
-					//doVcs(d.name, d.url, d.branch, d.subDir, d.version);
+					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir, d.version);
+				//TODO: add mercurial-dependency type to schema.json (https://github.com/HaxeFoundation/haxelib/blob/master/schema.json#L38)
+				case Mercurial:
+					doVcs(VcsID.Hg, d.name, d.url, d.branch, d.subDir, d.version);
 			}
 		}
 	}
@@ -1278,25 +1279,27 @@ class Main {
 	inline function hg() doVcs(VcsID.Hg);
 	inline function git() doVcs(VcsID.Git);
 
-	function doVcs(id:VcsID)
+	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		// Prepare check vcs.available:
 		var vcs = Vcs.get(VcsID.Hg);
-
 		if(vcs == null || !vcs.available)
-			print('Could not use $id, please make sure it is installed and available in your PATH.');
+			return print('Could not use $id, please make sure it is installed and available in your PATH.');
 
 
-		doVcsInstall(vcs,
-		           param("Library name"),
-		           param(vcs.name + " path"),
-		           paramOpt(),
-		           paramOpt(),
-		           paramOpt()
-		);
+		if(libName != null && url != null)
+			doVcsInstall(vcs, libName, url, branch, subDir, version);
+		else
+			doVcsInstall(vcs,
+			             param("Library name"),
+			             param(vcs.name + " path"),
+			             paramOpt(),
+			             paramOpt(),
+			             paramOpt()
+			);
 	}
 
-	function doVcsInstall(vcs:Vcs, libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String)
+	function doVcsInstall(vcs:Vcs, libName:String, url:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
@@ -1313,11 +1316,11 @@ class Main {
 			deleteRec(libPath);
 
 
-		print("Installing " +libName + " from " +vcsPath);
+		print("Installing " +libName + " from " +url);
 
 		try
 		{
-			vcs.clone(libPath, vcsPath, branch, version);
+			vcs.clone(libPath, url, branch, version);
 		}
 		catch(error:VcsError)
 		{
@@ -1357,53 +1360,6 @@ class Main {
 				Data.readData(File.getContent("haxelib.json"), false).dependencies
 			);
 	}
-
-	//FIXME: conflict with `function doInstallDependencies`: arg `libPath`  !=  `libName`.
-	function doHg(libName:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
-	{
-		//var libPath = proj + "/" + vcs.directory;
-		//vcs.clone(libPath, vcsPath, branch, version);// CWD?
-		throw "Breaked. I have to fix it.";
-	}
-
-	//FIXME: conflict with `function doInstallDependencies`: arg `libPath`  !=  `libName`.
-	function doGit(libPath:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
-	{
-		var vcsArgs = ["clone", vcsPath, libPath];
-
-		if(!settings.flat)
-			vcsArgs.push('--recursive');
-
-		if(Sys.command("git", vcsArgs) != 0)
-		{
-			print("Could not clone git repository");
-			return;
-		}
-
-		Sys.setCwd(libPath);
-		if(branch != null){
-			var ret = command("git", ["checkout", branch]);
-			if(ret.code != 0)
-			{
-				print('Could not checkout branch, tag or path "$branch": ' + ret.out);
-				deleteRec(libPath);
-				return;
-			}
-		}
-
-		if(version != null){
-			var ret = command("git", ["checkout", "tags/" + version]);
-			if(ret.code != 0)
-			{
-				print('Could not checkout tag "$version": ' + ret.out);
-				deleteRec(libPath);
-				return;
-			}
-		}
-	}
-
-
-
 
 
 	function run() {
