@@ -788,6 +788,8 @@ class Main {
 					doInstall(d.name, d.version, false);
 				case Git:
 					doGit(d.name, d.url, d.branch, d.subDir, d.version);
+				//case Hg & Any Vcs:
+					//doVcs(d.name, d.url, d.branch, d.subDir, d.version);
 			}
 		}
 	}
@@ -1241,6 +1243,8 @@ class Main {
 		}
 	}
 
+	//XXX: handy inlined into doInstallVcs():
+	//XXX: delete me!
 	function checkVcs(vcs:Vcs)
 	{
 		if(vcs == null)
@@ -1254,143 +1258,52 @@ class Main {
 	{
 		//TODO: ask if existing repo have changes.
 
-		// find existing repo
+		// find existing repo:
 		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
-		// remove existing repo
-		if(vcs != null)
+		// remove existing repos:
+		while(vcs != null)
+		{
 			deleteRec(proj + "/" + vcs.directory);
+			vcs = Vcs.getVcsForDevLib(proj);
+		}
 	}
 
-	function git()
+
+	inline function hg() doVcs(VcsID.Hg);
+	inline function git() doVcs(VcsID.Git);
+
+	function doVcs(id:VcsID)
 	{
-		doVcsClone(
-			Vcs.get("git"),
-			param("Library name"),
-		//XXX: need to optimize:
-			param(Vcs.get("git").name + " path"),
-			paramOpt(),
-			paramOpt(),
-			paramOpt()
+		// Prepare check vcs.available:
+		var vcs = Vcs.get(VcsID.Hg);
+
+		if(vcs == null || !vcs.available)
+			print('Could not use $id, please make sure it is installed and available in your PATH.');
+
+
+		doVcsInstall(vcs,
+		           param("Library name"),
+		           param(vcs.name + " path"),
+		           paramOpt(),
+		           paramOpt(),
+		           paramOpt()
 		);
-		/*doGit( param("Library name"), param("Git path"), paramOpt(), paramOpt(), paramOpt() );*/
 	}
 
-	function hg()
-	{
-		doVcsClone(
-			Vcs.get("hg"),
-			param("Library name"),
-		//XXX: need to optimize:
-			param(Vcs.get("hg").name + " path"),
-			paramOpt(),
-			paramOpt(),
-			paramOpt()
-		);
-		/*doHg( param("Library name"), param("Mercurial (hg) path"), paramOpt(), paramOpt(), paramOpt() );*/
-	}
-
-	function doVcsClone(vcs:Vcs, libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String)
+	function doVcsInstall(vcs:Vcs, libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String)
 	{
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
 		removeExistingDevLib(proj);
+		// currently we already kill all dev-repos for all supported Vcs.
 
-		//...
-	}
 
-	function doGit(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
-		var rep = getRepository();
-		var proj = rep + Data.safe(libName);
-
-		removeExistingDevLib(proj);
-
-		/*// find existing repo
-		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
-		// remove existing repo
-		if(vcs != null)
-			deleteRec(proj + "/" + vcs.directory);*/
-
-		// get git
-		var vcs = Vcs.get("git");
-		checkVcs(vcs);
 
 		var libPath = proj + "/" + vcs.directory;
 
-		// prepare for new repo
-		if( FileSystem.exists(libPath) )
-			deleteRec(libPath);
-
-		print("Installing " +libName + " from " +vcsPath);
-
-		var gitArgs = ["clone", vcsPath, libPath];
-		if (!settings.flat)
-			gitArgs.push('--recursive');
-
-		if( Sys.command("git", gitArgs) != 0 ) {
-			print("Could not clone git repository");
-			return;
-		}
-		Sys.setCwd(libPath);
-		if (branch != null) {
-			var ret = command("git", ["checkout", branch]);
-			if (ret.code != 0)
-			{
-				print('Could not checkout branch, tag or path "$branch": ' +ret.out);
-				deleteRec(libPath);
-				return;
-			}
-		}
-
-		if (version != null) {
-			var ret = command("git", ["checkout", "tags/" + version]);
-			if (ret.code != 0)
-			{
-				print('Could not checkout tag "$version": ' +ret.out);
-				deleteRec(libPath);
-				return;
-			}
-		}
-
-		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-
-		Sys.setCwd(proj);
-
-		File.saveContent(".dev", devPath);
-
-		print('Library $libName set to use git.');
-
-		if ( branch != null )
-			print('  Branch/Tag/Rev: $branch');
-		print('  Path: $devPath');
-
-		Sys.setCwd(libPath);
-
-		if (FileSystem.exists("haxelib.json"))
-			doInstallDependencies(
-				Data.readData(File.getContent("haxelib.json"), false).dependencies
-			);
-
-	}
-
-	function doHg(libName: String, vcsPath: String, ?branch : String, ?subDir: String, ?version:String) {
-		var rep = getRepository();
-		var proj = rep + Data.safe(libName);
-
-		// find existing repo
-		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
-		// remove existing repo
-		if(vcs != null)
-			deleteRec(proj + "/" + vcs.directory);
-
-
-		// get hg
-		vcs = Vcs.get("hg");
-		checkVcs(vcs);
-
-		var libPath = proj + "/" + vcs.directory;
-
+		//TODO: move to Vcs:
 		// prepare for new repo
 		if(FileSystem.exists(libPath))
 			deleteRec(libPath);
@@ -1399,44 +1312,96 @@ class Main {
 		print("Installing " +libName + " from " +vcsPath);
 
 
-		var vcsArgs = ["clone", vcsPath, libPath];
+		//XXX: // TEMP TEMP TEMP //
 
-		//TODO: "--subrepos" need?
-
-		if (branch != null) {
-			vcsArgs.push("--branch");
-			vcsArgs.push(branch);
+		switch(vcs.executable)
+		{
+			case VcsID.Hg: doHg(libPath, vcsPath, branch, subDir, version);
+			case VcsID.Git: doGit(libPath, vcsPath, branch, subDir, version);
 		}
 
-		if (version != null) {
-			vcsArgs.push("--rev");
-			vcsArgs.push(version);
-		}
 
-		if( Sys.command("hg", vcsArgs) != 0 ) {
-			print("Could not clone hg repository");
-			return;
-		}
-
+		// finish it!
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
 		Sys.setCwd(proj);
 
 		File.saveContent(".dev", devPath);
 
-		print('Library $libName set to use hg.');
+		print('Library $libName set to use ${vcs.name}.');
 
-		if ( branch != null )
+		if(branch != null)
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 
 		Sys.setCwd(libPath);
 
-		if (FileSystem.exists("haxelib.json"))
+		if(FileSystem.exists("haxelib.json"))
 			doInstallDependencies(
 				Data.readData(File.getContent("haxelib.json"), false).dependencies
 			);
 	}
+
+	function doHg(libPath:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
+	{
+		var vcsArgs = ["clone", vcsPath, libPath];
+
+		if(branch != null)
+		{
+			vcsArgs.push("--branch");
+			vcsArgs.push(branch);
+		}
+
+		if(version != null)
+		{
+			vcsArgs.push("--rev");
+			vcsArgs.push(version);
+		}
+
+		if(Sys.command("hg", vcsArgs) != 0)
+		{
+			print("Could not clone hg repository");
+			return;
+		}
+	}
+
+
+	function doGit(libPath:String, vcsPath:String, ?branch:String, ?subDir:String, ?version:String)
+	{
+		var vcsArgs = ["clone", vcsPath, libPath];
+
+		if(!settings.flat)
+			vcsArgs.push('--recursive');
+
+		if(Sys.command("git", vcsArgs) != 0)
+		{
+			print("Could not clone git repository");
+			return;
+		}
+
+		Sys.setCwd(libPath);
+		if(branch != null){
+			var ret = command("git", ["checkout", branch]);
+			if(ret.code != 0)
+			{
+				print('Could not checkout branch, tag or path "$branch": ' + ret.out);
+				deleteRec(libPath);
+				return;
+			}
+		}
+
+		if(version != null){
+			var ret = command("git", ["checkout", "tags/" + version]);
+			if(ret.code != 0)
+			{
+				print('Could not checkout tag "$version": ' + ret.out);
+				deleteRec(libPath);
+				return;
+			}
+		}
+	}
+
+
 
 
 

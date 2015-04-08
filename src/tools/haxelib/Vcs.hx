@@ -15,6 +15,40 @@ import haxe.macro.Type in MType;
 #end
 
 
+interface IVcs
+{
+	public var name(default, null):String;
+	public var directory(default, null):String;
+	public var executable(default, null):String;
+	public var internalDirectory(default, null):String;
+
+	public var available(get_available, null):Bool;
+
+
+	// clone repo into CWD/{directory}
+	public function clone(?cwd:String):Void;
+
+	// check available updates for repo in CWD/{directory}
+	public function updatable(?cwd:String):Void;
+
+	/**
+		Update to HEAD repo in `cwd` or `cwd`/{directory}.
+		@param cwd is optional and if not passed it will work in current CWD.
+		Otherwise CWD will be temporally changed to `cwd` and restored when job is complete.
+	**/
+	public function update(?cwd:String):Void;
+
+	// reset all changes in repo in CWD/{directory}
+	public function reset(?cwd:String):Void;
+}
+
+
+@:enum abstract VcsID(String) to String
+{
+	var Hg = "hg";
+	var Git = "git";
+}
+
 enum VcsError
 {
 	VcsUnavailable(vcs:Vcs);
@@ -30,7 +64,6 @@ class Vcs
 	{
 		var type = Context.getLocalType();
 		var typeRef:String = Type.enumParameters(type)[0];
-		//var classType = switch (type) { case TInst(_.get() => cl, _): cl; default: throw false; };
 		var classType = TypeTools.getClass(type);
 		var fields = Context.getBuildFields();
 		var lines = [];
@@ -111,6 +144,14 @@ class Vcs
 				                       ret: null
 			                       })
 		            });
+		// dev-degug //
+		/*var moduleName = Context.getLocalModule();
+		var module = Context.getModule(moduleName);
+		trace('[!!!] Module "$moduleName" contain ${module.length} types.');
+		for(t in module)
+			trace(t);*/
+		// end //
+
 		return fields;
 	}
 	#end
@@ -125,8 +166,12 @@ class Vcs
 	private var availabilityChecked:Bool = false;
 	private var executableSearched:Bool = false;
 
+	//TODO: change key:String to key:VcsID:
 	private static var reg:Map<String, Void -> Vcs>;
 	private static var reg_inst:Map<String, Vcs>;
+
+
+	//private var cwd(get_cwd, set_cwd):String;
 
 	//--------------- constructor ---------------//
 
@@ -147,7 +192,7 @@ class Vcs
 
 	//----------------- static ------------------//
 
-	public static function get(executable:String):Null<Vcs>
+	public static function get(executable:VcsID):Null<Vcs>
 	{
 		if(reg.exists(executable))
 			return reg.get(executable)();
@@ -280,7 +325,7 @@ class Git extends Vcs
 	}
 }
 
-class Mercurial extends Vcs
+class Mercurial extends Vcs// implements IVcs
 {
 	public function new()
 	{
