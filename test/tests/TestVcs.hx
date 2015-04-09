@@ -106,9 +106,6 @@ class TestVcs extends TestCase
 		var dir = vcs.directory;
 		vcs.clone(dir, url);
 
-		trace('DIR: $dir');
-		trace('VCS: $vcs');
-
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
 
@@ -233,7 +230,6 @@ class TestVcs extends TestCase
 
 		// save CWD:
 		var cwd = Sys.getCwd();
-		trace('CWD: "${Sys.getCwd()}"');
 		Sys.setCwd(cwd + dir);
 
 		// creating user-changes:
