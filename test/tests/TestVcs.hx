@@ -53,12 +53,27 @@ class TestVcs extends TestCase
 
 		var path = CWD /*+ "/"*/ + REPO_ROOT + "/" + REPO_DIR;
 
-		if(FileSystem.exists(path))
+		var clearWorkDirectory_count:Int = 0;
+		function clearWorkDirectory(path:String):Bool
 		{
-			Sys.sleep(2);
-			HaxelibTests.runCommand("rm", ["-r", path + "/"], true);
-			Sys.sleep(1);
+			try
+			{
+				if(FileSystem.exists(path))
+				{
+					Sys.sleep(2);
+					HaxelibTests.runCommand("rm", ["-r", path], true);
+					Sys.sleep(1);
+				}
+				return true;
+			}
+			catch(error:Dynamic)
+			{
+				return false;
+			}
 		}
+
+		while(clearWorkDirectory_count < 3 && !clearWorkDirectory(path))
+			clearWorkDirectory_count++;
 	}
 
 	//----------------- tests -------------------//
