@@ -1372,7 +1372,7 @@ class Main {
 	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		// Prepare check vcs.available:
-		var vcs = Vcs.get(VcsID.Hg);
+		var vcs = Vcs.get(id);
 		if(vcs == null || !vcs.available)
 			return print('Could not use $id, please make sure it is installed and available in your PATH.');
 
