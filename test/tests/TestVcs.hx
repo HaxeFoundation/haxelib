@@ -19,17 +19,20 @@ class TestVcs extends TestCase
 	var vcsName:String = null;
 	var url:String = null;
 	var rev:String = null;
+	var counter:Int = 0;
 
 	//--------------- constructor ---------------//
 
-	public function new(id:VcsID, vcsName:String, url:String, rev:String)
+	public function new(id:VcsID, vcsName:String, url:String, ?rev:String)
 	{
 		super();
 		this.id = id;
 		this.url = url;
 		this.rev = rev;
 		this.vcsName = vcsName;
+
 		CWD = Sys.getCwd();
+		counter = 0;
 	}
 
 
@@ -49,31 +52,6 @@ class TestVcs extends TestCase
 	{
 		// restore original CWD:
 		Sys.setCwd(CWD);
-
-
-		var path = CWD /*+ "/"*/ + REPO_ROOT + "/" + REPO_DIR;
-
-		var clearWorkDirectory_count:Int = 0;
-		function clearWorkDirectory(path:String):Bool
-		{
-			try
-			{
-				if(FileSystem.exists(path))
-				{
-					Sys.sleep(2);
-					HaxelibTests.runCommand("rm", ["-r", path], true);
-					Sys.sleep(1);
-				}
-				return true;
-			}
-			catch(error:Dynamic)
-			{
-				return false;
-			}
-		}
-
-		while(clearWorkDirectory_count < 3 && !clearWorkDirectory(path))
-			clearWorkDirectory_count++;
 	}
 
 	//----------------- tests -------------------//
@@ -92,6 +70,7 @@ class TestVcs extends TestCase
 
 	// --------------- clone --------------- //
 
+		// [++]
 	public function testGetVcsByDir():Void
 	{
 		var vcs = getVcs();
@@ -100,66 +79,73 @@ class TestVcs extends TestCase
 		assertEquals(vcs, Vcs.get(id));
 	}
 
+		// [++]
 	public function testCloneSimple():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url);
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
 
-		assertTrue(FileSystem.exists('$dir/.$dir'));
-		assertTrue(FileSystem.isDirectory('$dir/.$dir'));
+		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
 	}
 
+		// [++]
 	public function testCloneBranch():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url, "develop");
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
 
-		assertTrue(FileSystem.exists('$dir/.$dir'));
-		assertTrue(FileSystem.isDirectory('$dir/.$dir'));
+		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
 	}
 
+		// [++]
 	public function testCloneBranchTag_0_9_2():Void
 	{
+		trace('TEST $counter (testCloneBranchTag_0_9_2)');
+
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url, "develop", "0.9.2");
 		Sys.sleep(3);
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.$dir'));
+		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(dir + "/README.md"));
 	}
 
+		// [++]
 	public function testCloneBranchTag_0_9_3():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url, "develop", "0.9.3");
 
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.$dir'));
+		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertTrue(FileSystem.exists(dir + "/README.md"));
 	}
 
+		// [++]
 	public function testCloneBranchRev():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url, "develop", rev);
 
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.$dir'));
+		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(dir + "/README.md"));
@@ -168,10 +154,13 @@ class TestVcs extends TestCase
 
 	// --------------- update --------------- //
 
-	public function testUpdateBranchTag_0_9_2__toHEAD():Void
+		// [++]
+	public function testUpdateBranchTag_0_9_2__toLatest():Void
 	{
+		trace('TEST $counter');
+
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
 		testCloneBranchTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
@@ -179,6 +168,7 @@ class TestVcs extends TestCase
 		// save CWD:
 		var cwd = Sys.getCwd();
 		Sys.setCwd(cwd + dir);
+		assertTrue(FileSystem.exists("." + vcs.directory));
 
 		// in this case `libName` can get any value:
 		vcs.update("LIBNAME");
@@ -190,10 +180,14 @@ class TestVcs extends TestCase
 		Sys.setCwd(cwd);
 	}
 
-	public function testUpdateBranchTag_0_9_2__toHEAD__afterUserChanges_withReset():Void
+
+		// [Hg+] [Git-!!!]
+	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withReset():Void
 	{
+		trace('TEST $counter');
+
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
 		testCloneBranchTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
@@ -220,10 +214,10 @@ class TestVcs extends TestCase
 		Sys.setCwd(cwd);
 	}
 
-	public function testUpdateBranchTag_0_9_2__toHEAD__afterUserChanges_withoutReset():Void
+	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withoutReset():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory;
+		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
 		testCloneBranchTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));

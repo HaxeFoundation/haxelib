@@ -1,3 +1,4 @@
+import tools.haxelib.Vcs;
 import haxe.unit.TestRunner;
 import sys.*;
 import sys.io.*;
@@ -7,12 +8,12 @@ using StringTools;
 class HaxelibTests {
 	public static function runCommand(cmd:String, args:Array<String>, ?quiet:Bool):Void
 	{
-		if(!quiet)
+		//if(!quiet)
 			Sys.println('Command: $cmd $args');
 
 		var exitCode = Sys.command(cmd, args);
 
-		if(!quiet)
+		//if(!quiet)
 			Sys.println('Command exited with $exitCode: $cmd $args');
 
 		if(exitCode != 0)
@@ -55,8 +56,15 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
+
+		// Testing VCS on two identical repositories:
+		// Hg:  https://bitbucket.org/fzzr/hx.signal
+		// Git: https://github.com/fzzr-/hx.signal.git
+
+		// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
 		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
-		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "2feb147"));
+		// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
+		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
 		//r.add(new TestCli());
 
 		var success = r.run();
