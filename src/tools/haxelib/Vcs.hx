@@ -354,8 +354,7 @@ class Git extends Vcs//TODO: implements IVcs
 
 
 		var cwd = cli.cwd;
-		//cli.cwd = libPath;
-		cli.cwd = cwd + libPath;
+		cli.cwd = libPath;
 
 		if(branch != null)
 		{
