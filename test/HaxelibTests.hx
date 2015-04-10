@@ -65,7 +65,7 @@ class HaxelibTests {
 		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
 		// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
 		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
-		//r.add(new TestCli());
+		//TODO: r.add(new TestCli());
 
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);

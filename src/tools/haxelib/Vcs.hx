@@ -158,14 +158,6 @@ class Vcs
 				                       ret: null
 			                       })
 		            });
-		// dev-degug //
-		/*var moduleName = Context.getLocalModule();
-		var module = Context.getModule(moduleName);
-		trace('[!!!] Module "$moduleName" contain ${module.length} types.');
-		for(t in module)
-			trace(t);*/
-		// end //
-
 		return fields;
 	}
 	#end
@@ -339,8 +331,6 @@ class Git extends Vcs//TODO: implements IVcs
 				if(regx.match(branch))
 					branch = regx.matched(1);
 
-
-				trace('doPull:: code=$code, branch="$branch"');
 				Sys.command(executable, ["checkout", branch, "--force"]);
 				Sys.command(executable, ["pull"]);
 			}
@@ -366,7 +356,6 @@ class Git extends Vcs//TODO: implements IVcs
 		var cwd = cli.cwd;
 		//cli.cwd = libPath;
 		cli.cwd = cwd + libPath;
-		trace('[HERE]:: libPath="$libPath", old-CWD="$cwd"');
 
 		if(branch != null)
 		{

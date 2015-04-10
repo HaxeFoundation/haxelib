@@ -70,7 +70,6 @@ class TestVcs extends TestCase
 
 	// --------------- clone --------------- //
 
-		// [++]
 	public function testGetVcsByDir():Void
 	{
 		var vcs = getVcs();
@@ -79,7 +78,6 @@ class TestVcs extends TestCase
 		assertEquals(vcs, Vcs.get(id));
 	}
 
-		// [++]
 	public function testCloneSimple():Void
 	{
 		var vcs = getVcs();
@@ -93,7 +91,6 @@ class TestVcs extends TestCase
 		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
 	}
 
-		// [++]
 	public function testCloneBranch():Void
 	{
 		var vcs = getVcs();
@@ -107,11 +104,8 @@ class TestVcs extends TestCase
 		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
 	}
 
-		// [++]
 	public function testCloneBranchTag_0_9_2():Void
 	{
-		trace('TEST $counter (testCloneBranchTag_0_9_2)');
-
 		var vcs = getVcs();
 		var dir = vcs.directory + counter++;
 		vcs.clone(dir, url, "develop", "0.9.2");
@@ -123,7 +117,6 @@ class TestVcs extends TestCase
 		assertFalse(FileSystem.exists(dir + "/README.md"));
 	}
 
-		// [++]
 	public function testCloneBranchTag_0_9_3():Void
 	{
 		var vcs = getVcs();
@@ -137,7 +130,6 @@ class TestVcs extends TestCase
 		assertTrue(FileSystem.exists(dir + "/README.md"));
 	}
 
-		// [++]
 	public function testCloneBranchRev():Void
 	{
 		var vcs = getVcs();
@@ -154,11 +146,8 @@ class TestVcs extends TestCase
 
 	// --------------- update --------------- //
 
-		// [++]
 	public function testUpdateBranchTag_0_9_2__toLatest():Void
 	{
-		trace('TEST $counter');
-
 		var vcs = getVcs();
 		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
@@ -181,11 +170,8 @@ class TestVcs extends TestCase
 	}
 
 
-		// [Hg+] [Git-!!!]
 	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withReset():Void
 	{
-		trace('TEST $counter');
-
 		var vcs = getVcs();
 		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
