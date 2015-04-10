@@ -318,17 +318,32 @@ class Git extends Vcs//TODO: implements IVcs
 
 		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
 		{
-			switch cli.ask("Reset changes to " + libName + " git repo so we can pull latest version?")
+			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")
 			{
 				case Answer.Yes:
 					Sys.command(executable, ["reset", "--hard"]);
 				case Answer.No:
 					doPull = false;
-					cli.print("Git repo left untouched");
+					cli.print(name + " repo left untouched");
 			}
 		}
-		if(doPull){
-			Sys.command("git", ["pull"]);
+		if(doPull)
+		{
+			var code = Sys.command(executable, ["pull"]);
+			// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
+			if(code != 0)
+			{
+				// get parent-branch:
+				var branch = cli.command(executable, ["show-branch"]).out;
+				var regx = ~/\[([^]]*)\]/;
+				if(regx.match(branch))
+					branch = regx.matched(1);
+
+
+				trace('doPull:: code=$code, branch="$branch"');
+				Sys.command(executable, ["checkout", branch, "--force"]);
+				Sys.command(executable, ["pull"]);
+			}
 		}
 		return doPull;
 	}
@@ -345,23 +360,24 @@ class Git extends Vcs//TODO: implements IVcs
 		if(Sys.command("git", vcsArgs) != 0)
 		{
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-			return;
 		}
 
 
 		var cwd = cli.cwd;
+		//cli.cwd = libPath;
+		cli.cwd = cwd + libPath;
+		trace('[HERE]:: libPath="$libPath", old-CWD="$cwd"');
 
-		cli.cwd = libPath;
 		if(branch != null)
 		{
-			var ret = cli.command("git", ["checkout", branch]);
+			var ret = cli.command(executable, ["checkout", branch]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		if(version != null)
 		{
-			var ret = cli.command("git", ["checkout", "tags/" + version]);
+			var ret = cli.command(executable, ["checkout", "tags/" + version]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
@@ -450,7 +466,7 @@ class Mercurial extends Vcs//TODO: implements IVcs
 			vcsArgs.push(version);
 		}
 
-		if(Sys.command("hg", vcsArgs) != 0)
+		if(Sys.command(executable, vcsArgs) != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 	}
 }
