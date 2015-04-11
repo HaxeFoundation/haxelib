@@ -240,8 +240,7 @@ class Vcs
 		available =
 		executable != null && try
 		{
-			cli.command(executable, []);
-			true;
+			cli.command(executable, []).code == 0;
 		}
 		catch(e:Dynamic) false;
 		availabilityChecked = true;
