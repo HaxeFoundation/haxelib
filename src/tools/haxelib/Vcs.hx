@@ -92,7 +92,14 @@ class Vcs
 		if(constructor == null)
 			Context.error('${typeRef} should contain a constructor like all other subclasses of Vcs.', Context.currentPos());
 		// constructor with args:
-		if(constructor.args.length > 0)
+		function allArgsIsOpt(args:Array<FunctionArg>):Bool
+		{
+			for(arg in args)
+				if(!arg.opt && arg.value == null)
+					return false;
+			return true;
+		}
+		if(constructor.args.length > 0 && !allArgsIsOpt(constructor.args))
 			Context.error('Constructor of ${typeRef} should not require arguments', Context.currentPos());
 
 
@@ -129,7 +136,10 @@ class Vcs
 
 		// get first arg of super call:
 		//XXX: optimize it:
-		var vcsName:String = ep(ep(ep(superCallExpr)[1][0].expr)[0])[0];
+		var vcsName:String = null;
+		try{
+			vcsName = ep(ep(ep(superCallExpr)[1][0].expr)[0])[0];
+		}catch(_:Dynamic) return fields;
 		var typePath:TypePath = {name:classType.name, pack:classType.pack};
 		var factory = macro function():Vcs
 		{
@@ -188,7 +198,7 @@ class Vcs
 	}
 
 
-	private function new(directory:String, executable:String, name:String)
+	private function new(executable:String, directory:String, name:String)
 	{
 		this.name = name;
 		this.directory = directory;
