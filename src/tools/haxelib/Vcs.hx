@@ -284,6 +284,24 @@ class Git extends Vcs//TODO: implements IVcs
 	public function new()
 		super("git", "git", "Git");
 
+
+	override private function checkExecutable():Bool
+	{
+		available =
+		executable != null && try
+		{
+			// with `help` cmd because without any cmd `git` can return exit-code = 1.
+			cli.command(executable, ["help"]).code == 0;
+		}
+		catch(e:Dynamic) false;
+		availabilityChecked = true;
+
+		if(!available && !executableSearched)
+			searchExecutable();
+
+		return available;
+	}
+
 	override private function searchExecutable():Void
 	{
 		super.searchExecutable();
