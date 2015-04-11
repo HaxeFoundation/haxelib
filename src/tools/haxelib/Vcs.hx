@@ -356,7 +356,7 @@ class Git extends Vcs//TODO: implements IVcs
 
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
-		if(Sys.command("git", vcsArgs) != 0)
+		if(Sys.command(executable, vcsArgs) != 0)
 		{
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 		}
