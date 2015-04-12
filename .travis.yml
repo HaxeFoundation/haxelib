@@ -6,3 +6,4 @@ haxe:
 
 script:
   - ./test.sh
+  - ./test-issue-202.sh
