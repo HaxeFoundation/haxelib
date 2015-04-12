@@ -1104,6 +1104,9 @@ class Main {
 			{
 				// if isSymLink:
 				if(path != FileSystem.fullPath(path))
+					//XXX: maybe need to use:
+					// *nix: `$ unlink mySymLink
+					// win: `del Foo.txt` and `rmdir Foo`
 					safeDelete(path);
 				else
 					deleteRec(path);
