@@ -1092,15 +1092,52 @@ class Main {
 		rebuildSelf();
 	}
 
-	function deleteRec(dir) {
-		for( p in FileSystem.readDirectory(dir) ) {
-			var path = dir+"/"+p;
-			if( FileSystem.isDirectory(path) )
-				deleteRec(path);
+	function deleteRec(dir)
+	{
+		for(p in FileSystem.readDirectory(dir))
+		{
+			var path = dir + "/" + p;
+			if(isSymlinkToRemovedDir(path))
+				safeDelete(path);
+			else
+			if(FileSystem.isDirectory(path))
+			{
+				// if isSymLink:
+				if(path != FileSystem.fullPath(path))
+					safeDelete(path);
+				else
+					deleteRec(path);
+			}
 			else
 				safeDelete(path);
 		}
 		FileSystem.deleteDirectory(dir);
+	}
+
+	function isSymlinkToRemovedDir(path:String):Bool
+	{
+		var errors:Int = 0;
+		function isNeeded(error:String):Bool
+		{
+			return switch(error)
+			{
+				case "std@sys_file_type" |
+				     "std@file_full_path": true;
+				default: false;
+			}
+		}
+
+		try{ FileSystem.isDirectory(path); }
+		catch(error:String)
+			if(isNeeded(error))
+				errors++;
+
+		try{ FileSystem.fullPath(path); }
+		catch(error:String)
+			if(isNeeded(error))
+				errors++;
+
+		return errors == 2;
 	}
 
 	function remove() {
