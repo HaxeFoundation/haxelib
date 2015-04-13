@@ -1,3 +1,6 @@
+-debug
+--each
+
 haxelib.hxml
 --next
 
@@ -5,4 +8,3 @@ haxelib.hxml
 -cp test
 -neko bin/test.n
 -main HaxelibTests
--debug

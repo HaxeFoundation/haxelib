@@ -25,10 +25,8 @@ class TestRemoveSymlinks extends TestCase
 
 	public function testRemoveLibWithSymlinks():Void
 	{
-		var result = command("neko", ["./bin/haxelib.n", "remove", "nme-dev"]);
-		assertEquals(0, result.code);
-		assertEquals("library nme-dev removed", StringTools.trim(result.out).toLowerCase());
-		trace("\n" + result.out);
+		var code = Sys.command("neko", ["./bin/haxelib.n", "remove", "nme-dev"]);
+		assertEquals(code, 0);
 	}
 
 
