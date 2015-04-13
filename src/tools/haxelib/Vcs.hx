@@ -1,18 +1,8 @@
 package tools.haxelib;
 
-import haxe.ds.StringMap;
 import tools.haxelib.Main;
 import sys.FileSystem;
 
-
-#if macro
-import Type.enumParameters in ep;
-import haxe.macro.TypeTools;
-import haxe.macro.Type.BaseType;
-import haxe.macro.Context;
-import haxe.macro.Expr;
-import haxe.macro.Type in MType;
-#end
 
 
 interface IVcs
@@ -69,108 +59,9 @@ typedef Settings =
 };
 
 
-#if !macro
-@:autoBuild(tools.haxelib.Vcs.staticRegistration()) #end
 class Vcs
 {
-	#if macro
-	static public function staticRegistration():Array<Field>
-	{
-		var type = Context.getLocalType();
-		var typeRef:String = Type.enumParameters(type)[0];
-		var classType = TypeTools.getClass(type);
-		var fields = Context.getBuildFields();
-		var lines = [];
-
-		// get current executable:
-		var constructor:Function;
-		for(field in fields)
-			if(field.name == "new" && field.kind.match(FieldType.FFun))
-				constructor = ep(field.kind)[0];
-
-		// without constructor:
-		if(constructor == null)
-			Context.error('${typeRef} should contain a constructor like all other subclasses of Vcs.', Context.currentPos());
-		// constructor with args:
-		function allArgsIsOpt(args:Array<FunctionArg>):Bool
-		{
-			for(arg in args)
-				if(!arg.opt && arg.value == null)
-					return false;
-			return true;
-		}
-		if(constructor.args.length > 0 && !allArgsIsOpt(constructor.args))
-			Context.error('Constructor of ${typeRef} should not require arguments', Context.currentPos());
-
-
-		// get super call in constructor:
-		var superCallExpr:ExprDef;
-		function searchSuperCall(expr:ExprDef, next:Dynamic):Null<ExprDef>
-		{
-			switch(expr)
-			{
-				case ExprDef.EBlock(exprs):
-					for(e in exprs)
-					{
-						var result = next(e.expr, next);
-						if(result != null)
-							return result;
-					}
-
-				case ExprDef.ECall(e, params):
-					if(e.expr.match(ExprDef.EConst))
-					{
-						var c:Constant = ep(e.expr)[0];
-						if(c.match(Constant.CIdent) && ep(c)[0] == "super")
-							return expr;
-					}
-				default: return null;
-			}
-			return null;
-		}
-		superCallExpr = searchSuperCall(constructor.expr.expr, searchSuperCall);
-
-		// without super Call:
-		if(superCallExpr == null)
-			Context.error('Constructor of ${typeRef} should call super.', Context.currentPos());
-
-		// get first arg of super call:
-		//XXX: optimize it:
-		var vcsName:String = null;
-		try{
-			vcsName = ep(ep(ep(superCallExpr)[1][0].expr)[0])[0];
-		}catch(_:Dynamic) return fields;
-		var typePath:TypePath = {name:classType.name, pack:classType.pack};
-		var factory = macro function():Vcs
-		{
-			var result:Vcs = $p{["Vcs", "reg_inst"]}.get('$vcsName');
-			if(result != null)
-				return result;
-			else
-			{
-				result = new $typePath();
-				$p{["Vcs", "reg_inst"]}.set('$vcsName', result);
-			}
-			return result;
-		}
-
-		//TODO: search existing `__init__` => add to top of it's block.
-		var regCall = macro $p{["Vcs", "reg"]}.set('$vcsName', $factory);
-		lines.push(regCall);
-		fields.push({
-			            name: "__init__",
-			            access: [APublic, AStatic],
-			            pos: Context.currentPos(),
-			            kind: FFun({
-				                       args: [],
-				                       expr: $b{lines[0]},
-				                       params: [],
-				                       ret: null
-			                       })
-		            });
-		return fields;
-	}
-	#end
+	private static var reg:Map<VcsID, Vcs>;
 
 	//----------- properties, fields ------------//
 
@@ -182,19 +73,21 @@ class Vcs
 	private var availabilityChecked:Bool = false;
 	private var executableSearched:Bool = false;
 
-	//TODO: change key:String to key:VcsID:
-	private static var reg:Map<String, Void -> Vcs>;
-	private static var reg_inst:Map<String, Vcs>;
-
-
 	private var cli(default, null):Cli;
 
 	//--------------- constructor ---------------//
 
-	public static function __init__()
+	public static function initialize()
 	{
-		reg = new StringMap();
-		reg_inst = new StringMap();
+		if(reg == null)
+			reg = [VcsID.Git => new Git(), VcsID.Hg => new Mercurial()];
+		else
+		{
+			if(reg.get(VcsID.Git) == null)
+				reg.set(VcsID.Git, new Git());
+			if(reg.get(VcsID.Hg) == null)
+				reg.set(VcsID.Hg, new Mercurial());
+		}
 	}
 
 
@@ -210,19 +103,27 @@ class Vcs
 
 	//----------------- static ------------------//
 
-	public static function get(executable:VcsID):Null<Vcs>
+	public static function get(id:VcsID):Null<Vcs>
 	{
-		if(reg.exists(executable))
-			return reg.get(executable)();
-		else return null;
+		initialize();
+		return reg.get(id);
+	}
+
+	private static function set(id:VcsID, vcs:Vcs, ?rewrite:Bool):Void
+	{
+		initialize();
+		var existing = reg.get(id) != null;
+		if(!existing || (existing && rewrite))
+			reg.set(id, vcs);
 	}
 
 	public static function getVcsForDevLib(libPath:String):Null<Vcs>
 	{
+		initialize();
 		for(k in reg.keys())
 		{
 			if(FileSystem.exists(libPath + "/" + k) && FileSystem.isDirectory(libPath + "/" + k))
-				return reg.get(k)();
+				return reg.get(k);
 		}
 		return null;
 	}
@@ -281,6 +182,11 @@ class Vcs
 
 class Git extends Vcs//TODO: implements IVcs
 {
+	public static function init()
+	{
+		Vcs.set(VcsID.Git, new Git());
+	}
+
 	public function new()
 		super("git", "git", "Git");
 
@@ -405,6 +311,11 @@ class Git extends Vcs//TODO: implements IVcs
 
 class Mercurial extends Vcs//TODO: implements IVcs
 {
+	public static function init()
+	{
+		Vcs.set(VcsID.Hg, new Mercurial());
+	}
+
 	public function new()
 		super("hg", "hg", "Mercurial");
 
