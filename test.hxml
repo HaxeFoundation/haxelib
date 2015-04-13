@@ -1,3 +1,6 @@
+haxelib.hxml
+--next
+
 -cp src
 -cp test
 -neko bin/test.n
