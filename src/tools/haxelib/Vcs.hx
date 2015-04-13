@@ -10,7 +10,7 @@ interface IVcs
 	public var name(default, null):String;
 	public var directory(default, null):String;
 	public var executable(default, null):String;
-	public var internalDirectory(default, null):String;
+	//TODO: public var internalDirectory(default, null):String;
 
 	public var available(get_available, null):Bool;
 
@@ -20,19 +20,20 @@ interface IVcs
 		Clone repo into CWD.
 		CWD must be like "...haxelib-repo/lib/git" for Git.
 	**/
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?settings:Settings):Void;
 
 	// check available updates for repo in CWD/{directory}
-	public function updatable(libName:String):Void;
+	//TODO: public function updatable(libName:String):Void;
 
 	/**
 		Update to HEAD repo contains in CWD or CWD/`Vcs.directory`.
 		CWD must be like "...haxelib-repo/lib/git" for Git.
+		Returns `true` if update successful.
 	**/
-	public function update(libName:String):Void;
+	public function update(libName:String, ?settings:Settings):Bool;
 
 	// reset all changes in repo in CWD/{directory}
-	public function reset(?cwd:String):Void;
+	//TODO: public function reset(?cwd:String):Void;
 }
 
 
@@ -59,7 +60,7 @@ typedef Settings =
 };
 
 
-class Vcs
+class Vcs implements IVcs
 {
 	private static var reg:Map<VcsID, Vcs>;
 
@@ -180,7 +181,7 @@ class Vcs
 }
 
 
-class Git extends Vcs//TODO: implements IVcs
+class Git extends Vcs
 {
 	public static function init()
 	{
@@ -309,7 +310,7 @@ class Git extends Vcs//TODO: implements IVcs
 }
 
 
-class Mercurial extends Vcs//TODO: implements IVcs
+class Mercurial extends Vcs
 {
 	public static function init()
 	{
