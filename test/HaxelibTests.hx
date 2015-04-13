@@ -50,7 +50,8 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
-		
+		r.add(new TestRemoveSymlinks());
+
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);
 	}
