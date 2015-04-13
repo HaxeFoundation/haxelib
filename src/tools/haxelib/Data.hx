@@ -84,6 +84,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 @:enum abstract DependencyType(String) {
 	var Haxelib = null;
 	var Git = 'git';
+	var Mercurial = 'hg';
 }
 
 typedef Dependency = {
