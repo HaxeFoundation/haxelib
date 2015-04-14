@@ -18,14 +18,14 @@ class TestRemoveSymlinks extends TestCase
 	override public function setup():Void
 	{
 		Sys.command("neko", ["./bin/haxelib.n", "setup", Sys.getCwd() + "haxelib-repo"]);
-		Sys.command("neko", ["./bin/haxelib.n", "install", "nme-dev", "1.3.2", "--always"]);
+		Sys.command("neko", ["./bin/haxelib.n", "local", "test/libraries/symlinks.zip"]);
 	}
 
 	//----------------- tests -------------------//
 
 	public function testRemoveLibWithSymlinks():Void
 	{
-		var code = Sys.command("neko", ["./bin/haxelib.n", "remove", "nme-dev"]);
+		var code = Sys.command("neko", ["./bin/haxelib.n", "remove", "symlinks"]);
 		assertEquals(code, 0);
 	}
 
