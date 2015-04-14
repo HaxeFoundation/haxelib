@@ -1094,19 +1094,19 @@ class Main {
 
 	function deleteRec(dir)
 	{
+		if(!FileSystem.exists(dir)) return;
+
 		for(p in FileSystem.readDirectory(dir))
 		{
-			var path = dir + "/" + p;
-			if(isSymlinkToRemovedDir(path))
+			var path = Path.join([dir, p]);
+
+			if(isBrokenSymlink(path))
 				safeDelete(path);
 			else
 			if(FileSystem.isDirectory(path))
 			{
 				// if isSymLink:
-				if(path != FileSystem.fullPath(path))
-					//XXX: maybe need to use:
-					// *nix: `$ unlink mySymLink
-					// win: `del Foo.txt` and `rmdir Foo`
+				if(Sys.systemName() != "Windows" && path != FileSystem.fullPath(path))
 					safeDelete(path);
 				else
 					deleteRec(path);
@@ -1117,7 +1117,7 @@ class Main {
 		FileSystem.deleteDirectory(dir);
 	}
 
-	function isSymlinkToRemovedDir(path:String):Bool
+	function isBrokenSymlink(path:String):Bool
 	{
 		var errors:Int = 0;
 		function isNeeded(error:String):Bool
