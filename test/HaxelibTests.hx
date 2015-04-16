@@ -56,6 +56,9 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
+		r.add(new TestRemoveSymlinks("symlinks"));
+		r.add(new TestRemoveSymlinks("symlinks-broken"));
+
 
 		// Testing VCS on two identical repositories:
 		// Hg:  https://bitbucket.org/fzzr/hx.signal
