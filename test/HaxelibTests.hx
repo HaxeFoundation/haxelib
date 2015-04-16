@@ -6,15 +6,13 @@ import tests.*;
 using StringTools;
 
 class HaxelibTests {
-	public static function runCommand(cmd:String, args:Array<String>, ?quiet:Bool):Void
+	public static function runCommand(cmd:String, args:Array<String>):Void
 	{
-		//if(!quiet)
-			Sys.println('Command: $cmd $args');
+		Sys.println('Command: $cmd $args');
 
 		var exitCode = Sys.command(cmd, args);
 
-		//if(!quiet)
-			Sys.println('Command exited with $exitCode: $cmd $args');
+		Sys.println('Command exited with $exitCode: $cmd $args');
 
 		if(exitCode != 0)
 			Sys.exit(exitCode);
@@ -59,7 +57,6 @@ class HaxelibTests {
 		r.add(new TestRemoveSymlinks("symlinks"));
 		r.add(new TestRemoveSymlinks("symlinks-broken"));
 
-
 		// Testing VCS on two identical repositories:
 		// Hg:  https://bitbucket.org/fzzr/hx.signal
 		// Git: https://github.com/fzzr-/hx.signal.git
@@ -69,7 +66,7 @@ class HaxelibTests {
 		// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
 		r.add(new TestVcs(tools.haxelib.Vcs.VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
 		r.add(new TestVcsNotFound());
-		//TODO: r.add(new TestCli());
+		r.add(new TestCli());
 
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);

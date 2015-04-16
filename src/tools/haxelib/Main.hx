@@ -1632,7 +1632,7 @@ class Main {
 		function deleteRec(path) {
 			if( FileSystem.isDirectory(path) ) {
 				for( f in FileSystem.readDirectory(path) )
-					deleteRec(path + "/" + f);
+					deleteRec(Path.join([path, f]));
 				FileSystem.deleteDirectory(path);
 			} else
 				FileSystem.deleteFile(path);
