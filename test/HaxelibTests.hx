@@ -6,15 +6,13 @@ import tests.*;
 using StringTools;
 
 class HaxelibTests {
-	public static function runCommand(cmd:String, args:Array<String>, ?quiet:Bool):Void
+	public static function runCommand(cmd:String, args:Array<String>):Void
 	{
-		//if(!quiet)
-			Sys.println('Command: $cmd $args');
+		Sys.println('Command: $cmd $args');
 
 		var exitCode = Sys.command(cmd, args);
 
-		//if(!quiet)
-			Sys.println('Command exited with $exitCode: $cmd $args');
+		Sys.println('Command exited with $exitCode: $cmd $args');
 
 		if(exitCode != 0)
 			Sys.exit(exitCode);
