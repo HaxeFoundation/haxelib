@@ -360,7 +360,10 @@ class Data {
 
 		if (doc.description == null)
 			doc.description = '';
-
+      
+    if (doc.tags == null)
+      doc.tags = [];
+      
 		if (doc.url == null)
 			doc.url = '';
 
