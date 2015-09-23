@@ -144,10 +144,8 @@ class Cli
 	public var cwd(get_cwd, set_cwd):String;
 	private static var cwd_cache:String = null;
 
-
-	public function new()
-		defaultAnswer = null;
-
+	public function new() {
+ 	}
 
 	function get_cwd():String
 	{
