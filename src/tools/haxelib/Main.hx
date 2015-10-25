@@ -1300,13 +1300,14 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
+	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos, isVersionSpecified : Bool }> ) {
 		var pdir = getRepository() + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
-		var version = if( version != null ) version else getCurrent(pdir);
+		var isVersionSpecified = version != null;
+		if( !isVersionSpecified ) version = getCurrent(pdir);
 		var vdir = pdir + "/" + Data.safe(version);
-		if( vdir.endsWith("dev") )
+		if( !isVersionSpecified && vdir.endsWith("dev") )
 			vdir = getDev(pdir);
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
@@ -1318,7 +1319,7 @@ class Main {
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		var inf = Data.readData(json,false);
-		l.add({ project : prj, version : version, info: inf });
+		l.add({ project : prj, version : version, info : inf, isVersionSpecified : isVersionSpecified });
 		for( d in inf.dependencies )
 			if( !Lambda.exists(l, function(e) return e.project == d.name) )
 				checkRec(d.name,if( d.version == "" ) null else d.version,l);
@@ -1334,11 +1335,14 @@ class Main {
 		for( d in list ) {
 			var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
 			var dir = rep + pdir;
-			try {
-				dir = getDev(rep+Data.safe(d.project));
-				dir = Path.addTrailingSlash(dir);
-				pdir = dir;
-			} catch( e : Dynamic ) {}
+			if( !d.isVersionSpecified )
+			{
+				try {
+					dir = getDev(rep+Data.safe(d.project));
+					dir = Path.addTrailingSlash(dir);
+					pdir = dir;
+				} catch( e : Dynamic ) {}
+			}
 			var ndir = dir + "ndll";
 			if( FileSystem.exists(ndir) ) {
 				var sysdir = ndir+"/"+Sys.systemName();
