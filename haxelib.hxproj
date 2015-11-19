@@ -21,6 +21,7 @@
   <build>
     <option directives="" />
     <option flashStrict="False" />
+    <option noInlineOnDebug="False" />
     <option mainClass="tools.haxelib.Main" />
     <option enabledebug="False" />
     <option additional="" />

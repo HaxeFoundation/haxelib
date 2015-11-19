@@ -27,7 +27,7 @@ class ConvertXml
 		{
 			switch (node.nodeType)
 			{
-				case Element:
+				case #if (haxe_ver >= 3.2) Element #else Xml.Element #end:
 					switch (node.nodeName)
 					{
 						case "tag":
