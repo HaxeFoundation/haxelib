@@ -27,10 +27,10 @@ class ConvertXml
 		{
 			switch (node.nodeType)
 			{
-				case Xml.Element:
+				case Element:
 					switch (node.nodeName)
 					{
-						case "tag": 
+						case "tag":
 							json.tags.push(node.get("v"));
 						case "user":
 							json.contributors.push(node.get("name"));
@@ -44,9 +44,9 @@ class ConvertXml
 							var version = node.get("version");
 							if (version == null) version = "";
 							Reflect.setField(json.dependencies, name, version);
-						default: 
+						default:
 					}
-				default: 
+				default:
 			}
 		}
 
@@ -67,7 +67,7 @@ class ConvertXml
 				case "dependencies":
 					var d = Reflect.field(json, f);
 					prettyPrint(d, indent + "  ");
-				default: 
+				default:
 					Json.stringify(Reflect.field(json, f));
 			}
 			sb.add(indent+'  "$f": $value');
