@@ -58,12 +58,12 @@ abstract DependencyVersion(String) to String from SemVer {
 		this = s;
 
 	@:to function toValidatable():Validatable
-		return 
+		return
 			if (this == '') { validate: function () return None }
 			else @:privateAccess new SemVer(this);
 
 	static public function isValid(s:String)
-		return toValidatable(s).validate() == None;
+		return new DependencyVersion(s).toValidatable().validate() == None;
 
 	static public var DEFAULT(default, null) = new DependencyVersion('');
 }
@@ -159,7 +159,7 @@ abstract ProjectName(String) to String {
 		a;
 	}
 
-	public function validate() 
+	public function validate()
 		return toValidatable().validate();
 
 	static public function ofString(s:String)
@@ -193,18 +193,18 @@ class Data {
 	public static function fileName( lib : String, ver : String ) {
 		return safe(lib)+"-"+safe(ver)+".zip";
 	}
-	
+
 	static public function getLatest(info:ProjectInfos, ?preview:SemVer.Preview->Bool):Null<SemVer> {
 		if (info.versions.length == 0) return null;
 		if (preview == null)
 			preview = function (p) return p == null;
-		
+
 		var versions = info.versions.copy();
 		versions.sort(function (a, b) return -SemVer.compare(a.name, b.name));
-		
-		for (v in versions) 
+
+		for (v in versions)
 			if (preview(v.name.preview)) return v.name;
-			
+
 		return versions[0].name;
 	}
 
@@ -217,44 +217,44 @@ class Data {
 		var f = getJson(zip);
 		return f.fileName.substr(0, f.fileName.length - JSON.length);
 	}
-	
+
 	static function getJson(zip:List<Entry>)
 		return switch topmost(zip, fileNamed(JSON)) {
 			case Some(f): f;
 			default: throw 'No $JSON found';
 		}
-	
+
 	static function fileNamed(name:String)
 		return function (f:Entry) return f.fileName.endsWith(name);
-	
+
 	static function topmost(zip:List<Entry>, predicate:Entry->Bool):Option<Entry> {
 		var best:Entry = null,
 			bestDepth = 0xFFFF;
-			
-		for (f in zip) 
+
+		for (f in zip)
 			if (predicate(f)) {
 				var depth = f.fileName.replace('\\', '/').split('/').length;//TODO: consider Path.normalize
 				if ((depth == bestDepth && f.fileName < best.fileName) || depth < bestDepth) {
 					best = f;
 					bestDepth = depth;
 				}
-			}		
-			
+			}
+
 		return
-			if (best == null) 
+			if (best == null)
 				None;
 			else
 				Some(best);
 	}
-	
-	public static function readDoc( zip : List<Entry> ) : Null<String> 
+
+	public static function readDoc( zip : List<Entry> ) : Null<String>
 		return switch topmost(zip, fileNamed(DOCXML)) {
 			case Some(f): Reader.unzip(f).toString();
 			case None: null;
 		}
-	
 
-	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos 
+
+	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos
 		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
 	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
@@ -319,7 +319,7 @@ class Data {
 					case None:
 				})(v.version);
 			})(doc);
-			
+
 	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
@@ -360,10 +360,10 @@ class Data {
 
 		if (doc.description == null)
 			doc.description = '';
-      
+
     if (doc.tags == null)
       doc.tags = [];
-      
+
 		if (doc.url == null)
 			doc.url = '';
 
