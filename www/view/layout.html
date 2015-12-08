@@ -1,0 +1,167 @@
+<!doctype html>
+<html id="page">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<meta name="viewport" content="width=device-width" />
+	<title>@title</title>
+	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+	<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/css/style.css"/><!-- TODO: revert style.css to be same as haxe.org? -->
+	<!--<link rel="stylesheet" type="text/css" href="/css/haxelib.css"/>-->
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+	<link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600,600italic,400' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,700italic,400italic' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+
+	<!-- Google -->
+	<link rel="author" href="https://plus.google.com/113704686911055424796/posts"/>
+	<link rel="publisher" href="https://plus.google.com/113704686911055424796/"/>
+	<meta name="description" content="@description" />
+
+	<!-- Twitter card -->
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:creator" content="@@haxelang" />
+	<meta name="twitter:site" content="@@haxelang" />
+	<meta name="twitter:title" content="@title" />
+	<meta name="twitter:description" value="@description">
+
+	<!-- OpenGraph -->
+	<meta property="og:title" content="@title" />
+	<meta property="og:type" content="article" />
+	<meta property="og:url" content="@pageUrl" />
+	<meta property="og:image" content="http://haxe.org/img/haxe-logo.png" />
+	<meta property="og:description" content="@description" />
+	<meta property="og:site_name" content="Haxe - The Cross-platform Toolkit" />
+
+	<!-- Facebook -->
+</head>
+
+<body>
+
+<div class="section nav">
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="http://haxe.org/"><img src="/img/haxe-logo-horizontal-on-dark.svg" width="107" height="21" alt="Haxe Logo" title="Go to Haxe.org Website" onerror="this.src='/img/haxe-logo-horizontal-on-dark.png'" /></a>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="/">Haxelib <span class="sr-only">(current)</span></a></li>
+					<li class="dropdown">
+						<a href="/all" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Browse Projects <span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li><a href="/t/"><i class="fa fa-tags"></i> Browse by Tag</a></li>
+							<li><a href="/all/"><i class="fa fa-star"></i> Browse by Popularity</a></li>
+							<li><a href="/u/"><i class="fa fa-user"></i>  Browse by Author</a></li>
+							<!--<li><a href="/recent/">Recently Updated</a></li>-->
+							<!--<li class="divider"></li>-->
+						</ul>
+					</li>
+					<li class="dropdown">
+						<a href="/documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							@for (url in documentationPages.keys()) {
+								<li @if(url==currentPage){ class="active" }><a href="@url">@documentationPages.get(url)</a></li>
+							}
+							<li class="divider"></li>
+							<li><a href="/rss/"><i class="fa fa-rss"></i> Recent Updates RSS Feed</a></li>
+							<li><a href="http://lib.haxe.org/legacy/"><i class="fa fa-folder-open-o"></i> Haxe 2 Haxelib repository</a></li>
+						</ul>
+					</li>
+				</ul>
+				<form action="/search/" method="GET" class="navbar-form navbar-right visible-lg" role="search">
+
+					<div class="form-group search">
+
+						<div class="input-group">
+							<input type="text" name="v" class="form-control" placeholder="Search Haxelib for..." @if(searchTerm!=null){ value="@searchTerm" } />
+							<span class="input-group-btn">
+								<button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+							</span>
+						</div>
+						<!--<div id="cse-search-form" style="width: 100%;"></div>-->
+						<!--<script src="http://www.google.com/jsapi" type="text/javascript"></script>-->
+						<!--<script type="text/javascript">-->
+							<!--google.load('search', '1', {language : 'en', style : google.loader.themes.V2_DEFAULT});-->
+							<!--google.setOnLoadCallback(function() {-->
+								<!--var customSearchOptions = {};  var customSearchControl = new google.search.CustomSearchControl(-->
+								<!--'008143996983163686627:ohovhuovssi', customSearchOptions);-->
+								<!--customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);-->
+								<!--var options = new google.search.DrawOptions();-->
+								<!--options.setAutoComplete(true);-->
+								<!--customSearchControl.setAutoCompletionId('008143996983163686627:ohovhuovssi+qptype:1');-->
+								<!--options.enableSearchboxOnly("/search", "s");-->
+								<!--customSearchControl.draw('cse-search-form', options);-->
+							<!--}, true);-->
+							<!--</script>-->
+					</div>
+
+					<!--<div class="form-group">-->
+						<!--<input type="text" class="form-control" placeholder="Search">-->
+					<!--</div>-->
+					<!--<button type="submit" class="btn btn-default">Submit</button>-->
+				</form>
+				<ul class="nav navbar-nav navbar-right">
+					<li class="hidden-lg"><a href="/search"><i class="fa fa-search"></i> Search</a></li>
+					<!-- TODO: some login / logout type links. -->
+					<!--<li class="dropdown">-->
+						<!--<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Dropdown <span class="caret"></span></a>-->
+						<!--<ul class="dropdown-menu" role="menu">-->
+							<!--<li><a href="#">Action</a></li>-->
+							<!--<li><a href="#">Another action</a></li>-->
+							<!--<li><a href="#">Something else here</a></li>-->
+							<!--<li class="divider"></li>-->
+							<!--<li><a href="#">Separated link</a></li>-->
+						<!--</ul>-->
+					<!--</li>-->
+				</ul>
+			</div><!-- /.navbar-collapse -->
+		</div><!-- /.container-fluid -->
+	</nav>
+</div>
+
+<div class="page-wrap">
+	@if( useWrapper ) {
+		<div class="section">
+			<div class="container">
+				@viewContent
+			</div>
+		</div>
+	}
+	else {
+		@viewContent
+	}
+</div>
+
+<footer class="section dark site-footer">
+	<div class="container">
+		<div class="copyright">
+			<p>&copy;@todaysDate.getFullYear()
+				<a href="http://haxe.org/foundation/" title="Haxe Foundation Website" class="hf-link">Haxe Foundation</a>
+		</div>
+	</div>
+</footer>
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/client.js"></script>
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-NXV3XR"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NXV3XR');</script>
+<!-- End Google Tag Manager -->
+</body>

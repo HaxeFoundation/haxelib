@@ -1,0 +1,73 @@
+<h1>@project <small>@version</small></h1>
+<p class="lead">@info.desc</p>
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<div class="btn-toolbar pull-right">
+			@if( type=="text" && extension=="hx" ) { <a href="#" class="btn btn-default"><i class="fa fa-cogs"></i> View API Docs</a> }
+			@if( type!="directory" ) { <a href="@downloadLink" class="btn btn-default"><i class="fa fa-download"></i> Download</a> }
+			<div class="btn-group">
+				<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+					@version <span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" role="menu">
+					@for ( v in info.versions ) {
+						<li @if(v.name==version){ class="active" }><a href="@baseUri@project/@v.name/files/@filePath">@v.name</a></li>
+					}
+				</ul>
+			</div>
+			<a href="@baseUri@project/@version" class="btn btn-default"><i class="fa fa-star"></i> View Project</a>
+		</div>
+		<ol class="breadcrumb">
+			@{
+				var i = 0;
+				var breadcrumbBase = baseUri+project+"/"+version+"/files";
+			}
+			<li>
+				@if ( type=="directory" ) { <i class="fa fa-folder"></i> }
+				else if ( type=="text" ) { <i class="fa fa-file"></i> }
+			</li>
+			<li><a href="@breadcrumbBase">@project : @version</a></li>
+			@while(i < fileParts.length) {
+				@if (i+1<fileParts.length){
+					<li><a href="@breadcrumbBase/@fileParts.slice(0,i+1).join('/')">@fileParts[i]</a></li>
+				}
+				else {
+					<li class="active">@fileParts[i]</li>
+				}
+				@{ i++; }
+			}
+		</ol>
+	</div>
+	@if ( type=="directory" ) {
+		<!-- Show the directory list -->
+
+		<div class="list-group">
+			@for (dir in dirListing) { <a href="@currentDir/@dir/" class="list-group-item"><i class="fa fa-folder"></i> @dir/</a> }
+			@for (file in fileListing) { <a href="@currentDir/@file" class="list-group-item" @if(extensionAllowed(file)==false) { rel="nofollow"}><i class="fa fa-file"></i> @file</a> }
+		</div>
+	}
+	else if ( type=="text" ) {
+		<!-- Show the content -->
+		<pre class="panel-body"><code class="prettyprint haxe">@fileContent</code></pre>
+		<!--<div class="panel-body">-->
+		<!--</div>-->
+	}
+	else if ( type=="markdown" ) {
+		<div class="panel-body">
+			@fileContent
+		</div>
+	}
+	else if ( type=="img" ) {
+		<!-- Display an image -->
+		<div class="panel-body text-center">
+			<img src="@downloadLink" alt="Viewing image @filename... sorry we don't have a better description"/>
+		</div>
+	}
+	else {
+		<!-- Show a link to download the file -->
+		<div class="panel-body text-center">
+			<a href="@downloadLink" class="btn btn-primary btn-large"><i class="fa fa-download"></i> Download @filename (@size)</a>
+		</div>
+	}
+</div>

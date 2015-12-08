@@ -1,0 +1,12 @@
+haxelib install actuate                       # Install `actuate` library
+haxelib install actuate 1.8.1                 # Install a specific version
+haxe -lib actuate -main Test -js test.js      # Use `actuate` library in your Haxe build
+
+haxelib list                                  # List all of your installed libraries
+haxelib list openfl                           # List your installed libraries that have "openfl" in the name
+
+haxelib install actuate.zip                   # Install a library from a zip file
+haxelib install test.hxml                     # Install all the libs listed in a hxml
+haxelib install all                           # Install all the libs in the hxml files in the current directory
+
+haxelib submit actuate.zip                    # Use Haxelib to share your library with others!

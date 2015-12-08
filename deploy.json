@@ -1,0 +1,41 @@
+{
+	"files": [
+		"css/",
+		"documentation-files/",
+		"img/",
+		"js/",
+		"view/",
+		"dbconfig.json",
+		"favicon.ico",
+		"index.n",
+		"tasks.n",
+		".htaccess"
+	],
+	"targets": [
+		{
+			"name": "lib.haxe.org",
+			"gitRepo": "ssh://joneil@haxe.org/data/haxelib/haxelibwebsite.git",
+			"defines": ["deploy"],
+			"hxmls": ["newsite"],
+			"debug": false,
+			"servers": [{
+				"name": "lib.haxe.org",
+				"user": "joneil",
+				"host": "haxe.org",
+				"port": 22,
+				"remoteDir": "/data/haxelib/www/"
+			}]
+		}
+	],
+	"hooks": {
+		"beforeBuild": [],
+		"afterBuild": [],
+		"beforeCopy": [],
+		"afterCopy": [],
+		"beforePush": [],
+		"afterPush": [],
+		"beforePull": [],
+		"afterPull": ["touch index.n"],
+		"afterComplete": []
+	}
+}

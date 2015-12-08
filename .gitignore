@@ -1,10 +1,23 @@
+# Compiled files
 *.exe
 *.n
 *.zip
-*.tmp
-*.db
-server
 package
 test/libraries/*.zip
+dump/
+deploy/
+
+# Runtime files
+*.tmp
+*.db
+www/dbconfig.json
+www/.htaccess
+
+# Files copied from /src/tools/haxelib/
+www/dbconfig.json.example
+www/haxelib.css
+www/legacy/
+www/tmpl/
+
+# IDE files
 .idea
-dump

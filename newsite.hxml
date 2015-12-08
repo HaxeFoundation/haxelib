@@ -1,0 +1,55 @@
+# The new haxelib website (on the same 3.0 repo)
+-cp src
+-lib ufront
+-lib ufront-mail:1.0.0-rc.4
+-lib ufront-ufadmin
+-lib erazor:1.0.0-rc.1
+-lib markdown:1.0.0
+-lib cleversort
+-D server
+-D getter_support
+-main website.Server
+-neko www/index.n
+
+--next
+
+-cp src
+-cp test
+-lib ufront
+-lib ufront-mail:1.0.0-rc.4
+-lib ufront-uftasks
+-lib ufront-ufadmin
+-lib erazor:1.0.0-rc.1
+-lib markdown:1.0.0
+-lib cleversort
+# Now the testing libs
+-lib buddy
+-lib mockatoo
+-lib utest
+--no-inline
+-D server
+-D getter_support
+-main WebsiteTests
+-neko bin/websitetest.n
+-cmd neko bin/websitetest.n
+
+--next
+
+-cp src
+-cp test
+-lib ufront
+-lib ufront-mail
+-lib ufront-uftasks
+-lib erazor
+-lib markdown
+-D server
+-main website.Tasks
+-neko www/tasks.n
+
+--next
+
+-cp src
+-neko www/api/3.0/index.n
+-main tools.haxelib.Repo
+-dce no
+-D haxelib_api

@@ -150,26 +150,26 @@ class Site {
 				return error("Project "+p.name+" version "+version+" has no documentation");
 			var root : TypeRoot = haxe.Unserializer.run(v.documentation);
 			var buf = new StringBuf();
-			var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
-			html.output = function(str) buf.add(str);
-			var path = uri.join(".").toLowerCase().split(".");
-			if( path.length == 1 && path[0] == "" )
-				path = [];
-			if( path.length == 0 ) {
-				ctx.index = true;
-				html.process(TPackage("root","root",root));
-			} else {
-				var cl = html.find(root,path,0);
-				if( cl == null ) {
-					// we most likely clicked on a class which is part of the haxe core documentation
-					neko.Web.redirect("http://haxe.org/api/"+path.join("/"));
-					return false;
-				}
-				html.process(cl);
-			}
-			ctx.p = p;
-			ctx.v = v;
-			ctx.content = buf.toString();
+//			var html = new tools.haxedoc.HtmlPrinter("/d/"+p.name+"/"+version+"/","","");
+//			html.output = function(str) buf.add(str);
+//			var path = uri.join(".").toLowerCase().split(".");
+//			if( path.length == 1 && path[0] == "" )
+//				path = [];
+//			if( path.length == 0 ) {
+//				ctx.index = true;
+//				html.process(TPackage("root","root",root));
+//			} else {
+//				var cl = html.find(root,path,0);
+//				if( cl == null ) {
+//					// we most likely clicked on a class which is part of the haxe core documentation
+//					neko.Web.redirect("http://haxe.org/api/"+path.join("/"));
+//					return false;
+//				}
+//				html.process(cl);
+//			}
+//			ctx.p = p;
+//			ctx.v = v;
+//			ctx.content = buf.toString();
 		case "index":
 			var vl = Version.manager.latest(10);
 			for( v in vl ) {

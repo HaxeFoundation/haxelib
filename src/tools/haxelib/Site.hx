@@ -137,7 +137,7 @@ class Site {
 	static function doDefault() {
 		var vl = Version.latest(10);
 		for( v in vl ) {
-			var p = v.project; // fetch
+			var p = v.projectObj; // fetch
 		}
 		return render('index', {
 			versions: vl
@@ -151,8 +151,8 @@ class Site {
 			return error("Unknown project '"+name+"'");
 		return render('project', {
 			p: p,
-			owner: p.owner,
-			version: p.version,
+			owner: p.ownerObj,
+			version: p.versionObj,
 			versions: Version.byProject(p),
 			tags: Tag.manager.search({ project : p.id })
 		});
@@ -165,7 +165,7 @@ class Site {
 			return error("Unknown user '"+name+"'");
 		return render('user', {
 			u: u,
-			uprojects: Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; })
+			uprojects: Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.projectObj; })
 		});
 	}
 
@@ -173,7 +173,7 @@ class Site {
 	static function doT(tagName: String) {
 		render('tag', {
 			tag: StringTools.htmlEscape(tagName),
-			tprojects: Tag.manager.search({ tag : tagName }).map(function(t) return t.project)
+			tprojects: Tag.manager.search({ tag : tagName }).map(function(t) return t.projectObj)
 		});
 	}
 
@@ -195,7 +195,7 @@ class Site {
 			return error("Unknown project '"+name+"'");
 		var v;
 		if( version == null ) {
-			v = p.version;
+			v = p.versionObj;
 			version = v.name;
 		} else {
 			v = Version.manager.select( { project : p.id, name : version } );
@@ -284,14 +284,14 @@ class Site {
 		createChildWithContent(channel, "generator", "haxe");
 		createChildWithContent(channel, "language", "en");
 		for (v in Version.latest(num)){
-			var project = v.project;
+			var project = v.projectObj;
 			var item = createChild(channel, "item");
 			createChildWithContent(item, "title", StringTools.htmlEscape(project.name + " " + v.toSemver()));
 			createChildWithContent(item, "link", url+"/p/"+project.name);
 			createChildWithContent(item, "guid", url+"/p/"+project.name+"?v="+v.id);
 			var date = DateTools.format(Date.fromString(v.date), "%a, %e %b %Y %H:%M:%S %z");
 			createChildWithContent(item, "pubDate", date);
-			createChildWithContent(item, "author", project.owner.name);
+			createChildWithContent(item, "author", project.ownerObj.name);
 			createChildWithContent(item, "description", StringTools.htmlEscape(v.comments));
 		}
 		return rss;
