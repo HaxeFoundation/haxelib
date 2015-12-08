@@ -34,7 +34,7 @@ class Template extends haxe.Template {
 				case None: null;
 			}
 			
-	override private function makePath(e:Void -> Dynamic, l):Dynamic {
+	override private function makePath(e:Void -> Dynamic, l) {
 		if (false) super.makePath(e, l);//to infer l
 		
 		var p = l.first();
