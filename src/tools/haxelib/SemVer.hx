@@ -76,7 +76,7 @@ abstract SemVer(String) to String {
 	inline function get_valid()
 		return isValid(this);
 
-	static var FORMAT = ~/^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.(\d|[1-9]\d*)(-(alpha|beta|rc)(\.([0-9]+))?)?$/;
+	static var FORMAT = ~/^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.(\d|[1-9]\d*)(-(alpha|beta|rc)(\.(\d|[1-9]\d*))?)?$/;
 
 	static var cache = new Map();
 
