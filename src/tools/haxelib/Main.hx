@@ -1379,11 +1379,12 @@ class Main {
 		for( d in list ) {
 			var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
 			var dir = rep + pdir;
-			try {
-				dir = getDev(rep+Data.safe(d.project));
-				dir = Path.addTrailingSlash(dir);
-				pdir = dir;
-			} catch( e : Dynamic ) {}
+			if (d.version == "dev")
+				try {
+					dir = getDev(rep+Data.safe(d.project));
+					dir = Path.addTrailingSlash(dir);
+					pdir = dir;
+				} catch( e : Dynamic ) {}
 			var ndir = dir + "ndll";
 			if( FileSystem.exists(ndir) ) {
 				var sysdir = ndir+"/"+Sys.systemName();
