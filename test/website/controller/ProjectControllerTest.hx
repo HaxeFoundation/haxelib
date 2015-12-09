@@ -46,8 +46,8 @@ class ProjectControllerTest extends BuddySuite {
 					.itShouldReturn( ViewResult, function (result) {
 						// TODO: Check we got the latest version.
 						// TODO: Check we got the correct project.
-						Assert.same( FromEngine("project/version.html"), result.templateSource );
-						Assert.same( FromEngine("layout.html"), result.layoutSource );
+						Assert.same( TFromEngine("project/version.html"), result.templateSource );
+						Assert.same( TFromEngine("layout.html"), result.layoutSource );
 					})
 					.andFinishWith( done );
 			});
@@ -60,8 +60,8 @@ class ProjectControllerTest extends BuddySuite {
 				whenILoadAProjectVersion
 				.itShouldLoad( ProjectController, "version", ["detox","1.0.0-rc.8"] )
 				.itShouldReturn( ViewResult, function(result) {
-					Assert.same( FromEngine("project/version.html"), result.templateSource );
-					Assert.same( FromEngine("layout.html"), result.layoutSource );
+					Assert.same( TFromEngine("project/version.html"), result.templateSource );
+					Assert.same( TFromEngine("layout.html"), result.layoutSource );
 				}).andFinishWith( done );
 			});
 			it("Should show me the README for the current version", function (done) {

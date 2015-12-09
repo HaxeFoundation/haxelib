@@ -31,7 +31,7 @@ class RSSControllerTest extends BuddySuite {
 			});
 			it("Should let me set the number of entries to include", function (done) {
 				whenIVisit( "/rss" )
-				.withTheParams([ "number"=>"3" ])
+				.withTheQueryParams([ "number"=>"3" ])
 				.onTheApp( haxelibSite )
 				.itShouldLoad( RSSController, "rss", [{number:3}] )
 				.itShouldReturn( ContentResult, function (result) {

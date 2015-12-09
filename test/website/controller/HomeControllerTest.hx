@@ -39,8 +39,8 @@ class HomeControllerTest extends BuddySuite {
 					.itShouldReturn( ViewResult, function (result) {
 						var title:String = result.data['title'];
 						(result.data['title']:String).should.be("Haxelib - the Haxe package manager");
-						Assert.same( result.templateSource, FromEngine("home/homepage") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("home/homepage") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 						// TODO: check we have a list of popular projects
 						// TODO: check we have a list of recent projects
 					})
@@ -55,8 +55,8 @@ class HomeControllerTest extends BuddySuite {
 					.onTheApp( haxelibSite )
 					.itShouldLoad( HomeController, "tagList", [] )
 					.itShouldReturn( ViewResult, function(result) {
-						Assert.same( result.templateSource, FromEngine("home/tagList") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("home/tagList") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 						// TODO: check that the tags are listed...
 					})
 					.andFinishWith( done );
@@ -69,8 +69,8 @@ class HomeControllerTest extends BuddySuite {
 					.onTheApp( haxelibSite )
 					.itShouldLoad( HomeController, "tag", ["games"] )
 					.itShouldReturn( ViewResult, function(result) {
-						Assert.same( result.templateSource, FromEngine("home/projectList.html") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("home/projectList.html") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 						// TODO: check that the matching projects are correct
 					})
 					.andFinishWith( done );
@@ -83,8 +83,8 @@ class HomeControllerTest extends BuddySuite {
 					.onTheApp( haxelibSite )
 					.itShouldLoad( HomeController, "all", [] )
 					.itShouldReturn( ViewResult, function(result) {
-						Assert.same( result.templateSource, FromEngine("home/projectList.html") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("home/projectList.html") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 						// TODO: check that all projects are loaded
 					})
 					.andFinishWith( done );

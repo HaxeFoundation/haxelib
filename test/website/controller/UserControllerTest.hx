@@ -48,8 +48,8 @@ class UserControllerTest extends BuddySuite {
 					.itShouldReturn( ViewResult, function (result) {
 						var title:String = result.data['title'];
 						(result.data['title']:String).should.be("jason (Jason O'Neil) on Haxelib");
-						Assert.same( result.templateSource, FromEngine("user/profile") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("user/profile") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 					})
 					.andFinishWith( done );
 			});
@@ -63,8 +63,8 @@ class UserControllerTest extends BuddySuite {
 					.itShouldReturn( ViewResult, function (result) {
 						var title:String = result.data['title'];
 						(result.data['title']:String).should.be("Haxelib Contributors");
-						Assert.same( result.templateSource, FromEngine("user/list") );
-						Assert.same( result.layoutSource, FromEngine("layout.html") );
+						Assert.same( result.templateSource, TFromEngine("user/list") );
+						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 					})
 					.andFinishWith( done );
 			});

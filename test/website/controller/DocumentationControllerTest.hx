@@ -33,8 +33,8 @@ class DocumentationControllerTest extends BuddySuite {
 						.onTheApp( haxelibSite )
 						.itShouldLoad( DocumentationController, "documentationPage", [page] )
 						.itShouldReturn( ViewResult, function (result) {
-							Assert.same( FromEngine("documentation/documentationPage"), result.templateSource );
-							Assert.same( FromEngine("layout.html"), result.layoutSource );
+							Assert.same( TFromEngine("documentation/documentationPage"), result.templateSource );
+							Assert.same( TFromEngine("layout.html"), result.layoutSource );
 							(result.data['title']:String).should.be('$title - Haxelib Documentation');
 						});
 					allResults.push( result.result );

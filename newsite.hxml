@@ -23,7 +23,7 @@
 -lib markdown:1.0.0
 -lib cleversort
 # Now the testing libs
--lib buddy
+-lib buddy:0.17.1
 -lib mockatoo
 -lib utest
 --no-inline
