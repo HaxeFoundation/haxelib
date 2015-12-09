@@ -67,7 +67,6 @@ class Tag extends Object {
 
 	public var id : SId;
 	public var tag : String;
-	//TODO: we shouldn't use the same name for both the ID and the object. I'm surprised this even works.
 	@:relation(project) public var projectObj : Project;
 
 	static public function topTags( n : Int ) : List<{ tag:String, count: Int }> {
@@ -112,7 +111,6 @@ class Version extends Object {
 
 }
 
-//TODO: we shouldn't use the same name for both the ID and the object. I'm surprised this even works.
 @:id(user,project)
 class Developer extends Object {
 
@@ -146,11 +144,9 @@ class SiteDb {
 			if (!TableCreate.exists(m))
 				TableCreate.create(m);
 	}
+
 	static public function cleanup() {
 		db.close();
 		Manager.cleanup();
-	}
-	public static function create( db : sys.db.Connection ) {
-		//now based on TableCreate when establishing the connection
 	}
 }
