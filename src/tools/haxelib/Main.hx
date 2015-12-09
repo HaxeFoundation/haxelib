@@ -279,8 +279,7 @@ class Main {
 
 		commands = new List();
 		addCommand("install", install, "install a given library, or all libraries from a hxml file", Basic);
-		addCommand("upgrade", upgrade, "upgrade all installed libraries", Basic);
-		addCommand("update", update, "update a single library", Basic);
+		addCommand("update", update, "update a single library (if given) or all installed libraries", Basic);
 		addCommand("remove", remove, "remove a given library/version", Basic, false);
 		addCommand("list", list, "list all installed libraries", Basic, false);
 		addCommand("set", set, "set the current version for a library", Basic, false);
@@ -464,6 +463,7 @@ class Main {
 			usage();
 			Sys.exit(1);
 		}
+		if (cmd == "upgrade") cmd = "update"; // TODO: maybe we should have some alias system
 		for( c in commands )
 			if( c.name == cmd ) {
 				try {
@@ -1094,9 +1094,11 @@ class Main {
 		}
 	}
 
-	function upgrade() {
-		if (args.length > argcur) {
-			update();
+	function update() {
+		var prj = paramOpt();
+		if (prj != null) {
+			if (!updateByName(prj))
+				print(prj + " is up to date");
 			return;
 		}
 
@@ -1154,11 +1156,6 @@ class Main {
 		var state = { rep : getRepository(), prompt : false, updated : false };
 		doUpdate(prj,state);
 		return state.updated;
-	}
-	function update() {
-		var prj = param('Library');
-		if (!updateByName(prj))
-			print(prj + " is up to date");
 	}
 
 	//recursively follow symlink
