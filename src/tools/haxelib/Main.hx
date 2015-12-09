@@ -261,6 +261,7 @@ class Main {
 		url : "index.n",
 		apiVersion : APIVERSION.major+"."+APIVERSION.minor,
 	};
+	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
 	var cli:Cli;
 	var argcur : Int;
@@ -929,7 +930,7 @@ class Main {
 			FileSystem.deleteFile(file);
 			return true;
 		} catch (e:Dynamic) {
-			if( Sys.systemName() == "Windows") {
+			if (IS_WINDOWS) {
 				try {
 					Sys.command("attrib", ["-R", file]);
 					FileSystem.deleteFile(file);
@@ -943,7 +944,7 @@ class Main {
 
 	function getConfigFile():String {
 		var home = null;
-		if (Sys.systemName() == "Windows") {
+		if (IS_WINDOWS) {
 			home = Sys.getEnv("USERPROFILE");
 			if (home == null) {
 				var drive = Sys.getEnv("HOMEDRIVE");
@@ -976,18 +977,17 @@ class Main {
 			catch( e : Dynamic ) try
 				File.getContent("/etc/.haxelib")
 			catch( e : Dynamic ) {
-				var win = Sys.systemName() == "Windows";
 				var haxepath = Sys.getEnv("HAXEPATH");
 				if( haxepath != null )
 					haxepath = Path.addTrailingSlash( haxepath );
 				if( setup ) {
-					(if (win)
+					(if (IS_WINDOWS)
 						haxepath;
 					else if (FileSystem.exists("/usr/share/haxe"))
 						"/usr/share/haxe";
 					else
 						"/usr/lib/haxe")+REPNAME;
-				} else if( win ) {
+				} else if( IS_WINDOWS ) {
 					// Windows have a default directory (no need for setup)
 					if( haxepath == null )
 						throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
@@ -1180,9 +1180,8 @@ class Main {
 	}
 
 	function rebuildSelf() {
-		var win = Sys.systemName() == "Windows";
 		var haxepath =
-			if (win) Sys.getEnv("HAXEPATH");
+			if (IS_WINDOWS) Sys.getEnv("HAXEPATH");
 			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
 
 		cli.cwd = haxepath;
@@ -1198,11 +1197,11 @@ class Main {
 			case None:
 
 				if (haxepath == null)
-					throw (win ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
+					throw (IS_WINDOWS ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
 				else
 					haxepath = Path.addTrailingSlash(haxepath);
 
-				if (win) {
+				if (IS_WINDOWS) {
 					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'tools.haxelib.Rebuild']);
 					print('rebuild launched');
 				}
@@ -1262,7 +1261,7 @@ class Main {
 			if(FileSystem.isDirectory(path))
 			{
 				// if isSymLink:
-				if(Sys.systemName() != "Windows" && path != FileSystem.fullPath(path))
+				if(!IS_WINDOWS && path != FileSystem.fullPath(path))
 					safeDelete(path);
 				else
 					deleteRec(path);
