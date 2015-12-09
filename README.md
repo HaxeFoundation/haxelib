@@ -14,7 +14,7 @@ Currently haxelib has two ways to have project local setups.
 
 ### Using haxelib newrepo
 
-When using `haxelib newrepo` you can have a project-local haxelib repository. This feature is quite new and a little rough around the edges. 
+When using `haxelib newrepo` you can have a project-local haxelib repository. This feature is quite new and a little rough around the edges.
 
 Caveats:
 
@@ -53,12 +53,11 @@ A solution that combines the strengths of both approaches is in the making. Stay
 
 ### Running the website for development
 
-(Work in progress instructions, 2015-02-27)
+(Work in progress instructions)
 
 ```
 # Initial checkout
-git clone https://github.com/jasononeil/haxelib.git
-git checkout feature/newsite
+git clone https://github.com/HaxeFoundation/haxelib
 
 # Install all the libs
 haxelib install newsite.hxml
