@@ -935,6 +935,27 @@ class Main {
 		}
 	}
 
+	function getConfigFile():String {
+		var home = null;
+		if (Sys.systemName() == "Windows") {
+			home = Sys.getEnv("USERPROFILE");
+			if (home == null) {
+				var drive = Sys.getEnv("HOMEDRIVE");
+				var path = Sys.getEnv("HOMEPATH");
+				if (drive != null && path != null)
+					home = drive + path;
+			}
+			if (home == null)
+				throw "Could not determine home path. Please ensure that USERPROFILE or HOMEDRIVE+HOMEPATH environment variables are set.";
+		} else {
+			home = Sys.getEnv("HOME");
+			if (home == null)
+				throw "Could not determine home path. Please ensure that HOME environment variable is set.";
+		}
+		home = Path.addTrailingSlash(home);
+		return home + ".haxelib";
+	}
+
 	function getRepository( ?setup : Bool ) {
 
 		if( !setup && !settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
@@ -942,45 +963,38 @@ class Main {
 			return Path.addTrailingSlash(absolutePath);
 		}
 
-		var win = Sys.systemName() == "Windows";
-		var haxepath = Sys.getEnv("HAXEPATH");
-		if( haxepath != null )
-			haxepath = Path.addTrailingSlash( haxepath );
-		var envPath = Sys.getEnv("HAXELIB_PATH");
-		var config_file;
-		if( win )
-			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
-		else
-			config_file = Sys.getEnv("HOME");
-		config_file += "/.haxelib";
-		var rep = if (envPath != null)
-			envPath
-		else try
-			File.getContent(config_file)
-		catch( e : Dynamic ) try
-			File.getContent("/etc/.haxelib")
-		catch( e : Dynamic ) {
-			if( setup ) {
-				(if (win)
-					haxepath;
-				else if (FileSystem.exists("/usr/share/haxe"))
-					"/usr/share/haxe";
-				else
-					"/usr/lib/haxe")+REPNAME;
-			} else if( win ) {
-				// Windows have a default directory (no need for setup)
-				if( haxepath == null )
-					throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
-				var rep = haxepath+REPNAME;
-				try {
-					safeDir(rep);
-				} catch( e : String ) {
-					throw "Error accessing Haxelib repository: $e";
-				}
-				return Path.addTrailingSlash( rep );
-			} else
-				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
-		}
+		var rep = Sys.getEnv("HAXELIB_PATH");
+		if (rep == null)
+			rep = try
+				File.getContent(getConfigFile())
+			catch( e : Dynamic ) try
+				File.getContent("/etc/.haxelib")
+			catch( e : Dynamic ) {
+				var win = Sys.systemName() == "Windows";
+				var haxepath = Sys.getEnv("HAXEPATH");
+				if( haxepath != null )
+					haxepath = Path.addTrailingSlash( haxepath );
+				if( setup ) {
+					(if (win)
+						haxepath;
+					else if (FileSystem.exists("/usr/share/haxe"))
+						"/usr/share/haxe";
+					else
+						"/usr/lib/haxe")+REPNAME;
+				} else if( win ) {
+					// Windows have a default directory (no need for setup)
+					if( haxepath == null )
+						throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
+					var rep = haxepath+REPNAME;
+					try {
+						safeDir(rep);
+					} catch( e : String ) {
+						throw "Error accessing Haxelib repository: $e";
+					}
+					return Path.addTrailingSlash( rep );
+				} else
+					throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
+			}
 		rep = rep.trim();
 		if( setup ) {
 			if( args.length <= argcur ) {
@@ -1000,7 +1014,7 @@ class Main {
 				}
 			}
 			rep = try FileSystem.fullPath(rep) catch( e : Dynamic ) rep;
-			File.saveContent(config_file, rep);
+			File.saveContent(getConfigFile(), rep);
 		} else if( !FileSystem.exists(rep) ) {
 			throw "haxelib Repository "+rep+" does not exist. Please run `haxelib setup` again";
 		} else if ( !FileSystem.isDirectory(rep) ) {
