@@ -708,37 +708,45 @@ class Main {
 
 	function installFromHxml( path )
 	{
-		var hxml = sys.io.File.getContent(path);
-		var lines = hxml.split("\n");
 		var targets  = [
 			'-java ' => 'hxjava',
 			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
 		var libsToInstall = new Map<String, {name:String,version:String}>();
-		for (l in lines) {
-			l = l.trim();
-			for (target in targets.keys())
-				if (l.startsWith(target)) {
-					var lib = targets[target];
-					if (!libsToInstall.exists(lib))
-						libsToInstall[lib] = { name: lib, version: null }
+
+		function processHxml(path) {
+			var hxml = sys.io.File.getContent(path);
+			var lines = hxml.split("\n");
+			for (l in lines) {
+				l = l.trim();
+				for (target in targets.keys())
+					if (l.startsWith(target)) {
+						var lib = targets[target];
+						if (!libsToInstall.exists(lib))
+							libsToInstall[lib] = { name: lib, version: null }
+					}
+
+				if (l.startsWith("-lib"))
+				{
+					var key = l.substr(5);
+					var parts = key.split(":");
+					var libName = parts[0].trim();
+					var libVersion = if (parts.length > 1) parts[1].trim() else null;
+
+					switch libsToInstall[key] {
+						case null, { version: null } :
+							libsToInstall.set(key, { name:libName, version:libVersion } );
+						default:
+					}
 				}
 
-			if (l.startsWith("-lib"))
-			{
-				var key = l.substr(5);
-				var parts = key.split(":");
-				var libName = parts[0].trim();
-				var libVersion = if (parts.length > 1) parts[1].trim() else null;
-
-				switch libsToInstall[key] {
-					case null, { version: null } :
-						libsToInstall.set(key, { name:libName, version:libVersion } );
-					default:
-				}
+				if (l.endsWith(".hxml"))
+					processHxml(l);
 			}
 		}
+		processHxml(path);
+
 		installMany(libsToInstall);
 	}
 
