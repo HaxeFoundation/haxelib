@@ -1095,6 +1095,11 @@ class Main {
 	}
 
 	function upgrade() {
+		if (args.length > argcur) {
+			update();
+			return;
+		}
+
 		var state = { rep : getRepository(), prompt : true, updated : false };
 		for( p in FileSystem.readDirectory(state.rep) ) {
 			if( p.charAt(0) == "." || !FileSystem.isDirectory(state.rep+"/"+p) )
