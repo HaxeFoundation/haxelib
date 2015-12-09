@@ -34,16 +34,16 @@ class Repo implements SiteApi {
 			sys.FileSystem.createDirectory(TMP_DIR);
 		if( !sys.FileSystem.exists(REP_DIR) )
 			sys.FileSystem.createDirectory(REP_DIR);
-		
+
 		var ctx = new haxe.remoting.Context();
 		ctx.addObject("api", new Repo());
-		
+
 		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
 			return;
-		else 
+		else
 			throw "Invalid remoting call";
 	}
-	
+
 	public function new() {}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
@@ -55,18 +55,18 @@ class Repo implements SiteApi {
 		if( p == null )
 			throw "No such Project : "+project;
 		var vl = Version.manager.search($project == p.id);
-		
+
 		var sumDownloads = function(version:Version, total:Int) return total += version.downloads;
 		var totalDownloads = Lambda.fold(vl, sumDownloads, 0);
-		
+
 		return {
 			name : p.name,
 			curversion : if( p.versionObj == null ) null else p.versionObj.toSemver(),
 			desc : p.description,
-			versions: 
+			versions:
 				[for ( v in vl ) {
-					name : v.toSemver(), 
-					comments : v.comments, 
+					name : v.toSemver(),
+					comments : v.comments,
 					downloads : v.downloads,
 					date : v.date
 				}],
@@ -130,10 +130,10 @@ class Repo implements SiteApi {
 	public function getSubmitId() : String {
 		return Std.string(Std.random(100000000));
 	}
-	
+
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		var path = TMP_DIR+"/"+Std.parseInt(id)+".tmp";
-		
+
 		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
 		file.close();
@@ -221,14 +221,14 @@ class Repo implements SiteApi {
 				}
 			}
 		}
-		
+
 		// look for current version
 		var current = null;
 		for( v in Version.manager.search({ project : p.id }) )
 			if( v.name == infos.version ) {
 				current = v;
 				break;
-			}		
+			}
 
 		// update documentation
 		var doc = null;
@@ -261,9 +261,11 @@ class Repo implements SiteApi {
 
 		// update file
 		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version);
+		if (sys.FileSystem.exists(target))
+			sys.FileSystem.deleteFile(target);
 		sys.FileSystem.rename(path,target);
 		var semVer = SemVer.ofString(infos.version);
-		
+
 		// update existing version
 		if( current != null ) {
 			current.documentation = doc;
@@ -271,7 +273,7 @@ class Repo implements SiteApi {
 			current.update();
 			return "Version "+current.name+" (id#"+current.id+") updated";
 		}
-		
+
 		// add new version
 		var v = new Version();
 		v.projectObj = p;
@@ -280,7 +282,7 @@ class Repo implements SiteApi {
 		v.patch = semVer.patch;
 		v.preview = semVer.preview;
 		v.previewNum = semVer.previewNum;
-		
+
 		v.comments = infos.releasenote;
 		v.downloads = 0;
 		v.date = Date.now().toString();
@@ -296,14 +298,14 @@ class Repo implements SiteApi {
 		var p = Project.manager.select($name == project);
 		if( p == null )
 			throw "No such Project : " + project;
-			
+
 		var version = SemVer.ofString(version);
 		var v = Version.manager.select(
-			$project == p.id && 
-			$major == version.major && 
-			$minor == version.minor && 
-			$patch == version.patch && 
-			$preview == version.preview && 
+			$project == p.id &&
+			$major == version.major &&
+			$minor == version.minor &&
+			$patch == version.patch &&
+			$preview == version.preview &&
 			$previewNum == version.previewNum
 		);
 		if( v == null )
