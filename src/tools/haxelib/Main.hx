@@ -1050,19 +1050,42 @@ class Main {
 		for( p in folders ) {
 			if( p.charAt(0) == "." )
 				continue;
-			var versions = new Array();
+
 			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
-			var dev = try File.getContent(rep+p+"/.dev").trim() catch( e : Dynamic ) null;
+			var dev = try getDev(rep + p) catch( e : Dynamic ) null;
+
+			var semvers = [];
+			var others = [];
 			for( v in FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." )
 					continue;
 				v = Data.unsafe(v);
-				if( dev == null && v == current )
-					v = "["+v+"]";
-				versions.push(v);
+				var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
+				if (semver != null)
+					semvers.push(semver);
+				else
+					others.push(v);
 			}
-			if( dev != null )
+
+			if (semvers.length > 0)
+				semvers.sort(SemVer.compare);
+
+			var versions = [];
+			for (v in semvers)
+				versions.push((v : String));
+			for (v in others)
+				versions.push(v);
+
+			if (dev == null) {
+				for (i in 0...versions.length) {
+					var v = versions[i];
+					if (v == current)
+						versions[i] = '[$v]';
+				}
+			} else {
 				versions.push("[dev:"+dev+"]");
+			}
+
 			all.push(Data.unsafe(p) + ": "+versions.join(" "));
 		}
 		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
