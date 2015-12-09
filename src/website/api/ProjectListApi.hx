@@ -9,7 +9,7 @@ using CleverSort;
 class ProjectListApi extends UFApi {
 	public function all():Outcome<Array<Project>,Error> {
 		try {
-			var all = Project.manager.search(true,{ orderBy: [-downloads,name] });
+			var all = Project.manager.search(1 == 1,{ orderBy: [-downloads,name] });
 			return Success( all.array() );
 		}
 		catch ( e:Dynamic ) return Failure( Error.withData("Failed to get list of all projects",e) );

@@ -47,7 +47,7 @@ class Project extends Object {
 	public var downloads : Int = 0;
 	@:relation(owner) public var ownerObj : User;
 	@:relation(version) public var versionObj : SNull<Version>;
-	
+
 	static public function containing( word:String ) : List<{ id: Int, name: String }> {
 		var ret = new List();
 		word = '%$word%';
@@ -103,7 +103,7 @@ class Version extends Object {
 	public var documentation : SNull<String>;
 
 	static public function latest( n : Int ) {
-		return manager.search(true, { orderBy: -date, limit: n } );
+		return manager.search(1 == 1, { orderBy: -date, limit: n } );
 	}
 
 	static public function byProject( p : Project ) {
@@ -115,7 +115,7 @@ class Version extends Object {
 //TODO: we shouldn't use the same name for both the ID and the object. I'm surprised this even works.
 @:id(user,project)
 class Developer extends Object {
-	
+
 	@:relation(user) public var userObj : User;
 	@:relation(project) public var projectObj : Project;
 
