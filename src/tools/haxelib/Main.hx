@@ -1147,6 +1147,7 @@ class Main {
 		else
 		{
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
+			p = inf.name;
 			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.getLatest())) ) {
 				if( state.prompt )
 					switch ask("Update "+p+" to "+inf.getLatest()) {
