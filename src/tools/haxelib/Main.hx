@@ -943,6 +943,7 @@ class Main {
 		}
 
 		var win = Sys.systemName() == "Windows";
+		var mac = Sys.systemName() == "Mac";
 		var haxepath = Sys.getEnv("HAXEPATH");
 		if( haxepath != null )
 			haxepath = Path.addTrailingSlash( haxepath );
@@ -965,6 +966,8 @@ class Main {
 					haxepath;
 				else if (FileSystem.exists("/usr/share/haxe"))
 					"/usr/share/haxe";
+				else if (mac)
+					"/usr/local/lib/haxe";
 				else
 					"/usr/lib/haxe")+REPNAME;
 			} else if( win ) {
