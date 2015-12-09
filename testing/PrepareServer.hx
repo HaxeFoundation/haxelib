@@ -74,7 +74,7 @@ class PrepareServer {
 
 	static function main() {
 		Sys.println("Cleaning up folders");
-		var serverPath = Sys.getCwd() + 'server/';
+		var serverPath = Sys.getCwd() + 'www/';
 		if (FileSystem.exists(serverPath + 'files') && FileSystem.isDirectory(serverPath + 'files'))
 			deleteFolderContent(serverPath + 'files');
 		if (FileSystem.exists(serverPath + 'tmp') && FileSystem.isDirectory(serverPath + 'tmp'))

@@ -1,0 +1,48 @@
+<h1><i class="fa fa-search"></i> @title</h1>
+
+<p class="lead">@description</p>
+
+<form action="/search/" method="GET">
+	<div class="input-group">
+		<input type="search" name="v" class="form-control" placeholder="Search Haxelib for..." @if(searchTerm!=null){ value="@searchTerm" } />
+		<span class="input-group-btn">
+			<input type="submit" class="btn btn-primary" value="Search" />
+		</span>
+	</div>
+</form>
+
+@if (projects!=null && projects.length>0) {
+	<table class="table table-compact table-hover">
+		<thead>
+			<tr>
+				<th>Project</th>
+				<th>Description</th>
+				<th>Version</th>
+				<th>Downloads</th>
+			</tr>
+		</thead>
+		<tbody>
+			@for (p in projects) {
+				<tr>
+					<th>
+						<a href="/p/@p.name/">@p.name</a>
+						<br/><small>(By <a href="/u/@p.author/">@@@p.author</a>)</small>
+					</th>
+					<td>@p.description</td>
+					<td>@p.version</td>
+					<td>@p.downloads</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+else if (projects!=null && projects.length==0) {
+	<p>No search results found.</p>
+}
+
+<p class="alert alert-info">
+	<a href="https://www.google.com/search?q=site:lib.haxe.org @searchTerm">
+		<strong>Not found what you are looking for?</strong>
+		Search Haxelib for "@searchTerm" using Google instead.
+	</a>
+</p>

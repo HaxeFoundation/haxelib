@@ -1,0 +1,33 @@
+<div class="user-profile well">
+	<div class="pull-left">
+		<img src="//www.gravatar.com/avatar/@(emailHash).jpg?s=150" class="img-circle avatar" width="150" height="150" alt="Avatar of @user" />
+	</div>
+	<h1 class="title"><i class="fa fa-user"></i> @user.name <small>haxelib member</small></h1>
+	<div class="clearfix"></div><br/>
+	<table class="table">
+		<tr><th width="190"><strong>Full name</strong></th><td>@user.fullname</td></tr>
+		<tr><th><strong>Statistics</strong></th><td>Contributes to <strong>@projects.length</strong> project@if(projects.length!=1){s}</td></tr>
+	</table>
+</div>
+
+<h2>Projects</h2>
+
+<div class="projects">
+	<div class="table-responsive">
+		<table class="table">
+			<thead>
+				<tr>
+					<th colspan="2">Project</th>
+					<th>Downloads</th>
+				</tr>
+			</thead>
+			@for( p in projects ) {
+				<tr>
+					<th><a href="/p/@p.name" class="text-nowrap">@p.name</a></th>
+					<td>@p.description</td>
+					<td>@p.downloads</td>
+				</tr>
+			}
+		</table>
+	</div>
+</div>

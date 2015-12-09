@@ -1,12 +1,13 @@
+# The old haxelib website (still on the 3.0 repo)
 -cp src
--neko server/index.n
+-neko www/old.n
 -main tools.haxelib.Site
 -dce no
 
 --next 
 
 -cp src 
--neko server/api/3.0/index.n
+-neko www/api/3.0/index.n
 -main tools.haxelib.Repo
 -dce no
 -D haxelib_api
@@ -14,7 +15,7 @@
 --next 
 
 -cp src 
--neko server/legacy/index.n
+-neko www/legacy/index.n
 -main tools.legacyhaxelib.Site
 -lib hx2compat
 -D haxelib_site

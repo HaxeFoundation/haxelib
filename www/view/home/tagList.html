@@ -1,0 +1,30 @@
+<h1><i class="fa fa-tags"></i> @title</h1>
+<p class="lead">@description</p>
+
+<div class="row">
+	<div class="col-lg-4">
+		<table class="table table-compact table-hover">
+			<thead>
+			<tr>
+				<th>Tag</th>
+				<th>Projects</th>
+			</tr>
+			</thead>
+			<tbody>
+				@for (t in tags) {
+					<tr>
+						<th><i class="fa fa-tag"></i> <a href="/t/@t.tag/">@t.tag</a></th>
+						<td>@t.count</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+	<div class="col-lg-8">
+		<div class="tag-cloud text-center">
+			@for (t in tagCloud) {
+				<a href="/t/@t.tag/" style="font-size: @(t.size)px">@t.tag</a>
+			}
+		</div>
+	</div>
+</div>

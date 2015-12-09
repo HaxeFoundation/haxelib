@@ -1,0 +1,28 @@
+<h1><i class="fa fa-user"></i> @title</h1>
+
+<table class="table table-condensed">
+	<thead>
+		<tr>
+			<th colspan="3">User</th>
+			<th>Projects</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for (u in list) {
+			<tr>
+				<td><img src="//www.gravatar.com/avatar/@(u.emailHash).jpg?s=150" class="img-circle" width="48" height="48" alt="Avatar of @u.user.name" /></td>
+				<th><a href="/u/@u.user.name/">@u.user.name</a></th>
+				<td>@u.user.fullname</td>
+				<td>
+					<p>
+						@{i = 0;}
+						@for (p in u.projects) {
+							@{i++;}
+							<strong><a href="/p/@p.name">@p.name</a></strong>@if(i<u.projects.length){,}
+						}
+					</p>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>

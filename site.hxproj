@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="server\index.n" />
+    <movie path="www\index.n" />
     <movie fps="30" />
     <movie width="800" />
     <movie height="600" />

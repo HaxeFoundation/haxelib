@@ -1,0 +1,58 @@
+<div class="section homepage-banner">
+	<div class="jumbotron">
+		<div class="container">
+			<h1>
+				<img src="/img/haxe-logo.svg" class="logo" onerror="this.src='/img/haxe-logo.png'" width="80" height="80" />
+				Haxelib
+			</h1>
+			<p class="lead">
+				Haxelib is the easiest way to find libraries and code for your Haxe project - and the best place you can share your code with others in the Haxe ecosystem.
+				Haxelib is the package manager for the Haxe Toolkit.
+			</p>
+			<pre><code>@exampleCode</code></pre>
+			<div class="btn-toolbar">
+				<a class="btn btn-primary" href="/documentation/using-haxelib/">Using Haxelib</a>
+				<a class="btn btn-default" href="/t/"><i class="fa fa-tags"></i> Browse By Tag</a>
+				<a class="btn btn-default" href="/u/"><i class="fa fa-user"></i> Browse By User</a>
+				<a class="btn btn-default" href="/all/"><i class="fa fa-star"></i> View All Haxelibs</a>
+				<a class="btn btn-default" href="/documentation/creating-a-haxelib-package/">Creating a Haxelib Package</a>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="section">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-3">
+				<h4><i class="fa fa-tags"></i> Popular Tags</h4>
+				<ul class="list-unstyled">
+					@for( t in tags ) {
+						<li><i class="fa fa-tag"></i> <a href="/t/@t.tag/"><strong>@t.tag</strong> <span class="badge">@t.count</span></a></li>
+					}
+				</ul>
+			</div>
+			<!-- <div class="col-md-5">
+				<h4><i class="fa fa-star"></i> Featured Project</h4>
+				<h5><a href="/p/munit/">munit</a></h5>
+				<p class="lead">MassiveUnit, or munit, is a full featured unit testing framework by Massive Interactive.</p>
+				<p>With support for AS3, JS, Neko and CPP, automatic test importers, support for ignoring tests, asynchronous tests and more, it's a great library.</p>
+				<pre><code>haxelib install munit</code></pre>
+				<div class="btn-toolbar">
+					<a class="btn btn-primary" href="/p/munit/">View project page</a>
+					<a class="btn btn-default" href="#">View older featured projects</a>
+				</div>
+			</div> -->
+			<div class="col-md-9">
+				<h4><i class="fa fa-paperclip"></i> Recently Updated</h4>
+				<div>
+					@for( update in latestProjects ) {
+						<p>
+							<strong><a href="/p/@update.p.name/@update.v.name/">@update.p.name</a>:</strong> @update.p.description
+							<br /><strong>@update.v.name:</strong> @update.v.comments
+						</p>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
