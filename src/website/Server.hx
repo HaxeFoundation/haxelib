@@ -56,16 +56,34 @@ class Server {
 		var file = null;
 		var sid = null;
 		var bytes = 0;
-		neko.Web.parseMultipart(function(p,filename) {
-			if( p == "file" ) {
-				sid = Std.parseInt(filename);
-				file = sys.io.File.write(TMP_DIR+"/"+sid+".tmp",true);
-			} else
-				throw p+" not accepted";
-		},function(data,pos,len) {
-			bytes += len;
-			file.writeFullBytes(data,pos,len);
-		});
+		//RAPTORS: the whole handling for nekotools is seriously evil
+		if (Sys.executablePath().indexOf('nekotools') == -1)
+			neko.Web.parseMultipart(function(p,filename) {
+				if( p == "file" ) {
+					sid = Std.parseInt(filename);
+					file = sys.io.File.write(TMP_DIR+"/"+sid+".tmp",true);
+				} else
+					throw p+" not accepted";
+			},function(data,pos,len) {
+				bytes += len;
+				file.writeFullBytes(data,pos,len);
+			});
+		else {
+			var post = neko.Web.getPostData();
+			if (post != null) {
+				var index = post.indexOf('PK');
+				if (index == -1)
+					throw 'Invalid Zip - or so I claim';
+
+				var start = post.substr(0, index);
+				var data = post.substr(index);
+
+				sid = Std.parseInt(start.split('filename="').pop());
+				file = sys.io.File.write(TMP_DIR + "/" + sid + ".tmp", true);
+				bytes = data.length;//thank got neko does not use utf8
+				file.writeString(data);
+			}
+		}
 		if( file != null ) {
 			file.close();
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
