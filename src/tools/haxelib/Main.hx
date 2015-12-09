@@ -948,10 +948,14 @@ class Main {
 			haxepath = Path.addTrailingSlash( haxepath );
 		var envPath = Sys.getEnv("HAXELIB_PATH");
 		var config_file;
-		if( win )
-			config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
-		else
+		if( win ) {
+			if (Sys.getEnv("HOMEDRIVE") != null && Sys.getEnv("HOMEPATH") != null)
+				config_file = Sys.getEnv("HOMEDRIVE") + Sys.getEnv("HOMEPATH");
+			else
+				config_file = "C:\Users";
+		} else {
 			config_file = Sys.getEnv("HOME");
+		}
 		config_file += "/.haxelib";
 		var rep = if (envPath != null)
 			envPath
