@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.legacyhaxelib;
+package legacyhaxelib;
 import haxe.zip.Reader;
 
 enum Answer {
@@ -28,7 +28,7 @@ enum Answer {
 	Always;
 }
 
-class SiteProxy extends haxe.remoting.Proxy<tools.legacyhaxelib.SiteApi> {
+class SiteProxy extends haxe.remoting.Proxy<legacyhaxelib.SiteApi> {
 }
 
 class Progress extends haxe.io.Output {

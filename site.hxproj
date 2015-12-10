@@ -21,7 +21,7 @@
   <build>
     <option directives="" />
     <option flashStrict="False" />
-    <option mainClass="tools.haxelib.Site" />
+    <option mainClass="haxelib.Site" />
     <option enabledebug="False" />
     <option additional="-dce no&#xA;" />
   </build>
@@ -31,7 +31,7 @@
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\tools\haxelib\Site.hx" />
+    <compile path="src\haxelib\Site.hx" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

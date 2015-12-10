@@ -19,10 +19,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.legacyhaxelib;
-import tools.legacyhaxelib.Data;
+package legacyhaxelib;
+import legacyhaxelib.Data;
 #if haxelib_site
-import tools.legacyhaxelib.SiteDb;
+import legacyhaxelib.SiteDb;
 #end
 
 class SiteApi {

@@ -8,11 +8,11 @@ import haxe.zip.Writer;
 import sys.db.Sqlite;
 import sys.FileSystem;
 import sys.io.File;
-import tools.haxelib.SiteDb;
+import haxelib.SiteDb;
 
 using StringTools;
 
-class SiteProxy extends haxe.remoting.Proxy<tools.haxelib.SiteApi> {
+class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
 class PrepareServer {
@@ -83,7 +83,7 @@ class PrepareServer {
 		Sys.println("Cleaning legacy DB");
 		var sqlFile = serverPath + 'legacy/haxelib.db';
 		var con = Sqlite.open(sqlFile);
-		tools.legacyhaxelib.SiteDb.create(con);
+		legacyhaxelib.SiteDb.create(con);
 
 		Sys.println("Package testing libraries");
 		var libraries = new List<String>();

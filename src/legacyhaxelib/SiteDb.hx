@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.legacyhaxelib;
+package legacyhaxelib;
 
 class User extends neko.db.Object {
 

@@ -1,11 +1,11 @@
 package website;
 
-import tools.haxelib.SiteDb;
+import haxelib.SiteDb;
 import website.controller.*;
 import ufront.mailer.*;
 import ufront.MVC;
 import sys.db.*;
-import tools.haxelib.Paths.*;
+import haxelib.Paths.*;
 
 class Server {
 	static var ufApp:UfrontApplication;

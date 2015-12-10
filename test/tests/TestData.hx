@@ -5,7 +5,7 @@ import haxe.Json;
 import haxe.io.*;
 import haxe.zip.*;
 import sys.io.*;
-import tools.haxelib.Data;
+import haxelib.Data;
 using StringTools;
 
 class TestData extends haxe.unit.TestCase {

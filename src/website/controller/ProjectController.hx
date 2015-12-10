@@ -1,6 +1,6 @@
 package website.controller;
 
-import tools.haxelib.SemVer;
+import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
 import haxe.ds.Option;

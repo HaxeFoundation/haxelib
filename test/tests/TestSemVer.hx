@@ -1,6 +1,6 @@
 package tests;
 
-import tools.haxelib.SemVer;
+import haxelib.SemVer;
 
 class TestSemVer extends haxe.unit.TestCase {
 	static function make(major, minor, patch, ?preview, ?previewNum):SemVer {

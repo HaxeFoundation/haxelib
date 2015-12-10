@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package haxelib;
 
 import haxe.crypto.Md5;
 import haxe.*;
@@ -30,11 +30,11 @@ import sys.io.File;
 import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
-import tools.haxelib.Vcs;
+import haxelib.Vcs;
 
 using StringTools;
 using Lambda;
-using tools.haxelib.Data;
+using haxelib.Data;
 
 enum Answer {
 	Yes;
@@ -48,7 +48,7 @@ private enum CommandCategory {
 	Miscellaneous;
 }
 
-class SiteProxy extends haxe.remoting.Proxy<tools.haxelib.SiteApi> {
+class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
 class Progress extends haxe.io.Output {
@@ -1188,7 +1188,7 @@ class Main {
 
 		cli.cwd = haxepath;
 		function tryBuild() {
-			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'tools.haxelib.Main', '--no-output']);
+			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.Main', '--no-output']);
 			return
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
@@ -1204,7 +1204,7 @@ class Main {
 					haxepath = Path.addTrailingSlash(haxepath);
 
 				if (IS_WINDOWS) {
-					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'tools.haxelib.Rebuild']);
+					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'haxelib.Rebuild']);
 					print('rebuild launched');
 				}
 				else {
@@ -1226,7 +1226,7 @@ class Main {
 							'#!/bin/sh'
 							+'\n'+'OLDCWD=`pwd`'
 							+'\n'+'cd $classPath'
-							+'\n'+'exec haxe '+args.join(' ')+" --run tools.haxelib.Main -cwd $OLDCWD $@"
+							+'\n'+'exec haxe '+args.join(' ')+" --run haxelib.Main -cwd $OLDCWD $@"
 						)
 						catch (e:Dynamic)
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);

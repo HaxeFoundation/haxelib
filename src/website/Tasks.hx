@@ -1,6 +1,6 @@
 package website;
 
-import tools.haxelib.SiteDb;
+import haxelib.SiteDb;
 import mcli.Dispatch;
 import ufront.api.UFApi;
 import ufront.tasks.UFTaskSet;

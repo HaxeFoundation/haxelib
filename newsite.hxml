@@ -50,6 +50,6 @@
 
 -cp src
 -neko www/api/3.0/index.n
--main tools.haxelib.Repo
+-main haxelib.Repo
 -dce no
 -D haxelib_api

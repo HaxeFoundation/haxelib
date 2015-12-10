@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.legacyhaxelib;
+package legacyhaxelib;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 

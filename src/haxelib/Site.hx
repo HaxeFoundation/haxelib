@@ -19,17 +19,17 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package haxelib;
 
 import haxe.web.Dispatch;
 import neko.Lib;
 import neko.Web;
 import sys.db.*;
 import sys.io.File;
-import tools.haxelib.SiteDb;
+import haxelib.SiteDb;
 import haxe.rtti.CType;
 import haxe.Json;
-import tools.haxelib.Paths.*;
+import haxelib.Paths.*;
 
 using sys.io.File;
 using sys.FileSystem;

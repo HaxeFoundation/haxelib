@@ -1,6 +1,6 @@
 package website.controller;
 
-import tools.haxelib.SiteDb;
+import haxelib.SiteDb;
 import ufront.web.Controller;
 import ufront.web.result.ContentResult;
 import website.api.ProjectListApi;

@@ -15,14 +15,14 @@ haxe newsite.hxml
 
 # Copy various assets
 
-cp src/tools/haxelib/.htaccess www/
-cp -ar src/tools/haxelib/tmpl www/
-cp src/tools/haxelib/haxelib.css www/
-cp src/tools/haxelib/dbconfig.json.example www/
+cp src/haxelib/.htaccess www/
+cp -ar src/haxelib/tmpl www/
+cp src/haxelib/haxelib.css www/
+cp src/haxelib/dbconfig.json.example www/
 
-cp src/tools/legacyhaxelib/.htaccess www/legacy/
-cp src/tools/legacyhaxelib/website.mtt www/legacy/
-cp src/tools/legacyhaxelib/haxelib.css www/legacy/
+cp src/legacyhaxelib/.htaccess www/legacy/
+cp src/legacyhaxelib/website.mtt www/legacy/
+cp src/legacyhaxelib/haxelib.css www/legacy/
 
 # If the databases don't exist, run "setup"
 

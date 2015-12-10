@@ -1,6 +1,6 @@
-package tools.haxelib;
+package haxelib;
 
-import tools.haxelib.Main;
+import haxelib.Main;
 import sys.FileSystem;
 
 

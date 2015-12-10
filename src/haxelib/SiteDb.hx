@@ -19,11 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package haxelib;
 
 import sys.db.*;
 import sys.db.Types;
-import tools.haxelib.Paths.*;
+import haxelib.Paths.*;
 using sys.io.File;
 using sys.FileSystem;
 

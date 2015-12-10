@@ -1,4 +1,4 @@
-package tools.haxelib;
+package haxelib;
 
 import haxe.ds.Option;
 
@@ -131,7 +131,7 @@ class Validator {
 					
 				case TAbstract(_.get() => a, _):
 					
-					macro @:pos(pos) switch ($IARG : tools.haxelib.Validator.Validatable).validate() {
+					macro @:pos(pos) switch ($IARG : haxelib.Validator.Validatable).validate() {
 						case Some( { error: e } ): throw e;
 						case None:
 					}

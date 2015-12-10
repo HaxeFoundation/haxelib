@@ -19,9 +19,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package haxelib;
 
-import tools.haxelib.Data;
+import haxelib.Data;
 
 interface SiteApi {
 	public function search( word : String ) : List<{ id : Int, name : String }>;

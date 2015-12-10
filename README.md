@@ -87,7 +87,7 @@ nekotools server -rewrite
 
 Build files:
 
-* __haxelib.hxml__: Build the current haxelib tool from src/tools/haxelib/Main
+* __haxelib.hxml__: Build the current haxelib tool from src/haxelib/Main
 * __legacyhaxelib.hxml__: Build the haxelib tool that works with Haxe 2.x
 * __prepare.hxml__: Build a tool to prepare the server (I think)
 * __site.hxml__: Build the old website, the legacy website, and the Haxe remoting API.

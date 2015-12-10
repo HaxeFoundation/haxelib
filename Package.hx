@@ -38,7 +38,7 @@ class Package {
 	}
 
 	static function main():Void {
-		mkdir("package/src/tools/haxelib");
+		mkdir("package/src/haxelib");
 
 		for (file in [
 			"Data.hx",
@@ -48,7 +48,7 @@ class Package {
 			"SiteApi.hx",
 			"ConvertXml.hx",
 		]) {
-			cp('src/tools/haxelib/$file', 'package/src/tools/haxelib/$file');
+			cp('src/haxelib/$file', 'package/src/haxelib/$file');
 		}
 		cp("haxelib.json", "package/haxelib.json");
 

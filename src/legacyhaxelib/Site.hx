@@ -19,9 +19,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.legacyhaxelib;
+package legacyhaxelib;
 #if haxelib_site
-import tools.legacyhaxelib.SiteDb;
+import legacyhaxelib.SiteDb;
 #end
 import haxe.rtti.CType;
 

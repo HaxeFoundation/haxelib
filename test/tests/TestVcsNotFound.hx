@@ -1,7 +1,7 @@
 package tests;
 
 import sys.FileSystem;
-import tools.haxelib.Vcs;
+import haxelib.Vcs;
 import haxe.unit.TestCase;
 
 

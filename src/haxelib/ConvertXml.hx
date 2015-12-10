@@ -1,4 +1,4 @@
-package tools.haxelib;
+package haxelib;
 import haxe.Json;
 
 class ConvertXml

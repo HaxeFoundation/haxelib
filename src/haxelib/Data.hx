@@ -19,13 +19,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package tools.haxelib;
+package haxelib;
 
 import haxe.ds.Option;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
-import tools.haxelib.Validator;
+import haxelib.Validator;
 
 using StringTools;
 
@@ -275,7 +275,7 @@ class Data {
 	static function doCheck(doc:Infos)
 		//return Validator.validate(doc);
 		return //This is generated from the above macro, which seems not to run in --run mode
-			(function(v:tools.haxelib.Data.Infos) {
+			(function(v:haxelib.Data.Infos) {
 				if (!Reflect.isObject(v)) throw "object expected";
 				if (Reflect.hasField(v, "classPath") && v.classPath != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.classPath);
 				if (!Reflect.hasField(v, "contributors")) throw ("missing field " + "contributors") else {
@@ -287,11 +287,11 @@ class Data {
 						if (!(v.length > 0)) throw 'Specify at least one contributor';
 					})(v.contributors);
 				};
-				if (Reflect.hasField(v, "dependencies") && v.dependencies != null) (function(v:StdTypes.Null<tools.haxelib.Data.Dependencies>) {
+				if (Reflect.hasField(v, "dependencies") && v.dependencies != null) (function(v:StdTypes.Null<haxelib.Data.Dependencies>) {
 					if (!Reflect.isObject(v)) throw "object expected";
 					for (f in Reflect.fields(v)) {
-						var v:tools.haxelib.Data.DependencyVersion = Reflect.field(v, f);
-						switch ((v : tools.haxelib.Validator.Validatable)).validate() {
+						var v:haxelib.Data.DependencyVersion = Reflect.field(v, f);
+						switch ((v : haxelib.Validator.Validatable)).validate() {
 							case Some({ error : e }):{
 								throw e;
 							};
@@ -300,9 +300,9 @@ class Data {
 					};
 				})(v.dependencies);
 				if (Reflect.hasField(v, "description") && v.description != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.description);
-				if (!Reflect.hasField(v, "license")) throw ("missing field " + "license") else (function(v:tools.haxelib.Data.License) if (!Lambda.has([tools.haxelib.Data.License.Gpl, tools.haxelib.Data.License.Lgpl, tools.haxelib.Data.License.Mit, tools.haxelib.Data.License.Bsd, tools.haxelib.Data.License.Public, tools.haxelib.Data.License.Apache], v)) throw 'Invalid value ' + v + ' for ' + "License")(v.license);
+				if (!Reflect.hasField(v, "license")) throw ("missing field " + "license") else (function(v:haxelib.Data.License) if (!Lambda.has([haxelib.Data.License.Gpl, haxelib.Data.License.Lgpl, haxelib.Data.License.Mit, haxelib.Data.License.Bsd, haxelib.Data.License.Public, haxelib.Data.License.Apache], v)) throw 'Invalid value ' + v + ' for ' + "License")(v.license);
 				if (Reflect.hasField(v, "main") && v.main != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.main);
-				if (!Reflect.hasField(v, "name")) throw ("missing field " + "name") else (function(v:tools.haxelib.Data.ProjectName) switch ((v : tools.haxelib.Validator.Validatable)).validate() {
+				if (!Reflect.hasField(v, "name")) throw ("missing field " + "name") else (function(v:haxelib.Data.ProjectName) switch ((v : haxelib.Validator.Validatable)).validate() {
 					case Some({ error : e }):{
 						throw e;
 					};
@@ -314,7 +314,7 @@ class Data {
 					for (v in v) (function(v:String) if (!Std.is(v, String)) throw "String expected")(v);
 				})(v.tags);
 				if (Reflect.hasField(v, "url") && v.url != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.url);
-				if (!Reflect.hasField(v, "version")) throw ("missing field " + "version") else (function(v:tools.haxelib.SemVer) switch ((v : tools.haxelib.Validator.Validatable)).validate() {
+				if (!Reflect.hasField(v, "version")) throw ("missing field " + "version") else (function(v:haxelib.SemVer) switch ((v : haxelib.Validator.Validatable)).validate() {
 					case Some({ error : e }):{
 						throw e;
 					};

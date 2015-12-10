@@ -1,7 +1,7 @@
 package tests;
 
-import tools.haxelib.Main.Cli;
-import tools.haxelib.Main.CliError;
+import haxelib.Main.Cli;
+import haxelib.Main.CliError;
 import haxe.unit.TestCase;
 
 class TestCli extends TestCase
