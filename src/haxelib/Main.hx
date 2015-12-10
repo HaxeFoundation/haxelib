@@ -633,11 +633,8 @@ class Main {
 		{
 			for (file in hxmlFiles)
 			{
-				if (file.endsWith(".hxml"))
-				{
-					print('Installing all libraries from $file:');
-					installFromHxml(cli.cwd+file);
-				}
+				print('Installing all libraries from $file:');
+				installFromHxml(cli.cwd+file);
 			}
 		}
 		else
