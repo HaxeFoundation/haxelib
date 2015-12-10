@@ -9,7 +9,7 @@ import haxelib.Data;
 using StringTools;
 
 class TestData extends haxe.unit.TestCase {
-	
+
 	public function testSafe() {
 		assertEquals( "abc", checkSafe("abc") );
 		assertEquals( "bean,hx", checkSafe("bean.hx") );
@@ -27,13 +27,13 @@ class TestData extends haxe.unit.TestCase {
 			Data.safe( str );
 		} catch (e:String) "invalid";
 	}
-	
+
 	public function testUnsafe() {
 		assertEquals( "abc", Data.unsafe("abc") );
 		assertEquals( "1.2.3", Data.unsafe("1,2,3") );
 		assertEquals( "", Data.unsafe("") );
 	}
-	
+
 	public function testFileName() {
 		assertEquals( "lib-1,2,3.zip", checkFileName("lib","1.2.3") );
 		assertEquals( "lib-1,2,3-rc,3.zip", checkFileName("lib","1.2.3-rc.3") );
@@ -47,24 +47,24 @@ class TestData extends haxe.unit.TestCase {
 			Data.fileName( lib, ver );
 		} catch (e:String) "invalid";
 	}
-	
+
 	public function testLocateBasePath() {
-		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
 		assertEquals( "", Data.locateBasePath(zip) );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
 		assertEquals( "libDeep/", Data.locateBasePath(zip) );
 	}
-	
+
 	public function testReadDoc() {
-		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
 		assertEquals( null, Data.readDoc(zip) );
 
 		//TODO
 	}
-	
+
 	public function testReadInfos() {
-		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
 		var info = Data.readInfos(zip, true);
 		assertEquals( "haxelib_client", info.name );
 		assertEquals( "GPL", info.license );
@@ -80,9 +80,9 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "N/A", info.releasenote );
 		assertEquals( "DeepAuthor, AnotherGuy", info.contributors.join(", ") );
 	}
-	
+
 	public function testCheckClassPath() {
-		var zip = Reader.readZip(new BytesInput(File.getBytes("package/package.zip")));
+		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
 		var info = Data.readInfos(zip, true);
 		var ok:Dynamic = try {
 			Data.checkClassPath(zip,info);
@@ -91,7 +91,7 @@ class TestData extends haxe.unit.TestCase {
 			e;
 		}
 		assertEquals( ok, true );
-		
+
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
 		var info = Data.readInfos(zip, true);
 		var ok:Dynamic = try {
@@ -102,16 +102,16 @@ class TestData extends haxe.unit.TestCase {
 		}
 		assertEquals( ok, true );
 	}
-	
+
 	public function testReadDataWithCheck() {
 		assertFalse( readDataOkay("bad json") );
-		
+
 		assertTrue( readDataOkay(getJsonInfos()) );
-		
+
 		// Names
 		assertFalse( readDataOkay("{}") );
 		assertFalse( readDataOkay(getJsonInfos({ name: null })) );
-		
+
 		assertFalse( readDataOkay(getJsonInfos({ name: '' })) );
 		assertFalse( readDataOkay(getJsonInfos({ name: 'haxe' })) );
 		assertFalse( readDataOkay(getJsonInfos({ name: 'haXe' })) );
@@ -157,7 +157,7 @@ class TestData extends haxe.unit.TestCase {
 		// Dependencies (optional)
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: null })) );
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib: "" } })) );
-		
+
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"1.3.0" } }) ));
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib: "nonsemver" }})) );
 
@@ -176,21 +176,21 @@ class TestData extends haxe.unit.TestCase {
 		assertTrue( readDataOkay(getJsonInfos({ classPath: null })) );
 		assertFalse( readDataOkay(getJsonInfos({ classPath: ["src","othersrc"] })) );
 	}
-	
+
 	public function testReadDataWithoutCheck() {
 		assertEquals( ProjectName.DEFAULT, Data.readData("bad json",false).name );
 		assertEquals( "0.0.0", Data.readData("bad json",false).version );
 
 		assertEquals( "mylib", Data.readData(getJsonInfos(),false).name );
 		assertEquals( "0.1.2", Data.readData(getJsonInfos(),false).version );
-		
+
 		// Names
 		assertEquals( ProjectName.DEFAULT, Data.readData("{}",false).name );
 		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: null }),false).name );
 		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: '' }),false).name );
 		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).name );
 		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos([ "name" ]), false).name ); // remove the field altogether
-		
+
 		/*
 		// Description (optional)
 		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).description );
@@ -226,7 +226,7 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: null }),false).tags.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ tags: "mytag" }),false).tags.length );
 		*/
-		
+
 		// Dependencies (optional)
 		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.toArray().length );
 		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.toArray()[0].name );
@@ -235,7 +235,7 @@ class TestData extends haxe.unit.TestCase {
 		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.toArray()[0].version );
 		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.toArray()[0].version );
 		assertEquals( "", Data.readData(getJsonInfos( { dependencies: { somelib:0 } } ), false).dependencies.toArray()[0].version );
-		
+
 		/*
 		// ReleaseNote
 		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).releasenote );
@@ -249,10 +249,10 @@ class TestData extends haxe.unit.TestCase {
 	}
 
 	function readDataOkay( json ) {
-		try { 
-			Data.readData( json,true ); 
-			return true; 
-		} 
+		try {
+			Data.readData( json,true );
+			return true;
+		}
 		catch (e:String) {
 			return false;
 		}
@@ -273,7 +273,7 @@ class TestData extends haxe.unit.TestCase {
 			}
 		}
 		if (remove != null) {
-			for ( f in remove ) 
+			for ( f in remove )
 				Reflect.deleteField( infos, f );
 		}
 		return Json.stringify(infos);
