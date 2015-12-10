@@ -6,6 +6,7 @@ package.zip
 test/libraries/*.zip
 dump/
 deploy/
+testing/libraries/vcs
 
 # Runtime files
 *.tmp
