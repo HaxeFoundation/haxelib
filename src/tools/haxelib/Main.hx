@@ -985,6 +985,8 @@ class Main {
 						haxepath;
 					else if (FileSystem.exists("/usr/share/haxe"))
 						"/usr/share/haxe/";
+					else if (Sys.systemName() == "Mac")
+						"/usr/local/lib/haxe/";
 					else
 						"/usr/lib/haxe/")+REPNAME;
 				} else if( IS_WINDOWS ) {
