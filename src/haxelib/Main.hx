@@ -836,81 +836,97 @@ class Main {
 			if (home == null)
 				throw "Could not determine home path. Please ensure that HOME environment variable is set.";
 		}
-		home = Path.addTrailingSlash(home);
-		return home + ".haxelib";
+		return Path.addTrailingSlash(home) + ".haxelib";
 	}
 
-	function getRepository( ?setup : Bool ) {
+	function getGlobalRepositoryPath(create = false):String {
+		// first check the env var
+		var rep = Sys.getEnv("HAXELIB_PATH");
+		if (rep != null)
+			return rep.trim();
 
-		if( !setup && !settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
+		// try to read from user config
+		rep = try File.getContent(getConfigFile()).trim() catch (_:Dynamic) null;
+		if (rep != null)
+			return rep;
+
+		if (!IS_WINDOWS) {
+			// on unixes, try to read system-wide config
+			rep = try File.getContent("/etc/.haxelib").trim() catch (_:Dynamic) null;
+			if (rep == null)
+				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
+		} else {
+			// on windows, try to use haxe installation path
+			rep = getWindowsDefaultGlobalRepositoryPath();
+			if (create)
+				try safeDir(rep) catch(e:Dynamic) throw "Error accessing Haxelib repository: $e";
+		}
+
+		return rep;
+	}
+
+	// on windows we have default global haxelib path - where haxe is installed
+	function getWindowsDefaultGlobalRepositoryPath():String {
+		var haxepath = Sys.getEnv("HAXEPATH");
+		if (haxepath == null)
+			throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
+		return Path.addTrailingSlash(haxepath.trim()) + REPNAME;
+	}
+
+	function getSuggestedGlobalRepositoryPath():String {
+		if (IS_WINDOWS)
+			return getWindowsDefaultGlobalRepositoryPath();
+
+		return if (FileSystem.exists("/usr/share/haxe")) // for Debian
+			'/usr/share/haxe/$REPNAME'
+		else if (Sys.systemName() == "Mac") // for newer OSX, where /usr/lib is not writable
+			'/usr/local/lib/haxe/$REPNAME'
+		else
+			'/usr/lib/haxe/$REPNAME'; // for other unixes
+	}
+
+	function getRepository():String {
+		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
 			var absolutePath = Path.join([cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
 			return Path.addTrailingSlash(absolutePath);
 		}
 
-		var rep = Sys.getEnv("HAXELIB_PATH");
-		if (rep == null)
-			rep = try
-				File.getContent(getConfigFile())
-			catch( e : Dynamic ) try
-				File.getContent("/etc/.haxelib")
-			catch( e : Dynamic ) {
-				var haxepath = Sys.getEnv("HAXEPATH");
-				if( haxepath != null )
-					haxepath = Path.addTrailingSlash( haxepath );
-				if( setup ) {
-					(if (IS_WINDOWS)
-						haxepath;
-					else if (FileSystem.exists("/usr/share/haxe"))
-						"/usr/share/haxe/";
-					else if (Sys.systemName() == "Mac")
-						"/usr/local/lib/haxe/";
-					else
-						"/usr/lib/haxe/")+REPNAME;
-				} else if( IS_WINDOWS ) {
-					// Windows have a default directory (no need for setup)
-					if( haxepath == null )
-						throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
-					var rep = haxepath+REPNAME;
-					try {
-						safeDir(rep);
-					} catch( e : String ) {
-						throw "Error accessing Haxelib repository: $e";
-					}
-					return Path.addTrailingSlash( rep );
-				} else
-					throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
-			}
-		rep = rep.trim();
-		if( setup ) {
-			if( args.length <= argcur ) {
-				print("Please enter haxelib repository path with write access");
-				print("Hit enter for default (" + rep + ")");
-			}
-			var line = param("Path");
-			if( line != "" )
-				rep = line;
-			if( !FileSystem.exists(rep) ) {
-				try {
-					FileSystem.createDirectory(rep);
-				} catch( e : Dynamic ) {
-					print("Failed to create directory '"+rep+"' ("+Std.string(e)+"), maybe you need appropriate user rights");
-					print("Check also that the parent directory exists");
-					Sys.exit(1);
-				}
-			}
-			rep = try FileSystem.fullPath(rep) catch( e : Dynamic ) rep;
-			File.saveContent(getConfigFile(), rep);
-		} else if( !FileSystem.exists(rep) ) {
-			throw "haxelib Repository "+rep+" does not exist. Please run `haxelib setup` again";
-		} else if ( !FileSystem.isDirectory(rep) ) {
-			throw "haxelib Repository "+rep+" exists, but was a file, not a directory.  Please remove it and run `haxelib setup` again.";
-		}
-		return rep+"/";
+		var rep = getGlobalRepositoryPath(true);
+		if (!FileSystem.exists(rep))
+			throw "haxelib Repository " + rep + " does not exist. Please run `haxelib setup` again.";
+		else if (!FileSystem.isDirectory(rep))
+			throw "haxelib Repository " + rep + " exists, but is a file, not a directory. Please remove it and run `haxelib setup` again.";
+		return Path.addTrailingSlash(rep);
 	}
 
 	function setup() {
-		var path = getRepository(true);
-		print("haxelib repository is now "+path);
+		var rep = try getGlobalRepositoryPath() catch (_:Dynamic) null;
+		if (rep == null)
+			rep = getSuggestedGlobalRepositoryPath();
+
+		var configFile = getConfigFile();
+
+		if (args.length <= argcur) {
+			print("Please enter haxelib repository path with write access");
+			print("Hit enter for default (" + rep + ")");
+		}
+
+		var line = param("Path");
+		if (line != "")
+			rep = line;
+
+		if (!FileSystem.exists(rep)) {
+			try {
+				FileSystem.createDirectory(rep);
+			} catch (e:Dynamic) {
+				print("Failed to create directory '" + rep + "' (" + Std.string(e) + "), maybe you need appropriate user rights");
+				Sys.exit(1);
+			}
+		}
+		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
+		File.saveContent(configFile, rep);
+
+		print("haxelib repository is now " + rep);
 	}
 
 	function config() {
