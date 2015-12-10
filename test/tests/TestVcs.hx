@@ -4,8 +4,7 @@ import sys.io.File;
 import sys.FileSystem;
 import haxelib.Vcs;
 import haxe.unit.TestCase;
-import haxelib.Main.Cli;
-import haxelib.Main.Answer;
+import haxelib.Cli;
 
 class TestVcs extends TestCase
 {

@@ -246,9 +246,9 @@ class Git extends Vcs
 		{
 			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")
 			{
-				case Answer.Yes:
+				case Yes:
 					Sys.command(executable, ["reset", "--hard"]);
-				case Answer.No:
+				case No:
 					doPull = false;
 					cli.print(name + " repo left untouched");
 			}
@@ -364,9 +364,9 @@ class Mercurial extends Vcs
 			cli.print(diff.out);
 			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
 			{
-				case Answer.Yes:
+				case Yes:
 					Sys.command(executable, ["update", "--clean"]);
-				case Answer.No:
+				case No:
 					changed = false;
 					cli.print(name + " repo left untouched");
 			}
