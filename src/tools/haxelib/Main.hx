@@ -984,9 +984,9 @@ class Main {
 					(if (IS_WINDOWS)
 						haxepath;
 					else if (FileSystem.exists("/usr/share/haxe"))
-						"/usr/share/haxe";
+						"/usr/share/haxe/";
 					else
-						"/usr/lib/haxe")+REPNAME;
+						"/usr/lib/haxe/")+REPNAME;
 				} else if( IS_WINDOWS ) {
 					// Windows have a default directory (no need for setup)
 					if( haxepath == null )
