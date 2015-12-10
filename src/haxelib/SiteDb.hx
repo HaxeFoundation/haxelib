@@ -24,8 +24,6 @@ package haxelib;
 import sys.db.*;
 import sys.db.Types;
 import haxelib.Paths.*;
-using sys.io.File;
-using sys.FileSystem;
 
 class User extends Object {
 
@@ -125,8 +123,8 @@ class SiteDb {
 
 	static public function init() {
 		db =
-			if (DB_CONFIG.exists())
-				Mysql.connect(haxe.Json.parse(DB_CONFIG.getContent()));
+			if (sys.FileSystem.exists(DB_CONFIG))
+				Mysql.connect(haxe.Json.parse(sys.io.File.getContent(DB_CONFIG)));
 			else
 				Sqlite.open(DB_FILE);
 
