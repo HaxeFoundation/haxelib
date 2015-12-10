@@ -1,0 +1,6 @@
+-cp src 
+-neko www/legacy/index.n
+-main legacyhaxelib.Site
+-lib hx2compat
+-D haxelib_site
+-dce no

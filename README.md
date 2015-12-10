@@ -74,7 +74,7 @@ mkdir www/files/3.0
 # TODO: copy assets
 
 # Compile the site
-haxe site.hxml
+haxe legacysite.hxml
 haxe newsite.hxml
 
 # TODO: check the permissions, writeable directories etc.
@@ -89,8 +89,8 @@ Build files:
 
 * __haxelib.hxml__: Build the current haxelib tool from src/haxelib/Main
 * __legacyhaxelib.hxml__: Build the haxelib tool that works with Haxe 2.x
+* __legacysite.hxml__: Build the legacy website.
 * __prepare.hxml__: Build a tool to prepare the server (I think)
-* __site.hxml__: Build the old website, the legacy website, and the Haxe remoting API.
 * __newsite.hxml__: Build the new website, the new site unit tests, and the Haxe remoting API. (Also runs the unit tests).
 * __test.hxml__: Build the automated tests.
 

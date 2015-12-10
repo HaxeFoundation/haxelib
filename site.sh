@@ -10,14 +10,12 @@ mkdir -p www/files/3.0
 
 # Compile the old site first, to get the legacy API etc, and then the new site.
 
-haxe site.hxml
+haxe legacysite.hxml
 haxe newsite.hxml
 
 # Copy various assets
 
 cp src/haxelib/.htaccess www/
-cp -ar src/haxelib/tmpl www/
-cp src/haxelib/haxelib.css www/
 cp src/haxelib/dbconfig.json.example www/
 
 cp src/legacyhaxelib/.htaccess www/legacy/
@@ -25,13 +23,6 @@ cp src/legacyhaxelib/website.mtt www/legacy/
 cp src/legacyhaxelib/haxelib.css www/legacy/
 
 # If the databases don't exist, run "setup"
-
-if [ ! -f www/haxelib.db ];
-then
-    cd www
-    neko old.n setup
-    cd ..
-fi
 
 if [ ! -f www/legacy/haxelib.db ];
 then

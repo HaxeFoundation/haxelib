@@ -13,7 +13,6 @@ class Paths {
 	static public var DB_FILE = CWD + "haxelib.db";
 	
 	static public var TMP_DIR = CWD + "tmp";
-	static public var TMPL_DIR = CWD + "tmpl/";
 	static public var REP_DIR = CWD + Data.REPOSITORY;
 	
 }
