@@ -11,27 +11,27 @@
 -main website.Server
 -neko www/index.n
 
---next
+# --next
 
--cp src
--cp test
--lib ufront
--lib ufront-mail:1.0.0-rc.4
--lib ufront-uftasks
--lib ufront-ufadmin
--lib erazor:1.0.0-rc.1
--lib markdown:1.0.0
--lib cleversort
-# Now the testing libs
--lib buddy:0.17.1
--lib mockatoo
--lib utest
---no-inline
--D server
--D getter_support
--main WebsiteTests
--neko bin/websitetest.n
--cmd neko bin/websitetest.n
+# -cp src
+# -cp test
+# -lib ufront
+# -lib ufront-mail:1.0.0-rc.4
+# -lib ufront-uftasks
+# -lib ufront-ufadmin
+# -lib erazor:1.0.0-rc.1
+# -lib markdown:1.0.0
+# -lib cleversort
+# # Now the testing libs
+# -lib buddy:0.17.1
+# -lib mockatoo
+# -lib utest
+# --no-inline
+# -D server
+# -D getter_support
+# -main WebsiteTests
+# -neko bin/websitetest.n
+# -cmd neko bin/websitetest.n
 
 --next
 
