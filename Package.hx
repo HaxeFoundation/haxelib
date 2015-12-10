@@ -1,63 +1,57 @@
-import Sys.*;
-import sys.*;
-import sys.io.*;
-import haxe.io.*;
+import haxe.crypto.Crc32;
+import haxe.zip.Entry;
+import haxe.zip.Writer;
+import haxe.zip.Tools;
+
+import sys.io.File;
+import sys.FileSystem;
 
 class Package {
-	static function cp(srcFile:String, destFile:String):Void {
-		File.saveBytes(destFile, File.getBytes(srcFile));
-	}
+    static var outPath = "package.zip";
 
-	static function zip(srcFolder:String, destFile:String):Void {
-		switch (Sys.systemName()) {
-			case "Linux", "Mac":
-				command("zip", ["-r", destFile, srcFolder]);
-			case "Windows":
-				command("7za", ["a", "-tzip", "-r", destFile, srcFolder]);
-		}
-	}
+    static function main() {
+        var entries = new List<Entry>();
 
-	/**
-		Make directory recursively.
-		It is needed for Haxe 3.1.3, which FileSystem.createDirectory is not recursive.
-	*/
-	static function mkdir(path:String):Void {
-		#if (haxe_ver < 3.2)
-		path = Path.normalize(path);
+        function add(path:String, target:String) {
+            if (!FileSystem.exists(path))
+                throw 'Invalid path: $path';
 
-		if (FileSystem.exists(path)) {
-			return;
-		}
+            if (FileSystem.isDirectory(path)) {
+                for (item in FileSystem.readDirectory(path))
+                    add(path + "/" + item, target + "/" + item);
+            } else {
+                trace("Adding " + target);
+                var bytes = File.getBytes(path);
+                var entry:Entry = {
+                    fileName: target,
+                    fileSize: bytes.length,
+                    fileTime: FileSystem.stat(path).mtime,
+                    compressed: false,
+                    dataSize: 0,
+                    data: bytes,
+                    crc32: Crc32.make(bytes),
+                }
+                Tools.compress(entry, 9);
+                entries.add(entry);
+            }
+        }
 
-		var parent = path.substring(0, path.lastIndexOf("/"));
-		if (parent != "")
-			mkdir(parent);
-		#end
-		
-		FileSystem.createDirectory(path);
-	}
+        for (file in [
+            "Data.hx",
+            "Main.hx",
+            "Rebuild.hx",
+            "SemVer.hx",
+            "SiteApi.hx",
+            "ConvertXml.hx"
+        ])
+            add('src/haxelib/$file', 'src/haxelib/$file');
 
-	static function main():Void {
-		mkdir("package/src/haxelib");
+        add("haxelib.json", "haxelib.json");
 
-		for (file in [
-			"Data.hx",
-			"Main.hx",
-			"Rebuild.hx",
-			"SemVer.hx",
-			"SiteApi.hx",
-			"ConvertXml.hx",
-		]) {
-			cp('src/haxelib/$file', 'package/src/haxelib/$file');
-		}
-		cp("haxelib.json", "package/haxelib.json");
-
-		setCwd("package");
-
-		var zipFile = "package.zip";
-		if (FileSystem.exists(zipFile)) {
-			FileSystem.deleteFile(zipFile);
-		}
-		zip(".", zipFile);
-	}
+        trace("Saving to " + outPath);
+        var out = File.write(outPath, true);
+        var writer = new Writer(out);
+        writer.write(entries);
+        out.close();
+    }
 }

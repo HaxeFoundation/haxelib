@@ -2,7 +2,7 @@
 *.exe
 *.n
 *.zip
-package
+package.zip
 test/libraries/*.zip
 dump/
 deploy/
