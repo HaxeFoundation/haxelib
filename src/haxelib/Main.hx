@@ -31,6 +31,7 @@ import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
 import haxelib.Vcs;
+import haxelib.FsUtils.safeDir;
 import haxelib.FsUtils.deleteRec;
 
 using StringTools;
@@ -787,18 +788,6 @@ class Main {
 		}
 	}
 
-	function safeDir( dir ) {
-		if( FileSystem.exists(dir) ) {
-			if( !FileSystem.isDirectory(dir) )
-				throw ("A file is preventing "+dir+" to be created");
-		}
-		try {
-			FileSystem.createDirectory(dir);
-		} catch( e : Dynamic ) {
-			throw "You don't have enough user rights to create the directory "+dir;
-		}
-		return true;
-	}
 
 
 

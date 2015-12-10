@@ -6,6 +6,18 @@ import sys.FileSystem;
 class FsUtils {
     static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
+    public static function safeDir(dir:String):Void {
+        if (FileSystem.exists(dir)) {
+            if (!FileSystem.isDirectory(dir))
+                throw 'A file is preventing $dir to be created';
+        }
+        try {
+            FileSystem.createDirectory(dir);
+        } catch( e : Dynamic ) {
+            throw 'You don\'t have enough user rights to create the directory $dir';
+        }
+    }
+
     public static function deleteRec(dir:String):Void {
         if (!FileSystem.exists(dir))
             return;
