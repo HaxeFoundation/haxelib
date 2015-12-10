@@ -77,10 +77,6 @@ mkdir www/files/3.0
 haxe site.hxml
 haxe newsite.hxml
 
-# Set up the test database
-cd www
-neko old.n setup
-
 # TODO: check the permissions, writeable directories etc.
 
 # Start the server
