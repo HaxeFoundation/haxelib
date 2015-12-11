@@ -1,6 +1,5 @@
 package haxelib;
 
-import haxelib.Main;
 import sys.FileSystem;
 
 
