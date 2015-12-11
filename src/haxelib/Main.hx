@@ -33,6 +33,7 @@ import haxe.ds.Option;
 import haxelib.Vcs;
 import haxelib.FsUtils.safeDir;
 import haxelib.FsUtils.deleteRec;
+import haxelib.Cli.ask;
 
 using StringTools;
 using Lambda;
@@ -212,9 +213,6 @@ class Main {
 		return Sys.stdin().readLine();
 	}
 
-	inline function ask(question)
-		return Cli.ask(question);
-
 	function paramOpt() {
 		if( args.length > argcur )
 			return args[argcur++];
@@ -326,8 +324,8 @@ class Main {
 					print('--always and --never are mutually exclusive');
 					Sys.exit(1);
 					null;
-				case [true, _]: Yes;
-				case [_, true]: No;
+				case [true, _]: true;
+				case [_, true]: false;
 				default: null;
 			}
 
@@ -511,7 +509,7 @@ class Main {
 		var sinfos = try site.infos(infos.name) catch( _ : Dynamic ) null;
 		if( sinfos != null )
 			for( v in sinfos.versions )
-				if( v.name == infos.version && ask("You're about to overwrite existing version '"+v.name+"', please confirm") == No )
+				if( v.name == infos.version && !ask("You're about to overwrite existing version '"+v.name+"', please confirm") )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
@@ -665,7 +663,7 @@ class Main {
 		}
 
 		// Install if they confirm
-		if (ask("Continue?") != No)
+		if (ask("Continue?"))
 		{
 			for (l in libs)
 			{
@@ -1012,12 +1010,10 @@ class Main {
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
 			p = inf.name;
 			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.getLatest())) ) {
-				if( state.prompt )
-					switch ask("Update "+p+" to "+inf.getLatest()) {
-					case Yes:
-					case No:
+				if( state.prompt ) {
+					if (!ask("Update "+p+" to "+inf.getLatest()))
 						return;
-					}
+				}
 				doInstall(p,inf.getLatest(),true);
 				state.updated = true;
 			} else
@@ -1150,13 +1146,13 @@ class Main {
 		var vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
 			print("Library "+prj+" version "+version+" is not installed");
-			if(ask("Would you like to install it?") != No)
+			if(ask("Would you like to install it?"))
 				doInstall(prj, version, true);
 			return;
 		}
 		if( getCurrent(pdir) == version )
 			return;
-		if( doAsk && ask("Set "+prj+" to version "+version) == No )
+		if( doAsk && !ask("Set "+prj+" to version "+version) )
 			return;
 		File.saveContent(pdir+"/.current",version);
 		print("Library "+prj+" current version is now "+version);
@@ -1405,7 +1401,7 @@ class Main {
 	function local() {
 		var file = param("Package");
 		if (doInstallFile(file, true, true).name == 'haxelib_client')
-			if (ask('You have updated haxelib. Do you wish to rebuild it?') != No) {
+			if (ask('You have updated haxelib. Do you wish to rebuild it?')) {
 				rebuildSelf();
 			}
 	}

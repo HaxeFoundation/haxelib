@@ -23,18 +23,13 @@ package haxelib;
 
 import sys.FileSystem;
 
-enum Answer {
-    Yes;
-    No;
-}
-
 enum CliError {
     CwdUnavailable(pwd:String);
     CantSetSwd_DirNotExist(dir:String);
 }
 
 class Cli {
-    public static var defaultAnswer:Answer;
+    public static var defaultAnswer:Null<Bool>;
 
     public static var cwd(get, set):String;
     static var cwd_cache:String;
@@ -80,7 +75,7 @@ class Cli {
     }
 
 
-    public static function ask(question):Answer {
+    public static function ask(question:String):Bool {
         if (defaultAnswer != null)
             return defaultAnswer;
 
@@ -88,15 +83,15 @@ class Cli {
             Sys.print(question + " [y/n/a] ? ");
             try {
                 switch (Sys.stdin().readLine()) {
-                    case "n": return No;
-                    case "y": return Yes;
-                    case "a": return defaultAnswer = Yes;
+                    case "n": return false;
+                    case "y": return true;
+                    case "a": return defaultAnswer = true;
                 }
             } catch(e:haxe.io.Eof) {
                 Sys.println("n");
-                return No;
+                return false;
             }
         }
-        return null;
+        return false;
     }
 }

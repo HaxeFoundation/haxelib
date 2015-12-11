@@ -266,13 +266,11 @@ class Git extends Vcs
 
 		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
 		{
-			switch Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")
-			{
-				case Yes:
-					Sys.command(executable, ["reset", "--hard"]);
-				case No:
-					doPull = false;
-					Sys.println(name + " repo left untouched");
+			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")) {
+				Sys.command(executable, ["reset", "--hard"]);
+			} else {
+				doPull = false;
+				Sys.println(name + " repo left untouched");
 			}
 		}
 		if(doPull)
@@ -384,13 +382,11 @@ class Mercurial extends Vcs
 		if(diff.code + status.code + diff.out.length + status.out.length != 0)
 		{
 			Sys.println(diff.out);
-			switch Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
-			{
-				case Yes:
-					Sys.command(executable, ["update", "--clean"]);
-				case No:
-					changed = false;
-					Sys.println(name + " repo left untouched");
+			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")) {
+				Sys.command(executable, ["update", "--clean"]);
+			} else {
+				changed = false;
+				Sys.println(name + " repo left untouched");
 			}
 		}
 		else if(changed)
