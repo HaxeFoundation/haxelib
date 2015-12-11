@@ -99,8 +99,4 @@ class Cli {
         }
         return null;
     }
-
-    public static function print(str):Void {
-        Sys.println(str);
-    }
 }

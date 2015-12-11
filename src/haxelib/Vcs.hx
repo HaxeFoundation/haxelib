@@ -272,7 +272,7 @@ class Git extends Vcs
 					Sys.command(executable, ["reset", "--hard"]);
 				case No:
 					doPull = false;
-					Cli.print(name + " repo left untouched");
+					Sys.println(name + " repo left untouched");
 			}
 		}
 		if(doPull)
@@ -378,19 +378,19 @@ class Mercurial extends Vcs
 		changed = ~/(\d)/.match(summary);
 		if(changed)
 			// print new pulled changesets:
-			Cli.print(summary);
+			Sys.println(summary);
 
 
 		if(diff.code + status.code + diff.out.length + status.out.length != 0)
 		{
-			Cli.print(diff.out);
+			Sys.println(diff.out);
 			switch Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
 			{
 				case Yes:
 					Sys.command(executable, ["update", "--clean"]);
 				case No:
 					changed = false;
-					Cli.print(name + " repo left untouched");
+					Sys.println(name + " repo left untouched");
 			}
 		}
 		else if(changed)

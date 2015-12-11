@@ -1503,7 +1503,7 @@ class Main {
 	// ----------------------------------
 
 	inline function print(str)
-		Cli.print(str);
+		Sys.println(str);
 
 	static function main() {
 		new Main().process();
