@@ -1,7 +1,6 @@
 version: "{build}"
 
 install:
-    - cinst 7zip.commandline -y
     - cinst haxe -y
 
 build_script:
