@@ -142,7 +142,6 @@ class Main {
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
-	var cli:Cli;
 	var argcur : Int;
 	var args : Array<String>;
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
@@ -152,7 +151,6 @@ class Main {
 
 	function new()
 	{
-		cli = new Cli();
 		args = Sys.args();
 
 		commands = new List();
@@ -215,7 +213,7 @@ class Main {
 	}
 
 	inline function ask(question)
-		return cli.ask(question);
+		return Cli.ask(question);
 
 	function paramOpt() {
 		if( args.length > argcur )
@@ -294,7 +292,7 @@ class Main {
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
-				case '-cwd': cli.cwd = args[argcur++];
+				case '-cwd': Cli.cwd = args[argcur++];
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
@@ -322,7 +320,7 @@ class Main {
 			}
 		}
 
-		cli.defaultAnswer =
+		Cli.defaultAnswer =
 			switch [settings.always, settings.never] {
 				case [true, true]:
 					print('--always and --never are mutually exclusive');
@@ -630,13 +628,13 @@ class Main {
 
 	function installFromAllHxml()
 	{
-		var hxmlFiles = sys.FileSystem.readDirectory(cli.cwd).filter(function (f) return f.endsWith(".hxml"));
+		var hxmlFiles = sys.FileSystem.readDirectory(Cli.cwd).filter(function (f) return f.endsWith(".hxml"));
 		if (hxmlFiles.length > 0)
 		{
 			for (file in hxmlFiles)
 			{
 				print('Installing all libraries from $file:');
-				installFromHxml(cli.cwd+file);
+				installFromHxml(Cli.cwd+file);
 			}
 		}
 		else
@@ -859,7 +857,7 @@ class Main {
 
 	function getRepository():String {
 		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = Path.join([cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
+			var absolutePath = Path.join([Cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
 			return Path.addTrailingSlash(absolutePath);
 		}
 
@@ -1002,12 +1000,12 @@ class Main {
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable;
 
-			var oldCwd = cli.cwd;
-			cli.cwd = (rep + "/" + p + "/" + vcs.directory);
+			var oldCwd = Cli.cwd;
+			Cli.cwd = (rep + "/" + p + "/" + vcs.directory);
 			var success = vcs.update(p, cast settings);
 
 			state.updated = success;
-			cli.cwd = oldCwd;
+			Cli.cwd = oldCwd;
 		}
 		else
 		{
@@ -1051,7 +1049,7 @@ class Main {
 			if (IS_WINDOWS) Sys.getEnv("HAXEPATH");
 			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
 
-		cli.cwd = haxepath;
+		Cli.cwd = haxepath;
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.Main', '--no-output']);
 			return
@@ -1338,7 +1336,7 @@ class Main {
 		// finish it!
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
-		cli.cwd = proj;
+		Cli.cwd = proj;
 
 		File.saveContent(".dev", devPath);
 
@@ -1348,7 +1346,7 @@ class Main {
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 
-		cli.cwd = libPath;
+		Cli.cwd = libPath;
 
 		if(FileSystem.exists("haxelib.json"))
 			doInstallDependencies(
@@ -1370,8 +1368,8 @@ class Main {
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
-		args.push(cli.cwd);
-		cli.cwd = vdir;
+		args.push(Cli.cwd);
+		Cli.cwd = vdir;
 
 		var callArgs =
 			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), false), null] catch (e:Dynamic) [null, e] {
@@ -1413,7 +1411,7 @@ class Main {
 	}
 
 	inline function command(cmd:String, args:Array<String>)
-		return cli.command(cmd, args);
+		return Cli.command(cmd, args);
 
 	function proxy() {
 		var rep = getRepository();
@@ -1450,7 +1448,7 @@ class Main {
 	}
 
 	function convertXml() {
-		var cwd = cli.cwd;
+		var cwd = Cli.cwd;
 		var xmlFile = cwd + "haxelib.xml";
 		var jsonFile = cwd + "haxelib.json";
 
@@ -1508,7 +1506,7 @@ class Main {
 	// ----------------------------------
 
 	inline function print(str)
-		cli.print(str);
+		Cli.print(str);
 
 	static function main() {
 		new Main().process();

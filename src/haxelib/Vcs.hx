@@ -92,8 +92,6 @@ class Vcs implements IVcs
 	private var availabilityChecked:Bool = false;
 	private var executableSearched:Bool = false;
 
-	private var cli(default, null):Cli;
-
 	//--------------- constructor ---------------//
 
 	public static function initialize()
@@ -115,8 +113,6 @@ class Vcs implements IVcs
 		this.name = name;
 		this.directory = directory;
 		this.executable = executable;
-
-		cli = new Cli();
 	}
 
 
@@ -160,7 +156,7 @@ class Vcs implements IVcs
 		available =
 		executable != null && try
 		{
-			cli.command(executable, []).code == 0;
+			Cli.command(executable, []).code == 0;
 		}
 		catch(e:Dynamic) false;
 		availabilityChecked = true;
@@ -216,7 +212,7 @@ class Git extends Vcs
 		executable != null && try
 		{
 			// with `help` cmd because without any cmd `git` can return exit-code = 1.
-			cli.command(executable, ["help"]).code == 0;
+			Cli.command(executable, ["help"]).code == 0;
 		}
 		catch(e:Dynamic) false;
 		availabilityChecked = true;
@@ -262,13 +258,13 @@ class Git extends Vcs
 
 		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
 		{
-			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")
+			switch Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")
 			{
 				case Yes:
 					Sys.command(executable, ["reset", "--hard"]);
 				case No:
 					doPull = false;
-					cli.print(name + " repo left untouched");
+					Cli.print(name + " repo left untouched");
 			}
 		}
 		if(doPull)
@@ -278,7 +274,7 @@ class Git extends Vcs
 			if(code != 0)
 			{
 				// get parent-branch:
-				var branch = cli.command(executable, ["show-branch"]).out;
+				var branch = Cli.command(executable, ["show-branch"]).out;
 				var regx = ~/\[([^]]*)\]/;
 				if(regx.match(branch))
 					branch = regx.matched(1);
@@ -305,25 +301,25 @@ class Git extends Vcs
 		}
 
 
-		var cwd = cli.cwd;
-		cli.cwd = libPath;
+		var cwd = Cli.cwd;
+		Cli.cwd = libPath;
 
 		if(branch != null)
 		{
-			var ret = cli.command(executable, ["checkout", branch]);
+			var ret = Cli.command(executable, ["checkout", branch]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		if(version != null)
 		{
-			var ret = cli.command(executable, ["checkout", "tags/" + version]);
+			var ret = Cli.command(executable, ["checkout", "tags/" + version]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
 
 		// return prev. cwd:
-		cli.cwd = cwd;
+		Cli.cwd = cwd;
 	}
 }
 
@@ -361,10 +357,10 @@ class Mercurial extends Vcs
 	override public function update(libName:String, ?settings:Settings):Bool
 	{
 		var changed = false;
-		cli.command(executable, ["pull"]);
-		var summary = cli.command(executable, ["summary"]).out;
-		var diff = cli.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
-		var status = cli.command(executable, ["status"]);
+		Cli.command(executable, ["pull"]);
+		var summary = Cli.command(executable, ["summary"]).out;
+		var diff = Cli.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var status = Cli.command(executable, ["status"]);
 
 		// get new pulled changesets:
 		// (and search num of sets)
@@ -374,19 +370,19 @@ class Mercurial extends Vcs
 		changed = ~/(\d)/.match(summary);
 		if(changed)
 			// print new pulled changesets:
-			cli.print(summary);
+			Cli.print(summary);
 
 
 		if(diff.code + status.code + diff.out.length + status.out.length != 0)
 		{
-			cli.print(diff.out);
-			switch cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
+			Cli.print(diff.out);
+			switch Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")
 			{
 				case Yes:
 					Sys.command(executable, ["update", "--clean"]);
 				case No:
 					changed = false;
-					cli.print(name + " repo left untouched");
+					Cli.print(name + " repo left untouched");
 			}
 		}
 		else if(changed)

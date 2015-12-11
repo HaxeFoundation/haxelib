@@ -34,16 +34,12 @@ enum CliError {
 }
 
 class Cli {
-    public var defaultAnswer(get, set):Answer;
-    static var defaultAnswer_global:Answer;
+    public static var defaultAnswer:Answer;
 
-    public var cwd(get, set):String;
+    public static var cwd(get, set):String;
     static var cwd_cache:String;
 
-    public function new() {}
-
-    function get_cwd():String {
-        var result:String = null;
+    static function get_cwd():String {
         try {
             cwd_cache = Sys.getCwd();
         } catch (error:String) {
@@ -52,7 +48,7 @@ class Cli {
         return cwd_cache;
     }
 
-    function set_cwd(value:String):String {
+    static function set_cwd(value:String):String {
         //TODO: For call `FileSystem.isDirectory(value)` we can get an exeption "std@sys_file_type":
         if (value != null && cwd_cache != value && FileSystem.exists(value) && FileSystem.isDirectory(value))
             Sys.setCwd(cwd_cache = value);
@@ -61,7 +57,7 @@ class Cli {
         return cwd_cache;
     }
 
-    function tryFixGetCwdError(error:String) {
+    static function tryFixGetCwdError(error:String) {
         switch(error) {
             case "std@get_cwd" | "std@file_path" | "std@file_full_path":
                 var pwd = Sys.getEnv("PWD");
@@ -84,10 +80,7 @@ class Cli {
     }
 
 
-    function get_defaultAnswer():Answer return defaultAnswer_global;
-    function set_defaultAnswer(value:Answer):Answer return defaultAnswer_global = value;
-
-    public function ask(question):Answer {
+    public static function ask(question):Answer {
         if (defaultAnswer != null)
             return defaultAnswer;
 
@@ -107,7 +100,7 @@ class Cli {
         return null;
     }
 
-    public function command(cmd:String, args:Array<String>) {
+    public static function command(cmd:String, args:Array<String>) {
         var p = new sys.io.Process(cmd, args);
         var code = p.exitCode();
         return {
@@ -116,7 +109,7 @@ class Cli {
         };
     }
 
-    public function print(str):Void {
+    public static function print(str):Void {
         Sys.println(str);
     }
 }
