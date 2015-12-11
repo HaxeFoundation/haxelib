@@ -470,7 +470,7 @@ class Main {
 			do {
 				print("Which of these users are you: " + infos.contributors);
 				user = param("User");
-			} while ( !Lambda.has(infos.contributors, user) );
+			} while ( infos.contributors.indexOf(user) == -1 );
 
 		var password;
 		if( site.isNewUser(user) ) {
@@ -643,7 +643,8 @@ class Main {
 
 	function installMany( libs:Iterable<{name:String,version:String}>, ?setCurrent=true )
 	{
-		if (Lambda.count(libs) == 0) return;
+		if (libs.empty())
+			return;
 
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
