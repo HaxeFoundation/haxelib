@@ -14,5 +14,6 @@ sudo: false
 script:
   - haxe haxelib.hxml
   - haxe legacyhaxelib.hxml
+  - haxelib install hx2compat
   - haxe legacysite.hxml
   - ./test.sh
