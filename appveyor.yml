@@ -3,6 +3,7 @@ version: "{build}"
 install:
     - cinst haxe -y
     - RefreshEnv
+    - haxelib setup haxelib_repo
 
 build_script:
     - haxe haxelib.hxml
