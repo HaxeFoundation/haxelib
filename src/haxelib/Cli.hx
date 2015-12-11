@@ -100,15 +100,6 @@ class Cli {
         return null;
     }
 
-    public static function command(cmd:String, args:Array<String>) {
-        var p = new sys.io.Process(cmd, args);
-        var code = p.exitCode();
-        return {
-            code: code,
-            out: (code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString())
-        };
-    }
-
     public static function print(str):Void {
         Sys.println(str);
     }

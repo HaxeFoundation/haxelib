@@ -1410,9 +1410,6 @@ class Main {
 			}
 	}
 
-	inline function command(cmd:String, args:Array<String>)
-		return Cli.command(cmd, args);
-
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");

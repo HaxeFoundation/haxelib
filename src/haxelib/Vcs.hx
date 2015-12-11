@@ -143,6 +143,14 @@ class Vcs implements IVcs
 		return null;
 	}
 
+    static function command(cmd:String, args:Array<String>) {
+        var p = new sys.io.Process(cmd, args);
+        var code = p.exitCode();
+        return {
+            code: code,
+            out: (code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString())
+        };
+    }
 
 	//--------------- initialize ----------------//
 
@@ -156,7 +164,7 @@ class Vcs implements IVcs
 		available =
 		executable != null && try
 		{
-			Cli.command(executable, []).code == 0;
+			Vcs.command(executable, []).code == 0;
 		}
 		catch(e:Dynamic) false;
 		availabilityChecked = true;
@@ -212,7 +220,7 @@ class Git extends Vcs
 		executable != null && try
 		{
 			// with `help` cmd because without any cmd `git` can return exit-code = 1.
-			Cli.command(executable, ["help"]).code == 0;
+			Vcs.command(executable, ["help"]).code == 0;
 		}
 		catch(e:Dynamic) false;
 		availabilityChecked = true;
@@ -274,7 +282,7 @@ class Git extends Vcs
 			if(code != 0)
 			{
 				// get parent-branch:
-				var branch = Cli.command(executable, ["show-branch"]).out;
+				var branch = Vcs.command(executable, ["show-branch"]).out;
 				var regx = ~/\[([^]]*)\]/;
 				if(regx.match(branch))
 					branch = regx.matched(1);
@@ -306,14 +314,14 @@ class Git extends Vcs
 
 		if(branch != null)
 		{
-			var ret = Cli.command(executable, ["checkout", branch]);
+			var ret = Vcs.command(executable, ["checkout", branch]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		if(version != null)
 		{
-			var ret = Cli.command(executable, ["checkout", "tags/" + version]);
+			var ret = Vcs.command(executable, ["checkout", "tags/" + version]);
 			if(ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
@@ -357,10 +365,10 @@ class Mercurial extends Vcs
 	override public function update(libName:String, ?settings:Settings):Bool
 	{
 		var changed = false;
-		Cli.command(executable, ["pull"]);
-		var summary = Cli.command(executable, ["summary"]).out;
-		var diff = Cli.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
-		var status = Cli.command(executable, ["status"]);
+		Vcs.command(executable, ["pull"]);
+		var summary = Vcs.command(executable, ["summary"]).out;
+		var diff = Vcs.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var status = Vcs.command(executable, ["status"]);
 
 		// get new pulled changesets:
 		// (and search num of sets)
