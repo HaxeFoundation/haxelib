@@ -1,45 +1,16 @@
 package tests;
 
 import haxelib.Cli;
-import haxe.unit.TestCase;
 
-class TestCli extends TestCase
-{
-	//----------- properties, fields ------------//
-
-	var cli:Cli;
-
-	//--------------- constructor ---------------//
-	public function new()
-	{
-		super();
-	}
-
-
-	//--------------- initialize ----------------//
-
-	override public function setup():Void
-	{
-		cli = new Cli();
-	}
-
-	//----------------- tests -------------------//
-
-	public function testSetWrongCwd():Void
-	{
+class TestCli extends haxe.unit.TestCase {
+	public function testSetWrongCwd() {
 		var cwd = Sys.getCwd();
-
-		try
-		{
-			cli.cwd = "/this/path/dos/not/exists";
+		try {
+			Cli.cwd = "/this/path/dos/not/exists";
 			assertTrue(false);
-		}
-		catch(error:CliError)
+		} catch (error:CliError) {
 			assertTrue(true);
-
+		}
 		assertEquals(cwd, Sys.getCwd());
 	}
-
-
-	//----------------- tools -------------------//
 }

@@ -186,7 +186,7 @@ class TestVcs extends TestCase
 		File.saveContent("file", "new file \"file\" with content");
 
 		//Hack: set the default answer:
-		new Cli().defaultAnswer = Answer.Yes;
+		Cli.defaultAnswer = true;
 
 		// update to HEAD:
 		// in this case `libName` can get any value:
@@ -216,7 +216,7 @@ class TestVcs extends TestCase
 		File.saveContent("file", "new file \"file\" with content");
 
 		//Hack: set the default answer:
-		new Cli().defaultAnswer = Answer.No;
+		Cli.defaultAnswer = false;
 
 		// update to HEAD:
 		// in this case `libName` can get any value:
