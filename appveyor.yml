@@ -2,12 +2,13 @@ version: "{build}"
 
 install:
     - cinst haxe -y
+    - RefreshEnv
 
 build_script:
     - haxe haxelib.hxml
     - haxe legacyhaxelib.hxml
-    # - haxelib install hx2compat
-    # - haxe legacysite.hxml
+    - haxelib install hx2compat
+    - haxe legacysite.hxml
     - haxe test.hxml
 
 test_script:
