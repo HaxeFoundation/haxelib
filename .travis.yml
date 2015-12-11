@@ -12,4 +12,7 @@ os:
 sudo: false
 
 script:
+  - haxe haxelib.hxml
+  - haxe legacyhaxelib.hxml
+  - haxe legacysite.hxml
   - ./test.sh

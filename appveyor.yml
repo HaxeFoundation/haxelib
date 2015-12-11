@@ -4,6 +4,9 @@ install:
     - cinst haxe -y
 
 build_script:
+    - haxe haxelib.hxml
+    - haxe legacyhaxelib.hxml
+    - haxe legacysite.hxml
     - haxe test.hxml
 
 test_script:
