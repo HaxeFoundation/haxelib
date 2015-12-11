@@ -176,7 +176,6 @@ abstract ProjectName(String) to String {
 class Data {
 
 	public static var JSON = "haxelib.json";
-	public static var XML = "haxelib.xml";
 	public static var DOCXML = "haxedoc.xml";
 	public static var REPOSITORY = "files/3.0";
 	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
