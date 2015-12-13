@@ -33,6 +33,7 @@ import haxe.ds.Option;
 import haxelib.Vcs;
 import haxelib.FsUtils.safeDir;
 import haxelib.FsUtils.deleteRec;
+import haxelib.FsUtils.realPath;
 import haxelib.Cli.ask;
 
 using StringTools;
@@ -1027,19 +1028,7 @@ class Main {
 		return state.updated;
 	}
 
-	//recursively follow symlink
-	static function realPath(path:String):String {
-		return switch (new Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]).stdout.readAll().toString()) {
-			case "": //it is not a symlink
-				path;
-			case targetPath:
-				if (targetPath.startsWith("/")) {
-					realPath(targetPath);
-				} else {
-					realPath(new Path(path).dir + "/" + targetPath);
-				}
-		}
-	}
+
 
 	function rebuildSelf() {
 		var haxepath =

@@ -23,9 +23,25 @@ package haxelib;
 
 import haxe.io.Path;
 import sys.FileSystem;
+using StringTools;
 
 class FsUtils {
     static var IS_WINDOWS = (Sys.systemName() == "Windows");
+
+    //recursively follow symlink
+    public static function realPath(path:String):String {
+        var proc = new sys.io.Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]);
+        return switch (proc.stdout.readAll().toString()) {
+            case "": //it is not a symlink
+                path;
+            case targetPath:
+                if (targetPath.startsWith("/")) {
+                    realPath(targetPath);
+                } else {
+                    realPath(new Path(path).dir + "/" + targetPath);
+                }
+        }
+    }
 
     public static function safeDir(dir:String):Void {
         if (FileSystem.exists(dir)) {
