@@ -1148,8 +1148,8 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
-		var pdir = getRepository() + Data.safe(prj);
+	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
+		var pdir = rep + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
 		var version = if( version != null ) version else getCurrent(pdir);
@@ -1169,16 +1169,16 @@ class Main {
 		l.add({ project : prj, version : version, info: inf });
 		for( d in inf.dependencies )
 			if( !Lambda.exists(l, function(e) return e.project == d.name) )
-				checkRec(d.name,if( d.version == "" ) null else d.version,l);
+				checkRec(rep,d.name,if( d.version == "" ) null else d.version,l);
 	}
 
 	function path() {
+		var rep = getRepository();
 		var list = new List();
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
-			checkRec(a[0],a[1],list);
+			checkRec(rep, a[0],a[1],list);
 		}
-		var rep = getRepository();
 		for( d in list ) {
 			var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
 			var dir = rep + pdir;
