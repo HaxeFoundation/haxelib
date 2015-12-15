@@ -53,23 +53,20 @@ A solution that combines the strengths of both approaches is in the making. Stay
 
 ### Running the website for development
 
-(Work in progress instructions)
-
 ```
 # Initial checkout
 git clone https://github.com/HaxeFoundation/haxelib
 
+# Change to the checkout directory
+cd haxelib
+
 # Install all the libs
 haxelib install newsite.hxml
-haxelib git ufront-mvc https://github.com/ufront/ufront-mvc.git
 
 # Create directories
-mkdir www
-mkdir www/legacy
-mkdir www/api/
-mkdir www/api/3.0
-mkdir www/files/
-mkdir www/files/3.0
+mkdir -p www/legacy
+mkdir -p www/api/3.0
+mkdir -p www/files/3.0
 
 # TODO: copy assets
 
