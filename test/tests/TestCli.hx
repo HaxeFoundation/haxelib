@@ -1,6 +1,6 @@
 package tests;
 
-import haxelib.Cli;
+import haxelib.client.Cli;
 
 class TestCli extends haxe.unit.TestCase {
 	public function testSetWrongCwd() {

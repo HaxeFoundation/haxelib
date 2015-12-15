@@ -38,11 +38,15 @@ class Package {
 
         for (file in [
             "Data.hx",
-            "Main.hx",
-            "Rebuild.hx",
+            "Validator.hx",
             "SemVer.hx",
             "SiteApi.hx",
-            "ConvertXml.hx"
+            "client/Cli.hx",
+            "client/Main.hx",
+            "client/FsUtils.hx",
+            "client/Rebuild.hx",
+            "client/ConvertXml.hx",
+            "client/Vcs.hx",
         ])
             add('src/haxelib/$file', 'src/haxelib/$file');
 

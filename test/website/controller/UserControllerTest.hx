@@ -1,7 +1,7 @@
 package website.controller;
 
 import haxe.crypto.Md5;
-import haxelib.SiteDb;
+import haxelib.server.SiteDb;
 import website.controller.*;
 import website.api.UserApi;
 import ufront.web.result.*;

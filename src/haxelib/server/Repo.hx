@@ -19,13 +19,15 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib;
+package haxelib.server;
+
 import haxe.io.Bytes;
-import haxelib.Data;
-import haxelib.Paths.*;
-import haxelib.SiteDb;
 import neko.Web;
+
+import haxelib.Data;
 import haxelib.SemVer;
+import haxelib.server.Paths.*;
+import haxelib.server.SiteDb;
 
 class Repo implements SiteApi {
 

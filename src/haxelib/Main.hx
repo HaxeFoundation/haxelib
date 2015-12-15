@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib;
+package haxelib.client;
 
 import haxe.crypto.Md5;
 import haxe.*;
@@ -30,11 +30,11 @@ import sys.io.File;
 import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
-import haxelib.Vcs;
-import haxelib.FsUtils.safeDir;
-import haxelib.FsUtils.deleteRec;
-import haxelib.FsUtils.realPath;
-import haxelib.Cli.ask;
+import haxelib.client.Cli.ask;
+import haxelib.client.FsUtils.safeDir;
+import haxelib.client.FsUtils.deleteRec;
+import haxelib.client.FsUtils.realPath;
+import haxelib.client.Vcs;
 
 using StringTools;
 using Lambda;
@@ -1053,7 +1053,7 @@ class Main {
 					haxepath = Path.addTrailingSlash(haxepath);
 
 				if (IS_WINDOWS) {
-					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'haxelib.Rebuild']);
+					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'haxelib.client.Rebuild']);
 					print('rebuild launched');
 				}
 				else {

@@ -2,9 +2,10 @@ package tests;
 
 import sys.io.File;
 import sys.FileSystem;
-import haxelib.Vcs;
 import haxe.unit.TestCase;
-import haxelib.Cli;
+
+import haxelib.client.Cli;
+import haxelib.client.Vcs;
 
 class TestVcs extends TestCase
 {

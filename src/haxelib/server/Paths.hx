@@ -19,10 +19,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib;
+package haxelib.server;
 
 class Paths {
-	static var RELATIVE_ROOT = 
+	static var RELATIVE_ROOT =
 		#if haxelib_api
 			'../../';
 		#else
@@ -32,8 +32,8 @@ class Paths {
 	static public var CWD = neko.Web.getCwd() + RELATIVE_ROOT;
 	static public var DB_CONFIG = CWD + "dbconfig.json";
 	static public var DB_FILE = CWD + "haxelib.db";
-	
+
 	static public var TMP_DIR = CWD + "tmp";
 	static public var REP_DIR = CWD + Data.REPOSITORY;
-	
+
 }

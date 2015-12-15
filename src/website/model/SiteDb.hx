@@ -1,7 +1,7 @@
 package website.model;
 
-typedef Developer = haxelib.SiteDb.Developer;
-typedef Project = haxelib.SiteDb.Project;
-typedef Tag = haxelib.SiteDb.Tag;
-typedef User = haxelib.SiteDb.User;
-typedef Version = haxelib.SiteDb.Version;
+typedef Developer = haxelib.server.SiteDb.Developer;
+typedef Project = haxelib.server.SiteDb.Project;
+typedef Tag = haxelib.server.SiteDb.Tag;
+typedef User = haxelib.server.SiteDb.User;
+typedef Version = haxelib.server.SiteDb.Version;

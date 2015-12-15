@@ -15,8 +15,8 @@ haxe newsite.hxml
 
 # Copy various assets
 
-cp src/haxelib/.htaccess www/
-cp src/haxelib/dbconfig.json.example www/
+cp src/haxelib/server/.htaccess www/
+cp src/haxelib/server/dbconfig.json.example www/
 
 cp src/legacyhaxelib/.htaccess www/legacy/
 cp src/legacyhaxelib/website.mtt www/legacy/
@@ -31,7 +31,7 @@ then
     cd ../..
 fi
 
-# Make sure the server folders are writeable.  
+# Make sure the server folders are writeable.
 
 chmod a+w www
 chmod a+w www/tmp

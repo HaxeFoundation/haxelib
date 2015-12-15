@@ -1,9 +1,9 @@
 package tests;
 
 import sys.FileSystem;
-import haxelib.Vcs;
 import haxe.unit.TestCase;
 
+import haxelib.client.Vcs;
 
 class TestVcsNotFound extends TestCase
 {

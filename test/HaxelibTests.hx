@@ -1,4 +1,4 @@
-import haxelib.Vcs.VcsID;
+import haxelib.client.Vcs.VcsID;
 import haxe.unit.TestRunner;
 import sys.*;
 import sys.io.*;

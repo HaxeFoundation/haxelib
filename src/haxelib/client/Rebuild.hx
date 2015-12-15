@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib;
+package haxelib.client;
 
 import sys.FileSystem;
 import sys.io.Process;
@@ -28,10 +28,10 @@ class Rebuild {
 	static function run(cmd:String, ?msg:String = '', ?args:Array<String>) {
 		if (args == null) args = [];
 		var p = new Process(cmd, args);
-		if (p.exitCode() != 0) 
+		if (p.exitCode() != 0)
 			throw 'Error $msg:' + p.stderr.readAll().toString();
 	}
-	static function main() 
+	static function main()
 		try {
 			Sys.sleep(.5);//wait for calling haxelib to exit
 			switch Sys.systemName() {
@@ -40,20 +40,20 @@ class Rebuild {
 			}
 			var haxepath = Sys.getEnv("HAXEPATH");
 			var file = '$haxepath/haxelib.n';
-			
+
 			run('haxe', 'rebuilding haxelib', [
-				'-neko', file, 
-				'-lib', 'haxelib_client', 
-				'-main', 'haxelib.Main', 
+				'-neko', file,
+				'-lib', 'haxelib_client',
+				'-main', 'haxelib.Main',
 			]);
 			run('nekotools', 'booting haxe', ['boot', file]);
 			FileSystem.deleteFile(file);
 			var oldMode = FileSystem.exists('update.hxml');
 			if (oldMode)
 				FileSystem.deleteFile('update.hxml');
-				
+
 			Sys.println('Update successful.');
-			
+
 			if (!oldMode) {
 				Sys.println('Rebuild will exit in 5 seconds.');
 				Sys.sleep(5.0);

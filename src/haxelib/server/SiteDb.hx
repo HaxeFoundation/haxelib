@@ -19,11 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib;
+package haxelib.server;
 
 import sys.db.*;
 import sys.db.Types;
-import haxelib.Paths.*;
+import haxelib.server.Paths.*;
 
 class User extends Object {
 
