@@ -43,6 +43,16 @@ class FsUtils {
         }
     }
 
+    public static function isSamePath(a:String, b:String):Bool {
+        a = Path.normalize(a);
+        b = Path.normalize(b);
+        if (IS_WINDOWS) { // paths are case-insensitive on Windows
+            a = a.toLowerCase();
+            b = b.toLowerCase();
+        }
+        return a == b;
+    }
+
     public static function safeDir(dir:String):Void {
         if (FileSystem.exists(dir)) {
             if (!FileSystem.isDirectory(dir))

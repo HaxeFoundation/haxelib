@@ -31,9 +31,7 @@ import sys.FileSystem;
 import sys.io.*;
 import haxe.ds.Option;
 import haxelib.client.Cli.ask;
-import haxelib.client.FsUtils.safeDir;
-import haxelib.client.FsUtils.deleteRec;
-import haxelib.client.FsUtils.realPath;
+import haxelib.client.FsUtils.*;
 import haxelib.client.Vcs;
 
 using StringTools;
@@ -885,15 +883,12 @@ class Main {
 		if (line != "")
 			rep = line;
 
-		if (!FileSystem.exists(rep)) {
-			try {
-				FileSystem.createDirectory(rep);
-			} catch (e:Dynamic) {
-				print("Failed to create directory '" + rep + "' (" + Std.string(e) + "), maybe you need appropriate user rights");
-				Sys.exit(1);
-			}
-		}
 		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
+
+		if (isSamePath(rep, configFile))
+			throw "Can't use "+rep+" because it is reserved for config file";
+
+		safeDir(rep);
 		File.saveContent(configFile, rep);
 
 		print("haxelib repository is now " + rep);
