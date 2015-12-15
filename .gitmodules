@@ -1,7 +1,3 @@
-[submodule "submodules/minject"]
-	path = submodules/minject
-	url = https://github.com/jasononeil/minject.git
-	branch = v2_type_params
 [submodule "submodules/ufront"]
 	path = submodules/ufront
 	url = https://github.com/ufront/ufront.git
