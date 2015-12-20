@@ -1223,11 +1223,11 @@ class Main {
 			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
 				dir = dir.substr(0,-1);
 			}
-			dir = FileSystem.fullPath(dir);
 			if (!FileSystem.exists(dir))
 				print('Directory $dir does not exist');
 			else
 				try {
+					dir = FileSystem.fullPath(dir);
 					File.saveContent(devfile, dir);
 					print("Development directory set to "+dir);
 				}
