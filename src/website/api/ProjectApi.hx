@@ -146,7 +146,8 @@ class ProjectApi extends UFApi {
 		Get the path to the zip file (relative to the script directory).
 	**/
 	public function getZipFilePath( project:String, version:String ):String {
-		var version = version.replace(".",",");
+		var project = Data.safe(project);
+		var version = Data.safe(version);
 		#if deploy
 			// On the haxe.org server, we want to access the repo from the old website.
 			// When we change the websites over we should probably move these over too.
