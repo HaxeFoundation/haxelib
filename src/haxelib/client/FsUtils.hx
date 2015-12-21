@@ -53,15 +53,25 @@ class FsUtils {
         return a == b;
     }
 
-    public static function safeDir(dir:String):Void {
+    public static function safeDir(dir:String, checkWritable = false):Void {
         if (FileSystem.exists(dir)) {
             if (!FileSystem.isDirectory(dir))
                 throw 'A file is preventing $dir to be created';
-        }
-        try {
-            FileSystem.createDirectory(dir);
-        } catch( e : Dynamic ) {
-            throw 'You don\'t have enough user rights to create the directory $dir';
+            if (checkWritable) {
+                var checkFile = dir+"/haxelib_writecheck.txt";
+                try {
+                    sys.io.File.saveContent(checkFile, "This is a temporary file created by Haxelib to check if directory is writable. You can safely delete it!");
+                } catch (_:Dynamic) {
+                    throw '$dir exists but is not writeable, chmod it';
+                }
+                FileSystem.deleteFile(checkFile);
+            }
+        } else {
+            try {
+                FileSystem.createDirectory(dir);
+            } catch (_:Dynamic) {
+                throw 'You don\'t have enough user rights to create the directory $dir';
+            }
         }
     }
 

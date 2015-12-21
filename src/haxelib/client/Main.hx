@@ -1446,40 +1446,11 @@ class Main {
 	}
 
 	function newRepo() {
-		if( FileSystem.exists(REPODIR) ) {
-			if( !FileSystem.isDirectory(REPODIR) ) {
-				print('$REPODIR exists already but is not a directory, delete it first');
-				Sys.exit(1);
-			}
-			try {
-				sys.io.File.saveContent(REPODIR+"/checkWrite.txt","CHECK WRITE");
-			} catch( e : Dynamic ) {
-				print('$REPODIR exists but is not writeable, chmod it');
-				Sys.exit(2);
-			}
-			FileSystem.deleteFile(REPODIR+"/checkWrite.txt");
-		} else {
-			try {
-				FileSystem.createDirectory(REPODIR);
-			} catch( e : Dynamic ) {
-				print('Failed to create ./$REPODIR');
-				Sys.exit(3);
-			}
-		}
+		FsUtils.safeDir(REPODIR, true);
 	}
 
 	function deleteRepo() {
-		if( !FileSystem.exists(REPODIR) )
-			return;
-		function deleteRec(path) {
-			if( FileSystem.isDirectory(path) ) {
-				for( f in FileSystem.readDirectory(path) )
-					deleteRec(Path.join([path, f]));
-				FileSystem.deleteDirectory(path);
-			} else
-				FileSystem.deleteFile(path);
-		}
-		deleteRec(REPODIR);
+		FsUtils.deleteRec(REPODIR);
 	}
 
 	// ----------------------------------
