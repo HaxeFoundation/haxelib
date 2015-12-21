@@ -186,11 +186,11 @@ class Repository {
 				path += "/";
 			}
 			if( file == "" ) {
-				if( path != "" ) print("  Created "+path);
+				if( path != "" ) print("Created "+path);
 				continue; // was just a directory
 			}
 			path += file;
-			print("  Install "+path);
+			print("Install "+path);
 			var data = haxe.zip.Reader.unzip(zipfile);
 			File.saveBytes(target+path,data);
 		}

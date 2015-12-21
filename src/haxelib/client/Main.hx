@@ -704,7 +704,7 @@ class Main {
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
 		// install the library to repository
-		var infos = repo.installLibrary(filepath, print);
+		var infos = repo.installLibrary(filepath, function(s) print('  $s'));
 
 		var lib = repo.getLibrary(infos.name);
 
