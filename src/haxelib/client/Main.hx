@@ -640,7 +640,7 @@ class Main {
 		}
 	}
 
-	function installMany( libs:Iterable<{name:String,version:String}>, ?setCurrent=true )
+	function installMany( libs:Iterable<{name:String,version:String}> )
 	{
 		if (libs.empty())
 			return;
@@ -667,7 +667,7 @@ class Main {
 		{
 			for (l in libs)
 			{
-				doInstall(l.name, l.version, setCurrent);
+				doInstall(l.name, l.version, true);
 			}
 		}
 	}
