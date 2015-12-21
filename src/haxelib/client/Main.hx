@@ -853,6 +853,13 @@ class Main {
 			'/usr/lib/haxe/$REPNAME'; // for other unixes
 	}
 
+	var repo(get,null):Repository;
+	inline function get_repo() {
+		if (repo == null)
+			repo = new Repository(getRepository());
+		return repo;
+	}
+
 	function getRepository():String {
 		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
 			var absolutePath = Path.join([Cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
@@ -907,25 +914,18 @@ class Main {
 	}
 
 	function list() {
-		var rep = getRepository();
-		var folders = FileSystem.readDirectory(rep);
-		var filter = paramOpt();
-		if ( filter != null )
-			folders = folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
+		var libs = repo.getInstalledLibraries(paramOpt());
 		var all = [];
-		for( p in folders ) {
-			if( p.charAt(0) == "." )
+		for( lib in libs ) {
+			var current = lib.getCurrentVersion();
+			var dev = lib.getDevPath();
+			if (current == null && dev == null)
 				continue;
-
-			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
-			var dev = try getDev(rep + p) catch( e : Dynamic ) null;
 
 			var semvers = [];
 			var others = [];
-			for( v in FileSystem.readDirectory(rep+p) ) {
-				if( v.charAt(0) == "." )
-					continue;
-				v = Data.unsafe(v);
+
+			for (v in lib.getInstalledVersions()) {
 				var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
 				if (semver != null)
 					semvers.push(semver);
@@ -952,12 +952,11 @@ class Main {
 				versions.push("[dev:"+dev+"]");
 			}
 
-			all.push(Data.unsafe(p) + ": "+versions.join(" "));
+			all.push(lib.name + ": "+versions.join(" "));
 		}
 		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
-		for (p in all) {
+		for (p in all)
 			print(p);
-		}
 	}
 
 	function update() {
@@ -1099,25 +1098,14 @@ class Main {
 	function remove() {
 		var prj = param("Library");
 		var version = paramOpt();
-		var rep = getRepository();
-		var pdir = rep + Data.safe(prj);
+		var lib = repo.getLibrary(prj);
 		if( version == null ) {
-			if( !FileSystem.exists(pdir) )
-				throw "Library "+prj+" is not installed";
-			deleteRec(pdir);
+			lib.remove();
 			print("Library "+prj+" removed");
-			return;
+		} else {
+			lib.removeVersion(version);
+			print("Library "+prj+" version "+version+" removed");
 		}
-
-		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) )
-			throw "Library "+prj+" does not have version "+version+" installed";
-
-		var cur = getCurrent(pdir);
-		if( cur == version )
-			throw "Can't remove current version of library "+prj;
-		deleteRec(vdir);
-		print("Library "+prj+" version "+version+" removed");
 	}
 
 	function set() {
@@ -1127,19 +1115,18 @@ class Main {
 	}
 
 	function setCurrent( prj : String, version : String, doAsk : Bool ) {
-		var pdir = getRepository() + Data.safe(prj);
-		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) ){
+		var lib = repo.getLibrary(prj);
+		if (!lib.isVersionInstalled(version)) {
 			print("Library "+prj+" version "+version+" is not installed");
 			if(ask("Would you like to install it?"))
 				doInstall(prj, version, true);
 			return;
 		}
-		if( getCurrent(pdir) == version )
+		if (lib.getCurrentVersion() == version)
 			return;
 		if( doAsk && !ask("Set "+prj+" to version "+version) )
 			return;
-		File.saveContent(pdir+"/.current",version);
+		lib.setCurrentVersion(version);
 		print("Library "+prj+" current version is now "+version);
 	}
 
@@ -1198,36 +1185,16 @@ class Main {
 	}
 
 	function dev() {
-		var rep = getRepository();
 		var project = param("Library");
 		var dir = paramOpt();
-		var proj = rep + Data.safe(project);
-		if( !FileSystem.exists(proj) ) {
-			FileSystem.createDirectory(proj);
-		}
-		var devfile = proj+"/.dev";
-		if( dir == null ) {
-			if( FileSystem.exists(devfile) )
-				FileSystem.deleteFile(devfile);
-			print("Development directory disabled");
-		}
-		else {
-			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
-				dir = dir.substr(0,-1);
-			}
-			if (!FileSystem.exists(dir)) {
-				print('Directory $dir does not exist');
-			} else {
-				dir = FileSystem.fullPath(dir);
-				try {
-					File.saveContent(devfile, dir);
-					print("Development directory set to "+dir);
-				}
-				catch (e:Dynamic) {
-					print('Could not write to $devfile');
-				}
-			}
 
+		var lib = repo.getLibrary(project);
+		if (dir == null) {
+			lib.unsetDevPath();
+			print("Development directory disabled");
+		} else {
+			lib.setDevPath(dir);
+			print("Development directory set to "+lib.getDevPath());
 		}
 	}
 
