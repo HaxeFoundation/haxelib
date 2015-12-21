@@ -985,18 +985,18 @@ class Main {
 	}
 
 	function doUpdate( p : String, state ) {
-		var rep = state.rep;
+		var pdir = state.rep + Data.safe(p);
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
 
-		var vcs:Vcs = Vcs.getVcsForDevLib(rep + "/" + p);
+		var vcs:Vcs = Vcs.getVcsForDevLib(pdir);
 		if(vcs != null)
 		{
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable;
 
 			var oldCwd = Cli.cwd;
-			Cli.cwd = (rep + "/" + p + "/" + vcs.directory);
+			Cli.cwd = (pdir + "/" + vcs.directory);
 			var success = vcs.update(p, cast settings);
 
 			state.updated = success;
@@ -1006,7 +1006,7 @@ class Main {
 		{
 			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
 			p = inf.name;
-			if( !FileSystem.exists(rep+Data.safe(p)+"/"+Data.safe(inf.getLatest())) ) {
+			if( !FileSystem.exists(pdir+"/"+Data.safe(inf.getLatest())) ) {
 				if( state.prompt ) {
 					if (!ask("Update "+p+" to "+inf.getLatest()))
 						return;
