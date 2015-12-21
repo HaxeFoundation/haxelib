@@ -117,7 +117,7 @@ class Library {
 }
 
 class Repository {
-	var root:String;
+	public var root(default,null):String;
 	var libs:Map<String,Library>;
 
 	public function new(path:String) {

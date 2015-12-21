@@ -673,10 +673,10 @@ class Main {
 	}
 
 	function doInstall( project, version, setcurrent ) {
-		var rep = getRepository();
+		var lib = repo.getLibrary(project);
 
 		// check if exists already
-		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
+		if(lib.isVersionInstalled(version)) {
 			print("You already have "+project+" version "+version+" installed");
 			setCurrent(project,version,true);
 			return;
@@ -684,9 +684,8 @@ class Main {
 
 		// download to temporary file
 		var filename = Data.fileName(project,version);
-		var filepath = rep+filename;
-		var out = try File.write(filepath,true)
-			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+		var filepath = repo.root+filename;
+		var out = try File.write(filepath, true) catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
 
 		var progress = new Progress(out);
 		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
@@ -699,9 +698,8 @@ class Main {
 		h.customRequest(false,progress);
 
 		doInstallFile(filepath, setcurrent);
-		try {
-			site.postInstall(project, version);
-		} catch (e:Dynamic) {}
+
+		try site.postInstall(project, version) catch (e:Dynamic) {}
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
