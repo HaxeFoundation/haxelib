@@ -1223,17 +1223,18 @@ class Main {
 			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
 				dir = dir.substr(0,-1);
 			}
-			if (!FileSystem.exists(dir))
+			if (!FileSystem.exists(dir)) {
 				print('Directory $dir does not exist');
-			else
+			} else {
+				dir = FileSystem.fullPath(dir);
 				try {
-					dir = FileSystem.fullPath(dir);
 					File.saveContent(devfile, dir);
 					print("Development directory set to "+dir);
 				}
 				catch (e:Dynamic) {
 					print('Could not write to $devfile');
 				}
+			}
 
 		}
 	}
