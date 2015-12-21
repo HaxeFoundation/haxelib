@@ -36,7 +36,7 @@ class Library {
 	@:allow(haxelib.client.Repository)
 	function new(repo:String, name:String) {
 		this.name = name;
-		this.path = repo + name + "/";
+		this.path = repo + Data.safe(name) + "/";
 	}
 
 	public inline function isInstalled():Bool {
@@ -111,7 +111,7 @@ class Library {
 	}
 
 	inline function getVersionPath(version:String):String {
-		return path + Data.safe(version);
+		return path + Data.safe(version) + "/";
 	}
 
 }
