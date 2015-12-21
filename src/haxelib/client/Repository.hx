@@ -26,6 +26,9 @@ import sys.FileSystem;
 import sys.io.File;
 using StringTools;
 
+import haxelib.Data;
+
+@:allow(haxelib.client.Repository)
 class Library {
 	static inline var CURRENT_FILE = ".current";
 	static inline var DEV_FILE = ".dev";
@@ -33,7 +36,6 @@ class Library {
 	public var name(default,null):String;
 	var path:String;
 
-	@:allow(haxelib.client.Repository)
 	function new(repo:String, name:String) {
 		this.name = name;
 		this.path = repo + Data.safe(name) + "/";
@@ -143,5 +145,56 @@ class Repository {
 		if (lib == null)
 			lib = libs[name] = new Library(root, name);
 		return lib;
+	}
+
+	public function installLibrary(filePath:String, ?log:String->Void):Infos {
+		inline function print(s) if (log != null) log(s);
+
+		// read zip content
+		var f = File.read(filePath, true);
+		var zip = haxe.zip.Reader.readZip(f);
+		f.close();
+		var infos = Data.readInfos(zip, false);
+
+		// create directories
+		var lib = getLibrary(infos.name);
+		var target = lib.getVersionPath(infos.version);
+		FsUtils.safeDir(target);
+
+		// locate haxelib.json base path
+		var basepath = Data.locateBasePath(zip);
+
+		// unzip content
+		for( zipfile in zip ) {
+			var n = zipfile.fileName;
+			if( !n.startsWith(basepath) )
+				continue;
+
+			// remove basepath
+			n = n.substr(basepath.length,n.length-basepath.length);
+
+			// check for hacks
+			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
+				throw "Invalid filename : "+n;
+
+			var dirs = ~/[\/\\]/g.split(n);
+			var path = "";
+			var file = dirs.pop();
+			for( d in dirs ) {
+				path += d;
+				FsUtils.safeDir(target+path);
+				path += "/";
+			}
+			if( file == "" ) {
+				if( path != "" ) print("  Created "+path);
+				continue; // was just a directory
+			}
+			path += file;
+			print("  Install "+path);
+			var data = haxe.zip.Reader.unzip(zipfile);
+			File.saveBytes(target+path,data);
+		}
+
+		return infos;
 	}
 }

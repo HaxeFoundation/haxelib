@@ -703,52 +703,14 @@ class Main {
 	}
 
 	function doInstallFile(filepath,setcurrent,?nodelete) {
-		// read zip content
-		var f = File.read(filepath,true);
-		var zip = Reader.readZip(f);
-		f.close();
-		var infos = Data.readInfos(zip,false);
-		// create directories
-		var pdir = getRepository() + Data.safe(infos.name);
-		safeDir(pdir);
-		pdir += "/";
-		var target = pdir + Data.safe(infos.version);
-		safeDir(target);
-		target += "/";
+		// install the library to repository
+		var infos = repo.installLibrary(filepath, print);
 
-		// locate haxelib.json base path
-		var basepath = Data.locateBasePath(zip);
-
-		// unzip content
-		for( zipfile in zip ) {
-			var n = zipfile.fileName;
-			if( n.startsWith(basepath) ) {
-				// remove basepath
-				n = n.substr(basepath.length,n.length-basepath.length);
-				if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
-					throw "Invalid filename : "+n;
-				var dirs = ~/[\/\\]/g.split(n);
-				var path = "";
-				var file = dirs.pop();
-				for( d in dirs ) {
-					path += d;
-					safeDir(target+path);
-					path += "/";
-				}
-				if( file == "" ) {
-					if( path != "" ) print("  Created "+path);
-					continue; // was just a directory
-				}
-				path += file;
-				print("  Install "+path);
-				var data = Reader.unzip(zipfile);
-				File.saveBytes(target+path,data);
-			}
-		}
+		var lib = repo.getLibrary(infos.name);
 
 		// set current version
-		if( setcurrent || !FileSystem.exists(pdir+".current") ) {
-			File.saveContent(pdir + ".current", infos.version);
+		if( setcurrent || lib.getCurrentVersion() == null) {
+			lib.setCurrentVersion(infos.version);
 			print("  Current version is now "+infos.version);
 		}
 
