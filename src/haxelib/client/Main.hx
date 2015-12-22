@@ -1350,30 +1350,32 @@ class Main {
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
+		var infos =
+			try
+				Data.readData(File.getContent(vdir + '/haxelib.json'), false)
+			catch (e:Dynamic)
+				throw 'Error parsing haxelib.json for $project@$version: $e';
+
 		args.push(Cli.cwd);
 		Cli.cwd = vdir;
 
 		var callArgs =
-			switch try [Data.readData(File.getContent(vdir + '/haxelib.json'), false), null] catch (e:Dynamic) [null, e] {
-				case [null, e]:
-					throw 'Error parsing haxelib.json for $project@$version: $e';
-				case [{ main: null }, _]:
-					if( !FileSystem.exists('$vdir/run.n') )
-						throw 'Library $project version $version does not have a run script';
-					["neko", "run.n"];
-				case [{ main: cls, dependencies: _.toArray() => deps }, _]:
-					deps = switch deps { case null: []; default: deps.copy(); };
-					deps.push( { name: project, version: DependencyVersion.DEFAULT } );
-					var args = [];
-					for (d in deps) {
-						args.push('-lib');
-						args.push(d.name + if (d.version == '') '' else ':${d.version}');
-					}
-					args.unshift('haxe');
-					args.push('--run');
-					args.push(cls);
-					args;
-				default: throw 'assert';
+			if (infos.main == null) {
+				if( !FileSystem.exists('$vdir/run.n') )
+					throw 'Library $project version $version does not have a run script';
+				["neko", "run.n"];
+			} else {
+				var deps = infos.dependencies.toArray();
+				deps.push( { name: project, version: DependencyVersion.DEFAULT } );
+				var args = [];
+				for (d in deps) {
+					args.push('-lib');
+					args.push(d.name + if (d.version == '') '' else ':${d.version}');
+				}
+				args.unshift('haxe');
+				args.push('--run');
+				args.push(infos.main);
+				args;
 			}
 
 		for (i in argcur...args.length)
