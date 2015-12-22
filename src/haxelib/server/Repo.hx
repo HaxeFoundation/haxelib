@@ -97,10 +97,10 @@ class Repo implements SiteApi {
 	}
 
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Bool {
-		if( !Data.alphanum.match(name) )
-			throw "Invalid user name, please use alphanumeric characters";
 		if( name.length < 3 )
 			throw "User name must be at least 3 characters";
+		if( !Data.alphanum.match(name) )
+			throw "Invalid user name, please use alphanumeric characters";
 		var u = new User();
 		u.name = name;
 		u.pass = pass;
