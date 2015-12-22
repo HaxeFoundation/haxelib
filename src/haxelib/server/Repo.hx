@@ -101,6 +101,8 @@ class Repo implements SiteApi {
 			throw "User name must be at least 3 characters";
 		if( !Data.alphanum.match(name) )
 			throw "Invalid user name, please use alphanumeric characters";
+		if( User.manager.count($name == name) > 0 )
+			throw 'User name "$name" is already taken';
 		var u = new User();
 		u.name = name;
 		u.pass = pass;
