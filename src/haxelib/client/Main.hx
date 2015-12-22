@@ -1032,7 +1032,7 @@ class Main {
 
 		Cli.cwd = haxepath;
 		function tryBuild() {
-			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.Main', '--no-output']);
+			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.client.Main', '--no-output']);
 			return
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
@@ -1070,7 +1070,7 @@ class Main {
 							'#!/bin/sh'
 							+'\n'+'OLDCWD=`pwd`'
 							+'\n'+'cd $classPath'
-							+'\n'+'exec haxe '+args.join(' ')+" --run haxelib.Main -cwd $OLDCWD $@"
+							+'\n'+'exec haxe '+args.join(' ')+" --run haxelib.client.Main -cwd $OLDCWD $@"
 						)
 						catch (e:Dynamic)
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);

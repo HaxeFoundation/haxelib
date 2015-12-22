@@ -44,7 +44,7 @@ class Rebuild {
 			run('haxe', 'rebuilding haxelib', [
 				'-neko', file,
 				'-lib', 'haxelib_client',
-				'-main', 'haxelib.Main',
+				'-main', 'haxelib.client.Main',
 			]);
 			run('nekotools', 'booting haxe', ['boot', file]);
 			FileSystem.deleteFile(file);
