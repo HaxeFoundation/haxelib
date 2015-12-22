@@ -1143,7 +1143,7 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, info : Infos }> ) {
+	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }> ) {
 		var pdir = rep + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
@@ -1163,7 +1163,7 @@ class Main {
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		var inf = Data.readData(json,false);
-		l.add({ project : prj, version : version, info: inf });
+		l.add({ project : prj, version : version, dir : Path.addTrailingSlash(vdir), info: inf });
 		for( d in inf.dependencies )
 			if( !Lambda.exists(l, function(e) return e.project == d.name) )
 				checkRec(rep,d.name,if( d.version == "" ) null else d.version,l);
@@ -1177,27 +1177,22 @@ class Main {
 			checkRec(rep, a[0],a[1],list);
 		}
 		for( d in list ) {
-			var pdir = Data.safe(d.project)+"/"+Data.safe(d.version)+"/";
-			var dir = rep + pdir;
-			if (d.version == "dev")
-				try {
-					dir = getDev(rep+Data.safe(d.project));
-					dir = Path.addTrailingSlash(dir);
-					pdir = dir;
-				} catch( e : Dynamic ) {}
-			var ndir = dir + "ndll";
-			if( FileSystem.exists(ndir) ) {
-				Sys.println("-L "+pdir+"ndll/");
-			}
+			var ndir = d.dir + "ndll";
+			if (FileSystem.exists(ndir))
+				Sys.println('-L $ndir/');
+
 			try {
-				var f = File.getContent(dir + "extraParams.hxml");
+				var f = File.getContent(d.dir + "extraParams.hxml");
 				Sys.println(f.trim());
-			} catch( e : Dynamic ) {}
+			} catch(_:Dynamic) {}
+
+			var dir = d.dir;
 			if (d.info.classPath != "") {
 				var cp = d.info.classPath;
-				dir = Path.addTrailingSlash( dir + cp );
+				dir = Path.addTrailingSlash( d.dir + cp );
 			}
 			Sys.println(dir);
+
 			Sys.println("-D " + d.project + "="+d.info.version);
 		}
 	}
