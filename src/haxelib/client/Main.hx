@@ -550,7 +550,7 @@ class Main {
 			// *.zip provided, install zip as haxe library
 			if( prj.endsWith(".zip") )
 			{
-				doInstallFile(prj,true,true);
+				doLocalInstall(prj);
 				return;
 			}
 		}
@@ -1387,7 +1387,10 @@ class Main {
 	}
 
 	function local() {
-		var file = param("Package");
+		doLocalInstall(param("Package"));
+	}
+
+	function doLocalInstall(file:String) {
 		if (doInstallFile(file, true, true).name == 'haxelib_client')
 			if (ask('You have updated haxelib. Do you wish to rebuild it?')) {
 				rebuildSelf();
