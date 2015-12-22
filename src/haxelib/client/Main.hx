@@ -48,7 +48,7 @@ private enum CommandCategory {
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
-class Progress extends haxe.io.Output {
+class ProgressOut extends haxe.io.Output {
 
 	var o : haxe.io.Output;
 	var cur : Int;
@@ -61,7 +61,7 @@ class Progress extends haxe.io.Output {
 		start = Timer.stamp();
 	}
 
-	function bytes(n) {
+	function report(n) {
 		cur += n;
 		if( max == null )
 			Sys.print(cur+" bytes\r");
@@ -71,12 +71,12 @@ class Progress extends haxe.io.Output {
 
 	public override function writeByte(c) {
 		o.writeByte(c);
-		bytes(1);
+		report(1);
 	}
 
 	public override function writeBytes(s,p,l) {
 		var r = o.writeBytes(s,p,l);
-		bytes(r);
+		report(r);
 		return r;
 	}
 
@@ -110,17 +110,17 @@ class ProgressIn extends haxe.io.Input {
 
 	public override function readByte() {
 		var c = i.readByte();
-		doRead(1);
+		report(1);
 		return c;
 	}
 
 	public override function readBytes(buf,pos,len) {
 		var k = i.readBytes(buf,pos,len);
-		doRead(k);
+		report(k);
 		return k;
 	}
 
-	function doRead( nbytes : Int ) {
+	function report( nbytes : Int ) {
 		pos += nbytes;
 		Sys.print( Std.int((pos * 100.0) / tot) + "%\r" );
 	}
@@ -688,7 +688,7 @@ class Main {
 		var out = try File.write(filepath,true)
 			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
 
-		var progress = new Progress(out);
+		var progress = new ProgressOut(out);
 		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
 		h.onError = function(e) {
 			progress.close();
