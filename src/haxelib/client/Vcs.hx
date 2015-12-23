@@ -294,6 +294,8 @@ class Git extends Vcs
 
 	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void
 	{
+		var oldCwd = Sys.getCwd();
+
 		var vcsArgs = ["clone", url, libPath];
 
 		if(settings == null || !settings.flat)
@@ -307,8 +309,7 @@ class Git extends Vcs
 		}
 
 
-		var cwd = Cli.cwd;
-		Cli.cwd = libPath;
+		Sys.setCwd(libPath);
 
 		if(branch != null)
 		{
@@ -325,7 +326,7 @@ class Git extends Vcs
 		}
 
 		// return prev. cwd:
-		Cli.cwd = cwd;
+		Sys.setCwd(oldCwd);
 	}
 }
 

@@ -83,7 +83,6 @@ class HaxelibTests {
 		// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
 		r.add(new TestVcs(VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
 		r.add(new TestVcsNotFound());
-		r.add(new TestCli());
 
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);

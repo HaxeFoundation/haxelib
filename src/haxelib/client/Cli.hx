@@ -23,11 +23,6 @@ package haxelib.client;
 
 import sys.FileSystem;
 
-enum CliError {
-	CwdUnavailable(pwd:String);
-	CantSetSwd_DirNotExist(dir:String);
-}
-
 class Cli {
 	public static var defaultAnswer:Null<Bool>;
 
@@ -49,46 +44,5 @@ class Cli {
 			}
 		}
 		return false;
-	}
-
-
-	public static var cwd(get,set):String;
-
-	static var cwd_cache:String;
-
-	static function get_cwd():String {
-		try {
-			cwd_cache = Sys.getCwd();
-		} catch (error:String) {
-			switch(error) {
-				case "std@get_cwd" | "std@file_path" | "std@file_full_path":
-					var pwd = Sys.getEnv("PWD");
-					// This is a magic for issue #196:
-					// if we have $PWD then we can re-set it again.
-					// Works for case: `$ mkdir temp; cd temp; rm -r ../temp; mkdir ../temp; haxelib upgrade;`
-					if (pwd != null) {
-						if (FileSystem.exists(pwd) && FileSystem.isDirectory(pwd))
-							// Trying fix it: setting cwd to pwd
-							Sys.setCwd(cwd_cache = pwd);
-						else
-							// Can't fix it.
-							throw CliError.CwdUnavailable(pwd);
-					} else {
-						throw CliError.CwdUnavailable(pwd);
-					}
-				default:
-					throw error;
-			}
-		}
-		return cwd_cache;
-	}
-
-	static function set_cwd(value:String):String {
-		//TODO: For call `FileSystem.isDirectory(value)` we can get an exeption "std@sys_file_type":
-		if (value != null && cwd_cache != value && FileSystem.exists(value) && FileSystem.isDirectory(value))
-			Sys.setCwd(cwd_cache = value);
-		else
-			throw CliError.CantSetSwd_DirNotExist(value);
-		return cwd_cache;
 	}
 }

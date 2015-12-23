@@ -289,7 +289,21 @@ class Main {
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
-				case '-cwd': Cli.cwd = args[argcur++];
+				case '-cwd':
+					var dir = args[argcur++];
+					if (dir == null) {
+						print("Missing directory argument for -cwd");
+						Sys.exit(0);
+					}
+					try {
+						Sys.setCwd(dir);
+					} catch (e:String) {
+						if (e == "std@set_cwd") {
+							print("Directory " + dir + " unavailable");
+							Sys.exit(1);
+						}
+						neko.Lib.rethrow(e);
+					}
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
@@ -354,6 +368,10 @@ class Main {
 					}
 					if( e == "Blocked" ) {
 						print("Http connection timeout. Try running haxelib -notimeout <command> to disable timeout");
+						Sys.exit(1);
+					}
+					if( e == "std@get_cwd" ) {
+						print("ERROR: Current working directory is unavailable");
 						Sys.exit(1);
 					}
 					if( settings.debug )
@@ -625,13 +643,14 @@ class Main {
 
 	function installFromAllHxml()
 	{
-		var hxmlFiles = sys.FileSystem.readDirectory(Cli.cwd).filter(function (f) return f.endsWith(".hxml"));
+		var cwd = Sys.getCwd();
+		var hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
 		if (hxmlFiles.length > 0)
 		{
 			for (file in hxmlFiles)
 			{
 				print('Installing all libraries from $file:');
-				installFromHxml(Cli.cwd+file);
+				installFromHxml(cwd+file);
 			}
 		}
 		else
@@ -995,12 +1014,12 @@ class Main {
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable;
 
-			var oldCwd = Cli.cwd;
-			Cli.cwd = (pdir + "/" + vcs.directory);
+			var oldCwd = Sys.getCwd();
+			Sys.setCwd(pdir + "/" + vcs.directory);
 			var success = vcs.update(p, cast settings);
 
 			state.updated = success;
-			Cli.cwd = oldCwd;
+			Sys.setCwd(oldCwd);
 		}
 		else
 		{
@@ -1030,7 +1049,7 @@ class Main {
 			if (IS_WINDOWS) Sys.getEnv("HAXEPATH");
 			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
 
-		Cli.cwd = haxepath;
+		Sys.setCwd(haxepath);
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.client.Main', '--no-output']);
 			return
@@ -1311,7 +1330,7 @@ class Main {
 		// finish it!
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
-		Cli.cwd = proj;
+		Sys.setCwd(proj);
 
 		File.saveContent(".dev", devPath);
 
@@ -1321,7 +1340,7 @@ class Main {
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 
-		Cli.cwd = libPath;
+		Sys.setCwd(libPath);
 
 		if(FileSystem.exists("haxelib.json"))
 			doInstallDependencies(
@@ -1349,8 +1368,8 @@ class Main {
 			catch (e:Dynamic)
 				throw 'Error parsing haxelib.json for $project@$version: $e';
 
-		args.push(Cli.cwd);
-		Cli.cwd = vdir;
+		args.push(Sys.getCwd());
+		Sys.setCwd(vdir);
 
 		var callArgs =
 			if (infos.main == null) {
@@ -1425,7 +1444,7 @@ class Main {
 	}
 
 	function convertXml() {
-		var cwd = Cli.cwd;
+		var cwd = Sys.getCwd();
 		var xmlFile = cwd + "haxelib.xml";
 		var jsonFile = cwd + "haxelib.json";
 
