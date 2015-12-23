@@ -1298,29 +1298,24 @@ class Main {
 		var libPath = proj + "/" + vcs.directory;
 
 		// prepare for new repo
-		if(FileSystem.exists(libPath))
-			deleteRec(libPath);
+		deleteRec(libPath);
 
 
 		print("Installing " +libName + " from " +url);
 
-		try
-		{
+		try {
 			vcs.clone(libPath, url, branch, version, cast settings);
-		}
-		catch(error:VcsError)
-		{
-			var message = switch(error)
-			{
-				case VcsError.VcsUnavailable(vcs):
+		} catch(error:VcsError) {
+			var message = switch(error) {
+				case VcsUnavailable(vcs):
 					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
-				case VcsError.CantCloneRepo(vcs, repo, stderr):
+				case CantCloneRepo(vcs, repo, stderr):
 					'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
-				case VcsError.CantCheckoutBranch(vcs, branch, stderr):
+				case CantCheckoutBranch(vcs, branch, stderr):
 					'Could not checkout branch, tag or path "$branch": ' + stderr;
-				case VcsError.CantCheckoutVersion(vcs, version, stderr):
+				case CantCheckoutVersion(vcs, version, stderr):
 					'Could not checkout tag "$version": ' + stderr;
-			}
+			};
 			print(message);
 			deleteRec(libPath);
 			return;
