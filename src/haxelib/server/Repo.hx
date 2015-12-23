@@ -196,15 +196,27 @@ class Repo implements SiteApi {
 		var otags = Tag.manager.search({ project : p.id });
 		var curtags = otags.map(function(t) return t.tag).join(":");
 
+		var devsChanged = (pdevs.length != devs.length);
+		if (!devsChanged) { // same length, check whether elements are the same
+			for (d in pdevs) {
+				var exists = Lambda.exists(devs, function(u) return u.id == d.userObj.id);
+				if (!exists) {
+					devsChanged = true;
+					break;
+				}
+			}
+		}
+
+
 		// update public infos
-		if( infos.description != p.description || p.website != infos.url || p.license != infos.license || pdevs.length != devs.length || tags.join(":") != curtags ) {
+		if( devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
 			if( u.id != p.ownerObj.id )
 				throw "Only project owner can modify project infos";
 			p.description = infos.description;
 			p.website = infos.url;
 			p.license = infos.license;
 			p.update();
-			if( pdevs.length != devs.length ) {
+			if( devsChanged ) {
 				for( d in pdevs )
 					d.delete();
 				for( u in devs ) {
