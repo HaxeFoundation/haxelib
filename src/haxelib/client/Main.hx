@@ -855,7 +855,7 @@ class Main {
 
 	function getRepository():String {
 		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = Path.join([Cli.cwd, REPODIR]);//TODO: we actually might want to get the real path here
+			var absolutePath = FileSystem.fullPath(REPODIR);
 			return Path.addTrailingSlash(absolutePath);
 		}
 
