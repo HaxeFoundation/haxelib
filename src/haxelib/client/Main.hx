@@ -293,7 +293,7 @@ class Main {
 					var dir = args[argcur++];
 					if (dir == null) {
 						print("Missing directory argument for -cwd");
-						Sys.exit(0);
+						Sys.exit(1);
 					}
 					try {
 						Sys.setCwd(dir);
