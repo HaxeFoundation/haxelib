@@ -451,15 +451,17 @@ class Main {
 				if (FileSystem.isDirectory(full)) seek(full);
 				else {
 					var blob = File.getBytes(full);
-					ret.push({
+					var entry:Entry = {
 						fileName: full.substr(root.length+1),
 						fileSize : blob.length,
 						fileTime : FileSystem.stat(full).mtime,
 						compressed : false,
 						dataSize : blob.length,
 						data : blob,
-						crc32: null,//TODO: consider calculating this one
-					});
+						crc32: haxe.crypto.Crc32.make(blob),
+					};
+					Tools.compress(entry, 9);
+					ret.push(entry);
 				}
 			}
 		}
