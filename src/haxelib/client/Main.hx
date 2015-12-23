@@ -1330,9 +1330,7 @@ class Main {
 		// finish it!
 		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
 
-		Sys.setCwd(proj);
-
-		File.saveContent(".dev", devPath);
+		File.saveContent(proj + "/.dev", devPath);
 
 		print('Library $libName set to use ${vcs.name}.');
 
@@ -1340,12 +1338,9 @@ class Main {
 			print('  Branch/Tag/Rev: $branch');
 		print('  Path: $devPath');
 
-		Sys.setCwd(libPath);
-
-		if(FileSystem.exists("haxelib.json"))
-			doInstallDependencies(
-				Data.readData(File.getContent("haxelib.json"), false).dependencies
-			);
+		var jsonPath = libPath + "/haxelib.json";
+		if(FileSystem.exists(jsonPath))
+			doInstallDependencies(Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
 
 
