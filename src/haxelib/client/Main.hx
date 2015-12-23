@@ -1304,6 +1304,7 @@ class Main {
 			}
 			print(message);
 			deleteRec(libPath);
+			return;
 		}
 
 
