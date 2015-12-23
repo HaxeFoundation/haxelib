@@ -475,7 +475,7 @@ class Main {
 			}
 			else {
 				data = File.getBytes(file);
-				Reader.readZip(File.read(file, true));
+				Reader.readZip(new haxe.io.BytesInput(data));
 			}
 
 		var infos = Data.readInfos(zip,true);
