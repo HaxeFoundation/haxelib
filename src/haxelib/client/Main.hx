@@ -1316,10 +1316,6 @@ class Main {
 					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
 				case CantCloneRepo(vcs, repo, stderr):
 					'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
-				case CantCheckoutBranch(vcs, branch, stderr):
-					'Could not checkout branch, tag or path "$branch": ' + stderr;
-				case CantCheckoutVersion(vcs, version, stderr):
-					'Could not checkout tag "$version": ' + stderr;
 			};
 			print(message);
 			deleteRec(libPath);
