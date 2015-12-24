@@ -51,6 +51,8 @@ interface IVcs {
 enum VcsError {
 	VcsUnavailable(vcs:Vcs);
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
+	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
+	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
 }
 
 
@@ -229,25 +231,35 @@ class Git extends Vcs {
 	}
 
 	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void {
+		var oldCwd = Sys.getCwd();
+
 		var vcsArgs = ["clone", url, libPath];
 
 		if (settings == null || !settings.flat)
 			vcsArgs.push('--recursive');
 
-		if (version != null) {
-			vcsArgs.push("--branch");
-			vcsArgs.push("tags/" + version);
-		} else if (branch != null) {
-			vcsArgs.push("--branch");
-			vcsArgs.push(branch);
-		}
-
-
-
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
 		if (Sys.command(executable, vcsArgs) != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+
+
+		Sys.setCwd(libPath);
+
+		if (branch != null) {
+			var ret = Vcs.command(executable, ["checkout", branch]);
+			if (ret.code != 0)
+				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
+		}
+
+		if (version != null) {
+			var ret = Vcs.command(executable, ["checkout", "tags/" + version]);
+			if (ret.code != 0)
+				throw VcsError.CantCheckoutVersion(this, version, ret.out);
+		}
+
+		// return prev. cwd:
+		Sys.setCwd(oldCwd);
 	}
 }
 
