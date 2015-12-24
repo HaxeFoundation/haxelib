@@ -3,7 +3,7 @@
 -lib ufront
 -lib ufront-mail:1.0.0-rc.4
 -lib ufront-ufadmin
--lib erazor:1.0.0-rc.1
+-lib erazor:1.0.1
 -lib markdown:1.0.0
 -lib cleversort
 -D server
