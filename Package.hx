@@ -52,6 +52,27 @@ class Package {
 
         add("haxelib.json", "haxelib.json");
 
+
+        // these are files provided for backward-compatibility, to make selfupdate work from old clients to the new version
+        var compat = [
+            {name: "src/tools/haxelib/Main.hx", content: "package tools.haxelib;class Main{static function main()@:privateAccess haxelib.client.Main.main();}"},
+            {name: "src/tools/haxelib/Rebuild.hx", content: "package tools.haxelib;class Rebuild{static function main()@:privateAccess haxelib.client.Rebuild.main();}"},
+        ];
+        for (item in compat) {
+            var bytes = haxe.io.Bytes.ofString(item.content);
+            var entry:Entry = {
+                fileName: item.name,
+                fileSize: bytes.length,
+                fileTime: Date.now(),
+                compressed: false,
+                dataSize: 0,
+                data: bytes,
+                crc32: Crc32.make(bytes)
+            };
+            Tools.compress(entry, 9);
+            entries.add(entry);
+        }
+
         trace("Saving to " + outPath);
         var out = File.write(outPath, true);
         var writer = new Writer(out);
