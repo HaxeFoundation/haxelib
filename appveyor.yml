@@ -10,6 +10,8 @@ build_script:
     - haxe legacyhaxelib.hxml
     - haxelib install hx2compat
     - haxe legacysite.hxml
+    - haxelib install newsite.hxml
+    - haxe newsite.hxml
     - haxe test.hxml
 
 test_script:
