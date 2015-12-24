@@ -237,7 +237,9 @@ class Git extends Vcs {
 		if (branch != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push(branch);
-		} else if (version != null) {
+		}
+
+		if (version != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push("tags/" + version);
 		}
