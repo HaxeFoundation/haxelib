@@ -262,34 +262,30 @@ class Git extends Vcs
 
 	override public function update(libName:String, ?settings:Settings):Bool
 	{
-		var doPull = true;
-
 		if(0 != Sys.command(executable, ["diff", "--exit-code"]) || 0 != Sys.command(executable, ["diff", "--cached", "--exit-code"]))
 		{
 			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")) {
 				Sys.command(executable, ["reset", "--hard"]);
 			} else {
-				doPull = false;
 				Sys.println(name + " repo left untouched");
+				return false;
 			}
 		}
-		if(doPull)
-		{
-			var code = Sys.command(executable, ["pull"]);
-			// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
-			if(code != 0)
-			{
-				// get parent-branch:
-				var branch = Vcs.command(executable, ["show-branch"]).out;
-				var regx = ~/\[([^]]*)\]/;
-				if(regx.match(branch))
-					branch = regx.matched(1);
 
-				Sys.command(executable, ["checkout", branch, "--force"]);
-				Sys.command(executable, ["pull"]);
-			}
+		var code = Sys.command(executable, ["pull"]);
+		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
+		if(code != 0)
+		{
+			// get parent-branch:
+			var branch = Vcs.command(executable, ["show-branch"]).out;
+			var regx = ~/\[([^]]*)\]/;
+			if(regx.match(branch))
+				branch = regx.matched(1);
+
+			Sys.command(executable, ["checkout", branch, "--force"]);
+			Sys.command(executable, ["pull"]);
 		}
-		return doPull;
+		return true;
 	}
 
 	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void
