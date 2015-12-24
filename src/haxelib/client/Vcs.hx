@@ -234,15 +234,15 @@ class Git extends Vcs {
 		if (settings == null || !settings.flat)
 			vcsArgs.push('--recursive');
 
-		if (branch != null) {
+		if (version != null) {
+			vcsArgs.push("--branch");
+			vcsArgs.push("tags/" + version);
+		} else if (branch != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push(branch);
 		}
 
-		if (version != null) {
-			vcsArgs.push("--branch");
-			vcsArgs.push("tags/" + version);
-		}
+
 
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
