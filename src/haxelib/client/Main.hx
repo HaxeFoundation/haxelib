@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2015 Haxe Foundation
+ * Copyright (C)2005-2016 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -236,7 +236,7 @@ class Main {
 			else cats[i].push(c);
 		}
 
-		print("Haxe Library Manager " + VERSION + " - (c)2006-2015 Haxe Foundation");
+		print("Haxe Library Manager " + VERSION + " - (c)2006-2016 Haxe Foundation");
 		print("  Usage: haxelib [command] [options]");
 
 		for (cat in cats) {
