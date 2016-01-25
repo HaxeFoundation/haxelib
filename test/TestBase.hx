@@ -19,14 +19,14 @@ class TestBase extends TestCase {
 	}
 
 	public function deleteDirectory(dir:String):Void {
-		for (item in FileSystem.readDirectory(dir)) {
-			item = haxe.io.Path.join([dir, item]);
-			if (FileSystem.isDirectory(item)) {
-				deleteDirectory(item);
-			} else {
-				FileSystem.deleteFile(item);
-			}
+		var exitCode = switch (Sys.systemName()) {
+			case "Windows":
+				Sys.command("del", ["/S", "/Q", StringTools.replace(FileSystem.absolutePath(dir), "/", "\\")]);
+			case _:
+				Sys.command("rm", ["-rf", dir]);
 		}
-		FileSystem.deleteDirectory(dir);
+		if (exitCode != 0) {
+			throw 'unable to delete $dir';
+		}
 	}
 }

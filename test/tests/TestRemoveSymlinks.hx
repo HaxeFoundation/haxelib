@@ -26,7 +26,7 @@ class TestRemoveSymlinks extends TestBase
 
 	override public function setup():Void
 	{
-		origRepo = runHaxelib(["config"]).stdout.split("\n")[0];
+		origRepo = ~/\r?\n/.split(runHaxelib(["config"]).stdout)[0];
 
 		var libzip = Path.join([Sys.getCwd(), "test", "libraries", lib + ".zip"]);
 		if (runHaxelib(["setup", repo]).exitCode != 0) {

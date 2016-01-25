@@ -64,6 +64,17 @@ class HaxelibTests {
 		}
 	}
 
+	static function cmdSucceed(cmd:String, ?args:Array<String>):Bool {
+		var p = try {
+			new Process(cmd, args);
+		} catch(e:Dynamic) {
+			return false;
+		}
+		var exitCode = p.exitCode();
+		p.close();
+		return exitCode == 0;
+	}
+
 	static function main():Void {
 		prepare();
 
@@ -74,14 +85,20 @@ class HaxelibTests {
 		r.add(new TestRemoveSymlinks("symlinks"));
 		r.add(new TestRemoveSymlinks("symlinks-broken"));
 
-		// Testing VCS on two identical repositories:
-		// Hg:  https://bitbucket.org/fzzr/hx.signal
-		// Git: https://github.com/fzzr-/hx.signal.git
+		var isCI = Sys.getEnv("CI") != null;
 
-		// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
-		r.add(new TestVcs(VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
-		// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
-		r.add(new TestVcs(VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
+		if (isCI || cmdSucceed("hg", ["version"])) {
+			// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
+			r.add(new TestVcs(VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
+		} else {
+			Sys.println("hg not found.");
+		}
+		if (isCI || cmdSucceed("git", ["version"])) {
+			// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
+			r.add(new TestVcs(VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
+		} else {
+			Sys.println("git not found.");
+		}
 		r.add(new TestVcsNotFound());
 
 		var success = r.run();
