@@ -37,10 +37,10 @@ class TestVcsNotFound extends TestBase
 
 	override public function tearDown():Void
 	{
-		deleteDirectory(Path.join([CWD, REPO_ROOT, REPO_DIR]));
-
 		// restore original CWD & PATH:
 		Sys.setCwd(CWD);
+
+		deleteDirectory(Path.join([CWD, REPO_ROOT, REPO_DIR]));
 	}
 
 	//----------------- tests -------------------//

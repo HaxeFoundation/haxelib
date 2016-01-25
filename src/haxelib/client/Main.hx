@@ -1051,15 +1051,23 @@ class Main {
 
 	function rebuildSelf() {
 		var haxepath =
-			if (IS_WINDOWS) Sys.getEnv("HAXEPATH");
-			else new Path(realPath(new Process('which', ['haxelib']).stdout.readAll().toString())).dir + '/';
+			if (IS_WINDOWS) {
+				Sys.getEnv("HAXEPATH");
+			} else {
+				var p = new Process('which', ['haxelib']);
+				var path = new Path(realPath(p.stdout.readAll().toString())).dir + '/';
+				p.close();
+				path;
+			}
 
 		Sys.setCwd(haxepath);
 		function tryBuild() {
 			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.client.Main', '--no-output']);
-			return
+			var ret =
 				if (p.exitCode() == 0) None;
 				else Some(p.stderr.readAll().toString());
+			p.close();
+			return ret;
 		}
 
 
@@ -1100,6 +1108,7 @@ class Main {
 							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
 					}
 					else throw p.stdout.readAll();
+					p.close();
 				}
 			case Some(error):
 				throw 'Error compiling haxelib client: $error';

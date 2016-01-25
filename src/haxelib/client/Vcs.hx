@@ -121,10 +121,12 @@ class Vcs implements IVcs {
     static function command(cmd:String, args:Array<String>) {
         var p = new sys.io.Process(cmd, args);
         var code = p.exitCode();
-        return {
+        var ret = {
             code: code,
             out: (code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString())
         };
+        p.close();
+        return ret;
     }
 
 	function searchExecutable():Void {

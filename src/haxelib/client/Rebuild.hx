@@ -30,6 +30,7 @@ class Rebuild {
 		var p = new Process(cmd, args);
 		if (p.exitCode() != 0)
 			throw 'Error $msg:' + p.stderr.readAll().toString();
+		p.close();
 	}
 	static function main()
 		try {

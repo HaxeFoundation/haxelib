@@ -31,7 +31,7 @@ class FsUtils {
     //recursively follow symlink
     public static function realPath(path:String):String {
         var proc = new sys.io.Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]);
-        return switch (proc.stdout.readAll().toString()) {
+        var ret = switch (proc.stdout.readAll().toString()) {
             case "": //it is not a symlink
                 path;
             case targetPath:
@@ -41,6 +41,8 @@ class FsUtils {
                     realPath(new Path(path).dir + "/" + targetPath);
                 }
         }
+        proc.close();
+        return ret;
     }
 
     public static function isSamePath(a:String, b:String):Bool {
