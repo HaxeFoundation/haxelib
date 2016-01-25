@@ -8,7 +8,7 @@ import sys.io.*;
 import haxelib.Data;
 using StringTools;
 
-class TestData extends haxe.unit.TestCase {
+class TestData extends TestBase {
 
 	public function testSafe() {
 		assertEquals( "abc", checkSafe("abc") );

@@ -5,14 +5,7 @@ install:
     - RefreshEnv
     - haxelib setup haxelib_repo
 
-build_script:
-    - haxe haxelib.hxml
-    - haxe legacyhaxelib.hxml
-    - haxelib install hx2compat
-    - haxe legacysite.hxml
-    - haxelib install newsite.hxml --always
-    - haxe newsite.hxml
-    - haxe test.hxml
+build: off
 
 test_script:
-    - neko bin/test.n
+    - haxe RunCi.hxml

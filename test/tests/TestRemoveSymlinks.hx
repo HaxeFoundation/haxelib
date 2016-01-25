@@ -1,16 +1,18 @@
 package tests;
 
 import sys.FileSystem;
+import sys.io.*;
 import haxe.io.Path;
 import haxe.unit.TestCase;
 
-class TestRemoveSymlinks extends TestCase
+class TestRemoveSymlinks extends TestBase
 {
 	//----------- properties, fields ------------//
 
 	static var REPO = "haxelib-repo";
 	var lib:String = null;
 	var repo:String = null;
+	var origRepo:String;
 
 	//--------------- constructor ---------------//
 	public function new(lib:String)
@@ -24,27 +26,30 @@ class TestRemoveSymlinks extends TestCase
 
 	override public function setup():Void
 	{
+		origRepo = runHaxelib(["config"]).stdout.split("\n")[0];
+
 		var libzip = Path.join([Sys.getCwd(), "test", "libraries", lib + ".zip"]);
-		Sys.command("neko", ["./bin/haxelib.n", "setup", repo]);
-		Sys.command("neko", ["./bin/haxelib.n", "local", libzip]);
+		if (runHaxelib(["setup", repo]).exitCode != 0) {
+			throw "haxelib setup failed";
+		}
+		if (runHaxelib(["local", libzip]).exitCode != 0) {
+			throw "haxelib local failed";
+		}
+	}
+
+	override public function tearDown():Void {
+		if (runHaxelib(["setup", origRepo]).exitCode != 0) {
+			throw "haxelib setup failed";
+		}
+		deleteDirectory(repo);
 	}
 
 	//----------------- tests -------------------//
 
 	public function testRemoveLibWithSymlinks():Void
 	{
-		var code = Sys.command("neko", ["./bin/haxelib.n", "remove", lib]);
+		var code = runHaxelib(["remove", lib]).exitCode;
 		assertEquals(code, 0);
 		assertFalse(FileSystem.exists(Path.join([repo, lib])));
-	}
-
-
-	//----------------- tools -------------------//
-
-	function command(cmd:String, args:Array<String>)
-	{
-		var p = new sys.io.Process(cmd, args);
-		var code = p.exitCode();
-		return {code:code, out:code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString()};
 	}
 }

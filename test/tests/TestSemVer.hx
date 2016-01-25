@@ -2,7 +2,7 @@ package tests;
 
 import haxelib.SemVer;
 
-class TestSemVer extends haxe.unit.TestCase {
+class TestSemVer extends TestBase {
 	static function make(major, minor, patch, ?preview, ?previewNum):SemVer {
 		return {
 			major : major,

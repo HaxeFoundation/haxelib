@@ -1,11 +1,11 @@
 package tests;
 
 import sys.FileSystem;
-import haxe.unit.TestCase;
+import haxe.io.*;
 
 import haxelib.client.Vcs;
 
-class TestVcsNotFound extends TestCase
+class TestVcsNotFound extends TestBase
 {
 	//----------- properties, fields ------------//
 
@@ -25,16 +25,20 @@ class TestVcsNotFound extends TestCase
 
 	override public function setup():Void
 	{
-		Sys.setCwd(CWD + "/" + REPO_ROOT);
+		Sys.setCwd(Path.join([CWD, REPO_ROOT]));
 
-		if(!FileSystem.exists(REPO_DIR))
-			FileSystem.createDirectory(REPO_DIR);
+		if(FileSystem.exists(REPO_DIR)) {
+			deleteDirectory(REPO_DIR);
+		}
+		FileSystem.createDirectory(REPO_DIR);
 
 		Sys.setCwd(REPO_DIR);
 	}
 
 	override public function tearDown():Void
 	{
+		deleteDirectory(Path.join([CWD, REPO_ROOT, REPO_DIR]));
+
 		// restore original CWD & PATH:
 		Sys.setCwd(CWD);
 	}

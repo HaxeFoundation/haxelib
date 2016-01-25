@@ -12,11 +12,4 @@ os:
 sudo: false
 
 script:
-  - haxe haxelib.hxml
-  - haxe legacyhaxelib.hxml
-  - haxelib install hx2compat
-  - mkdir -p www/legacy
-  - haxe legacysite.hxml
-  # - haxelib install newsite.hxml --always
-  # - haxe newsite.hxml
-  - ./test.sh
+  - haxe RunCi.hxml
