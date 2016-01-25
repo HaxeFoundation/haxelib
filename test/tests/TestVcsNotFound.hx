@@ -100,12 +100,12 @@ class TestVcsNotFound extends TestBase
 
 	inline function getHg():Vcs
 	{
-		return new WrongHg();
+		return new WrongHg({quiet: true});
 	}
 
 	inline function getGit():Vcs
 	{
-		return new WrongGit();
+		return new WrongGit({quiet: true});
 	}
 }
 
@@ -113,9 +113,9 @@ class TestVcsNotFound extends TestBase
 
 class WrongHg extends Mercurial
 {
-	public function new()
+	public function new(settings:Settings)
 	{
-		super();
+		super(settings);
 		this.directory = "no-hg";
 		this.executable = "no-hg";
 		this.name = "Mercurial-not-found";
@@ -145,9 +145,9 @@ class WrongHg extends Mercurial
 
 class WrongGit extends Git
 {
-	public function new()
+	public function new(settings:Settings)
 	{
-		super();
+		super(settings);
 		this.directory = "no-git";
 		this.executable = "no-git";
 		this.name = "Git-not-found";

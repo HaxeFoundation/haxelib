@@ -252,7 +252,8 @@ class Main {
 	}
 	static var ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
-		debug  : "run in debug mode",
+		debug  : "run in debug mode, imply not --quiet",
+		quiet  : "print less messages, imply not --debug",
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
 		never  : "answer all questions with no"
@@ -260,6 +261,7 @@ class Main {
 
 	var settings: {
 		debug  : Bool,
+		quiet  : Bool,
 		flat   : Bool,
 		always : Bool,
 		never  : Bool,
@@ -270,6 +272,7 @@ class Main {
 		var rest = [];
 		settings = {
 			debug: false,
+			quiet: false,
 			always: false,
 			never: false,
 			flat: false,
@@ -317,6 +320,12 @@ class Main {
 					SERVER.dir = r.matched(4);
 					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
 					initSite();
+				case "--debug":
+					settings.debug = true;
+					settings.quiet = false;
+				case "--quiet":
+					settings.debug = false;
+					settings.quiet = true;
 				case parseSwitch(_) => Some(s) if (Reflect.hasField(settings, s)):
 					//if (!Reflect.hasField(settings, s)) {
 						//print('unknown switch $a');
@@ -1013,7 +1022,7 @@ class Main {
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
 
-		var vcs:Vcs = Vcs.getVcsForDevLib(pdir);
+		var vcs:Vcs = Vcs.getVcsForDevLib(pdir, settings);
 		if(vcs != null)
 		{
 			if(!vcs.available)
@@ -1021,7 +1030,7 @@ class Main {
 
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(pdir + "/" + vcs.directory);
-			var success = vcs.update(p, cast settings);
+			var success = vcs.update(p);
 
 			state.updated = success;
 			Sys.setCwd(oldCwd);
@@ -1270,19 +1279,19 @@ class Main {
 		//TODO: ask if existing repo have changes.
 
 		// find existing repo:
-		var vcs:Vcs = Vcs.getVcsForDevLib(proj);
+		var vcs:Vcs = Vcs.getVcsForDevLib(proj, settings);
 		// remove existing repos:
 		while(vcs != null)
 		{
 			deleteRec(proj + "/" + vcs.directory);
-			vcs = Vcs.getVcsForDevLib(proj);
+			vcs = Vcs.getVcsForDevLib(proj, settings);
 		}
 	}
 
 	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
 	{
 		// Prepare check vcs.available:
-		var vcs = Vcs.get(id);
+		var vcs = Vcs.get(id, settings);
 		if(vcs == null || !vcs.available)
 			return print('Could not use $id, please make sure it is installed and available in your PATH.');
 
@@ -1318,7 +1327,7 @@ class Main {
 		print("Installing " +libName + " from " +url);
 
 		try {
-			vcs.clone(libPath, url, branch, version, cast settings);
+			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
 			var message = switch(error) {
 				case VcsUnavailable(vcs):

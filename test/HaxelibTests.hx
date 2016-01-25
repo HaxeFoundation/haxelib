@@ -89,13 +89,13 @@ class HaxelibTests {
 
 		if (isCI || cmdSucceed("hg", ["version"])) {
 			// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
-			r.add(new TestVcs(VcsID.Hg, "Mercurial", "https://bitbucket.org/fzzr/hx.signal", "78edb4b"));
+			r.add(new TestHg());
 		} else {
 			Sys.println("hg not found.");
 		}
 		if (isCI || cmdSucceed("git", ["version"])) {
 			// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
-			r.add(new TestVcs(VcsID.Git, "Git", "https://github.com/fzzr-/hx.signal.git", "0.9.2"));
+			r.add(new TestGit());
 		} else {
 			Sys.println("git not found.");
 		}

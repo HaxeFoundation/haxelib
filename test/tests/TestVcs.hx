@@ -64,8 +64,8 @@ class TestVcs extends TestBase
 
 	public function testGetVcs():Void
 	{
-		assertTrue(Vcs.get(id) != null);
-		assertTrue(Vcs.get(id).name == vcsName);
+		assertTrue(Vcs.get(id, {quiet: true}) != null);
+		assertTrue(Vcs.get(id, {quiet: true}).name == vcsName);
 	}
 
 	public function testAvailable():Void
@@ -80,7 +80,7 @@ class TestVcs extends TestBase
 		var vcs = getVcs();
 		testCloneSimple();
 
-		assertEquals(vcs, Vcs.get(id));
+		assertEquals(vcs, Vcs.get(id, {quiet: true}));
 	}
 
 	public function testCloneSimple():Void
@@ -241,6 +241,6 @@ class TestVcs extends TestBase
 
 	inline function getVcs():Vcs
 	{
-		return Vcs.get(id);
+		return Vcs.get(id, {quiet: true});
 	}
 }

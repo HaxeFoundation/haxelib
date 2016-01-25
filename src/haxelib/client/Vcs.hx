@@ -22,24 +22,26 @@
 package haxelib.client;
 
 import sys.FileSystem;
+using haxelib.client.Vcs;
 
 interface IVcs {
 	var name(default, null):String;
 	var directory(default, null):String;
 	var executable(default, null):String;
 	var available(get, null):Bool;
+	var settings(default, null):Settings;
 
 	/**
 		Clone repo into `libPath`.
 	**/
-	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?settings:Settings):Void;
+	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
 
 	/**
 		Update to HEAD repo contains in CWD or CWD/`Vcs.directory`.
 		CWD must be like "...haxelib-repo/lib/git" for Git.
 		Returns `true` if update successful.
 	**/
-	function update(libName:String, ?settings:Settings):Bool;
+	function update(libName:String):Bool;
 }
 
 
@@ -57,9 +59,9 @@ enum VcsError {
 
 
 typedef Settings = {
-	var flat:Bool;
-	@:optional var quiet:Bool;
+	@:optional var flat:Bool;
 	@:optional var debug:Bool;
+	@:optional var quiet:Bool;
 }
 
 
@@ -69,48 +71,58 @@ class Vcs implements IVcs {
 	public var name(default, null):String;
 	public var directory(default, null):String;
 	public var executable(default, null):String;
+	public var settings(default, null):Settings;
 
 	public var available(get, null):Bool;
 
 	var availabilityChecked = false;
 	var executableSearched = false;
 
-	public static function initialize() {
+	public static function initialize(settings:Settings) {
 		if (reg == null) {
 			reg = [
-				VcsID.Git => new Git(),
-				VcsID.Hg => new Mercurial()
+				VcsID.Git => new Git(settings),
+				VcsID.Hg => new Mercurial(settings)
 			];
 		} else {
 			if (reg.get(VcsID.Git) == null)
-				reg.set(VcsID.Git, new Git());
+				reg.set(VcsID.Git, new Git(settings));
 			if (reg.get(VcsID.Hg) == null)
-				reg.set(VcsID.Hg, new Mercurial());
+				reg.set(VcsID.Hg, new Mercurial(settings));
 		}
 	}
 
 
-	function new(executable:String, directory:String, name:String) {
+	function new(executable:String, directory:String, name:String, settings:Settings) {
 		this.name = name;
 		this.directory = directory;
 		this.executable = executable;
+		this.settings = {
+			flat: settings.flat != null ? settings.flat : false,
+			debug: settings.debug != null ? settings.debug : false,
+			quiet: settings.quiet != null ? settings.quiet : false
+		}
+
+		if (settings.debug) {
+			this.settings.quiet = false;
+		}
 	}
 
 
-	public static function get(id:VcsID):Null<Vcs> {
-		initialize();
+	public static function get(id:VcsID, settings:Settings):Null<Vcs> {
+		initialize(settings);
 		return reg.get(id);
 	}
 
-	static function set(id:VcsID, vcs:Vcs, ?rewrite:Bool):Void {
-		initialize();
+	static function set(id:VcsID, vcs:Vcs, settings:Settings, ?rewrite:Bool):Void {
+		initialize(settings);
 		var existing = reg.get(id) != null;
 		if (!existing || rewrite)
 			reg.set(id, vcs);
 	}
 
-	public static function getVcsForDevLib(libPath:String):Null<Vcs> {
-		initialize();
+	public static function getVcsForDevLib(libPath:String, settings:Settings):Null<Vcs> {
+		initialize(settings);
 		for (k in reg.keys()) {
 			if (FileSystem.exists(libPath + "/" + k) && FileSystem.isDirectory(libPath + "/" + k))
 				return reg.get(k);
@@ -118,12 +130,31 @@ class Vcs implements IVcs {
 		return null;
 	}
 
-    static function command(cmd:String, args:Array<String>) {
+	function sure(commandResult:{code:Int, out:String}):Void {
+		switch (commandResult) {
+			case {code: 0}: //pass
+			case {code: code, out:out}:
+				if (!settings.debug) 
+					Sys.stderr().writeString(out);
+				Sys.exit(code);
+		}
+	}
+
+    function command(cmd:String, args:Array<String>):{
+    	code: Int,
+    	out: String
+    } {
         var p = new sys.io.Process(cmd, args);
+        var out = p.stdout.readAll().toString();
+        var err = p.stderr.readAll().toString();
+        if (settings.debug && out != "")
+        	Sys.println(out);
+        if (settings.debug && err != "")
+        	Sys.stderr().writeString(err);
         var code = p.exitCode();
         var ret = {
             code: code,
-            out: (code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString())
+            out: code == 0 ? out : err
         };
         p.close();
         return ret;
@@ -134,7 +165,7 @@ class Vcs implements IVcs {
 	}
 
 	function checkExecutable():Bool {
-		available = (executable != null) && try Vcs.command(executable, []).code == 0 catch(_:Dynamic) false;
+		available = (executable != null) && try command(executable, []).code == 0 catch(_:Dynamic) false;
 		availabilityChecked = true;
 
 		if (!available && !executableSearched)
@@ -149,11 +180,11 @@ class Vcs implements IVcs {
 		return available;
 	}
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?settings:Settings):Void {
+	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void {
 		throw "This method must be overriden.";
 	}
 
-	public function update(libName:String, ?settings:Settings):Bool {
+	public function update(libName:String):Bool {
 		throw "This method must be overriden.";
 	}
 }
@@ -161,16 +192,12 @@ class Vcs implements IVcs {
 
 class Git extends Vcs {
 
-	public static function init() {
-		Vcs.set(VcsID.Git, new Git());
-	}
-
-	public function new()
-		super("git", "git", "Git");
+	public function new(settings:Settings)
+		super("git", "git", "Git", settings);
 
 	override function checkExecutable():Bool {
 		// with `help` cmd because without any cmd `git` can return exit-code = 1.
-		available = (executable != null) && try Vcs.command(executable, ["help"]).code == 0 catch(_:Dynamic) false;
+		available = (executable != null) && try command(executable, ["help"]).code == 0 catch(_:Dynamic) false;
 		availabilityChecked = true;
 
 		if (!available && !executableSearched)
@@ -207,32 +234,37 @@ class Git extends Vcs {
 		}
 	}
 
-	override public function update(libName:String, ?settings:Settings):Bool {
-		if (Sys.command(executable, ["diff", "--exit-code"]) !=0 || Sys.command(executable, ["diff", "--cached", "--exit-code"]) != 0) {
+	override public function update(libName:String):Bool {
+		if (
+			command(executable, ["diff", "--exit-code"]).code != 0
+			||
+			command(executable, ["diff", "--cached", "--exit-code"]).code != 0
+		) {
 			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")) {
-				Sys.command(executable, ["reset", "--hard"]);
+				sure(command(executable, ["reset", "--hard"]));
 			} else {
-				Sys.println(name + " repo left untouched");
+				if (!settings.quiet)
+					Sys.println(name + " repo left untouched");
 				return false;
 			}
 		}
 
-		var code = Sys.command(executable, ["pull"]);
+		var code = command(executable, ["pull"]).code;
 		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
 		if (code != 0) {
 			// get parent-branch:
-			var branch = Vcs.command(executable, ["show-branch"]).out;
+			var branch = command(executable, ["show-branch"]).out;
 			var regx = ~/\[([^]]*)\]/;
 			if (regx.match(branch))
 				branch = regx.matched(1);
 
-			Sys.command(executable, ["checkout", branch, "--force"]);
-			Sys.command(executable, ["pull"]);
+			sure(command(executable, ["checkout", branch, "--force"]));
+			sure(command(executable, ["pull"]));
 		}
 		return true;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void {
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
 		var oldCwd = Sys.getCwd();
 
 		var vcsArgs = ["clone", url, libPath];
@@ -242,20 +274,20 @@ class Git extends Vcs {
 
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
-		if (Sys.command(executable, vcsArgs) != 0)
+		if (command(executable, vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 
 
 		Sys.setCwd(libPath);
 
 		if (branch != null) {
-			var ret = Vcs.command(executable, ["checkout", branch]);
+			var ret = command(executable, ["checkout", branch]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		if (version != null) {
-			var ret = Vcs.command(executable, ["checkout", "tags/" + version]);
+			var ret = command(executable, ["checkout", "tags/" + version]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
@@ -268,12 +300,8 @@ class Git extends Vcs {
 
 class Mercurial extends Vcs {
 
-	public static function init() {
-		Vcs.set(VcsID.Hg, new Mercurial());
-	}
-
-	public function new()
-		super("hg", "hg", "Mercurial");
+	public function new(settings:Settings)
+		super("hg", "hg", "Mercurial", settings);
 
 	override function searchExecutable():Void {
 		super.searchExecutable();
@@ -292,11 +320,11 @@ class Mercurial extends Vcs {
 		checkExecutable();
 	}
 
-	override public function update(libName:String, ?settings:Settings):Bool {
-		Vcs.command(executable, ["pull"]);
-		var summary = Vcs.command(executable, ["summary"]).out;
-		var diff = Vcs.command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
-		var status = Vcs.command(executable, ["status"]);
+	override public function update(libName:String):Bool {
+		command(executable, ["pull"]);
+		var summary = command(executable, ["summary"]).out;
+		var diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var status = command(executable, ["status"]);
 
 		// get new pulled changesets:
 		// (and search num of sets)
@@ -304,27 +332,29 @@ class Mercurial extends Vcs {
 		summary = summary.substr(summary.lastIndexOf("\n") + 1);
 		// we don't know any about locale then taking only Digit-exising:s
 		var changed = ~/(\d)/.match(summary);
-		if (changed)
+		if (changed && !settings.quiet)
 			// print new pulled changesets:
 			Sys.println(summary);
 
 
 		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
-			Sys.println(diff.out);
+			if (!settings.quiet)
+				Sys.println(diff.out);
 			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")) {
-				Sys.command(executable, ["update", "--clean"]);
+				sure(command(executable, ["update", "--clean"]));
 			} else {
 				changed = false;
-				Sys.println(name + " repo left untouched");
+				if (!settings.quiet)
+					Sys.println(name + " repo left untouched");
 			}
 		} else if (changed) {
-			Sys.command(executable, ["update"]);
+			sure(command(executable, ["update"]));
 		}
 
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?settings:Settings):Void {
+	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
 		var vcsArgs = ["clone", url, libPath];
 
 		if (branch != null) {
@@ -332,12 +362,12 @@ class Mercurial extends Vcs {
 			vcsArgs.push(branch);
 		}
 
-		if(version != null) {
+		if (version != null) {
 			vcsArgs.push("--rev");
 			vcsArgs.push(version);
 		}
 
-		if (Sys.command(executable, vcsArgs) != 0)
+		if (command(executable, vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 	}
 }
