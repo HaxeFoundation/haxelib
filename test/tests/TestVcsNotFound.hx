@@ -65,9 +65,8 @@ class TestVcsNotFound extends TestBase
 			vcs.clone(vcs.directory, "https://bitbucket.org/fzzr/hx.signal");
 			assertFalse(true);
 		}
-		catch(error:Dynamic)
+		catch(error:VcsError)
 		{
-			assertTrue(Reflect.isEnumValue(error));
 			switch(error)
 			{
 				case VcsError.CantCloneRepo(_, repo, stderr): assertTrue(true);
@@ -84,9 +83,8 @@ class TestVcsNotFound extends TestBase
 			vcs.clone(vcs.directory, "https://github.com/fzzr-/hx.signal.git");
 			assertFalse(true);
 		}
-		catch(error:Dynamic)
+		catch(error:VcsError)
 		{
-			assertTrue(Reflect.isEnumValue(error));
 			switch(error)
 			{
 				case VcsError.CantCloneRepo(_, repo, stderr): assertTrue(true);

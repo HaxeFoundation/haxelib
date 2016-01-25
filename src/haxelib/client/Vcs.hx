@@ -144,7 +144,14 @@ class Vcs implements IVcs {
     	code: Int,
     	out: String
     } {
-        var p = new sys.io.Process(cmd, args);
+        var p = try {
+        	new sys.io.Process(cmd, args);
+        } catch(e:Dynamic) {
+        	return {
+        		code: -1,
+        		out: Std.string(e)
+        	}
+        }
         var out = p.stdout.readAll().toString();
         var err = p.stderr.readAll().toString();
         if (settings.debug && out != "")
