@@ -63,11 +63,6 @@ cd haxelib
 # Install all the libs
 haxelib install newsite.hxml
 
-# Create directories
-mkdir -p www/legacy
-mkdir -p www/api/3.0
-mkdir -p www/files/3.0
-
 # TODO: copy assets
 
 # Compile the site
@@ -77,6 +72,7 @@ haxe newsite.hxml
 # TODO: check the permissions, writeable directories etc.
 
 # Start the server
+cd www
 nekotools server -rewrite
 ```
 

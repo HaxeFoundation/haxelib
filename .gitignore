@@ -18,7 +18,6 @@ www/.htaccess
 # Files copied from /src/haxelib/
 www/dbconfig.json.example
 www/haxelib.css
-www/legacy/
 
 # IDE files
 .idea

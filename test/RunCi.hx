@@ -55,8 +55,6 @@ class RunCi {
 		#end
 
 		runCommand("haxelib", ["install", "hx2compat"]);
-		if (!exists("www/legacy"))
-			createDirectory("www/legacy");
 		runCommand("haxe", ["legacysite.hxml"]);
 	}
 
