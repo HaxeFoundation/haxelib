@@ -12,15 +12,18 @@ class Package {
     static function main() {
         var entries = new List<Entry>();
 
-        function add(path:String, target:String) {
+        function add(path:String, ?target:String) {
             if (!FileSystem.exists(path))
                 throw 'Invalid path: $path';
+
+            if (target == null)
+                target = path;
 
             if (FileSystem.isDirectory(path)) {
                 for (item in FileSystem.readDirectory(path))
                     add(path + "/" + item, target + "/" + item);
             } else {
-                trace("Adding " + target);
+                Sys.println("Adding " + target);
                 var bytes = File.getBytes(path);
                 var entry:Entry = {
                     fileName: target,
@@ -36,22 +39,12 @@ class Package {
             }
         }
 
-        for (file in [
-            "Data.hx",
-            "Validator.hx",
-            "SemVer.hx",
-            "SiteApi.hx",
-            "client/Cli.hx",
-            "client/Main.hx",
-            "client/FsUtils.hx",
-            "client/Rebuild.hx",
-            "client/ConvertXml.hx",
-            "client/Vcs.hx",
-        ])
-            add('src/haxelib/$file', 'src/haxelib/$file');
+        for (file in FileSystem.readDirectory("src/haxelib"))
+            if (file != "server")
+                add('src/haxelib/$file');
 
-        add("haxelib.json", "haxelib.json");
-
+        add("haxelib.json");
+        add("README.md");
 
         // these are files provided for backward-compatibility, to make selfupdate work from old clients to the new version
         var compat = [
@@ -73,7 +66,7 @@ class Package {
             entries.add(entry);
         }
 
-        trace("Saving to " + outPath);
+        Sys.println("Saving to " + outPath);
         var out = File.write(outPath, true);
         var writer = new Writer(out);
         writer.write(entries);
