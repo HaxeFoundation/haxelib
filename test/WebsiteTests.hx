@@ -11,7 +11,13 @@ import buddy.*;
 import mockatoo.Mockatoo.*;
 using mockatoo.Mockatoo;
 
-@:build(buddy.GenerateMain.build(["website"]))
+@:build(buddy.GenerateMain.withSuites([
+	website.controller.DocumentationControllerTest,
+	website.controller.HomeControllerTest,
+	website.controller.ProjectControllerTest,
+	website.controller.RSSControllerTest,
+	website.controller.UserControllerTest,
+]))
 class WebsiteTests {
 	static var ufApp:UfrontApplication;
 

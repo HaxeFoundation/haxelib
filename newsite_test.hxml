@@ -1,0 +1,10 @@
+newsite_each.hxml
+-cp test
+# Now the testing libs
+-lib buddy:0.18.1
+-lib mockatoo
+-lib utest
+--no-inline
+-main WebsiteTests
+-neko bin/websitetest.n
+-cmd neko bin/websitetest.n
