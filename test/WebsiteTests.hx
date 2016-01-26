@@ -8,15 +8,13 @@ import ufront.view.TemplatingEngines;
 import twl.webapp.*;
 import twl.*;
 import buddy.*;
-import mockatoo.Mockatoo.*;
-using mockatoo.Mockatoo;
 
 @:build(buddy.GenerateMain.withSuites([
 	website.controller.DocumentationControllerTest,
 	website.controller.HomeControllerTest,
-	website.controller.ProjectControllerTest,
+	// website.controller.ProjectControllerTest,
 	website.controller.RSSControllerTest,
-	website.controller.UserControllerTest,
+	// website.controller.UserControllerTest,
 ]))
 class WebsiteTests {
 	static var ufApp:UfrontApplication;
@@ -38,6 +36,8 @@ class WebsiteTests {
 			ufApp.injector.map( UFMailer ).toSingleton( TestMailer );
 			ufApp.injector.map( EasyAuth ).toValue( new EasyAuthAdminMode() );
 			ufApp.injector.map( String, "documentationPath" ).toValue( "www/documentation-files/" );
+
+			haxelib.server.SiteDb.init();
 		}
 		return ufApp;
 	}

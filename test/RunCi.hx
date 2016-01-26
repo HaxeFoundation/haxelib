@@ -63,14 +63,19 @@ class RunCi {
 		runCommand("haxe", ["legacyhaxelib.hxml"]);
 	}
 
-	static function test():Void {
+	static function testClient():Void {
 		runCommand("haxe", ["test.hxml"]);
 		runCommand("neko", ["bin/test.n"]);
+	}
+
+	static function testServer():Void {
+		runCommand("haxe", ["newsite_test.hxml"]);
 	}
 
 	static function main():Void {
 		compileClient();
 		compileServer();
-		test();
+		testClient();
+		testServer();
 	}
 }

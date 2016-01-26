@@ -6,6 +6,7 @@ import ufront.web.result.*;
 import ufront.web.result.ViewResult;
 import website.Server;
 using tink.CoreApi;
+import haxelib.server.SiteDb;
 
 // These imports are common for our various test-suite tools.
 import buddy.*;
@@ -102,7 +103,7 @@ class HomeControllerTest extends BuddySuite {
 		describe("When I want to access the data through a JSON API", {
 			it("Should give me search via JSON", function (done) {
 				whenIVisit( "/search.json" )
-					.withTheParams([ "v"=>"web" ])
+					.withTheQueryParams([ "v"=>"web" ])
 					.onTheApp( haxelibSite )
 					.itShouldLoad( HomeController, "searchJson", [{ v: "web" }] )
 					.itShouldReturn( JsonResult, function (result) {

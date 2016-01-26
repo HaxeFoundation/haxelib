@@ -3,10 +3,6 @@ newsite_each.hxml
 -main website.Server
 -neko www/index.n
 
-# --next
-
-# newsite_test.hxml
-
 --next
 
 newsite_each.hxml
