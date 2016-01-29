@@ -76,8 +76,8 @@ class RunCi {
 		switch (Sys.systemName()) {
 			case "Windows":
 				// skip for now
-				// AppVeyor hangs at this step for unknown reason
-				// Local machine works though...
+				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
+				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
 			case _:
 				runCommand("haxe", ["newsite_test.hxml"]);
 		}
