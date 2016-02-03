@@ -84,10 +84,16 @@ class RunCi {
 		#end
 	}
 
+	static function integrationTests():Void {
+		runCommand("haxe", ["integration_tests.hxml"]);
+		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+	}
+
 	static function main():Void {
 		compileClient();
 		compileServer();
 		testClient();
 		testServer();
+		integrationTests();
 	}
 }
