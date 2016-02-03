@@ -49,20 +49,23 @@ class RunCi {
 	}
 
 	static function compileServer():Void {
-		#if (haxe_ver >= 3.2)
 		runCommand("haxelib", ["install", "newsite.hxml", "--always"]);
 		runCommand("haxelib", ["install", "newsite_each.hxml", "--always"]);
 		runCommand("haxelib", ["install", "newsite_test.hxml", "--always"]);
 		runCommand("haxelib", ["list"]);
 		runCommand("haxe", ["newsite.hxml"]);
-		#end
+	}
 
+	static function compileLegacyServer():Void {
 		runCommand("haxelib", ["install", "hx2compat"]);
 		runCommand("haxe", ["legacysite.hxml"]);
 	}
 
 	static function compileClient():Void {
 		runCommand("haxe", ["haxelib.hxml"]);
+	}
+
+	static function compileLegacyClient():Void {
 		runCommand("haxe", ["legacyhaxelib.hxml"]);
 	}
 
@@ -72,16 +75,7 @@ class RunCi {
 	}
 
 	static function testServer():Void {
-		#if (haxe_ver >= 3.2)
-		switch (Sys.systemName()) {
-			case "Windows":
-				// skip for now
-				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
-				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case _:
-				runCommand("haxe", ["newsite_test.hxml"]);
-		}
-		#end
+		runCommand("haxe", ["newsite_test.hxml"]);
 	}
 
 	static function integrationTests():Void {
@@ -90,10 +84,24 @@ class RunCi {
 	}
 
 	static function main():Void {
+		compileLegacyClient();
+		compileLegacyServer();
 		compileClient();
-		compileServer();
 		testClient();
-		testServer();
-		integrationTests();
+
+		// the server can only be compiled with haxe 3.2.x for now...
+		#if ((haxe_ver >= 3.2) && (haxe_ver < 3.3))
+		compileServer();
+
+		switch (Sys.systemName()) {
+			case "Windows":
+				// skip for now
+				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
+				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
+			case _:
+				testServer();
+				integrationTests();
+		}
+		#end
 	}
 }
