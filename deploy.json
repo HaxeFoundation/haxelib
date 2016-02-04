@@ -14,13 +14,13 @@
 	"targets": [
 		{
 			"name": "lib.haxe.org",
-			"gitRepo": "ssh://joneil@haxe.org/data/haxelib/haxelibwebsite.git",
+			"gitRepo": "ssh://haxelib@haxe.org/data/haxelib/haxelibwebsite.git",
 			"defines": ["deploy"],
 			"hxmls": ["newsite"],
 			"debug": false,
 			"servers": [{
 				"name": "lib.haxe.org",
-				"user": "joneil",
+				"user": "haxelib",
 				"host": "haxe.org",
 				"port": 22,
 				"remoteDir": "/data/haxelib/www/"
