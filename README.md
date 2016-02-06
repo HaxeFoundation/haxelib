@@ -2,8 +2,8 @@
 
 For more documentation, please refer to [haxe.org](http://haxe.org/haxelib)
 
-[![TravisCI Build Status](https://travis-ci.org/HaxeFoundation/haxelib.svg?branch=master)](https://travis-ci.org/HaxeFoundation/haxelib)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/HaxeFoundation/haxelib?branch=master&svg=true)](https://ci.appveyor.com/project/HaxeFoundation/haxelib)
+[![TravisCI Build Status](https://travis-ci.org/HaxeFoundation/haxelib.svg?branch=development)](https://travis-ci.org/HaxeFoundation/haxelib)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/HaxeFoundation/haxelib?branch=development&svg=true)](https://ci.appveyor.com/project/HaxeFoundation/haxelib)
 
 ## Per-project setup
 
@@ -80,18 +80,23 @@ nekotools server -rewrite
 
 Build files:
 
-* __haxelib.hxml__: Build the current haxelib tool from src/haxelib/Main
-* __legacyhaxelib.hxml__: Build the haxelib tool that works with Haxe 2.x
-* __legacysite.hxml__: Build the legacy website.
-* __prepare.hxml__: Build a tool to prepare the server (I think)
-* __newsite.hxml__: Build the new website, the new site unit tests, and the Haxe remoting API. (Also runs the unit tests).
-* __test.hxml__: Build the automated tests.
+* client.hxml: Build the current haxelib client.
+* client_tests.hxml: Build the client tests.
+* client_legacy.hxml: Build the haxelib client that works with Haxe 2.x.
+* prepare.hxml: Prepare and test the server.
+* server.hxml: Build the new website, and the Haxe remoting API.
+* server_tests.hxml: Build the new website tests.
+* server_each.hxml: Libraries and configs used by server.hxml and server_tests.hxml.
+* server_legacy.hxml: Build the legacy website.
+* integration_tests.hxml: Build and run tests that test haxelib client and server together.
+* haxelib.hxml: Alias of client.hxml.
 
 Folders:
 
-* __/src/__: Source code for the haxelib tool and the website, including legacy versions.
-* __/bin/__: The compile target for building the haxelib tool, legacy tool, and site preparation tool.
-* __/www/__: The compile target (and supporting files) for the haxelib website (including legacy site and API)
-* __/test/__: Unit test source code for running on Travis.
-* __/testing/__: A setup for manually testing a complete setup.
-* __/package/__: Files that are used for bundling the haxelib_client zip file.
+* /src/: Source code for the haxelib tool and the website, including legacy versions.
+* /bin/: The compile target for building the haxelib client, legacy client, and others.
+* /www/: The compile target (and supporting files) for the haxelib website (including legacy server)
+* /test/: Source code for testings.
+* /testing/: Files used by tests.
+* /package/: Files that are used for bundling the haxelib_client zip file.
+* /deploy/: Git repo for pushing the haxelib website to lib.haxe.org. Created and used by `haxelib run ufront deploy`.

@@ -1,4 +1,4 @@
-newsite_each.hxml
+server_each.hxml
 -cp test
 # Now the testing libs
 -lib buddy:0.18.1

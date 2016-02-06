@@ -49,33 +49,33 @@ class RunCi {
 	}
 
 	static function compileServer():Void {
-		runCommand("haxelib", ["install", "newsite.hxml", "--always"]);
-		runCommand("haxelib", ["install", "newsite_each.hxml", "--always"]);
-		runCommand("haxelib", ["install", "newsite_test.hxml", "--always"]);
+		runCommand("haxelib", ["install", "server.hxml", "--always"]);
+		runCommand("haxelib", ["install", "server_each.hxml", "--always"]);
+		runCommand("haxelib", ["install", "server_tests.hxml", "--always"]);
 		runCommand("haxelib", ["list"]);
-		runCommand("haxe", ["newsite.hxml"]);
+		runCommand("haxe", ["server.hxml"]);
 	}
 
 	static function compileLegacyServer():Void {
 		runCommand("haxelib", ["install", "hx2compat"]);
-		runCommand("haxe", ["legacysite.hxml"]);
+		runCommand("haxe", ["server_legacy.hxml"]);
 	}
 
 	static function compileClient():Void {
-		runCommand("haxe", ["haxelib.hxml"]);
+		runCommand("haxe", ["client.hxml"]);
 	}
 
 	static function compileLegacyClient():Void {
-		runCommand("haxe", ["legacyhaxelib.hxml"]);
+		runCommand("haxe", ["client_legacy.hxml"]);
 	}
 
 	static function testClient():Void {
-		runCommand("haxe", ["test.hxml"]);
+		runCommand("haxe", ["client_tests.hxml"]);
 		runCommand("neko", ["bin/test.n"]);
 	}
 
 	static function testServer():Void {
-		runCommand("haxe", ["newsite_test.hxml"]);
+		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
 	static function integrationTests():Void {

@@ -1,11 +1,11 @@
 # The new haxelib website (on the same 3.0 repo)
-newsite_each.hxml
+server_each.hxml
 -main website.Server
 -neko www/index.n
 
 --next
 
-newsite_each.hxml
+server_each.hxml
 -lib ufront-uftasks
 -main website.Tasks
 -neko www/tasks.n
