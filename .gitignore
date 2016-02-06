@@ -3,11 +3,10 @@
 *.exe
 *.n
 *.zip
-package.zip
-test/libraries/*.zip
+test/libraries/vsc/
 dump/
 deploy/
-testing/libraries/vcs
+repo_integration_tests/
 
 # Runtime files
 *.tmp

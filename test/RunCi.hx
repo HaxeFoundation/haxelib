@@ -84,6 +84,9 @@ class RunCi {
 	}
 
 	static function main():Void {
+		// Note that package.zip output is also used by client tests, so it has to be run before that.
+		runCommand("haxe", ["package.hxml"]);
+
 		compileLegacyClient();
 		compileLegacyServer();
 		compileClient();

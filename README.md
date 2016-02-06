@@ -90,13 +90,18 @@ Build files:
 * server_legacy.hxml: Build the legacy website.
 * integration_tests.hxml: Build and run tests that test haxelib client and server together.
 * haxelib.hxml: Alias of client.hxml.
+* package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib_client](http://lib.haxe.org/p/haxelib_client/).
+* ci.hxml: Used by our CIs, TravisCI and AppVeyor.
 
 Folders:
 
 * /src/: Source code for the haxelib tool and the website, including legacy versions.
 * /bin/: The compile target for building the haxelib client, legacy client, and others.
 * /www/: The compile target (and supporting files) for the haxelib website (including legacy server)
-* /test/: Source code for testings.
-* /testing/: Files used by tests.
+* /test/: Source code and files for testings.
 * /package/: Files that are used for bundling the haxelib_client zip file.
-* /deploy/: Git repo for pushing the haxelib website to lib.haxe.org. Created and used by `haxelib run ufront deploy`.
+
+Other files:
+
+* schema.json: JSON schema of haxelib.json.
+* deploy.json: Deploy configuration used by `haxelib run ufront deploy` for pushing the haxelib website to lib.haxe.org.

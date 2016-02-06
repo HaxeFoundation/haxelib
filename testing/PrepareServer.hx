@@ -87,7 +87,7 @@ class PrepareServer {
 
 		Sys.println("Package testing libraries");
 		var libraries = new List<String>();
-		var testFolder = Sys.getCwd() + 'testing/';
+		var testFolder = Sys.getCwd() + 'test/';
 		for (file in FileSystem.readDirectory(testFolder + 'libraries')) {
 			if (FileSystem.isDirectory(testFolder + 'libraries/' + file) && file.startsWith('lib')) {
 				packageLibrary(testFolder + 'libraries/' + file);

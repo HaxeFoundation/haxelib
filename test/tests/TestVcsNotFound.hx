@@ -9,7 +9,7 @@ class TestVcsNotFound extends TestBase
 {
 	//----------- properties, fields ------------//
 
-	static inline var REPO_ROOT = "testing/libraries";
+	static inline var REPO_ROOT = "test/libraries";
 	static inline var REPO_DIR = "vcs-no";
 	static var CWD:String = null;
 

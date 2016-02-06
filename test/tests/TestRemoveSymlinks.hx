@@ -19,7 +19,7 @@ class TestRemoveSymlinks extends TestBase
 	{
 		super();
 		this.lib = lib;
-		this.repo = Path.join([Sys.getCwd(), "testing", REPO]);
+		this.repo = Path.join([Sys.getCwd(), "test", REPO]);
 	}
 
 	//--------------- initialize ----------------//

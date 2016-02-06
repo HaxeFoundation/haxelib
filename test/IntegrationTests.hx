@@ -4,9 +4,16 @@ import sys.io.*;
 
 using IntegrationTests;
 
-class IntegrationTests extends TestCase {
+class IntegrationTests extends TestBase {
 	var haxelibBin:String = Path.join([Sys.getCwd(), "bin", "haxelib.n"]);
 	var siteUrl:String = "http://localhost:2000/";
+	static var originalRepo(default, never) = {
+		var p = new Process("haxelib", ["config"]);
+		var repo = Path.normalize(p.stdout.readLine());
+		p.close();
+		repo;
+	};
+	static var repo(default, never) = "repo_integration_tests";
 
 	function haxelib(args:Array<String>):Process {
 		#if system_haxelib
@@ -14,6 +21,19 @@ class IntegrationTests extends TestCase {
 		#else
 			return new Process("neko", [haxelibBin, "-R", siteUrl].concat(args));
 		#end
+	}
+
+	override function setup():Void {
+		super.setup();
+
+		haxelibSetup(repo);
+	}
+
+	override function tearDown():Void {
+		haxelibSetup(originalRepo);
+		deleteDirectory(repo);
+
+		super.tearDown();
 	}
 
 	function test():Void {
@@ -74,15 +94,6 @@ class IntegrationTests extends TestCase {
 	}
 
 	static function main():Void {
-		var originalRepo = {
-			var p = new Process("haxelib", ["config"]);
-			var repo = Path.normalize(p.stdout.readLine());
-			p.close();
-			repo;
-		};
-		var repo = "repo";
-		haxelibSetup(repo);
-
 		var prevDir = Sys.getCwd();
 		Sys.setCwd("www");
 		var serverProcess = new Process("nekotools", ["server", "-rewrite"]);
@@ -92,8 +103,7 @@ class IntegrationTests extends TestCase {
 		var runner = new TestRunner();
 		runner.add(new IntegrationTests());
 		var success = runner.run();
-
-		haxelibSetup(originalRepo);
+		
 		serverProcess.kill();
 		serverProcess.close();
 
