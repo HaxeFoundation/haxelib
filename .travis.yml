@@ -27,6 +27,8 @@ script:
       ssh-add deploy_key;
       scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/;
       scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/;
+      git config --global user.name "TravisCI";
+      git config --global user.email "travisci@haxe.org";
       haxelib run ufront deploy;
     fi
 
