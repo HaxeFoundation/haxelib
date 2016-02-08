@@ -19,3 +19,5 @@ www/haxelib.css
 
 # IDE files
 .idea
+
+deploy_key

@@ -2,7 +2,7 @@ language: haxe
 
 haxe:
   - development
-  - "3.2.0"
+  - "3.2.1"
   - "3.1.3"
 
 os:
@@ -11,5 +11,28 @@ os:
 
 sudo: false
 
+env:
+  global:
+    # deploy_key_decrypt
+    - secure: "cWYcbB7z97sW4yZtz9qcYrEhFZktNjQMOraPm7Vy0FsCMqb4r314Fk8rJze+yDbOKGdsIz6VNHE8nlsQN3EgGiVFJnF8xv6GAlfHPuaVomP2vO7W0A+l7xVy2/326MQJP8JoMgdebDi71yxKeEhYA+mVliI9qql9yfD2YOBmilQ="
+
 script:
+  # run our CI script
   - haxe ci.hxml
+  # Deploy to lib.haxe.org
+  - if [ -n "$deploy_key_decrypt" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_HAXE_VERSION" = "3.2.1" ]; then
+      openssl aes-256-cbc -k "$deploy_key_decrypt" -in deploy_key.enc -out deploy_key -d;
+      chmod 600 deploy_key;
+      eval `ssh-agent -s`;
+      ssh-add deploy_key;
+      scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/
+      scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/
+      haxelib run ufront deploy;
+    fi
+
+cache:
+  directories:
+    - deploy
+
+addons:
+  ssh_known_hosts: lib.haxe.org

@@ -14,7 +14,7 @@
 	"targets": [
 		{
 			"name": "lib.haxe.org",
-			"gitRepo": "ssh://haxelib@haxe.org/data/haxelib/haxelibwebsite.git",
+			"gitRepo": "ssh://haxelib@lib.haxe.org/data/haxelib/haxelibwebsite.git",
 			"defines": ["deploy"],
 			"hxmls": ["newsite"],
 			"debug": false,

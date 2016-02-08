@@ -123,3 +123,4 @@ Other files:
 
 * schema.json: JSON schema of haxelib.json.
 * deploy.json: Deploy configuration used by `haxelib run ufront deploy` for pushing the haxelib website to lib.haxe.org.
+* deploy_key.enc: Encrypted ssh private key for logging in to lib.haxe.org. Used by TravisCI.
