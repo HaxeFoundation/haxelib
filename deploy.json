@@ -21,7 +21,7 @@
 			"servers": [{
 				"name": "lib.haxe.org",
 				"user": "haxelib",
-				"host": "haxe.org",
+				"host": "lib.haxe.org",
 				"port": 22,
 				"remoteDir": "/data/haxelib/www/"
 			}]
