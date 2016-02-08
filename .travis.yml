@@ -25,8 +25,8 @@ script:
       chmod 600 deploy_key;
       eval `ssh-agent -s`;
       ssh-add deploy_key;
-      scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/
-      scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/
+      scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/;
+      scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/;
       haxelib run ufront deploy;
     fi
 
