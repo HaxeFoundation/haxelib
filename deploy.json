@@ -16,7 +16,7 @@
 			"name": "lib.haxe.org",
 			"gitRepo": "ssh://haxelib@lib.haxe.org/data/haxelib/haxelibwebsite.git",
 			"defines": ["deploy"],
-			"hxmls": ["newsite"],
+			"hxmls": ["server"],
 			"debug": false,
 			"servers": [{
 				"name": "lib.haxe.org",
