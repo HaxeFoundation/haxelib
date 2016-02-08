@@ -63,13 +63,31 @@ cd haxelib
 # Install all the libs
 haxelib install newsite.hxml
 
-# TODO: copy assets
-
 # Compile the site
 haxe legacysite.hxml
 haxe newsite.hxml
 
-# TODO: check the permissions, writeable directories etc.
+# copy assets, remember to modify dbconfig.json
+cp src/haxelib/server/.htaccess www/
+cp src/haxelib/server/dbconfig.json.example www/dbconfig.json
+cp src/legacyhaxelib/.htaccess www/legacy/
+cp src/legacyhaxelib/website.mtt www/legacy/
+cp src/legacyhaxelib/haxelib.css www/legacy/
+
+# If the database (www/legacy/haxelib.db) doesn't exist, run "setup"
+pushd www/legacy
+neko index.n setup
+popd
+
+# Make sure the server folders and databases are writeable.
+
+chmod a+w www
+chmod a+w www/tmp
+chmod a+w www/files
+chmod a+w www/files/3.0
+chmod a+w www/legacy
+chmod a+w www/haxelib.db
+chmod a+w www/legacy/haxelib.db
 
 # Start the server
 cd www
