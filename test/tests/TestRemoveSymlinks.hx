@@ -10,15 +10,14 @@ class TestRemoveSymlinks extends TestBase
 	//----------- properties, fields ------------//
 
 	static var REPO = "haxelib-repo";
-	var lib:String = null;
+	var lib:String = "symlinks";
 	var repo:String = null;
 	var origRepo:String;
 
 	//--------------- constructor ---------------//
-	public function new(lib:String)
+	public function new()
 	{
 		super();
-		this.lib = lib;
 		this.repo = Path.join([Sys.getCwd(), "test", REPO]);
 	}
 
