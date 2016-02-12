@@ -80,8 +80,8 @@ class HaxelibTests {
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
-		r.add(new TestRemoveSymlinks("symlinks"));
-		r.add(new TestRemoveSymlinks("symlinks-broken"));
+		r.add(new TestRemoveSymlinks());
+		r.add(new TestRemoveSymlinksBroken());
 
 		var isCI = Sys.getEnv("CI") != null;
 
