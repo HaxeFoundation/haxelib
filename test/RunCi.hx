@@ -1,5 +1,6 @@
 import Sys.*;
 import haxe.*;
+import haxe.io.*;
 import sys.FileSystem.*;
 import sys.io.File.*;
 
@@ -78,9 +79,82 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
+	static function setupLocalServer():Void {
+		var NEKOPATH = getEnv("NEKOPATH");
+		var DocumentRoot = Path.join([getCwd(), "www"]);
+		function copyConfigs():Void {
+			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
+				"user": "travis",
+				"pass": "",
+				"host": "localhost",
+				"database": "haxelib_test"
+			}));
+			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
+		}
+		function writeApacheConf(confPath:String):Void {
+			var confContent =
+'
+LoadModule neko_module ${Path.join([NEKOPATH, "mod_neko2.ndll"])}
+LoadModule tora_module ${Path.join([NEKOPATH, "mod_tora2.ndll"])}
+AddHandler tora-handler .n
+Listen 2000
+<VirtualHost *:2000>
+	DocumentRoot "$DocumentRoot"
+</VirtualHost>
+<Directory "$DocumentRoot">
+    Options Indexes FollowSymLinks
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+</Directory>
+';
+			var confOut = append(confPath);
+			confOut.writeString(confContent);
+			confOut.flush();
+			confOut.close();
+		}
+		switch (systemName()) {
+			case "Mac":
+				runCommand("brew", ["update"]);
+				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
+
+				runCommand("mysql.server", ["start"]);
+				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
+				runCommand("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
+				runCommand("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
+
+				runCommand("apachectl", ["start"]);
+				Sys.sleep(2.5);
+				copyConfigs();
+				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
+				Sys.sleep(2.5);
+				runCommand("apachectl", ["restart"]);
+				Sys.sleep(2.5);
+			case "Linux":
+				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
+				runCommand("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
+				runCommand("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
+
+				copyConfigs();
+
+				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
+				runCommand("apachectl", ["start"]);
+			case name:
+				throw "System not supported: " + name;
+		}
+	}
+
 	static function integrationTests():Void {
+		setupLocalServer();
+
+		runCommand("haxelib", ["install", "tora"]);
+		infoMsg("starting tora...");
+		var tora = new sys.io.Process("haxelib", ["run", "tora"]);
+
 		runCommand("haxe", ["integration_tests.hxml"]);
 		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+
+		tora.close();
 	}
 
 	static function main():Void {
@@ -96,14 +170,15 @@ class RunCi {
 		#if ((haxe_ver >= 3.2) && (haxe_ver < 3.3))
 		compileServer();
 
-		switch (Sys.systemName()) {
+		switch (systemName()) {
 			case "Windows":
 				// skip for now
 				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
 				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case _:
+			case "Mac":
 				testServer();
 				integrationTests();
+			case _:
 		}
 		#end
 	}

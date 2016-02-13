@@ -26,6 +26,7 @@ class IntegrationTests extends TestBase {
 	override function setup():Void {
 		super.setup();
 
+		deleteDirectory(repo);
 		haxelibSetup(repo);
 	}
 
@@ -36,7 +37,7 @@ class IntegrationTests extends TestBase {
 		super.tearDown();
 	}
 
-	function test():Void {
+	function testEmpty():Void {
 		// the initial local and remote repos are empty
 
 		var installResult = haxelib(["install", "foo"]).result();
@@ -84,6 +85,7 @@ class IntegrationTests extends TestBase {
 		var out = p.stdout.readAll().toString();
 		var err = p.stderr.readAll().toString();
 		var code = p.exitCode();
+		p.close();
 		return {out:out, err:err, code:code};
 	}
 
@@ -95,17 +97,10 @@ class IntegrationTests extends TestBase {
 
 	static function main():Void {
 		var prevDir = Sys.getCwd();
-		Sys.setCwd("www");
-		var serverProcess = new Process("nekotools", ["server", "-rewrite"]);
-		Sys.setCwd(prevDir);
-		Sys.sleep(0.5);
 
 		var runner = new TestRunner();
 		runner.add(new IntegrationTests());
 		var success = runner.run();
-		
-		serverProcess.kill();
-		serverProcess.close();
 
 		if (!success) {
 			Sys.exit(1);
