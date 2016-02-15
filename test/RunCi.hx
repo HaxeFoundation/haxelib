@@ -123,8 +123,6 @@ Listen 2000
 
 				runCommand("mysql.server", ["start"]);
 				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
-				runCommand("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
-				runCommand("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
@@ -136,9 +134,6 @@ Listen 2000
 			case "Linux":
 				runCommand("sudo", ["apt-get", "update"]);
 				runCommand("sudo", ["apt-get", "install", "apache2"]);
-
-				runCommand("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
-				runCommand("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
 
 				copyConfigs();
 				writeApacheConf("haxelib_test.conf");
