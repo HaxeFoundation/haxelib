@@ -118,7 +118,6 @@ Listen 2000
 		}
 		switch (systemName()) {
 			case "Mac":
-				runCommand("brew", ["update"]);
 				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
 
 				runCommand("mysql.server", ["start"]);
@@ -132,7 +131,6 @@ Listen 2000
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
 			case "Linux":
-				runCommand("sudo", ["apt-get", "update"]);
 				runCommand("sudo", ["apt-get", "install", "apache2"]);
 
 				copyConfigs();
