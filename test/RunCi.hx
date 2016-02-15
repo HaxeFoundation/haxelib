@@ -108,7 +108,10 @@ Listen 2000
     Allow from all
 </Directory>
 ';
-			var confOut = append(confPath);
+			var confOut = if (exists(confPath))
+				append(confPath);
+			else
+				write(confPath);
 			confOut.writeString(confContent);
 			confOut.flush();
 			confOut.close();
@@ -131,14 +134,19 @@ Listen 2000
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
 			case "Linux":
-				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
+				runCommand("sudo", ["apt-get", "update"]);
+				runCommand("sudo", ["apt-get", "install", "apache2"]);
+
 				runCommand("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
 				runCommand("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
 
 				copyConfigs();
-
-				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
-				runCommand("apachectl", ["start"]);
+				writeApacheConf("haxelib_test.conf");
+				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib_test.conf"]), "/etc/apache2/conf.d/haxelib_test.conf"]);
+				runCommand("sudo", ["ln", "-s", Path.join([NEKOPATH, "libneko.so"]), "/usr/lib/libneko.so"]);
+				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["service", "apache2", "restart"]);
+				Sys.sleep(2.5);
 			case name:
 				throw "System not supported: " + name;
 		}
@@ -175,10 +183,9 @@ Listen 2000
 				// skip for now
 				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
 				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case "Mac":
+			case _:
 				testServer();
 				integrationTests();
-			case _:
 		}
 		#end
 	}
