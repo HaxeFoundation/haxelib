@@ -23,8 +23,16 @@ class IntegrationTests extends TestBase {
 		#end
 	}
 
+	function resetDB():Void {
+		Sys.command("mysql", ["-u", "root", "-e", "DROP DATABASE IF EXISTS haxelib_test;"]);
+		Sys.command("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
+		Sys.command("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
+	}
+
 	override function setup():Void {
 		super.setup();
+
+		resetDB();
 
 		deleteDirectory(repo);
 		haxelibSetup(repo);
@@ -33,6 +41,8 @@ class IntegrationTests extends TestBase {
 	override function tearDown():Void {
 		haxelibSetup(originalRepo);
 		deleteDirectory(repo);
+
+		resetDB();
 
 		super.tearDown();
 	}
