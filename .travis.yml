@@ -16,6 +16,13 @@ env:
     # deploy_key_decrypt
     - secure: "cWYcbB7z97sW4yZtz9qcYrEhFZktNjQMOraPm7Vy0FsCMqb4r314Fk8rJze+yDbOKGdsIz6VNHE8nlsQN3EgGiVFJnF8xv6GAlfHPuaVomP2vO7W0A+l7xVy2/326MQJP8JoMgdebDi71yxKeEhYA+mVliI9qql9yfD2YOBmilQ="
 
+install:
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+      sudo apt-get update;
+    elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+      brew update;
+    fi
+
 script:
   # run our CI script
   - haxe ci.hxml
