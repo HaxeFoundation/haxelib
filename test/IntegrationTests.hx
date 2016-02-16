@@ -23,6 +23,13 @@ class IntegrationTests extends TestBase {
 		#end
 	}
 
+	function assertSuccess(r:{out:String, err:String, code:Int}, ?pos:haxe.PosInfos):Void {
+		if (r.code != 0) {
+			throw r;
+		}
+		assertEquals(0, r.code, pos);
+	}
+
 	function resetDB():Void {
 		Sys.command("mysql", ["-u", "root", "-e", "DROP DATABASE IF EXISTS haxelib_test;"]);
 		Sys.command("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
@@ -54,7 +61,7 @@ class IntegrationTests extends TestBase {
 		assertTrue(installResult.code != 0);
 
 		var upgradeResult = haxelib(["upgrade"]).result();
-		assertEquals(0, upgradeResult.code);
+		assertSuccess(upgradeResult);
 
 		var updateResult = haxelib(["update", "foo"]).result();
 		// assertTrue(updateResult.code != 0);
@@ -63,14 +70,14 @@ class IntegrationTests extends TestBase {
 		assertTrue(removeResult.code != 0);
 
 		var upgradeResult = haxelib(["list"]).result();
-		assertEquals(0, upgradeResult.code);
+		assertSuccess(upgradeResult);
 
 		var removeResult = haxelib(["set", "foo", "0.0", "--always"]).result();
 		assertTrue(removeResult.code != 0);
 
 		var searchResult = haxelib(["search", "foo"]).result();
+		assertSuccess(searchResult);
 		assertTrue(searchResult.out.indexOf("0") >= 0);
-		assertEquals(0, searchResult.code);
 
 		var infoResult = haxelib(["info", "foo"]).result();
 		assertTrue(infoResult.code != 0);
@@ -79,16 +86,114 @@ class IntegrationTests extends TestBase {
 		assertTrue(userResult.code != 0);
 
 		var configResult = haxelib(["config"]).result();
-		assertEquals(0, configResult.code);
+		assertSuccess(configResult);
 
 		var pathResult = haxelib(["path", "foo"]).result();
 		assertTrue(pathResult.code != 0);
 
 		var versionResult = haxelib(["version"]).result();
-		assertEquals(0, versionResult.code);
+		assertSuccess(versionResult);
 
 		var helpResult = haxelib(["help"]).result();
-		assertEquals(0, helpResult.code);
+		assertSuccess(helpResult);
+	}
+
+	function testNormal():Void {
+		var bar = {
+			user: "Bar",
+			email: "bar@haxe.org",
+			fullname: "Bar",
+			pw: "barpassword",
+		};
+		var foo = {
+			user: "Foo",
+			email: "foo@haxe.org",
+			fullname: "Foo",
+			pw: "foopassword",
+		};
+
+		{
+			var r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["submit", "test/libraries/libBar.zip", bar.pw]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["search", "Bar"]).result();
+			assertSuccess(r);
+			assertTrue(r.out.indexOf("Bar") >= 0);
+		}
+
+		{
+			var r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["submit", "test/libraries/libFoo.zip", foo.pw]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["search", "Foo"]).result();
+			assertSuccess(r);
+			assertTrue(r.out.indexOf("Foo") >= 0);
+		}
+
+		{
+			var r = haxelib(["install", "Bar"]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["install", "Foo"]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["list", "Bar"]).result();
+			assertTrue(r.out.indexOf("Bar") >= 0);
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["list", "Foo"]).result();
+			assertSuccess(r);
+			assertTrue(r.out.indexOf("Foo") >= 0);
+		}
+
+		{
+			var r = haxelib(["list"]).result();
+			assertSuccess(r);
+			assertTrue(r.out.indexOf("Foo") >= 0);
+			assertTrue(r.out.indexOf("Bar") >= 0);
+		}
+
+		{
+			var r = haxelib(["remove", "Foo"]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["list", "Foo"]).result();
+			assertTrue(r.out.indexOf("Foo") < 0);
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["remove", "Bar"]).result();
+			assertSuccess(r);
+		}
+
+		{
+			var r = haxelib(["list", "Bar"]).result();
+			assertSuccess(r);
+			assertTrue(r.out.indexOf("Bar") < 0);
+		}
 	}
 
 	static public function result(p:Process):{out:String, err:String, code:Int} {
