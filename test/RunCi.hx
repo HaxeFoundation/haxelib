@@ -176,7 +176,10 @@ Listen 2000
 				// skip for now
 				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
 				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case _:
+			case "Linux":
+				// skip for now
+				// Unreleased fix: https://github.com/HaxeFoundation/neko/pull/34
+			case "Mac":
 				testServer();
 				integrationTests();
 		}
