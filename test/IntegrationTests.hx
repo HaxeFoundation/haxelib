@@ -1,7 +1,8 @@
 import haxe.unit.*;
 import haxe.io.*;
+import sys.*;
 import sys.io.*;
-
+using StringTools;
 using IntegrationTests;
 
 class IntegrationTests extends TestBase {
@@ -34,6 +35,19 @@ class IntegrationTests extends TestBase {
 		Sys.command("mysql", ["-u", "root", "-e", "DROP DATABASE IF EXISTS haxelib_test;"]);
 		Sys.command("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
 		Sys.command("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
+
+		var filesPath = "www/files/3.0";
+		for (item in FileSystem.readDirectory(filesPath)) {
+			if (item.endsWith(".zip")) {
+				FileSystem.deleteFile(Path.join([filesPath, item]));
+			}
+		}
+		var tmpPath = "tmp";
+		for (item in FileSystem.readDirectory(filesPath)) {
+			if (item.endsWith(".tmp")) {
+				FileSystem.deleteFile(Path.join([tmpPath, item]));
+			}
+		}
 	}
 
 	override function setup():Void {
