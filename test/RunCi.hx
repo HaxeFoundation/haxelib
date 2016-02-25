@@ -80,7 +80,8 @@ class RunCi {
 	}
 
 	static function setupLocalServer():Void {
-		var NEKOPATH = getEnv("NEKOPATH");
+		var ndllPath = getEnv("NEKOPATH");
+		if (ndllPath == null) ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
 		function copyConfigs():Void {
 			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
@@ -92,10 +93,23 @@ class RunCi {
 			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
 		}
 		function writeApacheConf(confPath:String):Void {
+			var hasModNeko = {
+				var p = new sys.io.Process("apachectl", ["-M"]);
+				var out = p.stdout.readAll().toString();
+				var has = out.indexOf("neko_module") >= 0;
+				p.close();
+				has;
+			}
+
 			var confContent =
+(
+	if (hasModNeko)
+		""
+	else
+		'LoadModule neko_module ${Path.join([ndllPath, "mod_neko2.ndll"])}'
+) +
 '
-LoadModule neko_module ${Path.join([NEKOPATH, "mod_neko2.ndll"])}
-LoadModule tora_module ${Path.join([NEKOPATH, "mod_tora2.ndll"])}
+LoadModule tora_module ${Path.join([ndllPath, "mod_tora2.ndll"])}
 AddHandler tora-handler .n
 Listen 2000
 <VirtualHost *:2000>
@@ -136,7 +150,6 @@ Listen 2000
 				copyConfigs();
 				writeApacheConf("haxelib_test.conf");
 				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib_test.conf"]), "/etc/apache2/conf.d/haxelib_test.conf"]);
-				runCommand("sudo", ["ln", "-s", Path.join([NEKOPATH, "libneko.so"]), "/usr/lib/libneko.so"]);
 				runCommand("sudo", ["a2enmod", "rewrite"]);
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
@@ -176,10 +189,7 @@ Listen 2000
 				// skip for now
 				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
 				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case "Linux":
-				// skip for now
-				// Unreleased fix: https://github.com/HaxeFoundation/neko/pull/34
-			case "Mac":
+			case _:
 				testServer();
 				integrationTests();
 		}
