@@ -30,8 +30,6 @@ class HaxelibTests {
 	}
 
 	static function main():Void {
-		prepare();
-
 		var r = new TestRunner();
 
 		r.add(new TestSemVer());
