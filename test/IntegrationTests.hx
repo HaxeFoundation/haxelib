@@ -2,6 +2,7 @@ import haxe.unit.*;
 import haxe.io.*;
 import sys.*;
 import sys.io.*;
+import haxelib.*;
 using StringTools;
 using IntegrationTests;
 
@@ -27,6 +28,13 @@ class IntegrationTests extends TestBase {
 		fullname: "Foo",
 		pw: "foopassword",
 	};
+	public var clientVer(get, null):SemVer;
+	function get_clientVer() {
+		return if (clientVer != null)
+			clientVer;
+		else
+			clientVer = SemVer.ofString(haxelib(["version"]).result().out);
+	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
 		var p = #if system_haxelib
@@ -109,6 +117,7 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestSimple());
 		runner.add(new tests.integration.TestUpgrade());
 		runner.add(new tests.integration.TestUpdate());
+		runner.add(new tests.integration.TestList());
 		runner.add(new tests.integration.TestSet());
 		runner.add(new tests.integration.TestInfo());
 		runner.add(new tests.integration.TestUser());
