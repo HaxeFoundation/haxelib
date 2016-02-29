@@ -49,7 +49,7 @@ class TestUpgrade extends IntegrationTests {
 		}
 
 		{
-			var r = haxelib(["upgrade", "--always"]).result();
+			var r = haxelib(["upgrade"], "y\n").result();
 			assertSuccess(r);
 		}
 

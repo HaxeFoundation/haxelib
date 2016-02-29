@@ -28,12 +28,19 @@ class IntegrationTests extends TestBase {
 		pw: "foopassword",
 	};
 
-	function haxelib(args:Array<String>):Process {
-		#if system_haxelib
-			return new Process("haxelib", ["-R", siteUrl].concat(args));
+	function haxelib(args:Array<String>, ?input:String):Process {
+		var p = #if system_haxelib
+			new Process("haxelib", ["-R", siteUrl].concat(args));
 		#else
-			return new Process("neko", [haxelibBin, "-R", siteUrl].concat(args));
+			new Process("neko", [haxelibBin, "-R", siteUrl].concat(args));
 		#end
+
+		if (input != null) {
+			p.stdin.writeString(input);
+			p.stdin.close();
+		}
+
+		return p;
 	}
 
 	function assertSuccess(r:{out:String, err:String, code:Int}, ?pos:haxe.PosInfos):Void {
