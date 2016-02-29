@@ -100,6 +100,7 @@ class IntegrationTests extends TestBase {
 		var runner = new TestRunner();
 		runner.add(new tests.integration.TestEmpty());
 		runner.add(new tests.integration.TestSimple());
+		runner.add(new tests.integration.TestDev());
 		var success = runner.run();
 
 		if (!success) {
