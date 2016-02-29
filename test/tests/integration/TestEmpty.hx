@@ -22,7 +22,7 @@ class TestEmpty extends IntegrationTests {
 		var upgradeResult = haxelib(["list"]).result();
 		assertSuccess(upgradeResult);
 
-		var removeResult = haxelib(["set", "foo", "0.0", "--always"]).result();
+		var removeResult = haxelib(["set", "foo", "0.0"], "y\n").result();
 		assertTrue(removeResult.code != 0);
 
 		var searchResult = haxelib(["search", "foo"]).result();
