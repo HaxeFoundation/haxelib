@@ -35,7 +35,7 @@ class TestSet extends IntegrationTests {
 		{
 			var r = haxelib(["list", "Bar"]).result();
 			assertSuccess(r);
-			assertEquals("Bar: [2.0.0]", r.out.rtrim());
+			assertTrue(r.out.indexOf("[2.0.0]") >= 0);
 		}
 
 		{
@@ -46,7 +46,8 @@ class TestSet extends IntegrationTests {
 		{
 			var r = haxelib(["list", "Bar"]).result();
 			assertSuccess(r);
-			assertEquals("Bar: 1.0.0 [2.0.0]", r.out.rtrim());
+			assertTrue(r.out.indexOf("[2.0.0]") >= 0);
+			assertTrue(r.out.indexOf("1.0.0") >= 0);
 		}
 
 		{
@@ -57,7 +58,8 @@ class TestSet extends IntegrationTests {
 		{
 			var r = haxelib(["list", "Bar"]).result();
 			assertSuccess(r);
-			assertEquals("Bar: [1.0.0] 2.0.0", r.out.rtrim());
+			assertTrue(r.out.indexOf("[1.0.0]") >= 0);
+			assertTrue(r.out.indexOf("2.0.0") >= 0);
 		}
 
 		{
@@ -68,7 +70,8 @@ class TestSet extends IntegrationTests {
 		{
 			var r = haxelib(["list", "Bar"]).result();
 			assertSuccess(r);
-			assertEquals("Bar: 1.0.0 [2.0.0]", r.out.rtrim());
+			assertTrue(r.out.indexOf("1.0.0") >= 0);
+			assertTrue(r.out.indexOf("[2.0.0]") >= 0);
 		}
 	}
 }
