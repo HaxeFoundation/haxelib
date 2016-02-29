@@ -109,6 +109,7 @@ Build files:
 * integration_tests.hxml: Build and run tests that test haxelib client and server together.
 * haxelib.hxml: Alias of client.hxml.
 * package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib_client](http://lib.haxe.org/p/haxelib_client/).
+* prepare_tests.hxml: Package the test libs.
 * ci.hxml: Used by our CIs, TravisCI and AppVeyor.
 
 Folders:
