@@ -7,5 +7,5 @@
 	"version": "0.0.1",
 	"releasenote": "Initial release, everything is working correctly",
 	"classPath": "lib/src",
-	"contributors": ["Foo"]
+	"contributors": ["Bar"]
 }

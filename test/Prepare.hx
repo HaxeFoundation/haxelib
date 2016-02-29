@@ -1,5 +1,6 @@
 import sys.*;
 import sys.io.*;
+import haxe.io.*;
 using StringTools;
 
 class Prepare {
@@ -40,10 +41,12 @@ class Prepare {
 		/*
 			(re)package the dummy libraries
 		*/
-		for (item in FileSystem.readDirectory("test/libraries")) {
-			if (!item.startsWith("lib") || item.endsWith(".zip"))
-				continue;
-			zipDir('test/libraries/${item}', 'test/libraries/${item}.zip');
+		var libsPath = "test/libraries";
+		for (item in FileSystem.readDirectory(libsPath)) {
+			var path = Path.join([libsPath, item]);
+			if (FileSystem.isDirectory(path)) {
+				zipDir(path, 'test/libraries/${item}.zip');
+			}
 		}
 	}
 }
