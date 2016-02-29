@@ -14,7 +14,19 @@ class IntegrationTests extends TestBase {
 		p.close();
 		repo;
 	};
-	static var repo(default, never) = "repo_integration_tests";
+	static public var repo(default, never) = "repo_integration_tests";
+	static public var bar(default, never) = {
+		user: "Bar",
+		email: "bar@haxe.org",
+		fullname: "Bar",
+		pw: "barpassword",
+	};
+	static public var foo(default, never) = {
+		user: "Foo",
+		email: "foo@haxe.org",
+		fullname: "Foo",
+		pw: "foopassword",
+	};
 
 	function haxelib(args:Array<String>):Process {
 		#if system_haxelib
@@ -68,148 +80,6 @@ class IntegrationTests extends TestBase {
 		super.tearDown();
 	}
 
-	function testEmpty():Void {
-		// the initial local and remote repos are empty
-
-		var installResult = haxelib(["install", "foo"]).result();
-		assertTrue(installResult.code != 0);
-
-		var upgradeResult = haxelib(["upgrade"]).result();
-		assertSuccess(upgradeResult);
-
-		var updateResult = haxelib(["update", "foo"]).result();
-		// assertTrue(updateResult.code != 0);
-
-		var removeResult = haxelib(["remove", "foo"]).result();
-		assertTrue(removeResult.code != 0);
-
-		var upgradeResult = haxelib(["list"]).result();
-		assertSuccess(upgradeResult);
-
-		var removeResult = haxelib(["set", "foo", "0.0", "--always"]).result();
-		assertTrue(removeResult.code != 0);
-
-		var searchResult = haxelib(["search", "foo"]).result();
-		assertSuccess(searchResult);
-		assertTrue(searchResult.out.indexOf("0") >= 0);
-
-		var infoResult = haxelib(["info", "foo"]).result();
-		assertTrue(infoResult.code != 0);
-
-		var userResult = haxelib(["user", "foo"]).result();
-		assertTrue(userResult.code != 0);
-
-		var configResult = haxelib(["config"]).result();
-		assertSuccess(configResult);
-
-		var pathResult = haxelib(["path", "foo"]).result();
-		assertTrue(pathResult.code != 0);
-
-		var versionResult = haxelib(["version"]).result();
-		assertSuccess(versionResult);
-
-		var helpResult = haxelib(["help"]).result();
-		assertSuccess(helpResult);
-	}
-
-	function testNormal():Void {
-		var bar = {
-			user: "Bar",
-			email: "bar@haxe.org",
-			fullname: "Bar",
-			pw: "barpassword",
-		};
-		var foo = {
-			user: "Foo",
-			email: "foo@haxe.org",
-			fullname: "Foo",
-			pw: "foopassword",
-		};
-
-		{
-			var r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["submit", "test/libraries/libBar.zip", bar.pw]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["search", "Bar"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Bar") >= 0);
-		}
-
-		{
-			var r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["submit", "test/libraries/libFoo.zip", foo.pw]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["search", "Foo"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Foo") >= 0);
-		}
-
-		{
-			var r = haxelib(["install", "Bar"]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["install", "Foo"]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["list", "Bar"]).result();
-			assertTrue(r.out.indexOf("Bar") >= 0);
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["list", "Foo"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Foo") >= 0);
-		}
-
-		{
-			var r = haxelib(["list"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Foo") >= 0);
-			assertTrue(r.out.indexOf("Bar") >= 0);
-		}
-
-		{
-			var r = haxelib(["remove", "Foo"]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["list", "Foo"]).result();
-			assertTrue(r.out.indexOf("Foo") < 0);
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["remove", "Bar"]).result();
-			assertSuccess(r);
-		}
-
-		{
-			var r = haxelib(["list", "Bar"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Bar") < 0);
-		}
-	}
-
 	static public function result(p:Process):{out:String, err:String, code:Int} {
 		var out = p.stdout.readAll().toString();
 		var err = p.stderr.readAll().toString();
@@ -228,7 +98,8 @@ class IntegrationTests extends TestBase {
 		var prevDir = Sys.getCwd();
 
 		var runner = new TestRunner();
-		runner.add(new IntegrationTests());
+		runner.add(new tests.integration.TestEmpty());
+		runner.add(new tests.integration.TestSimple());
 		var success = runner.run();
 
 		if (!success) {
