@@ -7,19 +7,27 @@ env:
 
 matrix:
   include:
-    # Linux
+    # haxe development + neko master
     - os: linux
-      language: haxe
-      haxe: development
-      sudo: required
-      services: [docker]
+      language: generic
+      install:
+        - sudo add-apt-repository ppa:haxe/snapshots -y
+        - sudo apt-get update
+        - sudo apt-get install haxe neko-dev libapache2-mod-neko -y
+        - mkdir ~/haxelib && haxelib setup ~/haxelib
+    # haxe 3.2.1 + neko master
     - os: linux
-      language: haxe
-      haxe: 3.2.1
+      language: generic
       sudo: required
-      services: [docker]
       env:
         - DEPLOY=1
+      install:
+        - sudo add-apt-repository ppa:haxe/snapshots -y
+        - sudo add-apt-repository ppa:haxe/releases -y
+        - sudo apt-get update
+        - sudo apt-get install haxe=1:3.2.1* neko-dev libapache2-mod-neko -y
+        - mkdir ~/haxelib && haxelib setup ~/haxelib
+    # haxe 3.1.3 + neko 2.0.0
     - os: linux
       language: haxe
       haxe: 3.1.3
@@ -38,10 +46,6 @@ matrix:
 install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       brew update;
-      brew cask install virtualbox &&
-      brew install docker docker-compose docker-machine &&
-      docker-machine create --driver virtualbox default &&
-      eval "$(docker-machine env default)";
     fi
 
 script:
