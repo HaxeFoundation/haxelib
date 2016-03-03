@@ -8,6 +8,8 @@ services:
       - ../www:/var/www/html
   dbHost:
     image: mariadb
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=haxelib
