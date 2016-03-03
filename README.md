@@ -49,7 +49,7 @@ You can of course combine both approaches, giving you the isolation provided by 
 
 A solution that combines the strengths of both approaches is in the making. Stay tuned.
 
------
+## Development info
 
 ### Running the website for development
 
@@ -89,9 +89,9 @@ chmod a+w www/legacy
 chmod a+w www/haxelib.db
 chmod a+w www/legacy/haxelib.db
 
-# Start the server
-cd www
-nekotools server -rewrite
+# Start the server using Docker
+# Make sure "www/dbconfig.json" matches with the config in "test/docker-compose.yml"
+docker-compose -f test/docker-compose.yml up
 ```
 
 ### About this repo
