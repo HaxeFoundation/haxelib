@@ -1,4 +1,5 @@
 import haxe.unit.*;
+import haxe.*;
 import haxe.io.*;
 import sys.*;
 import sys.io.*;
@@ -8,7 +9,12 @@ using IntegrationTests;
 
 class IntegrationTests extends TestBase {
 	var haxelibBin:String = Path.join([Sys.getCwd(), "bin", "haxelib.n"]);
-	var siteUrl:String = "http://localhost:2000/";
+	var server:String = switch (Sys.getEnv("HAXELIB_SERVER")) {
+		case null:
+			"localhost";
+		case url:
+			url;
+	};
 	static var originalRepo(default, never) = {
 		var p = new Process("haxelib", ["config"]);
 		var repo = Path.normalize(p.stdout.readLine());
@@ -37,6 +43,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
+		var siteUrl = 'http://${server}/';
 		var p = #if system_haxelib
 			new Process("haxelib", ["-R", siteUrl].concat(args));
 		#else
@@ -58,10 +65,12 @@ class IntegrationTests extends TestBase {
 		assertEquals(0, r.code, pos);
 	}
 
+	var dbConfig:Dynamic = Json.parse(File.getContent("www/dbconfig.json"));
+	var dbCnx:sys.db.Connection;
 	function resetDB():Void {
-		Sys.command("mysql", ["-u", "root", "-e", "DROP DATABASE IF EXISTS haxelib_test;"]);
-		Sys.command("mysql", ["-u", "root", "-e", "CREATE DATABASE haxelib_test;"]);
-		Sys.command("mysql", ["-u", "root", "-e", "grant all on haxelib_test.* to travis@localhost;"]);
+		var db = dbConfig.database;
+		dbCnx.request('DROP DATABASE IF EXISTS ${db};');
+		dbCnx.request('CREATE DATABASE ${db};');
 
 		var filesPath = "www/files/3.0";
 		for (item in FileSystem.readDirectory(filesPath)) {
@@ -80,6 +89,13 @@ class IntegrationTests extends TestBase {
 	override function setup():Void {
 		super.setup();
 
+		dbCnx = sys.db.Mysql.connect({
+			user: dbConfig.user,
+			pass: dbConfig.pass,
+			host: server,
+			port: dbConfig.port,
+			database: dbConfig.database,
+		});
 		resetDB();
 
 		deleteDirectory(repo);
@@ -91,6 +107,7 @@ class IntegrationTests extends TestBase {
 		deleteDirectory(repo);
 
 		resetDB();
+		dbCnx.close();
 
 		super.tearDown();
 	}
