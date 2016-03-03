@@ -79,96 +79,22 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
-	static function setupLocalServer():Void {
-		var ndllPath = getEnv("NEKOPATH");
-		if (ndllPath == null) ndllPath = "/usr/lib/neko";
-		var DocumentRoot = Path.join([getCwd(), "www"]);
-		function copyConfigs():Void {
-			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
-				"user": "travis",
-				"pass": "",
-				"host": "localhost",
-				"database": "haxelib_test"
-			}));
-			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
-		}
-		function writeApacheConf(confPath:String):Void {
-			var hasModNeko = {
-				var p = new sys.io.Process("apachectl", ["-M"]);
-				var out = p.stdout.readAll().toString();
-				var has = out.indexOf("neko_module") >= 0;
-				p.close();
-				has;
-			}
-
-			var confContent =
-(
-	if (hasModNeko)
-		""
-	else
-		'LoadModule neko_module ${Path.join([ndllPath, "mod_neko2.ndll"])}'
-) +
-'
-LoadModule tora_module ${Path.join([ndllPath, "mod_tora2.ndll"])}
-AddHandler tora-handler .n
-Listen 2000
-<VirtualHost *:2000>
-	DocumentRoot "$DocumentRoot"
-</VirtualHost>
-<Directory "$DocumentRoot">
-    Options Indexes FollowSymLinks
-    AllowOverride All
-    Order allow,deny
-    Allow from all
-</Directory>
-';
-			var confOut = if (exists(confPath))
-				append(confPath);
-			else
-				write(confPath);
-			confOut.writeString(confContent);
-			confOut.flush();
-			confOut.close();
-		}
-		switch (systemName()) {
-			case "Mac":
-				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
-
-				runCommand("mysql.server", ["start"]);
-				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
-
-				runCommand("apachectl", ["start"]);
-				Sys.sleep(2.5);
-				copyConfigs();
-				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
-				Sys.sleep(2.5);
-				runCommand("apachectl", ["restart"]);
-				Sys.sleep(2.5);
-			case "Linux":
-				runCommand("sudo", ["apt-get", "install", "apache2"]);
-
-				copyConfigs();
-				writeApacheConf("haxelib_test.conf");
-				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib_test.conf"]), "/etc/apache2/conf.d/haxelib_test.conf"]);
-				runCommand("sudo", ["a2enmod", "rewrite"]);
-				runCommand("sudo", ["service", "apache2", "restart"]);
-				Sys.sleep(2.5);
-			case name:
-				throw "System not supported: " + name;
-		}
-	}
-
 	static function integrationTests():Void {
-		setupLocalServer();
-
-		runCommand("haxelib", ["install", "tora"]);
-		infoMsg("starting tora...");
-		var tora = new sys.io.Process("haxelib", ["run", "tora"]);
+		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "up", "-d"]);
+		var serverIP = {
+			var p = new sys.io.Process("docker-machine", ["ip"]);
+			var ip = p.stdout.readLine();
+			p.close();
+			ip;
+		}
+		Sys.putEnv("HAXELIB_SERVER", serverIP);
+		infoMsg("wait for 5 seconds...");
+		Sys.sleep(5.0);
 
 		runCommand("haxe", ["integration_tests.hxml"]);
 		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 
-		tora.close();
+		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "down"]);
 	}
 
 	static function main():Void {
