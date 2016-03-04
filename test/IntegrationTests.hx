@@ -15,6 +15,12 @@ class IntegrationTests extends TestBase {
 		case url:
 			url;
 	};
+	var serverPort = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
+		case null:
+			80;
+		case port:
+			Std.parseInt(port);
+	};
 	static var originalRepo(default, never) = {
 		var p = new Process("haxelib", ["config"]);
 		var repo = Path.normalize(p.stdout.readLine());
@@ -43,7 +49,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
-		var siteUrl = 'http://${server}/';
+		var siteUrl = 'http://${server}:${serverPort}/';
 		var p = #if system_haxelib
 			new Process("haxelib", ["-R", siteUrl].concat(args));
 		#else
