@@ -218,8 +218,8 @@ Listen 2000
 		compileClient();
 		testClient();
 
-		// the server can only be compiled with haxe 3.2.x for now...
-		#if ((haxe_ver >= 3.2) && (haxe_ver < 3.3))
+		// the server can only be compiled with haxe 3.2+
+		#if (haxe_ver >= 3.2)
 		compileServer();
 
 		switch (systemName()) {
