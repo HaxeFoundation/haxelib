@@ -53,6 +53,8 @@ A solution that combines the strengths of both approaches is in the making. Stay
 
 ### Running the website for development
 
+Initial compilation and setup:
+
 ```
 # Initial checkout
 git clone https://github.com/HaxeFoundation/haxelib
@@ -88,11 +90,28 @@ chmod a+w www/files/3.0
 chmod a+w www/legacy
 chmod a+w www/haxelib.db
 chmod a+w www/legacy/haxelib.db
+```
 
-# Start the server using Docker
-# Make sure "www/dbconfig.json" matches with the config in "test/docker-compose.yml"
+Start a local development server using [Docker](https://www.docker.com/):
+```
 docker-compose -f test/docker-compose.yml up
 ```
+Make sure "www/dbconfig.json" matches with the config in "test/docker-compose.yml".
+The server should now be available at `http://$(docker-machine ip)/`.
+To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
+```
+neko bin/haxelib.n -R http://$(docker-machine ip)/ search foo
+```
+
+We can keep the server running and try modify the contents in the "www" directory, or even recompile the server code (`haxe server.hxml`). Changes will be picked up immediately.
+
+To run integration tests with the local development server, set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT` and then compile "integration_tests.hxml":
+```
+export HAXELIB_SERVER=$(docker-machine ip)
+export HAXELIB_SERVER_PORT=80
+haxe integration_tests.hxml
+```
+Note that the integration tests will reset the server database before and after each test.
 
 ### About this repo
 
