@@ -83,12 +83,14 @@ class RunCi {
 		var ndllPath = getEnv("NEKOPATH");
 		if (ndllPath == null) ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
+		var dbConfigPath = Path.join(["src", "haxelib", "server", "dbconfig.json.example"]);
+		var dbConfig = Json.parse(getContent(dbConfigPath));
 		function copyConfigs():Void {
 			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
-				"user": "travis",
-				"pass": "",
-				"host": "localhost",
-				"database": "haxelib_test"
+				user: dbConfig.user,
+				pass: dbConfig.pass,
+				host: "localhost",
+				database: dbConfig.database,
 			}));
 			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
 		}
@@ -130,12 +132,17 @@ Listen 2000
 			confOut.flush();
 			confOut.close();
 		}
+		function configDb():Void {
+			runCommand("mysql", ["-u", "root", "-e", 'create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';']);
+			runCommand("mysql", ["-u", "root", "-e", 'create database ${dbConfig.database};']);
+			runCommand("mysql", ["-u", "root", "-e", 'grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';']);
+		}
 		switch (systemName()) {
 			case "Mac":
 				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
 
 				runCommand("mysql.server", ["start"]);
-				runCommand("mysql", ["-u", "root", "-e", "create user if not exists travis@localhost;"]);
+				configDb();
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
@@ -145,17 +152,23 @@ Listen 2000
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
 			case "Linux":
+				configDb();
+
 				runCommand("sudo", ["apt-get", "install", "apache2"]);
 
 				copyConfigs();
-				writeApacheConf("haxelib_test.conf");
-				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib_test.conf"]), "/etc/apache2/conf.d/haxelib_test.conf"]);
+				writeApacheConf("haxelib.conf");
+				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf.d/haxelib.conf"]);
 				runCommand("sudo", ["a2enmod", "rewrite"]);
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
 			case name:
 				throw "System not supported: " + name;
 		}
+		Sys.putEnv("HAXELIB_SERVER", "localhost");
+		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
+
+		runCommand("haxelib", ["install", "tora"]);
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
@@ -167,6 +180,7 @@ Listen 2000
 			ip;
 		}
 		Sys.putEnv("HAXELIB_SERVER", serverIP);
+		Sys.putEnv("HAXELIB_SERVER_PORT", "80");
 		infoMsg("wait for 5 seconds...");
 		Sys.sleep(5.0);
 
@@ -175,16 +189,22 @@ Listen 2000
 		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "down"]);
 	}
 
+	static function runWithLocalServer(test:Void->Void):Void {
+		var tora = new sys.io.Process("haxelib", ["run", "tora"]);
+		test();
+		tora.close();
+	}
+
 	static function integrationTests():Void {
-		if (Sys.getEnv("CI") != null) {
-			setupLocalServer();
+		function test():Void {
 			runCommand("haxe", ["integration_tests.hxml"]);
 			runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+		}
+		if (Sys.getEnv("CI") != null) {
+			setupLocalServer();
+			runWithLocalServer(test);
 		} else {
-			runWithDockerServer(function(){
-				runCommand("haxe", ["integration_tests.hxml"]);
-				runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
-			});
+			runWithDockerServer(test);
 		}
 	}
 
