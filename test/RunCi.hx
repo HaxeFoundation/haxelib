@@ -198,7 +198,13 @@ Listen 2000
 	static function integrationTests():Void {
 		function test():Void {
 			runCommand("haxe", ["integration_tests.hxml"]);
-			runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+
+			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
+			 	case null, "development":
+			 		// pass
+			 	case _:
+			 		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+			}
 		}
 		if (Sys.getEnv("CI") != null) {
 			setupLocalServer();
