@@ -86,11 +86,14 @@ class FsUtils {
             if (isBrokenSymlink(path)) {
                 safeDelete(path);
             } else if (FileSystem.isDirectory(path)) {
-                // if isSymLink:
-                if (!IS_WINDOWS && path != FileSystem.fullPath(path))
-                    safeDelete(path);
-                else
+                if (!IS_WINDOWS) {
+                    // try to delete it as a file first - in case of path
+                    // being a symlink, it will success
+                    if (!safeDelete(path))
+                        deleteRec(path);
+                } else {
                     deleteRec(path);
+                }
             } else {
                 safeDelete(path);
             }
