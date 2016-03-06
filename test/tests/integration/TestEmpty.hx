@@ -1,5 +1,7 @@
 package tests.integration;
 
+import haxe.*;
+import haxe.io.*;
 import IntegrationTests.*;
 using IntegrationTests;
 
@@ -46,5 +48,28 @@ class TestEmpty extends IntegrationTests {
 
 		var helpResult = haxelib(["help"]).result();
 		assertSuccess(helpResult);
+	}
+
+	function testWebsite():Void {
+		// home page
+		assertNoError(function() Http.requestUrl(serverUrl));
+
+		// Haxelib Tags
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "t"])));
+
+		// All Haxelibs
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "all"])));
+
+		// Haxelib Contributors
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "u"])));
+
+		// docs
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "documentation"])));
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "documentation/using-haxelib"])));
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "documentation/creating-a-haxelib-package/"])));
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "documentation/creating-a-haxelib-package/"])));
+
+		// RSS feed
+		assertNoError(function() Http.requestUrl(Path.join([serverUrl, "rss"])));
 	}
 }

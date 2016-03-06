@@ -9,18 +9,21 @@ using IntegrationTests;
 
 class IntegrationTests extends TestBase {
 	var haxelibBin:String = Path.join([Sys.getCwd(), "bin", "haxelib.n"]);
-	var server:String = switch (Sys.getEnv("HAXELIB_SERVER")) {
+	public var server(default, null):String = switch (Sys.getEnv("HAXELIB_SERVER")) {
 		case null:
 			"localhost";
 		case url:
 			url;
 	};
-	var serverPort = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
+	public var serverPort(default, null) = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
 		case null:
 			80;
 		case port:
 			Std.parseInt(port);
 	};
+	public var serverUrl(get, null):String;
+	function get_serverUrl() return serverUrl != null ? serverUrl : serverUrl = 'http://${server}:${serverPort}/';
+
 	static var originalRepo(default, never) = {
 		var p = new Process("haxelib", ["config"]);
 		var repo = Path.normalize(p.stdout.readLine());
@@ -49,11 +52,10 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
-		var siteUrl = 'http://${server}:${serverPort}/';
 		var p = #if system_haxelib
-			new Process("haxelib", ["-R", siteUrl].concat(args));
+			new Process("haxelib", ["-R", serverUrl].concat(args));
 		#else
-			new Process("neko", [haxelibBin, "-R", siteUrl].concat(args));
+			new Process("neko", [haxelibBin, "-R", serverUrl].concat(args));
 		#end
 
 		if (input != null) {
@@ -69,6 +71,11 @@ class IntegrationTests extends TestBase {
 			throw r;
 		}
 		assertEquals(0, r.code, pos);
+	}
+
+	function assertNoError(f:Void->Void):Void {
+		f();
+		assertTrue(true);
 	}
 
 	var dbConfig:Dynamic = Json.parse(File.getContent("www/dbconfig.json"));
