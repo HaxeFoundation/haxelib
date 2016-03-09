@@ -21,8 +21,6 @@
  */
 package haxelib.client;
 
-import sys.FileSystem;
-
 class Cli {
 	public static var defaultAnswer:Null<Bool>;
 
