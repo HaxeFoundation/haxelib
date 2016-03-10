@@ -1,5 +1,6 @@
 import Sys.*;
 import haxe.*;
+import haxe.io.*;
 import sys.FileSystem.*;
 import sys.io.File.*;
 
@@ -78,25 +79,156 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
+	static function setupLocalServer():Void {
+		var ndllPath = getEnv("NEKOPATH");
+		if (ndllPath == null) ndllPath = "/usr/lib/neko";
+		var DocumentRoot = Path.join([getCwd(), "www"]);
+		var dbConfigPath = Path.join(["src", "haxelib", "server", "dbconfig.json.example"]);
+		var dbConfig = Json.parse(getContent(dbConfigPath));
+		function copyConfigs():Void {
+			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
+				user: dbConfig.user,
+				pass: dbConfig.pass,
+				host: "localhost",
+				database: dbConfig.database,
+			}));
+			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
+		}
+		function writeApacheConf(confPath:String):Void {
+			var hasModNeko = {
+				var p = new sys.io.Process("apachectl", ["-M"]);
+				var out = p.stdout.readAll().toString();
+				var has = out.indexOf("neko_module") >= 0;
+				p.close();
+				has;
+			}
+
+			var confContent =
+(
+	if (hasModNeko)
+		""
+	else
+		'LoadModule neko_module ${Path.join([ndllPath, "mod_neko2.ndll"])}'
+) +
+'
+LoadModule tora_module ${Path.join([ndllPath, "mod_tora2.ndll"])}
+AddHandler tora-handler .n
+Listen 2000
+<VirtualHost *:2000>
+	DocumentRoot "$DocumentRoot"
+</VirtualHost>
+<Directory "$DocumentRoot">
+    Options Indexes FollowSymLinks
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+</Directory>
+';
+			var confOut = if (exists(confPath))
+				append(confPath);
+			else
+				write(confPath);
+			confOut.writeString(confContent);
+			confOut.flush();
+			confOut.close();
+		}
+		function configDb():Void {
+			runCommand("mysql", ["-u", "root", "-e", 'create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';']);
+			runCommand("mysql", ["-u", "root", "-e", 'create database ${dbConfig.database};']);
+			runCommand("mysql", ["-u", "root", "-e", 'grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';']);
+		}
+		switch (systemName()) {
+			case "Mac":
+				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
+
+				runCommand("mysql.server", ["start"]);
+				configDb();
+
+				runCommand("apachectl", ["start"]);
+				Sys.sleep(2.5);
+				copyConfigs();
+				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
+				Sys.sleep(2.5);
+				runCommand("apachectl", ["restart"]);
+				Sys.sleep(2.5);
+			case "Linux":
+				configDb();
+
+				runCommand("sudo", ["apt-get", "install", "apache2"]);
+
+				copyConfigs();
+				writeApacheConf("haxelib.conf");
+				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf.d/haxelib.conf"]);
+				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["service", "apache2", "restart"]);
+				Sys.sleep(2.5);
+			case name:
+				throw "System not supported: " + name;
+		}
+		Sys.putEnv("HAXELIB_SERVER", "localhost");
+		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
+
+		runCommand("haxelib", ["install", "tora"]);
+	}
+
+	static function runWithDockerServer(test:Void->Void):Void {
+		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "up", "-d"]);
+		var serverIP = {
+			var p = new sys.io.Process("docker-machine", ["ip"]);
+			var ip = p.stdout.readLine();
+			p.close();
+			ip;
+		}
+		Sys.putEnv("HAXELIB_SERVER", serverIP);
+		Sys.putEnv("HAXELIB_SERVER_PORT", "80");
+		infoMsg("wait for 5 seconds...");
+		Sys.sleep(5.0);
+
+		test();
+
+		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "down"]);
+	}
+
+	static function runWithLocalServer(test:Void->Void):Void {
+		var tora = new sys.io.Process("haxelib", ["run", "tora"]);
+		test();
+		tora.close();
+	}
+
 	static function integrationTests():Void {
-		runCommand("haxe", ["integration_tests.hxml"]);
-		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+		function test():Void {
+			runCommand("haxe", ["integration_tests.hxml"]);
+
+			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
+			 	case null, "development":
+			 		// pass
+			 	case _:
+			 		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+			}
+		}
+		if (Sys.getEnv("CI") != null) {
+			setupLocalServer();
+			runWithLocalServer(test);
+		} else {
+			runWithDockerServer(test);
+		}
 	}
 
 	static function main():Void {
 		// Note that package.zip output is also used by client tests, so it has to be run before that.
 		runCommand("haxe", ["package.hxml"]);
+		runCommand("haxe", ["prepare_tests.hxml"]);
 
 		compileLegacyClient();
 		compileLegacyServer();
 		compileClient();
 		testClient();
 
-		// the server can only be compiled with haxe 3.2.x for now...
-		#if ((haxe_ver >= 3.2) && (haxe_ver < 3.3))
+		// the server can only be compiled with haxe 3.2+
+		#if (haxe_ver >= 3.2)
 		compileServer();
 
-		switch (Sys.systemName()) {
+		switch (systemName()) {
 			case "Windows":
 				// skip for now
 				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".

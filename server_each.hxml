@@ -7,3 +7,5 @@
 -lib cleversort
 -D server
 -D getter_support
+# https://github.com/HaxeFoundation/haxe/issues/4903
+--macro keep('StringBuf')
