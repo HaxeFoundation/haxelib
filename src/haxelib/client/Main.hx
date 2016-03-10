@@ -556,7 +556,8 @@ class Main {
 
 		// processing might take some time, make sure we wait
 		print("Processing file.... ");
-		haxe.remoting.HttpConnection.TIMEOUT = 1000;
+		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
+			haxe.remoting.HttpConnection.TIMEOUT = 1000;
 		// ask the server to register the sent file
 		var msg = site.processSubmit(id,user,password);
 		print(msg);
