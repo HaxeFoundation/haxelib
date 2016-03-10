@@ -1344,7 +1344,7 @@ class Main {
 			if (infos.main == null) {
 				if( !FileSystem.exists('$vdir/run.n') )
 					throw 'Library $project version $version does not have a run script';
-				["neko", "run.n"];
+				["neko", changeDir ? "run.n" : vdir + "/run.n"];
 			} else {
 				var deps = infos.dependencies.toArray();
 				deps.push( { name: project, version: DependencyVersion.DEFAULT } );
