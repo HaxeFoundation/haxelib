@@ -1155,9 +1155,12 @@ class Main {
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" does not have version "+version+" installed";
 
-		var cur = getCurrent(pdir);
+		var cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
 			throw "Can't remove current version of library "+prj;
+		var dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
+		if( dev == vdir )
+			throw "Can't remove dev version of library "+prj;
 		deleteRec(vdir);
 		print("Library "+prj+" version "+version+" removed");
 	}
