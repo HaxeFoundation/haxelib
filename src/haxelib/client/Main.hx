@@ -800,7 +800,18 @@ class Main {
 
 	function doInstallDependencies( dependencies:Array<Dependency> )
 	{
+		var rep = getRepository();
+
 		for( d in dependencies ) {
+			if( d.version == "" ) {
+				var pdir = rep + Data.safe(d.name);
+				var dev = try getDev(pdir) catch (_:Dynamic) null;
+
+				if (dev != null) { // no version specified and dev set, no need to install dependency
+					continue;
+				}
+			}
+
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
 				d.version = site.infos(d.name).getLatest();
