@@ -52,12 +52,14 @@ class ProgressOut extends haxe.io.Output {
 
 	var o : haxe.io.Output;
 	var cur : Int;
+	var startSize : Int;
 	var max : Int;
 	var start : Float;
 
-	public function new(o) {
+	public function new(o, currentSize) {
 		this.o = o;
-		cur = 0;
+		startSize = currentSize;
+		cur = currentSize;
 		start = Timer.stamp();
 	}
 
@@ -84,14 +86,15 @@ class ProgressOut extends haxe.io.Output {
 		super.close();
 		o.close();
 		var time = Timer.stamp() - start;
-		var speed = (cur / time) / 1024;
+		var downloadedBytes = cur - startSize;
+		var speed = (downloadedBytes / time) / 1024;
 		time = Std.int(time * 10) / 10;
 		speed = Std.int(speed * 10) / 10;
-		Sys.print("Download complete : "+cur+" bytes in "+time+"s ("+speed+"KB/s)\n");
+		Sys.print("Download complete : "+downloadedBytes+" bytes in "+time+"s ("+speed+"KB/s)\n");
 	}
 
 	public override function prepare(m) {
-		max = m;
+		max = m + startSize;
 	}
 
 }
@@ -555,7 +558,7 @@ class Main {
 
 		// directly send the file data over Http
 		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
-		h.onError = function(e) { throw e; };
+		h.onError = function(e) throw e;
 		h.onData = print;
 		h.fileTransfer("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
 		print("Sending data.... ");
@@ -726,15 +729,30 @@ class Main {
 		// download to temporary file
 		var filename = Data.fileName(project,version);
 		var filepath = rep+filename;
-		var out = try File.write(filepath,true)
-			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+		var out = try File.append(filepath,true) catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+		out.seek(0, SeekEnd);
 
-		var progress = new ProgressOut(out);
 		var h = createHttpRequest(siteUrl+Data.REPOSITORY+"/"+filename);
+
+		var currentSize = out.tell();
+		if (currentSize > 0)
+			h.addHeader("range", "bytes="+currentSize + "-");
+
+		var progress = new ProgressOut(out, currentSize);
+
+		var has416Status = false;
+		h.onStatus = function(status) {
+			// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
+			if (status == 416) has416Status = true;
+		};
 		h.onError = function(e) {
 			progress.close();
-			FileSystem.deleteFile(filepath);
-			throw e;
+
+			// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
+			if (!has416Status) {
+				FileSystem.deleteFile(filepath);
+				throw e;
+			}
 		};
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
@@ -745,10 +763,19 @@ class Main {
 		} catch (e:Dynamic) {}
 	}
 
-	function doInstallFile(filepath,setcurrent,?nodelete) {
+	function doInstallFile(filepath,setcurrent,nodelete = false) {
 		// read zip content
 		var f = File.read(filepath,true);
-		var zip = Reader.readZip(f);
+		var zip = try {
+			Reader.readZip(f);
+		} catch (e:Dynamic) {
+			f.close();
+			// file is corrupted, remove it
+			if (!nodelete)
+				FileSystem.deleteFile(filepath);
+			neko.Lib.rethrow(e);
+			throw e;
+		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
 		// create directories
