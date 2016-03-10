@@ -395,6 +395,13 @@ class Main {
 		Sys.exit(1);
 	}
 
+	inline function createHttpRequest(url:String):Http {
+		var req = new Http(url);
+		if (haxe.remoting.HttpConnection.TIMEOUT == 0)
+			req.cnxTimeout = 0;
+		return req;
+	}
+
 	// ---- COMMANDS --------------------
 
  	function search() {
@@ -547,7 +554,7 @@ class Main {
 		var id = site.getSubmitId();
 
 		// directly send the file data over Http
-		var h = new Http("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
+		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) { throw e; };
 		h.onData = print;
 		h.fileTransfer("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
@@ -723,7 +730,7 @@ class Main {
 			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
 
 		var progress = new ProgressOut(out);
-		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
+		var h = createHttpRequest(siteUrl+Data.REPOSITORY+"/"+filename);
 		h.onError = function(e) {
 			progress.close();
 			FileSystem.deleteFile(filepath);
