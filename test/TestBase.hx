@@ -4,7 +4,7 @@ import haxe.io.*;
 import haxe.unit.*;
 
 class TestBase extends TestCase {
-	static var haxelibPath = FileSystem.fullPath("bin/haxelib.n");
+	static var haxelibPath = FileSystem.fullPath("run.n");
 	public function runHaxelib(args:Array<String>) {
 		var p = new Process("neko", [haxelibPath].concat(args));
 		var stdout = p.stdout.readAll().toString();

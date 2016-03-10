@@ -5,7 +5,7 @@ import sys.io.*;
 using IntegrationTests;
 
 class IntegrationTests extends TestBase {
-	var haxelibBin:String = Path.join([Sys.getCwd(), "bin", "haxelib.n"]);
+	var haxelibBin:String = Path.join([Sys.getCwd(), "run.n"]);
 	var siteUrl:String = "http://localhost:2000/";
 	static var originalRepo(default, never) = {
 		var p = new Process("haxelib", ["config"]);

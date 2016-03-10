@@ -346,13 +346,15 @@ class Main {
 		if (!settings.safe && FileSystem.exists(getRepository() + "haxelib_client")) {
 			var old_argcur = argcur;
 			argcur = 0; // send all arguments
+			args.unshift("--safe");
 
 			try {
-				doRun("haxelib_client", null);
+				doRun("haxelib_client", null, false);
 			} catch (e:String) {
 				if (e.startsWith("Library haxelib_client version ") && e.endsWith(" does not have a run script")) {
 					// old version of haxelib_client without run script, ignore
 					argcur = old_argcur;
+					args.shift();
 				} else {
 					throw e;
 				}
@@ -1316,7 +1318,7 @@ class Main {
 		doRun(temp[0], temp[1]);
 	}
 
-	function doRun( project:String, version:String ) {
+	function doRun( project:String, version:String, changeDir=true ) {
 		var rep = getRepository();
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
@@ -1333,8 +1335,10 @@ class Main {
 			catch (e:Dynamic)
 				throw 'Error parsing haxelib.json for $project@$version: $e';
 
-		args.push(Sys.getCwd());
-		Sys.setCwd(vdir);
+		if (changeDir) {
+			args.push(Sys.getCwd());
+			Sys.setCwd(vdir);
+		}
 
 		var callArgs =
 			if (infos.main == null) {
