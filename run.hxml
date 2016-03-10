@@ -1,0 +1,3 @@
+-cp src
+-neko run.n
+-main haxelib.Run
