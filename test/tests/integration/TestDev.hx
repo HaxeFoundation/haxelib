@@ -21,7 +21,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.absolutePath("test/libraries/libBar")),
+				Path.normalize(sys.FileSystem.fullPath("test/libraries/libBar")),
 				Path.normalize(out[0])
 			);
 			assertEquals("-D Bar=1.0.0", out[1]);
@@ -69,7 +69,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.absolutePath("bin")),
+				Path.normalize(sys.FileSystem.fullPath("bin")),
 				Path.normalize(out[0])
 			);
 			assertEquals("-D Bar=0.0.0", out[1]);
@@ -104,7 +104,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "UseCp"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.absolutePath("test/libraries/UseCp/lib/src")),
+				Path.normalize(sys.FileSystem.fullPath("test/libraries/UseCp/lib/src")),
 				Path.normalize(out[0])
 			);
 			assertEquals("-D UseCp=0.0.1", out[1]);
