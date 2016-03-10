@@ -43,6 +43,7 @@ private enum CommandCategory {
 	Information;
 	Development;
 	Miscellaneous;
+	Deprecated(msg:String);
 }
 
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
@@ -173,7 +174,7 @@ class Main {
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
-		addCommand("local", local, "install the specified package locally", Development, false);
+		addCommand("local", local, "install the specified package locally", Deprecated("Use haxelib install <file> instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
 		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
@@ -234,6 +235,7 @@ class Main {
 		var maxLength = 0;
 		for( c in commands ) {
 			if (c.name.length > maxLength) maxLength = c.name.length;
+			if (c.cat.match(Deprecated(_))) continue;
 			var i = c.cat.getIndex();
 			if (cats[i] == null) cats[i] = [c];
 			else cats[i].push(c);
@@ -365,6 +367,11 @@ class Main {
 		if (cmd == "upgrade") cmd = "update"; // TODO: maybe we should have some alias system
 		for( c in commands )
 			if( c.name == cmd ) {
+				switch (c.cat) {
+					case Deprecated(message):
+						Sys.println('Warning: Command `$cmd` is deprecated and will be removed in future. $message.');
+					default:
+				}
 				try {
 					if( c.net ) loadProxy();
 					c.f();
