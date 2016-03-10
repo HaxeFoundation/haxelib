@@ -1,5 +1,6 @@
 package tests.integration;
 
+import haxelib.*;
 import IntegrationTests.*;
 using IntegrationTests;
 import haxe.io.*;
@@ -21,10 +22,13 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.fullPath("test/libraries/libBar")),
-				Path.normalize(out[0])
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("test/libraries/libBar"))),
+				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
-			assertEquals("-D Bar=1.0.0", out[1]);
+			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
+				assertEquals("-D Bar=1.0.0", out[1]);
+			else
+				assertEquals("-D Bar", out[1]);
 			assertSuccess(r);
 		}
 
@@ -49,7 +53,8 @@ class TestDev extends IntegrationTests {
 		{
 			var r = haxelib(["list", "Bar"]).result();
 			assertSuccess(r);
-			assertTrue(r.out.indexOf("Bar") == -1);
+			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
+				assertTrue(r.out.indexOf("Bar") == -1);
 		}
 	}
 
@@ -69,10 +74,13 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.fullPath("bin")),
-				Path.normalize(out[0])
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("bin"))),
+				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
-			assertEquals("-D Bar=0.0.0", out[1]);
+			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
+				assertEquals("-D Bar=0.0.0", out[1]);
+			else
+				assertEquals("-D Bar", out[1]);
 			assertSuccess(r);
 		}
 
@@ -104,10 +112,13 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "UseCp"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.normalize(sys.FileSystem.fullPath("test/libraries/UseCp/lib/src")),
-				Path.normalize(out[0])
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("test/libraries/UseCp/lib/src"))),
+				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
-			assertEquals("-D UseCp=0.0.1", out[1]);
+			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
+				assertEquals("-D UseCp=0.0.1", out[1]);
+			else
+				assertEquals("-D UseCp", out[1]);
 			assertSuccess(r);
 		}
 

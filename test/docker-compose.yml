@@ -3,7 +3,7 @@ services:
   web:
     build: ..
     ports:
-      - "80:80"
+      - "2000:80"
   dbHost:
     image: mariadb
     ports:

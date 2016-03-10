@@ -62,7 +62,7 @@ Use [Docker](https://www.docker.com/):
 docker-compose -f test/docker-compose.yml up
 ```
 
-The command above will copy the server source code and website resources into a container, compiles it, and then start Apache to serve it. To view the website, visit `http://$(docker-machine ip)/` (Windows and Mac) or `http://localhost/` (Linux).
+The command above will copy the server source code and website resources into a container, compiles it, and then start Apache to serve it. To view the website, visit `http://$(docker-machine ip):2000/` (Windows and Mac) or `http://localhost:2000/` (Linux).
 
 To stop the server:
 ```
@@ -76,13 +76,13 @@ docker-compose -f test/docker-compose.yml build
 
 To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
 ```
-neko bin/haxelib.n -R http://$(docker-machine ip)/ search foo
+neko bin/haxelib.n -R http://$(docker-machine ip):2000/ search foo
 ```
 
 To run integration tests with the local development server, set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT` and then compile "integration_tests.hxml":
 ```
 export HAXELIB_SERVER=$(docker-machine ip)
-export HAXELIB_SERVER_PORT=80
+export HAXELIB_SERVER_PORT=2000
 haxe integration_tests.hxml
 ```
 Note that the integration tests will reset the server database before and after each test.

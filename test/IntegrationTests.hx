@@ -17,7 +17,7 @@ class IntegrationTests extends TestBase {
 	};
 	public var serverPort(default, null) = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
 		case null:
-			80;
+			2000;
 		case port:
 			Std.parseInt(port);
 	};
@@ -44,11 +44,23 @@ class IntegrationTests extends TestBase {
 		pw: "foopassword",
 	};
 	public var clientVer(get, null):SemVer;
+	var clientVer_inited = false;
 	function get_clientVer() {
-		return if (clientVer != null)
+		return if (clientVer_inited)
 			clientVer;
-		else
-			clientVer = SemVer.ofString(haxelib(["version"]).result().out);
+		else {
+			clientVer = {
+				var r = haxelib(["version"]).result();
+				if (r.code == 0)
+					SemVer.ofString(r.out);
+				else if (r.out.indexOf("3.1.0-rc.4") >= 0)
+					SemVer.ofString("3.1.0-rc.4");
+				else
+					throw "unknown version";
+			};
+			clientVer_inited = true;
+			clientVer;
+		}
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {

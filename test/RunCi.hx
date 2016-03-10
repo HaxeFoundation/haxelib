@@ -79,12 +79,13 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
+	static var dbConfigExamplePath = Path.join(["src", "haxelib", "server", "dbconfig.json.example"]);
+
 	static function setupLocalServer():Void {
 		var ndllPath = getEnv("NEKOPATH");
 		if (ndllPath == null) ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
-		var dbConfigPath = Path.join(["src", "haxelib", "server", "dbconfig.json.example"]);
-		var dbConfig = Json.parse(getContent(dbConfigPath));
+		var dbConfig = Json.parse(getContent(dbConfigExamplePath));
 		function copyConfigs():Void {
 			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
 				user: dbConfig.user,
@@ -172,17 +173,50 @@ Listen 2000
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
-		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "up", "-d"]);
-		var serverIP = {
-			var p = new sys.io.Process("docker-machine", ["ip"]);
-			var ip = p.stdout.readLine();
-			p.close();
-			ip;
+		var server = switch (systemName()) {
+			case "Linux":
+				"localhost";
+			case _:
+				var p = new sys.io.Process("docker-machine", ["ip"]);
+				var ip = p.stdout.readLine();
+				p.close();
+				ip;
 		}
-		Sys.putEnv("HAXELIB_SERVER", serverIP);
-		Sys.putEnv("HAXELIB_SERVER_PORT", "80");
-		infoMsg("wait for 5 seconds...");
-		Sys.sleep(5.0);
+		var serverPort = 2000;
+
+		var dbConfig = Json.parse(getContent(dbConfigExamplePath));
+		copy(dbConfigExamplePath, Path.join(["www", "dbconfig.json"]));
+		copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
+
+		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "up", "-d"]);
+
+		Sys.putEnv("HAXELIB_SERVER", server);
+		Sys.putEnv("HAXELIB_SERVER_PORT", Std.string(serverPort));
+		infoMsg("waiting for server to start...");
+
+		var url = 'http://${server}:${serverPort}/';
+
+		var t = Timer.stamp();
+		while (true) {
+			var isUp = try {
+				var response = haxe.Http.requestUrl(url);
+				!StringTools.startsWith(response, "Error");
+			} catch (e:Dynamic) {
+				false;
+			}
+
+			if (isUp) {
+				break;
+			}
+
+			if (Timer.stamp() - t > 120) {
+				throw "server is not reachable...";
+			}
+
+			Sys.sleep(10.0);
+			// Sys.command("curl", ["-s", "-o", "/dev/null", "-w", "%{http_code}", url]);
+		}
+		infoMsg("server started");
 
 		test();
 
@@ -197,16 +231,17 @@ Listen 2000
 
 	static function integrationTests():Void {
 		function test():Void {
-			runCommand("haxe", ["integration_tests.hxml"]);
-
 			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
-			 	case null, "development":
-			 		// pass
-			 	case _:
-			 		runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+				case null, "development":
+					runCommand("haxe", ["integration_tests.hxml"]);
+				case "3.1.3":
+					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
+				case _:
+					runCommand("haxe", ["integration_tests.hxml"]);
+					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 			}
 		}
-		if (Sys.getEnv("CI") != null) {
+		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
 			setupLocalServer();
 			runWithLocalServer(test);
 		} else {
@@ -221,22 +256,35 @@ Listen 2000
 
 		compileLegacyClient();
 		compileLegacyServer();
-		compileClient();
-		testClient();
 
 		// the server can only be compiled with haxe 3.2+
+		// haxe 3.1.3 bundles haxelib client 3.1.0-rc.4, which is not upgradable to later haxelib
+		// so there is no need to test the client either
 		#if (haxe_ver >= 3.2)
-		compileServer();
+			compileClient();
+			testClient();
+			compileServer();
 
-		switch (systemName()) {
-			case "Windows":
-				// skip for now
-				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
-				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-			case _:
-				testServer();
-				integrationTests();
-		}
+			switch (systemName()) {
+				case "Windows":
+					// skip for now
+					// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
+					// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
+				case _:
+					testServer();
+			}
 		#end
+
+		// integration test
+		switch (systemName()) {
+			case "Linux":
+				integrationTests();
+			case "Mac":
+				#if (haxe_ver >= 3.2)
+					integrationTests();
+				#end
+			case _:
+				//pass
+		}
 	}
 }

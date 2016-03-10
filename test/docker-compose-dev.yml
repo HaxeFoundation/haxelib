@@ -3,7 +3,7 @@ services:
   web:
     image: andyli/tora
     ports:
-      - "80:80"
+      - "2000:80"
     volumes:
       - ../www:/var/www/html
   dbHost:
