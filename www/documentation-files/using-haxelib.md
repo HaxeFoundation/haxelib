@@ -260,12 +260,10 @@ haxelib dev starling                     # Cancel dev, use installed version.
 #### `haxelib git`
 
 ```
-haxelib git [project-name] [git-clone-path] [branch] [subdirectory]
+haxelib git [project-name] [git-clone-path] [branch]
 haxelib git minject https://github.com/massiveinteractive/minject.git         # Use HTTP git path.
 haxelib git minject git@github.com:massiveinteractive/minject.git             # Use SSH git path.
 haxelib git minject git@github.com:massiveinteractive/minject.git v2          # Checkout branch or tag `v2`.
-haxelib git minject git@github.com:massiveinteractive/minject.git master src/ # Path to the haxelib.json file.
-
 ```
 
 > Use a git repository as library.
