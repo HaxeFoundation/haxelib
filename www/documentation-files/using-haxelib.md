@@ -272,7 +272,7 @@ haxelib git minject git@github.com:massiveinteractive/minject.git master src/ # 
 >
 > This is useful for using a more up-to-date development version, a fork of the original project, or for having a private library that you do not wish to post to Haxelib.
 >
-> When you use `haxelib upgrade` any libraries that are installed using GIT will automatically pull the latest version.
+> When you use `haxelib update` any libraries that are installed using GIT will automatically pull the latest version.
 
 
 
