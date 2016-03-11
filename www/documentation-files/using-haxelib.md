@@ -10,7 +10,7 @@ The following commands are available:
 #### Basic
 
 * [install](#install)
-* [upgrade](#upgrade)
+* [update](#update)
 * [remove](#remove)
 * [list](#list)
 * [set](#set)
@@ -85,17 +85,11 @@ haxelib update minject
 
 > Update a single library to the latest version.
 
-
-
-<a name="upgrade" class="anch"></a>
-
-#### `haxelib upgrade`
-
 ```
-haxelib upgrade
+haxelib update
 ```
 
-> Upgrade all the installed projects to their latest version. This command prompts a confirmation for each upgradeable project.
+> Update all the installed projects to their latest version. This command prompts a confirmation for each updating project.
 
 
 
@@ -241,19 +235,6 @@ haxelib register
 ```
 
 > Register a new developer account.
-
-
-
-<a name="local" class="anch"></a>
-
-#### `haxelib local`
-
-```
-haxelib local [project.zip]
-haxelib install box2d.zip
-```
-
-> Install a zip package locally.  This is the same as `haxelib install project.zip`.
 
 
 
