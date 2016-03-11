@@ -109,11 +109,11 @@ class TestVcs extends TestBase
 		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
 	}
 
-	public function testCloneBranchTag_0_9_2():Void
+	public function testCloneTag_0_9_2():Void
 	{
 		var vcs = getVcs();
 		var dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", "0.9.2");
+		vcs.clone(dir, url, "0.9.2");
 		Sys.sleep(3);
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
@@ -122,11 +122,11 @@ class TestVcs extends TestBase
 		assertFalse(FileSystem.exists(dir + "/README.md"));
 	}
 
-	public function testCloneBranchTag_0_9_3():Void
+	public function testCloneTag_0_9_3():Void
 	{
 		var vcs = getVcs();
 		var dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", "0.9.3");
+		vcs.clone(dir, url, "0.9.3");
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
@@ -135,11 +135,11 @@ class TestVcs extends TestBase
 		assertTrue(FileSystem.exists(dir + "/README.md"));
 	}
 
-	public function testCloneBranchRev():Void
+	public function testCloneRev():Void
 	{
 		var vcs = getVcs();
 		var dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", rev);
+		vcs.clone(dir, url, rev);
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
@@ -151,12 +151,12 @@ class TestVcs extends TestBase
 
 	// --------------- update --------------- //
 
-	public function testUpdateBranchTag_0_9_2__toLatest():Void
+	public function testUpdateTag_0_9_2__toLatest():Void
 	{
 		var vcs = getVcs();
-		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
+		var dir = vcs.directory + counter;// increment will do in `testCloneTag_0_9_2`
 
-		testCloneBranchTag_0_9_2();
+		testCloneTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
 
 		// save CWD:
@@ -175,12 +175,12 @@ class TestVcs extends TestBase
 	}
 
 
-	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withReset():Void
+	public function testUpdateTag_0_9_2__toLatest__afterUserChanges_withReset():Void
 	{
 		var vcs = getVcs();
 		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
-		testCloneBranchTag_0_9_2();
+		testCloneTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
 
 		// save CWD:
@@ -205,12 +205,12 @@ class TestVcs extends TestBase
 		Sys.setCwd(cwd);
 	}
 
-	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withoutReset():Void
+	public function testUpdateTag_0_9_2__toLatest__afterUserChanges_withoutReset():Void
 	{
 		var vcs = getVcs();
 		var dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
 
-		testCloneBranchTag_0_9_2();
+		testCloneTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
 
 		// save CWD:

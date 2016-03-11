@@ -34,7 +34,7 @@ interface IVcs {
 	/**
 		Clone repo into `libPath`.
 	**/
-	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
+	function clone(libPath:String, vcsPath:String, ?branch:String):Void;
 
 	/**
 		Update to HEAD repo contains in CWD or CWD/`Vcs.directory`.
@@ -134,7 +134,7 @@ class Vcs implements IVcs {
 		switch (commandResult) {
 			case {code: 0}: //pass
 			case {code: code, out:out}:
-				if (!settings.debug) 
+				if (!settings.debug)
 					Sys.stderr().writeString(out);
 				Sys.exit(code);
 		}
@@ -187,7 +187,7 @@ class Vcs implements IVcs {
 		return available;
 	}
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void {
+	public function clone(libPath:String, vcsPath:String, ?branch:String):Void {
 		throw "This method must be overriden.";
 	}
 
@@ -271,7 +271,7 @@ class Git extends Vcs {
 		return true;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
+	override public function clone(libPath:String, url:String, ?branch:String):Void {
 		var oldCwd = Sys.getCwd();
 
 		var vcsArgs = ["clone", url, libPath];
@@ -291,12 +291,6 @@ class Git extends Vcs {
 			var ret = command(executable, ["checkout", branch]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-		}
-
-		if (version != null) {
-			var ret = command(executable, ["checkout", "tags/" + version]);
-			if (ret.code != 0)
-				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		}
 
 		// return prev. cwd:
@@ -361,17 +355,12 @@ class Mercurial extends Vcs {
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
+	override public function clone(libPath:String, url:String, ?branch:String):Void {
 		var vcsArgs = ["clone", url, libPath];
 
 		if (branch != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push(branch);
-		}
-
-		if (version != null) {
-			vcsArgs.push("--rev");
-			vcsArgs.push(version);
 		}
 
 		if (command(executable, vcsArgs).code != 0)

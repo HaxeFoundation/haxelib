@@ -862,10 +862,9 @@ class Main {
 				case Haxelib:
 					doInstall(d.name, d.version, false);
 				case Git:
-					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir, d.version);
-				//TODO: add mercurial-dependency type to schema.json (https://github.com/HaxeFoundation/haxelib/blob/master/schema.json#L38)
+					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir);
 				case Mercurial:
-					doVcs(VcsID.Hg, d.name, d.url, d.branch, d.subDir, d.version);
+					doVcs(VcsID.Hg, d.name, d.url, d.branch, d.subDir);
 			}
 		}
 	}
@@ -1344,7 +1343,7 @@ class Main {
 		}
 	}
 
-	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
+	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String)
 	{
 		// Prepare check vcs.available:
 		var vcs = Vcs.get(id, settings);
@@ -1353,18 +1352,17 @@ class Main {
 
 		// if called with known values:
 		if(libName != null && url != null)
-			doVcsInstall(vcs, libName, url, branch, subDir, version);
+			doVcsInstall(vcs, libName, url, branch, subDir);
 		else
 			doVcsInstall(vcs,
 			             param("Library name"),
 			             param(vcs.name + " path"),
 			             paramOpt(),
-			             paramOpt(),
 			             paramOpt()
 			);
 	}
 
-	function doVcsInstall(vcs:Vcs, libName:String, url:String, ?branch:String, ?subDir:String, ?version:String)
+	function doVcsInstall(vcs:Vcs, libName:String, url:String, ?branch:String, ?subDir:String)
 	{
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
@@ -1383,7 +1381,7 @@ class Main {
 		print("Installing " +libName + " from " +url);
 
 		try {
-			vcs.clone(libPath, url, branch, version);
+			vcs.clone(libPath, url, branch);
 		} catch(error:VcsError) {
 			var message = switch(error) {
 				case VcsUnavailable(vcs):
