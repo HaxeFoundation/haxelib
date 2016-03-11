@@ -1,3 +1,3 @@
 -cp src
--neko bin/haxelib.n
+-neko run.n
 -main haxelib.client.Main
