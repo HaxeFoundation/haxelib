@@ -261,7 +261,8 @@ class Main {
 		quiet  : "print less messages, imply not --debug",
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
-		never  : "answer all questions with no"
+		never  : "answer all questions with no",
+		safe   : "run bundled haxelib version instead of latest update",
 	}
 
 	var settings: {
@@ -271,6 +272,7 @@ class Main {
 		always : Bool,
 		never  : Bool,
 		global : Bool,
+		safe   : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -282,6 +284,7 @@ class Main {
 			never: false,
 			flat: false,
 			global: false,
+			safe: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -342,6 +345,24 @@ class Main {
 					break;
 				default:
 					rest.push(a);
+			}
+		}
+
+		if (!settings.safe && FileSystem.exists(getRepository() + "haxelib_client")) {
+			var old_argcur = argcur;
+			argcur = 0; // send all arguments
+			args.unshift("--safe");
+
+			try {
+				doRun("haxelib_client", null, false);
+			} catch (e:String) {
+				if (e.startsWith("Library haxelib_client version ") && e.endsWith(" does not have a run script")) {
+					// old version of haxelib_client without run script, ignore
+					argcur = old_argcur;
+					args.shift();
+				} else {
+					throw e;
+				}
 			}
 		}
 
@@ -1109,83 +1130,12 @@ class Main {
 		return state.updated;
 	}
 
-
-
-	function rebuildSelf() {
-		var haxepath =
-			if (IS_WINDOWS) {
-				Sys.getEnv("HAXEPATH");
-			} else {
-				var p = new Process('which', ['haxelib']);
-				var path = new Path(realPath(p.stdout.readAll().toString())).dir + '/';
-				p.close();
-				path;
-			}
-
-		Sys.setCwd(haxepath);
-		function tryBuild() {
-			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.client.Main', '--no-output']);
-			var ret =
-				if (p.exitCode() == 0) None;
-				else Some(p.stderr.readAll().toString());
-			p.close();
-			return ret;
-		}
-
-
-		switch tryBuild() {
-			case None:
-
-				if (haxepath == null)
-					throw (IS_WINDOWS ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
-				else
-					haxepath = Path.addTrailingSlash(haxepath);
-
-				if (IS_WINDOWS) {
-					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'haxelib.client.Rebuild']);
-					print('rebuild launched');
-				}
-				else {
-					var p = new Process('haxelib', ['path', 'haxelib_client']);
-					if (p.exitCode() == 0) {
-						var args = [];
-						var classPath = "";
-						for (arg in p.stdout.readAll().toString().split('\n')) {
-							arg = arg.trim();
-							if (arg.charAt(0) == '-')
-								args.push(arg);
-							else if (arg.length > 0)
-								classPath = arg;
-						};
-
-						var file = haxepath+'haxelib';
-						try File.saveContent(
-							file,
-							'#!/bin/sh'
-							+'\n'+'OLDCWD=`pwd`'
-							+'\n'+'cd $classPath'
-							+'\n'+'exec haxe '+args.join(' ')+" --run haxelib.client.Main -cwd $OLDCWD $@"
-						)
-						catch (e:Dynamic)
-							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
-					}
-					else throw p.stdout.readAll();
-					p.close();
-				}
-			case Some(error):
-				throw 'Error compiling haxelib client: $error';
-		}
-
-	}
-
 	function updateSelf() {
 		settings.global = true;
 		if (updateByName('haxelib_client'))
 			print("Haxelib successfully updated.");
 		else
 			print("Haxelib was already up to date...");
-
-		rebuildSelf();
 	}
 
 
@@ -1419,15 +1369,19 @@ class Main {
 
 
 	function run() {
-		var rep = getRepository();
 		var project = param("Library");
 		var temp = project.split(":");
-		project = temp[0];
+		doRun(temp[0], temp[1]);
+	}
+
+	function doRun( project:String, version:String, changeDir=true ) {
+		var rep = getRepository();
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+project+" is not installed";
 		pdir += "/";
-		var version = temp[1] != null ? temp[1] : getCurrent(pdir);
+		if (version == null)
+			version = getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
@@ -1437,14 +1391,16 @@ class Main {
 			catch (e:Dynamic)
 				throw 'Error parsing haxelib.json for $project@$version: $e';
 
-		args.push(Sys.getCwd());
-		Sys.setCwd(vdir);
+		if (changeDir) {
+			args.push(Sys.getCwd());
+			Sys.setCwd(vdir);
+		}
 
 		var callArgs =
 			if (infos.main == null) {
 				if( !FileSystem.exists('$vdir/run.n') )
 					throw 'Library $project version $version does not have a run script';
-				["neko", "run.n"];
+				["neko", vdir + "/run.n"];
 			} else {
 				var deps = infos.dependencies.toArray();
 				deps.push( { name: project, version: DependencyVersion.DEFAULT } );
@@ -1472,10 +1428,7 @@ class Main {
 	}
 
 	function doLocalInstall(file:String) {
-		if (doInstallFile(file, true, true).name == 'haxelib_client')
-			if (ask('You have updated haxelib. Do you wish to rebuild it?')) {
-				rebuildSelf();
-			}
+		doInstallFile(file, true, true);
 	}
 
 	function proxy() {
