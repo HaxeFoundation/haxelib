@@ -8,7 +8,7 @@ using StringTools;
 using IntegrationTests;
 
 class IntegrationTests extends TestBase {
-	var haxelibBin:String = Path.join([Sys.getCwd(), "bin", "haxelib.n"]);
+	var haxelibBin:String = Path.join([Sys.getCwd(), "run.n"]);
 	public var server(default, null):String = switch (Sys.getEnv("HAXELIB_SERVER")) {
 		case null:
 			"localhost";
