@@ -79,6 +79,14 @@ class ProjectApi extends UFApi {
 						break;
 					}
 				}
+				if (fileInfo == null) {
+					// If it's still null, handle one more case: there's no zip entry for the requested directory,
+					// but there are entries for files in it. Get listing of that directory and if it's not empty,
+					// return it.
+					var dirListing = getDirListing( zip, path );
+					if (dirListing.dirs.length > 0 || dirListing.files.length > 0)
+						fileInfo = Directory( dirListing.dirs, dirListing.files );
+				}
 				return fileInfo;
 			}).sure();
 			return

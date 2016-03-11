@@ -316,14 +316,18 @@ class Repo implements SiteApi {
 			throw "No such Project : " + project;
 
 		var version = SemVer.ofString(version);
-		var v = Version.manager.select(
-			$project == p.id &&
-			$major == version.major &&
-			$minor == version.minor &&
-			$patch == version.patch &&
-			$preview == version.preview &&
-			$previewNum == version.previewNum
-		);
+		// don't use macro select because of
+		// https://github.com/HaxeFoundation/haxe/issues/4931
+		// and https://github.com/HaxeFoundation/haxe/issues/4932
+		var v = Version.manager.dynamicSearch({
+			project: p.id,
+			major: version.major,
+			minor: version.minor,
+			patch: version.patch,
+			preview: if (version.preview == null) null else version.preview.getIndex(),
+			previewNum: version.previewNum
+		}).first();
+
 		if( v == null )
 			throw "No such Version : " + version;
 		v.downloads++;

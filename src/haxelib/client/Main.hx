@@ -43,6 +43,7 @@ private enum CommandCategory {
 	Information;
 	Development;
 	Miscellaneous;
+	Deprecated(msg:String);
 }
 
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
@@ -52,12 +53,14 @@ class ProgressOut extends haxe.io.Output {
 
 	var o : haxe.io.Output;
 	var cur : Int;
+	var startSize : Int;
 	var max : Int;
 	var start : Float;
 
-	public function new(o) {
+	public function new(o, currentSize) {
 		this.o = o;
-		cur = 0;
+		startSize = currentSize;
+		cur = currentSize;
 		start = Timer.stamp();
 	}
 
@@ -84,14 +87,15 @@ class ProgressOut extends haxe.io.Output {
 		super.close();
 		o.close();
 		var time = Timer.stamp() - start;
-		var speed = (cur / time) / 1024;
+		var downloadedBytes = cur - startSize;
+		var speed = (downloadedBytes / time) / 1024;
 		time = Std.int(time * 10) / 10;
 		speed = Std.int(speed * 10) / 10;
-		Sys.print("Download complete : "+cur+" bytes in "+time+"s ("+speed+"KB/s)\n");
+		Sys.print("Download complete : "+downloadedBytes+" bytes in "+time+"s ("+speed+"KB/s)\n");
 	}
 
 	public override function prepare(m) {
-		max = m;
+		max = m + startSize;
 	}
 
 }
@@ -170,7 +174,7 @@ class Main {
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
-		addCommand("local", local, "install the specified package locally", Development, false);
+		addCommand("local", local, "install the specified package locally", Deprecated("Use haxelib install <file> instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
 		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
@@ -231,6 +235,7 @@ class Main {
 		var maxLength = 0;
 		for( c in commands ) {
 			if (c.name.length > maxLength) maxLength = c.name.length;
+			if (c.cat.match(Deprecated(_))) continue;
 			var i = c.cat.getIndex();
 			if (cats[i] == null) cats[i] = [c];
 			else cats[i].push(c);
@@ -383,6 +388,11 @@ class Main {
 		if (cmd == "upgrade") cmd = "update"; // TODO: maybe we should have some alias system
 		for( c in commands )
 			if( c.name == cmd ) {
+				switch (c.cat) {
+					case Deprecated(message):
+						Sys.println('Warning: Command `$cmd` is deprecated and will be removed in future. $message.');
+					default:
+				}
 				try {
 					if( c.net ) loadProxy();
 					c.f();
@@ -414,6 +424,13 @@ class Main {
 		print("Unknown command "+cmd);
 		usage();
 		Sys.exit(1);
+	}
+
+	inline function createHttpRequest(url:String):Http {
+		var req = new Http(url);
+		if (haxe.remoting.HttpConnection.TIMEOUT == 0)
+			req.cnxTimeout = 0;
+		return req;
 	}
 
 	// ---- COMMANDS --------------------
@@ -568,8 +585,8 @@ class Main {
 		var id = site.getSubmitId();
 
 		// directly send the file data over Http
-		var h = new Http("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
-		h.onError = function(e) { throw e; };
+		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
+		h.onError = function(e) throw e;
 		h.onData = print;
 		h.fileTransfer("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
 		print("Sending data.... ");
@@ -577,7 +594,8 @@ class Main {
 
 		// processing might take some time, make sure we wait
 		print("Processing file.... ");
-		haxe.remoting.HttpConnection.TIMEOUT = 1000;
+		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
+			haxe.remoting.HttpConnection.TIMEOUT = 1000;
 		// ask the server to register the sent file
 		var msg = site.processSubmit(id,user,password);
 		print(msg);
@@ -739,15 +757,30 @@ class Main {
 		// download to temporary file
 		var filename = Data.fileName(project,version);
 		var filepath = rep+filename;
-		var out = try File.write(filepath,true)
-			catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+		var out = try File.append(filepath,true) catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
+		out.seek(0, SeekEnd);
 
-		var progress = new ProgressOut(out);
-		var h = new Http(siteUrl+Data.REPOSITORY+"/"+filename);
+		var h = createHttpRequest(siteUrl+Data.REPOSITORY+"/"+filename);
+
+		var currentSize = out.tell();
+		if (currentSize > 0)
+			h.addHeader("range", "bytes="+currentSize + "-");
+
+		var progress = new ProgressOut(out, currentSize);
+
+		var has416Status = false;
+		h.onStatus = function(status) {
+			// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
+			if (status == 416) has416Status = true;
+		};
 		h.onError = function(e) {
 			progress.close();
-			FileSystem.deleteFile(filepath);
-			throw e;
+
+			// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
+			if (!has416Status) {
+				FileSystem.deleteFile(filepath);
+				throw e;
+			}
 		};
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
@@ -758,10 +791,19 @@ class Main {
 		} catch (e:Dynamic) {}
 	}
 
-	function doInstallFile(filepath,setcurrent,?nodelete) {
+	function doInstallFile(filepath,setcurrent,nodelete = false) {
 		// read zip content
 		var f = File.read(filepath,true);
-		var zip = Reader.readZip(f);
+		var zip = try {
+			Reader.readZip(f);
+		} catch (e:Dynamic) {
+			f.close();
+			// file is corrupted, remove it
+			if (!nodelete)
+				FileSystem.deleteFile(filepath);
+			neko.Lib.rethrow(e);
+			throw e;
+		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
 		// create directories
@@ -821,7 +863,18 @@ class Main {
 
 	function doInstallDependencies( dependencies:Array<Dependency> )
 	{
+		var rep = getRepository();
+
 		for( d in dependencies ) {
+			if( d.version == "" ) {
+				var pdir = rep + Data.safe(d.name);
+				var dev = try getDev(pdir) catch (_:Dynamic) null;
+
+				if (dev != null) { // no version specified and dev set, no need to install dependency
+					continue;
+				}
+			}
+
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
 				d.version = site.infos(d.name).getLatest();
@@ -1105,9 +1158,12 @@ class Main {
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" does not have version "+version+" installed";
 
-		var cur = getCurrent(pdir);
+		var cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
 			throw "Can't remove current version of library "+prj;
+		var dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
+		if( dev == vdir )
+			throw "Can't remove dev version of library "+prj;
 		deleteRec(vdir);
 		print("Library "+prj+" version "+version+" removed");
 	}
