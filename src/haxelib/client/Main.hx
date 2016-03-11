@@ -157,7 +157,7 @@ class Main {
 	{
 		args = Sys.args();
 
-		if (Sys.getEnv("HAXELIB_RUN") == "1") {
+		if (Sys.getEnv("HAXELIB_RUN") != null) {
 			Sys.setCwd(args.pop());
 		}
 
@@ -352,7 +352,7 @@ class Main {
 			}
 		}
 
-		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") != "1") && FileSystem.exists(getRepository() + "haxelib_client")) {
+		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) && FileSystem.exists(getRepository() + "haxelib_client")) {
 			var old_argcur = argcur;
 			argcur = 0; // send all arguments
 
