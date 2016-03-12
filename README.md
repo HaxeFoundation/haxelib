@@ -18,8 +18,8 @@ When using `haxelib newrepo` you can have a project-local haxelib repository. Th
 
 Caveats:
 
-- if you mistakenly run a haxelib command in a subdirectory of your project, it will be executed on the global repo (to be fixed)
 - libraries get downloaded for each project
+- if you mistakenly run a haxelib command in a subdirectory of your project, it will be executed on the global repo ([to be fixed](https://github.com/HaxeFoundation/haxelib/issues/292))
 
 ### Using haxelib install all
 
