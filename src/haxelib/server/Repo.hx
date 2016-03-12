@@ -80,6 +80,15 @@ class Repo implements SiteApi {
 		};
 	}
 
+	public function getLatestVersion( project : String ) : SemVer {
+		var p = Project.manager.select($name == project);
+		if( p == null )
+			throw "No such Project : "+project;
+
+		var vl = Version.manager.unsafeObjects('SELECT * FROM Version WHERE project = ${p.id} ORDER BY major DESC, minor DESC, patch DESC, ifnull(preview, 100) DESC, previewNum DESC LIMIT 1', false);
+		return vl.first().toSemver();
+	}
+
 	public function user( name : String ) : UserInfos {
 		var u = User.manager.search($name == name).first();
 		if( u == null )

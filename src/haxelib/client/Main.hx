@@ -196,7 +196,13 @@ class Main {
 		initSite();
 	}
 
+	function checkUpdate() {
+		var latest:SemVer = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
 
+		if (latest != null && latest > VERSION) {
+			print('A new version (${latest}) of haxelib is available.\nDo "haxelib update ${HAXELIB_LIBNAME}" to get the latest version.\n');
+		}
+	}
 
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
@@ -391,7 +397,10 @@ class Main {
 					default:
 				}
 				handleErrors(function() {
-					if( c.net ) loadProxy();
+					if( c.net ) {
+						loadProxy();
+						checkUpdate();
+					}
 					c.f();
 				});
 				return;
@@ -876,7 +885,7 @@ class Main {
 
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
-				d.version = site.infos(d.name).getLatest();
+				d.version = site.getLatestVersion(d.name);
 
 			switch d.type {
 				case Haxelib:
@@ -1090,7 +1099,8 @@ class Main {
 			print("All libraries are up-to-date");
 	}
 
-	function doUpdate( p : String, state ) {
+	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
+		p = projectNameToDir(p, state);
 		var pdir = state.rep + Data.safe(p);
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
@@ -1110,19 +1120,31 @@ class Main {
 		}
 		else
 		{
-			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
-			p = inf.name;
-			if( !FileSystem.exists(pdir+"/"+Data.safe(inf.getLatest())) ) {
+			var latest = try site.getLatestVersion(p) catch( e : Dynamic ) { Sys.println(e); return; };
+
+			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
 				if( state.prompt ) {
-					if (!ask("Update "+p+" to "+inf.getLatest()))
+					if (!ask("Update "+p+" to "+latest))
 						return;
 				}
-				doInstall(state.rep,p,inf.getLatest(),true);
+				doInstall(state.rep, p, latest,true);
 				state.updated = true;
 			} else
-				setCurrent(state.rep, p, inf.getLatest(), true);
+				setCurrent(state.rep, p, latest, true);
 		}
 	}
+
+	function projectNameToDir( project:String, state ) {
+		var p = project.toLowerCase();
+		var l = FileSystem.readDirectory(state.rep).filter(function (dir) return dir.toLowerCase() == p);
+
+		switch (l) {
+			case []: throw "No such project " + project + " installed";
+			case [dir]: return Data.unsafe(dir);
+			case _: throw "Several name case for library " + project;
+		}
+	}
+
 	function updateByName(prj:String) {
 		var state = { rep : getRepository(), prompt : false, updated : false };
 		doUpdate(prj,state);
