@@ -138,8 +138,8 @@ class Main {
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
-		host : "localhost",
-		port : 2000,
+		host : "lib.haxe.org",
+		port : 80,
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
