@@ -353,9 +353,9 @@ class Main {
 		}
 
 		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) && FileSystem.exists(getRepository() + HAXELIB_LIBNAME)) {
-			var old_argcur = argcur;
 			argcur = 0; // send all arguments
 			doRun(HAXELIB_LIBNAME, null);
+			return;
 		}
 
 		Cli.defaultAnswer =
