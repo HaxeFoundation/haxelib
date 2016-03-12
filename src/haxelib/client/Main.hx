@@ -132,6 +132,7 @@ class ProgressIn extends haxe.io.Input {
 }
 
 class Main {
+	static inline var HAXELIB_LIBNAME = "haxelib";
 
 	static var VERSION = SemVer.ofString('3.3.0');
 	static var REPNAME = "lib";
@@ -351,20 +352,10 @@ class Main {
 			}
 		}
 
-		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) && FileSystem.exists(getRepository() + "haxelib_client")) {
+		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) && FileSystem.exists(getRepository() + HAXELIB_LIBNAME)) {
 			var old_argcur = argcur;
 			argcur = 0; // send all arguments
-
-			try {
-				doRun("haxelib_client", null);
-			} catch (e:String) {
-				if (e.startsWith("Library haxelib_client version ") && e.endsWith(" does not have a run script")) {
-					// old version of haxelib_client without run script, ignore
-					argcur = old_argcur;
-				} else {
-					throw e;
-				}
-			}
+			doRun(HAXELIB_LIBNAME, null);
 		}
 
 		Cli.defaultAnswer =
@@ -1133,7 +1124,7 @@ class Main {
 
 	function updateSelf() {
 		settings.global = true;
-		if (updateByName('haxelib_client'))
+		if (updateByName(HAXELIB_LIBNAME))
 			print("Haxelib successfully updated.");
 		else
 			print("Haxelib was already up to date...");

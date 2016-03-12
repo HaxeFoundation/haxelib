@@ -7,6 +7,9 @@ dump/
 deploy/
 repo_integration_tests/
 
+# run.n is in the repo
+!/run.n
+
 # Runtime files
 *.tmp
 *.db
