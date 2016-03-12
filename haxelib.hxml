@@ -1,4 +1,0 @@
-# This haxelib.hxml is just for backward compatibility,
-# particularly the haxe Makefile use it to compile the client.
-
-client.hxml
