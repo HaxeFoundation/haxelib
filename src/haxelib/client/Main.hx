@@ -360,7 +360,7 @@ class Main {
 		}
 
 		if (!isHaxelibRun && !settings.safe) {
-			var rep = try getRepository() catch (_:Dynamic) null;
+			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
 				doRun(rep, HAXELIB_LIBNAME, null);
@@ -734,7 +734,11 @@ class Main {
 		}
 	}
 
-	function doInstall( rep, project, version, setcurrent ) {
+	function doInstall( rep, project:String, version, setcurrent ) {
+		if (project.toLowerCase() == HAXELIB_LIBNAME) {
+			rep = getGlobalRepository();
+		}
+
 		// check if exists already
 		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
 			print("You already have "+project+" version "+version+" installed");
@@ -794,6 +798,12 @@ class Main {
 		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
+
+		if (infos.name == HAXELIB_LIBNAME) {
+			settings.global = true;
+			rep = getRepository();
+		}
+
 		// create directories
 		var pdir = rep + Data.safe(infos.name);
 		safeDir(pdir);
@@ -1091,6 +1101,11 @@ class Main {
 
 	function updateByName(rep:String, prj:String) {
 		var state = { rep : rep, prompt : false, updated : false };
+
+		if (prj == HAXELIB_LIBNAME) {
+			state.rep = getGlobalRepository();
+		}
+
 		doUpdate(prj,state);
 		return state.updated;
 	}
@@ -1237,6 +1252,11 @@ class Main {
 	function dev() {
 		var rep = getRepository();
 		var project = param("Library");
+
+		if (project == HAXELIB_LIBNAME) {
+			rep = getGlobalRepository();
+		}
+
 		var dir = paramOpt();
 		var proj = rep + Data.safe(project);
 		if( !FileSystem.exists(proj) ) {
@@ -1355,6 +1375,10 @@ class Main {
 	}
 
 	function doRun( rep:String, project:String, version:String ) {
+		if (project == HAXELIB_LIBNAME) {
+			rep = getGlobalRepository();
+		}
+
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+project+" is not installed";
@@ -1478,7 +1502,6 @@ class Main {
 	}
 
 	function updateSelf() {
-		settings.global = true;
-		updateByName(getRepository(), HAXELIB_LIBNAME);
+		updateByName(getGlobalRepository(), HAXELIB_LIBNAME);
 	}
 }
