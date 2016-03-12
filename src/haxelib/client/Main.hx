@@ -179,7 +179,6 @@ class Main {
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
-		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
 		addCommand("git", vcs.bind(VcsID.Git), "use Git repository as library", Development);
@@ -188,10 +187,13 @@ class Main {
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
 		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
-		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib update $HAXELIB_LIBNAME` instead'));
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
 		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
+
+		// deprecated commands
+		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
+		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib update $HAXELIB_LIBNAME` instead'));
 
 		initSite();
 	}
@@ -1122,11 +1124,6 @@ class Main {
 		return state.updated;
 	}
 
-	function updateSelf() {
-		settings.global = true;
-		updateByName(getRepository(), HAXELIB_LIBNAME);
-	}
-
 	function remove() {
 		var prj = param("Library");
 		var version = paramOpt();
@@ -1402,10 +1399,6 @@ class Main {
  		Sys.exit(Sys.command(cmd, callArgs));
 	}
 
-	function local() {
-		doInstallFile(getRepository(), param("Package"), true, true);
-	}
-
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");
@@ -1476,4 +1469,14 @@ class Main {
 		new Main().process();
 	}
 
+
+	// deprecated commands
+	function local() {
+		doInstallFile(getRepository(), param("Package"), true, true);
+	}
+
+	function updateSelf() {
+		settings.global = true;
+		updateByName(getRepository(), HAXELIB_LIBNAME);
+	}
 }
