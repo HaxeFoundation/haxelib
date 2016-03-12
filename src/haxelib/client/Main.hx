@@ -182,8 +182,8 @@ class Main {
 		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
-		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
-		addCommand("hg", function()doVcs(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
+		addCommand("git", vcs.bind(VcsID.Git), "use Git repository as library", Development);
+		addCommand("hg", vcs.bind(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
@@ -880,16 +880,12 @@ class Main {
 				case Haxelib:
 					doInstall(rep, d.name, d.version, false);
 				case Git:
-					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir, d.version);
-				//TODO: add mercurial-dependency type to schema.json (https://github.com/HaxeFoundation/haxelib/blob/master/schema.json#L38)
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(vcs, d.name, d.url, d.branch, d.subDir, d.version));
 				case Mercurial:
-					doVcs(VcsID.Hg, d.name, d.url, d.branch, d.subDir, d.version);
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(vcs, d.name, d.url, d.branch, d.subDir, d.version));
 			}
 		}
 	}
-
-
-
 
 	function getConfigFile():String {
 		var home = null;
@@ -1107,9 +1103,8 @@ class Main {
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
 
-		var vcs:Vcs = Vcs.getVcsForDevLib(pdir, settings);
-		if(vcs != null)
-		{
+		var vcs = Vcs.getVcsForDevLib(pdir, settings);
+		if(vcs != null) {
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable;
 
@@ -1119,9 +1114,7 @@ class Main {
 
 			state.updated = success;
 			Sys.setCwd(oldCwd);
-		}
-		else
-		{
+		} else {
 			var latest = try site.getLatestVersion(p) catch( e : Dynamic ) { Sys.println(e); return; };
 
 			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
@@ -1306,28 +1299,19 @@ class Main {
 		}
 	}
 
-	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
-	{
+	inline function useVcs(id:VcsID, fn:Vcs->Void):Void {
 		// Prepare check vcs.available:
 		var vcs = Vcs.get(id, settings);
 		if(vcs == null || !vcs.available)
-			return print('Could not use $id, please make sure it is installed and available in your PATH.');
-
-		// if called with known values:
-		if(libName != null && url != null)
-			doVcsInstall(vcs, libName, url, branch, subDir, version);
-		else
-			doVcsInstall(vcs,
-			             param("Library name"),
-			             param(vcs.name + " path"),
-			             paramOpt(),
-			             paramOpt(),
-			             paramOpt()
-			);
+			throw 'Could not use $id, please make sure it is installed and available in your PATH.';
+		return fn(vcs);
 	}
 
-	function doVcsInstall(vcs:Vcs, libName:String, url:String, ?branch:String, ?subDir:String, ?version:String)
-	{
+	function vcs(id:VcsID) {
+		useVcs(id, function(vcs) doVcsInstall(vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
+	}
+
+	function doVcsInstall(vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
 		var rep = getRepository();
 		var proj = rep + Data.safe(libName);
 
@@ -1347,6 +1331,7 @@ class Main {
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
+			deleteRec(libPath);
 			var message = switch(error) {
 				case VcsUnavailable(vcs):
 					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
@@ -1357,10 +1342,7 @@ class Main {
 				case CantCheckoutVersion(vcs, version, stderr):
 					'Could not checkout tag "$version": ' + stderr;
 			};
-			print(message);
-			deleteRec(libPath);
-			Sys.exit(1);
-			return;
+			throw message;
 		}
 
 
