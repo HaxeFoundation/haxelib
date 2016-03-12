@@ -320,7 +320,7 @@ class Main {
 					} catch (e:String) {
 						if (e == "std@set_cwd") {
 							print("Directory " + dir + " unavailable");
-							Sys.exit(1);
+							Sys.exit(2);
 						}
 						neko.Lib.rethrow(e);
 					}
@@ -370,7 +370,7 @@ class Main {
 			switch [settings.always, settings.never] {
 				case [true, true]:
 					print('--always and --never are mutually exclusive');
-					Sys.exit(1);
+					Sys.exit(3);
 					null;
 				case [true, _]: true;
 				case [_, true]: false;
@@ -383,7 +383,7 @@ class Main {
 		var cmd = args[argcur++];
 		if( cmd == null ) {
 			usage();
-			Sys.exit(1);
+			Sys.exit(0);
 		}
 		if (cmd == "upgrade") cmd = "update"; // TODO: maybe we should have some alias system
 		for( c in commands )
@@ -407,26 +407,26 @@ class Main {
 						print("please download manually the file from http://lib.haxe.org/files/3.0/");
 						print("and run 'haxelib local <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
-						Sys.exit(1);
+						Sys.exit(5);
 					}
 					if( e == "Blocked" ) {
 						print("Http connection timeout. Try running haxelib -notimeout <command> to disable timeout");
-						Sys.exit(1);
+						Sys.exit(6);
 					}
 					if( e == "std@get_cwd" ) {
 						print("ERROR: Current working directory is unavailable");
-						Sys.exit(1);
+						Sys.exit(7);
 					}
 					if( settings.debug )
 						neko.Lib.rethrow(e);
 					print(Std.string(e));
-					Sys.exit(1);
+					Sys.exit(8);
 				}
 				return;
 			}
 		print("Unknown command "+cmd);
 		usage();
-		Sys.exit(1);
+		Sys.exit(4);
 	}
 
 	inline function createHttpRequest(url:String):Http {
@@ -1160,7 +1160,7 @@ class Main {
 
 			if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
 				print('Error: Removing "$HAXELIB_LIBNAME" requires the --safe flag');
-				Sys.exit(1);
+				Sys.exit(9);
 			}
 
 			deleteRec(pdir);
@@ -1349,19 +1349,24 @@ class Main {
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
+			var errorCode;
 			var message = switch(error) {
 				case VcsUnavailable(vcs):
+					errorCode = 10;
 					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
 				case CantCloneRepo(vcs, repo, stderr):
+					errorCode = 11;
 					'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
 				case CantCheckoutBranch(vcs, branch, stderr):
+					errorCode = 12;
 					'Could not checkout branch, tag or path "$branch": ' + stderr;
 				case CantCheckoutVersion(vcs, version, stderr):
+					errorCode = 13;
 					'Could not checkout tag "$version": ' + stderr;
 			};
 			print(message);
 			deleteRec(libPath);
-			Sys.exit(1);
+			Sys.exit(errorCode);
 			return;
 		}
 
@@ -1485,7 +1490,7 @@ class Main {
 		if (!FileSystem.exists(xmlFile))
 		{
 			print('No `haxelib.xml` file was found in the current directory.');
-			Sys.exit(0);
+			Sys.exit(14);
 		}
 
 		var xmlString = File.getContent(xmlFile);
