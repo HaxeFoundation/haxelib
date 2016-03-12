@@ -151,15 +151,16 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
+	var isHaxelibRun : Bool;
 
 
 	function new()
 	{
 		args = Sys.args();
+		isHaxelibRun = (Sys.getEnv("HAXELIB_RUN") != null);
 
-		if (Sys.getEnv("HAXELIB_RUN") != null) {
+		if (isHaxelibRun)
 			Sys.setCwd(args.pop());
-		}
 
 		commands = new List();
 		addCommand("install", install, "install a given library, or all libraries from a hxml file", Basic);
@@ -352,7 +353,7 @@ class Main {
 			}
 		}
 
-		if (!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) {
+		if (!isHaxelibRun && !settings.safe) {
 			var rep = getRepository();
 			if (FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
@@ -1144,6 +1145,12 @@ class Main {
 		if( version == null ) {
 			if( !FileSystem.exists(pdir) )
 				throw "Library "+prj+" is not installed";
+
+			if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
+				print('Error: Removing "$HAXELIB_LIBNAME" requires the --safe flag');
+				Sys.exit(1);
+			}
+
 			deleteRec(pdir);
 			print("Library "+prj+" removed");
 			return;
