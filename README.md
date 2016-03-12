@@ -21,7 +21,6 @@ Caveats:
 - if you mistakenly run a haxelib command in a subdirectory of your project, it will be executed on the global repo (to be fixed)
 - there may be some issues with `haxelib run` and `haxelib selfupdate` (to be fixed)
 - libraries get downloaded for each project
-- it requires a recent Haxe version (after 3.1.3) to work properly with ndlls.
 
 ### Using haxelib install all
 
