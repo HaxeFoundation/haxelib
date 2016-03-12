@@ -358,9 +358,8 @@ class Main {
 		}
 
 		if (!isHaxelibRun && !settings.safe) {
-			var rep = null;
-			handleErrors(function() rep = getRepository());
-			if (FileSystem.exists(rep + HAXELIB_LIBNAME)) {
+			var rep = try getRepository() catch (_:Dynamic) null;
+			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
 				doRun(rep, HAXELIB_LIBNAME, null);
 				return;
@@ -394,46 +393,40 @@ class Main {
 						Sys.println('Warning: Command `$cmd` is deprecated and will be removed in future. $message.');
 					default:
 				}
-				handleErrors(function() {
+				try {
 					if( c.net ) {
 						loadProxy();
 						checkUpdate();
 					}
 					c.f();
-				});
+				} catch( e : Dynamic ) {
+					if( e == "std@host_resolve" ) {
+						print("Host "+SERVER.host+" was not found");
+						print("Please ensure that your internet connection is on");
+						print("If you don't have an internet connection or if you are behing a proxy");
+						print("please download manually the file from http://lib.haxe.org/files/3.0/");
+						print("and run 'haxelib local <file>' to install the Library.");
+						print("You can also setup the proxy with 'haxelib proxy'.");
+						Sys.exit(5);
+					}
+					if( e == "Blocked" ) {
+						print("Http connection timeout. Try running haxelib -notimeout <command> to disable timeout");
+						Sys.exit(6);
+					}
+					if( e == "std@get_cwd" ) {
+						print("ERROR: Current working directory is unavailable");
+						Sys.exit(7);
+					}
+					if( settings.debug )
+						neko.Lib.rethrow(e);
+					print(Std.string(e));
+					Sys.exit(8);
+				}
 				return;
 			}
 		print("Unknown command "+cmd);
 		usage();
 		Sys.exit(4);
-	}
-
-	inline function handleErrors(fn:Void->Void) {
-		try {
-			fn();
-		} catch( e : Dynamic ) {
-			if( e == "std@host_resolve" ) {
-				print("Host "+SERVER.host+" was not found");
-				print("Please ensure that your internet connection is on");
-				print("If you don't have an internet connection or if you are behing a proxy");
-				print("please download manually the file from http://lib.haxe.org/files/3.0/");
-				print("and run 'haxelib local <file>' to install the Library.");
-				print("You can also setup the proxy with 'haxelib proxy'.");
-				Sys.exit(5);
-			}
-			if( e == "Blocked" ) {
-				print("Http connection timeout. Try running haxelib -notimeout <command> to disable timeout");
-				Sys.exit(6);
-			}
-			if( e == "std@get_cwd" ) {
-				print("ERROR: Current working directory is unavailable");
-				Sys.exit(7);
-			}
-			if( settings.debug )
-				neko.Lib.rethrow(e);
-			print(Std.string(e));
-			Sys.exit(8);
-		}
 	}
 
 	inline function createHttpRequest(url:String):Http {
