@@ -880,9 +880,9 @@ class Main {
 				case Haxelib:
 					doInstall(rep, d.name, d.version, false);
 				case Git:
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(vcs, d.name, d.url, d.branch, d.subDir, d.version));
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 				case Mercurial:
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(vcs, d.name, d.url, d.branch, d.subDir, d.version));
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 			}
 		}
 	}
@@ -1306,11 +1306,11 @@ class Main {
 	}
 
 	function vcs(id:VcsID) {
-		useVcs(id, function(vcs) doVcsInstall(vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
+		var rep = getRepository();
+		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
 	}
 
-	function doVcsInstall(vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
-		var rep = getRepository();
+	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
