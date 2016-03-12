@@ -157,7 +157,7 @@ class Main {
 	function new()
 	{
 		args = Sys.args();
-		isHaxelibRun = (Sys.getEnv("HAXELIB_RUN") != null);
+		isHaxelibRun = (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME);
 
 		if (isHaxelibRun)
 			Sys.setCwd(args.pop());
@@ -1431,6 +1431,7 @@ class Main {
 			callArgs.push(args[i]);
 
 		Sys.putEnv("HAXELIB_RUN", "1");
+		Sys.putEnv("HAXELIB_RUN_NAME", project);
 		var cmd = callArgs.shift();
  		Sys.exit(Sys.command(cmd, callArgs));
 	}
