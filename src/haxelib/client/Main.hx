@@ -188,7 +188,7 @@ class Main {
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
 		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
-		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
+		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib update $HAXELIB_LIBNAME` instead'));
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
 		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
