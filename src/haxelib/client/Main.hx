@@ -633,7 +633,7 @@ class Main {
 		var inf = site.infos(prj);
 		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
-		doInstall(inf.name,version,version == inf.getLatest());
+		doInstall(getRepository(),inf.name,version,version == inf.getLatest());
 	}
 
 	function getVersion( inf:ProjectInfos, ?reqversion:String )
@@ -738,22 +738,18 @@ class Main {
 		}
 
 		// Install if they confirm
-		if (ask("Continue?"))
-		{
+		if (ask("Continue?")) {
+			var rep = getRepository();
 			for (l in libs)
-			{
-				doInstall(l.name, l.version, true);
-			}
+				doInstall(rep, l.name, l.version, true);
 		}
 	}
 
-	function doInstall( project, version, setcurrent ) {
-		var rep = getRepository();
-
+	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
 		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
 			print("You already have "+project+" version "+version+" installed");
-			setCurrent(project,version,true);
+			setCurrent(rep,project,version,true);
 			return;
 		}
 
@@ -788,13 +784,13 @@ class Main {
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
 
-		doInstallFile(filepath, setcurrent);
+		doInstallFile(rep,filepath, setcurrent);
 		try {
 			site.postInstall(project, version);
 		} catch (e:Dynamic) {}
 	}
 
-	function doInstallFile(filepath,setcurrent,nodelete = false) {
+	function doInstallFile(rep,filepath,setcurrent,nodelete = false) {
 		// read zip content
 		var f = File.read(filepath,true);
 		var zip = try {
@@ -810,7 +806,7 @@ class Main {
 		f.close();
 		var infos = Data.readInfos(zip,false);
 		// create directories
-		var pdir = getRepository() + Data.safe(infos.name);
+		var pdir = rep + Data.safe(infos.name);
 		safeDir(pdir);
 		pdir += "/";
 		var target = pdir + Data.safe(infos.version);
@@ -884,7 +880,7 @@ class Main {
 
 			switch d.type {
 				case Haxelib:
-					doInstall(d.name, d.version, false);
+					doInstall(rep, d.name, d.version, false);
 				case Git:
 					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir, d.version);
 				//TODO: add mercurial-dependency type to schema.json (https://github.com/HaxeFoundation/haxelib/blob/master/schema.json#L38)
@@ -1121,10 +1117,10 @@ class Main {
 					if (!ask("Update "+p+" to "+inf.getLatest()))
 						return;
 				}
-				doInstall(p,inf.getLatest(),true);
+				doInstall(state.rep,p,inf.getLatest(),true);
 				state.updated = true;
 			} else
-				setCurrent(p, inf.getLatest(), true);
+				setCurrent(state.rep, p, inf.getLatest(), true);
 		}
 	}
 	function updateByName(prj:String) {
@@ -1180,16 +1176,16 @@ class Main {
 	function set() {
 		var prj = param("Library");
 		var version = param("Version");
-		setCurrent(prj,version,false);
+		setCurrent(getRepository(), prj,version,false);
 	}
 
-	function setCurrent( prj : String, version : String, doAsk : Bool ) {
-		var pdir = getRepository() + Data.safe(prj);
+	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
+		var pdir = rep + Data.safe(prj);
 		var vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
 			print("Library "+prj+" version "+version+" is not installed");
 			if(ask("Would you like to install it?"))
-				doInstall(prj, version, true);
+				doInstall(rep, prj, version, true);
 			return;
 		}
 		if( getCurrent(pdir) == version )
@@ -1433,8 +1429,8 @@ class Main {
 		doLocalInstall(param("Package"));
 	}
 
-	function doLocalInstall(file:String) {
-		doInstallFile(file, true, true);
+	inline function doLocalInstall(file:String) {
+		doInstallFile(getRepository(), file, true, true);
 	}
 
 	function proxy() {
