@@ -154,8 +154,7 @@ class Main {
 	var isHaxelibRun : Bool;
 
 
-	function new()
-	{
+	function new() {
 		args = Sys.args();
 		isHaxelibRun = (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME);
 
@@ -619,8 +618,7 @@ class Main {
 
 		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
 			// *.hxml provided, install all libraries/versions in this hxml file
-			if( prj.endsWith(".hxml") )
-			{
+			if( prj.endsWith(".hxml") ) {
 				installFromHxml(rep, prj);
 				return;
 			}
@@ -638,8 +636,7 @@ class Main {
 		doInstall(rep,inf.name,version,version == inf.getLatest());
 	}
 
-	function getVersion( inf:ProjectInfos, ?reqversion:String )
-	{
+	function getVersion( inf:ProjectInfos, ?reqversion:String ) {
 		if( inf.versions.length == 0 )
 			throw "The library "+inf.name+" has not yet released a version";
 		var version = if( reqversion != null ) reqversion else inf.getLatest();
@@ -655,8 +652,7 @@ class Main {
 		return version;
 	}
 
-	function installFromHxml( rep:String, path:String )
-	{
+	function installFromHxml( rep:String, path:String ) {
 		var targets  = [
 			'-java ' => 'hxjava',
 			'-cpp ' => 'hxcpp',
@@ -676,8 +672,7 @@ class Main {
 							libsToInstall[lib] = { name: lib, version: null }
 					}
 
-				if (l.startsWith("-lib"))
-				{
+				if (l.startsWith("-lib")) {
 					var key = l.substr(5);
 					var parts = key.split(":");
 					var libName = parts[0].trim();
@@ -849,8 +844,7 @@ class Main {
 		return infos;
 	}
 
-	function doInstallDependencies( rep:String, dependencies:Array<Dependency> )
-	{
+	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = rep + Data.safe(d.name);
@@ -1269,15 +1263,13 @@ class Main {
 	}
 
 
-	function removeExistingDevLib(proj:String):Void
-	{
+	function removeExistingDevLib(proj:String):Void {
 		//TODO: ask if existing repo have changes.
 
 		// find existing repo:
 		var vcs:Vcs = Vcs.getVcsForDevLib(proj, settings);
 		// remove existing repos:
-		while(vcs != null)
-		{
+		while(vcs != null) {
 			deleteRec(proj + "/" + vcs.directory);
 			vcs = Vcs.getVcsForDevLib(proj, settings);
 		}
@@ -1440,8 +1432,7 @@ class Main {
 		var xmlFile = cwd + "haxelib.xml";
 		var jsonFile = cwd + "haxelib.json";
 
-		if (!FileSystem.exists(xmlFile))
-		{
+		if (!FileSystem.exists(xmlFile)) {
 			print('No `haxelib.xml` file was found in the current directory.');
 			Sys.exit(0);
 		}
