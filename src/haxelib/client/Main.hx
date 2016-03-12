@@ -179,7 +179,7 @@ class Main {
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
-		addCommand("local", local, "install the specified package locally", Deprecated("Use haxelib install <file> instead"), false);
+		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
 		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
