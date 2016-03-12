@@ -5,11 +5,15 @@ import haxe.zip.Tools;
 
 import sys.io.File;
 import sys.FileSystem;
+import haxelib.client.Main.VERSION;
+import haxelib.Data.Infos;
 
 class Package {
     static var outPath = "package.zip";
 
     static function main() {
+        checkVersion();
+
         var entries = new List<Entry>();
 
         function add(path:String, ?target:String) {
@@ -52,5 +56,14 @@ class Package {
         var writer = new Writer(out);
         writer.write(entries);
         out.close();
+    }
+
+    @:access(haxelib.client.Main.VERSION)
+    static function checkVersion() {
+        var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
+        if (json.version != VERSION) {
+            Sys.println('Error: Version in haxelib.json (${json.version}) does not match version in haxelib.client.Main.VERSION field ($VERSION)');
+            Sys.exit(1);
+        }
     }
 }
