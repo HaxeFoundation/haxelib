@@ -610,9 +610,8 @@ class Main {
 		var prj = param("Library name or hxml file:");
 
 		// No library given, install libraries listed in *.hxml in given directory
-		if( prj == "all")
-		{
-			installFromAllHxml();
+		if( prj == "all") {
+			installFromAllHxml(rep);
 			return;
 		}
 
@@ -620,7 +619,7 @@ class Main {
 			// *.hxml provided, install all libraries/versions in this hxml file
 			if( prj.endsWith(".hxml") )
 			{
-				installFromHxml(prj);
+				installFromHxml(rep, prj);
 				return;
 			}
 			// *.zip provided, install zip as haxe library
@@ -654,7 +653,7 @@ class Main {
 		return version;
 	}
 
-	function installFromHxml( path )
+	function installFromHxml( rep:String, path:String )
 	{
 		var targets  = [
 			'-java ' => 'hxjava',
@@ -695,54 +694,41 @@ class Main {
 		}
 		processHxml(path);
 
-		installMany(libsToInstall);
-	}
-
-	function installFromAllHxml()
-	{
-		var cwd = Sys.getCwd();
-		var hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
-		if (hxmlFiles.length > 0)
-		{
-			for (file in hxmlFiles)
-			{
-				print('Installing all libraries from $file:');
-				installFromHxml(cwd+file);
-			}
-		}
-		else
-		{
-			print ("No hxml files found in the current directory.");
-		}
-	}
-
-	function installMany( libs:Iterable<{name:String,version:String}> )
-	{
-		if (libs.empty())
+		if (libsToInstall.empty())
 			return;
 
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		print("Loading info about the required libraries");
-		for (l in libs)
-		{
+		for (l in libsToInstall) {
 			var inf = site.infos(l.name);
 			l.version = getVersion(inf, l.version);
 		}
 
 		// Print a list with all the info
 		print("Haxelib is going to install these libraries:");
-		for (l in libs)
-		{
+		for (l in libsToInstall) {
 			var vString = (l.version == null) ? "" : " - " + l.version;
 			print("  " + l.name + vString);
 		}
 
 		// Install if they confirm
 		if (ask("Continue?")) {
-			var rep = getRepository();
-			for (l in libs)
+			for (l in libsToInstall)
 				doInstall(rep, l.name, l.version, true);
+		}
+	}
+
+	function installFromAllHxml(rep:String) {
+		var cwd = Sys.getCwd();
+		var hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
+		if (hxmlFiles.length > 0) {
+			for (file in hxmlFiles) {
+				print('Installing all libraries from $file:');
+				installFromHxml(rep, cwd + file);
+			}
+		} else {
+			print("No hxml files found in the current directory.");
 		}
 	}
 
@@ -1363,9 +1349,10 @@ class Main {
 
 
 	function run() {
+		var rep = getRepository();
 		var project = param("Library");
 		var temp = project.split(":");
-		doRun(getRepository(), temp[0], temp[1]);
+		doRun(rep, temp[0], temp[1]);
 	}
 
 	function doRun( rep:String, project:String, version:String ) {
