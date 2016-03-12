@@ -352,10 +352,13 @@ class Main {
 			}
 		}
 
-		if ((!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) && FileSystem.exists(getRepository() + HAXELIB_LIBNAME)) {
-			argcur = 0; // send all arguments
-			doRun(HAXELIB_LIBNAME, null);
-			return;
+		if (!settings.safe && Sys.getEnv("HAXELIB_RUN") == null) {
+			var rep = getRepository();
+			if (FileSystem.exists(rep + HAXELIB_LIBNAME)) {
+				argcur = 0; // send all arguments
+				doRun(rep, HAXELIB_LIBNAME, null);
+				return;
+			}
 		}
 
 		Cli.defaultAnswer =
@@ -1363,11 +1366,10 @@ class Main {
 	function run() {
 		var project = param("Library");
 		var temp = project.split(":");
-		doRun(temp[0], temp[1]);
+		doRun(getRepository(), temp[0], temp[1]);
 	}
 
-	function doRun( project:String, version:String ) {
-		var rep = getRepository();
+	function doRun( rep:String, project:String, version:String ) {
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+project+" is not installed";
