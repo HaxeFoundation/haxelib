@@ -134,7 +134,6 @@ class ProgressIn extends haxe.io.Input {
 class Main {
 
 	static var VERSION = SemVer.ofString('3.3.0');
-	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
@@ -142,7 +141,7 @@ class Main {
 		port : 80,
 		dir : "",
 		url : "index.n",
-		apiVersion : APIVERSION.major+"."+APIVERSION.minor,
+		apiVersion : "3.0",
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
