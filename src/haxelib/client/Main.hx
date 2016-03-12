@@ -1446,11 +1446,21 @@ class Main {
 	}
 
 	function newRepo() {
-		FsUtils.safeDir(REPODIR, true);
+		var path = FileSystem.absolutePath(REPODIR);
+		var created = FsUtils.safeDir(path, true);
+		if (created)
+			print('Local repository created ($path)');
+		else
+			print('Local repository already exists ($path)');
 	}
 
 	function deleteRepo() {
-		FsUtils.deleteRec(REPODIR);
+		var path = FileSystem.absolutePath(REPODIR);
+		var deleted = FsUtils.deleteRec(path);
+		if (deleted)
+			print('Local repository deleted ($path)');
+		else
+			print('No local repository found ($path)');
 	}
 
 	// ----------------------------------

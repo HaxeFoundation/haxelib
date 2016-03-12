@@ -55,7 +55,7 @@ class FsUtils {
         return a == b;
     }
 
-    public static function safeDir(dir:String, checkWritable = false):Void {
+    public static function safeDir(dir:String, checkWritable = false):Bool {
         if (FileSystem.exists(dir)) {
             if (!FileSystem.isDirectory(dir))
                 throw 'A file is preventing $dir to be created';
@@ -68,18 +68,20 @@ class FsUtils {
                 }
                 FileSystem.deleteFile(checkFile);
             }
+            return false;
         } else {
             try {
                 FileSystem.createDirectory(dir);
+                return true;
             } catch (_:Dynamic) {
                 throw 'You don\'t have enough user rights to create the directory $dir';
             }
         }
     }
 
-    public static function deleteRec(dir:String):Void {
+    public static function deleteRec(dir:String):Bool {
         if (!FileSystem.exists(dir))
-            return;
+            return false;
         for (p in FileSystem.readDirectory(dir)) {
             var path = Path.join([dir, p]);
 
@@ -99,6 +101,7 @@ class FsUtils {
             }
         }
         FileSystem.deleteDirectory(dir);
+        return true;
     }
 
     static function safeDelete(file:String):Bool {
