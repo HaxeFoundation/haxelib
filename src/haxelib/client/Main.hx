@@ -1087,6 +1087,12 @@ class Main {
 		}
 	}
 
+	function updateByName(rep:String, prj:String) {
+		var state = { rep : rep, prompt : false, updated : false };
+		doUpdate(prj,state);
+		return state.updated;
+	}
+
 	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
 		var pdir = state.rep + Data.safe(p);
 
@@ -1116,12 +1122,6 @@ class Main {
 			} else
 				setCurrent(state.rep, p, latest, true);
 		}
-	}
-
-	function updateByName(rep:String, prj:String) {
-		var state = { rep : rep, prompt : false, updated : false };
-		doUpdate(prj,state);
-		return state.updated;
 	}
 
 	function remove() {
