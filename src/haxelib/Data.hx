@@ -271,56 +271,6 @@ class Data {
 		}
 	}
 
-	static function doCheck(doc:Infos)
-		//return Validator.validate(doc);
-		return //This is generated from the above macro, which seems not to run in --run mode
-			(function(v:haxelib.Data.Infos) {
-				if (!Reflect.isObject(v)) throw "object expected";
-				if (Reflect.hasField(v, "classPath") && v.classPath != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.classPath);
-				if (!Reflect.hasField(v, "contributors")) throw ("missing field " + "contributors") else {
-					(function(v:Array<String>) {
-						if (!Std.is(v, Array)) throw "Array expected";
-						for (v in v) (function(v:String) if (!Std.is(v, String)) throw "String expected")(v);
-					})(v.contributors);
-					(function(v:Array<String>) {
-						if (!(v.length > 0)) throw 'Specify at least one contributor';
-					})(v.contributors);
-				};
-				if (Reflect.hasField(v, "dependencies") && v.dependencies != null) (function(v:StdTypes.Null<haxelib.Data.Dependencies>) {
-					if (!Reflect.isObject(v)) throw "object expected";
-					for (f in Reflect.fields(v)) {
-						var v:haxelib.Data.DependencyVersion = Reflect.field(v, f);
-						switch ((v : haxelib.Validator.Validatable)).validate() {
-							case Some({ error : e }):{
-								throw e;
-							};
-							case None:
-						};
-					};
-				})(v.dependencies);
-				if (Reflect.hasField(v, "description") && v.description != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.description);
-				if (!Reflect.hasField(v, "license")) throw ("missing field " + "license") else (function(v:haxelib.Data.License) if (!Lambda.has([haxelib.Data.License.Gpl, haxelib.Data.License.Lgpl, haxelib.Data.License.Mit, haxelib.Data.License.Bsd, haxelib.Data.License.Public, haxelib.Data.License.Apache], v)) throw 'Invalid value ' + v + ' for ' + "License")(v.license);
-				if (Reflect.hasField(v, "main") && v.main != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.main);
-				if (!Reflect.hasField(v, "name")) throw ("missing field " + "name") else (function(v:haxelib.Data.ProjectName) switch ((v : haxelib.Validator.Validatable)).validate() {
-					case Some({ error : e }):{
-						throw e;
-					};
-					case None:
-				})(v.name);
-				if (!Reflect.hasField(v, "releasenote")) throw ("missing field " + "releasenote") else (function(v:String) if (!Std.is(v, String)) throw "String expected")(v.releasenote);
-				if (Reflect.hasField(v, "tags") && v.tags != null) (function(v:StdTypes.Null<Array<String>>) {
-					if (!Std.is(v, Array)) throw "Array expected";
-					for (v in v) (function(v:String) if (!Std.is(v, String)) throw "String expected")(v);
-				})(v.tags);
-				if (Reflect.hasField(v, "url") && v.url != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.url);
-				if (!Reflect.hasField(v, "version")) throw ("missing field " + "version") else (function(v:haxelib.SemVer) switch ((v : haxelib.Validator.Validatable)).validate() {
-					case Some({ error : e }):{
-						throw e;
-					};
-					case None:
-				})(v.version);
-			})(doc);
-
 	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
@@ -338,7 +288,7 @@ class Data {
 				}
 
 		if (check)
-			doCheck(doc);
+			Validator.validate(doc);
 		else {
 			if (!doc.version.valid)
 				doc.version = SemVer.DEFAULT;
