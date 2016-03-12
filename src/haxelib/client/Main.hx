@@ -943,11 +943,13 @@ class Main {
 	}
 
 	function getRepository():String {
-		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = FileSystem.fullPath(REPODIR);
-			return Path.addTrailingSlash(absolutePath);
-		}
+		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR))
+			return Path.addTrailingSlash(FileSystem.fullPath(REPODIR));
+		else
+			return getGlobalRepository();
+	}
 
+	function getGlobalRepository():String {
 		var rep = getGlobalRepositoryPath(true);
 		if (!FileSystem.exists(rep))
 			throw "haxelib Repository " + rep + " does not exist. Please run `haxelib setup` again.";
