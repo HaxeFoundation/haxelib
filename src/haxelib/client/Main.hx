@@ -1127,9 +1127,9 @@ class Main {
 	}
 
 	function remove() {
+		var rep = getRepository();
 		var prj = param("Library");
 		var version = paramOpt();
-		var rep = getRepository();
 		var pdir = rep + Data.safe(prj);
 		if( version == null ) {
 			if( !FileSystem.exists(pdir) )
