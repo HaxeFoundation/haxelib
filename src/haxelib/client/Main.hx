@@ -197,11 +197,9 @@ class Main {
 	}
 
 	function checkUpdate() {
-		var latest:SemVer = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
-
-		if (latest != null && latest > VERSION) {
-			print('A new version (${latest}) of haxelib is available.\nDo "haxelib update ${HAXELIB_LIBNAME}" to get the latest version.\n');
-		}
+		var latest = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
+		if (latest != null && latest > VERSION)
+			print('A new version ($latest) of haxelib is available.\nDo `haxelib update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
 
 	function initSite() {
@@ -1076,14 +1074,17 @@ class Main {
 	}
 
 	function update() {
+		var rep = getRepository();
+
 		var prj = paramOpt();
 		if (prj != null) {
-			if (!updateByName(prj))
+			prj = projectNameToDir(rep, prj); // get project name in proper case
+			if (!updateByName(rep, prj))
 				print(prj + " is up to date");
 			return;
 		}
 
-		var state = { rep : getRepository(), prompt : true, updated : false };
+		var state = { rep : rep, prompt : true, updated : false };
 		for( p in FileSystem.readDirectory(state.rep) ) {
 			if( p.charAt(0) == "." || !FileSystem.isDirectory(state.rep+"/"+p) )
 				continue;
@@ -1099,8 +1100,18 @@ class Main {
 			print("All libraries are up-to-date");
 	}
 
+	function projectNameToDir( rep:String, project:String ) {
+		var p = project.toLowerCase();
+		var l = FileSystem.readDirectory(rep).filter(function (dir) return dir.toLowerCase() == p);
+
+		switch (l) {
+			case []: return project;
+			case [dir]: return Data.unsafe(dir);
+			case _: throw "Several name case for library " + project;
+		}
+	}
+
 	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
-		p = projectNameToDir(p, state);
 		var pdir = state.rep + Data.safe(p);
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
@@ -1134,33 +1145,16 @@ class Main {
 		}
 	}
 
-	function projectNameToDir( project:String, state ) {
-		var p = project.toLowerCase();
-		var l = FileSystem.readDirectory(state.rep).filter(function (dir) return dir.toLowerCase() == p);
-
-		switch (l) {
-			case []: throw "No such project " + project + " installed";
-			case [dir]: return Data.unsafe(dir);
-			case _: throw "Several name case for library " + project;
-		}
-	}
-
-	function updateByName(prj:String) {
-		var state = { rep : getRepository(), prompt : false, updated : false };
+	function updateByName(rep:String, prj:String) {
+		var state = { rep : rep, prompt : false, updated : false };
 		doUpdate(prj,state);
 		return state.updated;
 	}
 
 	function updateSelf() {
 		settings.global = true;
-		if (updateByName(HAXELIB_LIBNAME))
-			print("Haxelib successfully updated.");
-		else
-			print("Haxelib was already up to date...");
+		updateByName(getRepository(), HAXELIB_LIBNAME);
 	}
-
-
-
 
 	function remove() {
 		var prj = param("Library");
