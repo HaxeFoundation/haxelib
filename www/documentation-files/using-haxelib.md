@@ -44,7 +44,6 @@ The following commands are available:
 
 * [run](#run)
 * [setup](#setup)
-* [selfupdate](#selfupdate)
 * [proxy](#proxy)
 
 </div>
@@ -307,18 +306,6 @@ haxelib setup
 ```
 
 > Set the Haxelib repository path. To print current path use `haxelib config`.
-
-
-
-<a name="selfupdate" class="anch"></a>
-
-#### `haxelib selfupdate`
-
-```
-haxelib selfupdate
-```
-
-> Update Haxelib itself. On Windows, it will ask to run `haxe update.hxml` after this command has finished, which will complete the upgrade.
 
 
 
