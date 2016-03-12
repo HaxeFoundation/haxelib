@@ -138,8 +138,8 @@ class Main {
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
-		host : "lib.haxe.org",
-		port : 80,
+		host : "localhost",
+		port : 2000,
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
@@ -199,7 +199,7 @@ class Main {
 	function checkUpdate() {
 		var latest = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
 		if (latest != null && latest > VERSION)
-			print('A new version ($latest) of haxelib is available.\nDo `haxelib update $HAXELIB_LIBNAME` to get the latest version.\n');
+			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
 
 	function initSite() {
