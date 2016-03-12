@@ -1174,9 +1174,7 @@ class Main {
 	}
 
 	function set() {
-		var prj = param("Library");
-		var version = param("Version");
-		setCurrent(getRepository(), prj,version,false);
+		setCurrent(getRepository(), param("Library"), param("Version"), false);
 	}
 
 	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
