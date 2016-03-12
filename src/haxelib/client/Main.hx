@@ -193,7 +193,7 @@ class Main {
 
 		// deprecated commands
 		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
-		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib update $HAXELIB_LIBNAME` instead'));
+		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib --global update $HAXELIB_LIBNAME` instead'));
 
 		initSite();
 	}
@@ -201,7 +201,7 @@ class Main {
 	function checkUpdate() {
 		var latest = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
 		if (latest != null && latest > VERSION)
-			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib update $HAXELIB_LIBNAME` to get the latest version.\n');
+			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
 
 	function initSite() {
@@ -360,7 +360,7 @@ class Main {
 		}
 
 		if (!isHaxelibRun && !settings.safe) {
-			var rep = try getRepository() catch (_:Dynamic) null;
+			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
 				doRun(rep, HAXELIB_LIBNAME, null);
@@ -1478,7 +1478,6 @@ class Main {
 	}
 
 	function updateSelf() {
-		settings.global = true;
-		updateByName(getRepository(), HAXELIB_LIBNAME);
+		updateByName(getGlobalRepository(), HAXELIB_LIBNAME);
 	}
 }
