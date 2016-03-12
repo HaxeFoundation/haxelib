@@ -124,7 +124,6 @@ Build files:
 * server_each.hxml: Libraries and configs used by server.hxml and server_tests.hxml.
 * server_legacy.hxml: Build the legacy website.
 * integration_tests.hxml: Build and run tests that test haxelib client and server together.
-* haxelib.hxml: Alias of client.hxml.
 * package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib](http://lib.haxe.org/p/haxelib/).
 * prepare_tests.hxml: Package the test libs.
 * ci.hxml: Used by our CIs, TravisCI and AppVeyor.
