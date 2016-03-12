@@ -1368,6 +1368,7 @@ class Main {
 			};
 			print(message);
 			deleteRec(libPath);
+			Sys.exit(1);
 			return;
 		}
 
