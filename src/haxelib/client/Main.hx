@@ -1502,6 +1502,6 @@ class Main {
 	}
 
 	function updateSelf() {
-		updateByName(getGlobalRepository(), HAXELIB_LIBNAME);
+		updateByName("", HAXELIB_LIBNAME);
 	}
 }
