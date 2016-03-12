@@ -605,6 +605,8 @@ class Main {
 	}
 
 	function install() {
+		var rep = getRepository();
+
 		var prj = param("Library name or hxml file:");
 
 		// No library given, install libraries listed in *.hxml in given directory
@@ -622,9 +624,8 @@ class Main {
 				return;
 			}
 			// *.zip provided, install zip as haxe library
-			if( prj.endsWith(".zip") )
-			{
-				doLocalInstall(prj);
+			if (prj.endsWith(".zip")) {
+				doInstallFile(rep, prj, true, true);
 				return;
 			}
 		}
@@ -633,7 +634,7 @@ class Main {
 		var inf = site.infos(prj);
 		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
-		doInstall(getRepository(),inf.name,version,version == inf.getLatest());
+		doInstall(rep,inf.name,version,version == inf.getLatest());
 	}
 
 	function getVersion( inf:ProjectInfos, ?reqversion:String )
@@ -1415,11 +1416,7 @@ class Main {
 	}
 
 	function local() {
-		doLocalInstall(param("Package"));
-	}
-
-	inline function doLocalInstall(file:String) {
-		doInstallFile(getRepository(), file, true, true);
+		doInstallFile(getRepository(), param("Package"), true, true);
 	}
 
 	function proxy() {
