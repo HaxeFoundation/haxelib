@@ -855,15 +855,13 @@ class Main {
 		print("Done");
 
 		// process dependencies
-		doInstallDependencies(infos.dependencies);
+		doInstallDependencies(rep, infos.dependencies);
 
 		return infos;
 	}
 
-	function doInstallDependencies( dependencies:Array<Dependency> )
+	function doInstallDependencies( rep:String, dependencies:Array<Dependency> )
 	{
-		var rep = getRepository();
-
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = rep + Data.safe(d.name);
@@ -1379,7 +1377,7 @@ class Main {
 
 		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))
-			doInstallDependencies(Data.readData(File.getContent(jsonPath), false).dependencies);
+			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
 
 
