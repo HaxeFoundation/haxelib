@@ -97,6 +97,24 @@ abstract SemVer(String) to String {
 	inline function get_valid()
 		return isValid(this);
 
+	@:op(a > b) static inline function gt(a:SemVer, b:SemVer)
+		return compare(a, b) == 1;
+
+	@:op(a >= b) static inline function gteq(a:SemVer, b:SemVer)
+		return compare(a, b) != -1;
+
+	@:op(a < b) static inline function lt(a:SemVer, b:SemVer)
+		return compare(a, b) == -1;
+
+	@:op(a <= b) static inline function lteq(a:SemVer, b:SemVer)
+		return compare(a, b) != 1;
+
+	@:op(a == b) static inline function eq(a:SemVer, b:SemVer)
+		return compare(a, b) == 0;
+
+	@:op(a != b) static inline function neq(a:SemVer, b:SemVer)
+		return compare(a, b) != 0;
+
 	static var FORMAT = ~/^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.(\d|[1-9]\d*)(-(alpha|beta|rc)(\.(\d|[1-9]\d*))?)?$/;
 
 	static var cache = new Map();
