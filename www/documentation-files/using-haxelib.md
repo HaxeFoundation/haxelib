@@ -228,7 +228,7 @@ haxelib user jason
 haxelib config
 ```
 
-> Print the Haxelib repository path. This is where each Haxelib will be installed to. You can modify the path using <code>haxelib [setup](#setup)</code>.
+> Print the Haxelib repository path. This is where each library will be installed to. You can modify the path using <code>haxelib [setup](#setup)</code>.
 >
 > If you are in a local repository and want to print the global Haxelib repository path do <code>haxelib [--global](#global) config</code>.
 
@@ -297,7 +297,7 @@ haxelib sumbit
 
 > Submits a zip package to Haxelib so other users can install it.
 >
-> Alternativelly you can run `haxelib submit` without argument to have Haxelib zip and submit the current directory.
+> Alternatively you can run `haxelib submit` without argument to have Haxelib zip and submit the current directory.
 >
 > If the user name is unknown, you'll be first asked to register an account.
 > If more the project has more than one developer, it will ask you which user you wish to submit as.
@@ -336,7 +336,7 @@ haxelib dev starling                     # Cancel dev, use installed version.
 > This directory should either contain a `haxelib.json` or the source `*.hx` files.
 > This command is useful when developing a library and testing changes on a project.
 >
-> If the directory is ommited the development version of the library will be deactivated.
+> If the directory is omitted the development version of the library will be deactivated.
 
 
 <a name="git" class="anch"></a>
@@ -368,7 +368,7 @@ haxelib hg [project-name] [mercurial-clone-path] [branch]
 
 > Use a mercurial repository as library.
 >
-> Usage is identital to <code>haxelib [git](#git)</code>.
+> Usage is identical to <code>haxelib [git](#git)</code>.
 
 
 
@@ -596,7 +596,7 @@ haxelib -cwd [dir]
 haxelib -no-timeout
 ```
 
-> Remove timeout when connecting to the Haxelib server, downloading or [submiting](#submit) a library.
+> Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
 
 
 
