@@ -789,6 +789,7 @@ class Main {
 		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
+		print('Installing ${infos.name}...');
 		// create directories
 		var pdir = rep + Data.safe(infos.name);
 		safeDir(pdir);
@@ -817,11 +818,12 @@ class Main {
 					path += "/";
 				}
 				if( file == "" ) {
-					if( path != "" ) print("  Created "+path);
+					if( path != "" && settings.debug ) print("  Created "+path);
 					continue; // was just a directory
 				}
 				path += file;
-				print("  Install "+path);
+				if (settings.debug)
+					print("  Install "+path);
 				var data = Reader.unzip(zipfile);
 				File.saveBytes(target+path,data);
 			}
