@@ -1446,7 +1446,7 @@ class Main {
 	}
 
 	function newRepo() {
-		var path = FileSystem.absolutePath(REPODIR);
+		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
 		var created = FsUtils.safeDir(path, true);
 		if (created)
 			print('Local repository created ($path)');
@@ -1455,7 +1455,7 @@ class Main {
 	}
 
 	function deleteRepo() {
-		var path = FileSystem.absolutePath(REPODIR);
+		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
 		var deleted = FsUtils.deleteRec(path);
 		if (deleted)
 			print('Local repository deleted ($path)');
