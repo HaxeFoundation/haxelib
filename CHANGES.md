@@ -10,5 +10,5 @@
  - Deprecated now redundant commands: `local`, `selfupdate` (#288)
  - Fixed suggested repository path on Linux (#242)
  - Suggested repository path on OSX is now `/usr/local/lib/haxe/lib` (#250)
- - `haxelib install <file>.hxml` now checks hxml files recursively (#242)
+ - `haxelib install <file>.hxml` now checks hxml files recursively (#200)
  - Tons of smaller fixes, cleanups and optimizations
