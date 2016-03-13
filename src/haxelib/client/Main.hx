@@ -802,31 +802,38 @@ class Main {
 		var basepath = Data.locateBasePath(zip);
 
 		// unzip content
-		for( zipfile in zip ) {
+		var entries = [for (entry in zip) if (entry.fileName.startsWith(basepath)) entry];
+		var total = entries.length;
+		for (i in 0...total) {
+			var zipfile = entries[i];
 			var n = zipfile.fileName;
-			if( n.startsWith(basepath) ) {
-				// remove basepath
-				n = n.substr(basepath.length,n.length-basepath.length);
-				if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
-					throw "Invalid filename : "+n;
-				var dirs = ~/[\/\\]/g.split(n);
-				var path = "";
-				var file = dirs.pop();
-				for( d in dirs ) {
-					path += d;
-					safeDir(target+path);
-					path += "/";
-				}
-				if( file == "" ) {
-					if( path != "" && settings.debug ) print("  Created "+path);
-					continue; // was just a directory
-				}
-				path += file;
-				if (settings.debug)
-					print("  Install "+path);
-				var data = Reader.unzip(zipfile);
-				File.saveBytes(target+path,data);
+			// remove basepath
+			n = n.substr(basepath.length,n.length-basepath.length);
+			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
+				throw "Invalid filename : "+n;
+
+			if (!settings.debug) {
+				var percent = Std.int((i / total) * 100);
+				Sys.print('${i + 1}/$total ($percent%)\r');
 			}
+
+			var dirs = ~/[\/\\]/g.split(n);
+			var path = "";
+			var file = dirs.pop();
+			for( d in dirs ) {
+				path += d;
+				safeDir(target+path);
+				path += "/";
+			}
+			if( file == "" ) {
+				if( path != "" && settings.debug ) print("  Created "+path);
+				continue; // was just a directory
+			}
+			path += file;
+			if (settings.debug)
+				print("  Install "+path);
+			var data = Reader.unzip(zipfile);
+			File.saveBytes(target+path,data);
 		}
 
 		// set current version
