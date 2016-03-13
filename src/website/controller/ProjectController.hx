@@ -4,6 +4,8 @@ import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
 import haxe.ds.Option;
+import markdown.AST;
+import Markdown;
 using tink.CoreApi;
 using haxe.io.Path;
 using CleverSort;
@@ -44,7 +46,7 @@ class ProjectController extends Controller {
 		var downloadUrl = '/p/$projectName/$semver/download/';
 
 		var readmeHTML = switch projectApi.readContentFromZip( projectName, semver, "README.md" ) {
-			case Success(Some(readme)): Markdown.markdownToHtml(readme);
+			case Success(Some(readme)): markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
 			case Success(None): ""; // No README.
 			case Failure(err):
 				ufError( err.message );
@@ -62,6 +64,23 @@ class ProjectController extends Controller {
 			downloadUrl: downloadUrl,
 			readme: readmeHTML,
 		}, "version.html");
+	}
+
+	function markdownToHtml(markdown:String, prefix:String) {
+		// this function is basically a copy of Markdown.markdownToHtml
+		// default md->html rendering function, but it adds a filter that
+		// fixes relative URLs in IMG tags
+		try {
+			var imgSrcfixer = new MarkdownImgRelativeSrcFixer(prefix);
+			var document = new Document();
+			var lines = ~/(\r\n|\r)/g.replace(markdown, '\n').split("\n");
+			document.parseRefLinks(lines);
+			var blocks = document.parseLines(lines);
+			for (block in blocks) block.accept(imgSrcfixer); // fix relative image links
+			return Markdown.renderHtml(blocks);
+		} catch (e:Dynamic) {
+			return '<pre>$e</pre>';
+		}
 	}
 
 	@:route("/$projectName/$semver/download/")
@@ -138,4 +157,26 @@ class ProjectController extends Controller {
 				throw HttpError.pageNotFound();
 		}
 	}
+}
+
+private class MarkdownImgRelativeSrcFixer implements NodeVisitor {
+    static var ABSOLUTE_URL_RE = ~/^(https?:\/)?\//;
+
+    var prefix:String;
+
+    public function new(prefix:String) {
+        this.prefix = prefix;
+    }
+
+    public function visitElementBefore(element:ElementNode):Bool {
+        if (element.tag == "img") {
+            var url = element.attributes["src"];
+            if (!ABSOLUTE_URL_RE.match(url))
+                element.attributes["src"] = prefix + url;
+        }
+        return element.children != null;
+    }
+
+    public function visitText(text:TextNode):Void {}
+    public function visitElementAfter(element:ElementNode):Void {}
 }
