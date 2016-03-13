@@ -272,7 +272,7 @@ class Main {
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
-		safe   : "run bundled haxelib version instead of latest update",
+		system : "run bundled haxelib version instead of latest update",
 	}
 
 	var settings: {
@@ -282,7 +282,7 @@ class Main {
 		always : Bool,
 		never  : Bool,
 		global : Bool,
-		safe   : Bool,
+		system : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -294,7 +294,7 @@ class Main {
 			never: false,
 			flat: false,
 			global: false,
-			safe: false,
+			system: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -358,7 +358,7 @@ class Main {
 			}
 		}
 
-		if (!isHaxelibRun && !settings.safe) {
+		if (!isHaxelibRun && !settings.system) {
 			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
@@ -1132,7 +1132,7 @@ class Main {
 				throw "Library "+prj+" is not installed";
 
 			if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
-				print('Error: Removing "$HAXELIB_LIBNAME" requires the --safe flag');
+				print('Error: Removing "$HAXELIB_LIBNAME" requires the --system flag');
 				Sys.exit(1);
 			}
 

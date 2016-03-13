@@ -61,7 +61,7 @@ The following commands are available:
 
 * [--flat](#flat)
 * [--always](#always)
-* [--safe](#safe)
+* [--system](#system)
 * [--debug](#debug)
 * [--quiet](#quiet)
 * [--never](#never)
@@ -503,12 +503,12 @@ haxelib --always
 
 
 
-<a name="safe" class="anch"></a>
+<a name="system" class="anch"></a>
 
-#### `haxelib --safe`
+#### `haxelib --system`
 
 ```
-haxelib --safe
+haxelib --system
 ```
 
 > Use the version of Haxelib bundled with Haxe instead of the one currently [set](#set).
