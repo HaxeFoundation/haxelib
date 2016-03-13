@@ -12,6 +12,8 @@ class Server {
 	static var ufApp:UfrontApplication;
 
 	static function main() {
+		// this is a temporary fix from https://github.com/dpeek/haxe-markdown/pull/26
+		@:privateAccess markdown.BlockParser.TableSyntax.TABLE_PATTERN = new EReg('^(.+?:?\\|:?)+(.+)$', '');
 
 		ufApp = new UfrontApplication({
 			indexController: HomeController,
