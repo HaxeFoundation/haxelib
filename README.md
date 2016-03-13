@@ -1,9 +1,13 @@
-# Haxelib
-
-For more documentation, please refer to [haxe.org](http://haxe.org/haxelib)
-
 [![TravisCI Build Status](https://travis-ci.org/HaxeFoundation/haxelib.svg?branch=development)](https://travis-ci.org/HaxeFoundation/haxelib)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/HaxeFoundation/haxelib?branch=development&svg=true)](https://ci.appveyor.com/project/HaxeFoundation/haxelib)
+
+# Haxelib: library manager for Haxe
+
+Haxelib is a library management tool shipped with the [Haxe Toolkit](http://haxe.org/).
+
+It allows searching, installing, upgrading and removing libraries from the [haxelib repository](http://lib.haxe.org/) as well as submitting libraries to it.
+
+For more documentation, please refer to http://lib.haxe.org/documentation/
 
 ## Per-project setup
 
