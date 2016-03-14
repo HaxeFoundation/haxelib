@@ -131,12 +131,10 @@ abstract ProjectName(String) to String {
 	@:to function toValidatable():Validatable
 		return {
 			validate:
-				function ():Option<{ error: String }> {
+				function ():Option<String> {
 					for (r in rules)
 						if (!r.check(this))
-							return Some( {
-								error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
-							});
+							return Some(r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`'));
 						return None;
 				}
 		}
@@ -166,7 +164,7 @@ abstract ProjectName(String) to String {
 
 	static public function ofString(s:String)
 		return switch new ProjectName(s) {
-			case _.toValidatable().validate() => Some({ error: e }): throw e;
+			case _.toValidatable().validate() => Some(e): throw e;
 			case v: v;
 		}
 
