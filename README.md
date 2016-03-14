@@ -11,23 +11,26 @@ For more documentation, please refer to http://lib.haxe.org/documentation/
 
 ## Development info
 
-### Running the website for development
+### Running the haxelib server for development
 
-Initial compilation and setup:
+The server has to be compiled with Haxe 3.2.1+. It can be run in Apache using mod_neko / mod_tora.
 
-Use [Docker](https://www.docker.com/):
+Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container.
+
+To start, run:
+
 ```
 docker-compose -f test/docker-compose.yml up
 ```
 
-The command above will copy the server source code and website resources into a container, compiles it, and then start Apache to serve it. To view the website, visit `http://$(docker-machine ip):2000/` (Windows and Mac) or `http://localhost:2000/` (Linux).
+The command above will copy the server source code and website resources into a container, compile it, and then start Apache to serve it.  To view the website, visit `http://$(docker-machine ip):2000/` (Windows and Mac) or `http://localhost:2000/` (Linux).
 
-To stop the server:
+To stop the server, run:
 ```
 docker-compose -f test/docker-compose.yml down
 ```
 
-If we modify any of the server source code or website resources, we need to rebuild the image by the command as follows:
+If we modify any of the server source code or website resources, we need to stop the server and then rebuild the image by running the command as follows:
 ```
 docker-compose -f test/docker-compose.yml build
 ```
@@ -74,3 +77,4 @@ Other files:
 * schema.json: JSON schema of haxelib.json.
 * deploy.json: Deploy configuration used by `haxelib run ufront deploy` for pushing the haxelib website to lib.haxe.org.
 * deploy_key.enc: Encrypted ssh private key for logging in to lib.haxe.org. Used by TravisCI.
+* Dockerfile: Docker build file for building an image that runs the haxelib server.
