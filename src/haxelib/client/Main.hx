@@ -1189,8 +1189,7 @@ class Main {
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
 		var version = if( version != null ) version else getCurrent(pdir);
 
-		var dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = if (dev != null) dev else pdir + "/" + Data.safe(version);
+		var vdir = if (version == "dev") getDev(pdir) else pdir + "/" + Data.safe(version);
 
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
