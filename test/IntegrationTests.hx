@@ -52,7 +52,7 @@ class IntegrationTests extends TestBase {
 			clientVer = {
 				var r = haxelib(["version"]).result();
 				if (r.code == 0)
-					SemVer.ofString(r.out);
+					SemVer.ofString(r.out.trim());
 				else if (r.out.indexOf("3.1.0-rc.4") >= 0)
 					SemVer.ofString("3.1.0-rc.4");
 				else

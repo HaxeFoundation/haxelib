@@ -19,6 +19,7 @@ class TestBase extends TestCase {
 	}
 
 	public function deleteDirectory(dir:String):Void {
+		if (!FileSystem.exists(dir)) return;
 		var exitCode = switch (Sys.systemName()) {
 			case "Windows":
 				Sys.command("rmdir", ["/S", "/Q", StringTools.replace(FileSystem.fullPath(dir), "/", "\\")]);
