@@ -5,80 +5,77 @@ If the `haxelib` command is executed without any arguments, it prints an exhaust
 The following commands are available:
 
 <div class="row">
-<div class="col-md-4">
+  <div class="col-md-4">
+    <h4><a href="#basic">Basic</a></h4>
+    <ul>
+      <li><a href="#install">install</a></li>
+      <li><a href="#update">update</a></li>
+      <li><a href="#remove">remove</a></li>
+      <li><a href="#list">list</a></li>
+      <li><a href="#set">set</a></li>
+    </ul>
+  </div>
 
-#### [Basic](#basic)
-
-* [install](#install)
-* [update](#update)
-* [remove](#remove)
-* [list](#list)
-* [set](#set)
-
-</div>
-<div class="col-md-4">
-
-#### [Information](#information)
-
-* [search](#search)
-* [info](#info)
-* [user](#user)
-* [config](#config)
-* [path](#path)
-* [version](#version)
-* [help](#help)
-
-</div>
-<div class="col-md-4">
-
-#### [Development](#development)
-
-* [submit](#submit)
-* [register](#register)
-* [dev](#dev)
-* [git](#git)
-* [hg](#hg)
-
-</div>
+  <div class="col-md-4">
+    <h4><a href="#information">Information</a></h4>
+    <ul>
+      <li><a href="#search">search</a></li>
+      <li><a href="#info">info</a></li>
+      <li><a href="#user">user</a></li>
+      <li><a href="#config">config</a></li>
+      <li><a href="#path">path</a></li>
+      <li><a href="#version">version</a></li>
+      <li><a href="#help">help</a></li>
+    </ul>
+  </div>
+  
+  <div class="col-md-4">
+    <h4><a href="#development">Development</a></h4>
+    <ul>
+      <li><a href="#submit">submit</a></li>
+      <li><a href="#register">register</a></li>
+      <li><a href="#dev">dev</a></li>
+      <li><a href="#git">git</a></li>
+      <li><a href="#hg">hg</a></li>
+    </ul>
+  </div>
 </div>
 
 <div class="row">
-<div class="col-md-4">
+  <div class="col-md-4">
+    <h4><a href="#miscellaneous">Miscellaneous</a></h4>
+    <ul>
+      <li><a href="#setup">setup</a></li>
+      <li><a href="#newrepo">newrepo</a></li>
+      <li><a href="#deleterepo">deleterepo</a></li>
+      <li><a href="#convertxml">convertxml</a></li>
+      <li><a href="#run">run</a></li>
+      <li><a href="#proxy">proxy</a></li>
+    </ul>
+  </div>
 
-#### [Miscellaneous](#miscellaneous)
+  <div class="col-md-4">
+    <h4><a href="#flags">Flags</a></h4>
+    <ul>
+      <li><a href="#flat">--flat</a></li>
+      <li><a href="#always">--always</a></li>
+      <li><a href="#system">--system</a></li>
+      <li><a href="#debug">--debug</a></li>
+      <li><a href="#quiet">--quiet</a></li>
+      <li><a href="#never">--never</a></li>
+      <li><a href="#global">--global</a></li>
+    </ul>
+  </div>
 
-* [setup](#setup)
-* [newrepo](#newrepo)
-* [deleterepo](#deleterepo)
-* [convertxml](#convertxml)
-* [run](#run)
-* [proxy](#proxy)
-
+  <div class="col-md-4">
+    <h4><a href="#parameters">Parameters</a></h4>
+    <ul>
+      <li><a href="#cwd">-cwd</a></li>
+      <li><a href="#notimeout">-no-timeout</a></li>
+      <li><a href="#R">-R</a></li>
+    </ul>
+  </div>
 </div>
-<div class="col-md-4">
-
-#### [Flags](#flags)
-
-* [--flat](#flat)
-* [--always](#always)
-* [--system](#system)
-* [--debug](#debug)
-* [--quiet](#quiet)
-* [--never](#never)
-* [--global](#global)
-
-</div>
-<div class="col-md-4">
-
-#### [Parameters](#parameters)
-
-* [-cwd](#cwd)
-* [-no-timeout](#notimeout)
-* [-R](#R)
-
-</div>
-</div>
-
 
 
 <a name="basic" class="anch"></a>
