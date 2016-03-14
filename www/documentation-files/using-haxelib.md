@@ -101,17 +101,24 @@ haxelib install actuate 1.8.2   # Install specific version
 > Install the given project. You can optionally specify a specific version to be installed. By default, latest released version will be installed.
 
 ```
+haxelib install [library-file]
 haxelib install actuate.zip     # Install from zip file
 ```
 
 > Install the project contained in the zip file.
 
 ```
+haxelib install [hxml-file]
 haxelib install build.hxml      # Install all dependencies listed in hxml file
+```
+
+> Install all the dependencies from a hxml file.
+
+```
 haxelib install all             # Install all dependencies in all hxml files
 ```
 
-> Install all the dependencies from a hxml file or all the hxml of the directory.
+> Install all the dependencies from all hxml files in the current directory.
 
 
 
@@ -249,7 +256,8 @@ haxelib path hscript erazor buddy:1.0.0
 > Prints the path to one or more libraries, as well as any dependencies and compiler definitions required by those libraries.
 >
 > You can specify a version by appending `:version` to the library name. If no version is specified the set version is used.
-> If a [development](#dev) version is set it'll be used even if a version is specified.
+>
+> This command is used by Haxe compiler to get required paths and flags for libraries.
 
 
 
@@ -263,7 +271,7 @@ haxelib version
 
 > Prints the version of Haxelib you are using.
 >
-> You can change the version of haxelib you are using with <code>haxelib [set](#set) haxelib version</code>
+> You can change the version of haxelib you are using with <code>haxelib --global [set](#set) haxelib version</code>
 
 
 
@@ -297,7 +305,7 @@ haxelib sumbit
 
 > Submits a zip package to Haxelib so other users can install it.
 >
-> Alternatively you can run `haxelib submit` without argument to have Haxelib zip and submit the current directory.
+> Alternatively you can run `haxelib submit` without argument to have Haxelib zip and submit the current directory (excluding names starting with a dot).
 >
 > If the user name is unknown, you'll be first asked to register an account.
 > If more the project has more than one developer, it will ask you which user you wish to submit as.
@@ -416,7 +424,7 @@ haxelib newrepo
 haxelib deleterepo
 ```
 
-> Remove a local repository created with <code>haxelib [newrepo](#newrepo)</code>.
+> Remove a local repository created with <code>haxelib [newrepo](#newrepo)</code> from the current directory.
 >
 > This will remove all libraries contained in it.
 
@@ -447,7 +455,7 @@ haxelib run openfl create DisplayingABitmap
 
 > Libraries with either a `run.n` helper or a main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
-> You can specify the version to run by appending `:version`, if the library has a [development](#dev) version set the version will be ignored.
+> You can specify the version to run by appending `:version`.
 >
 > The library will receive the `HAXELIB_RUN` environment variable with value `"1"` and `HAXELIB_RUN_NAME` with the name of the library as value.
 
@@ -511,7 +519,7 @@ haxelib --always
 haxelib --system
 ```
 
-> Use the version of Haxelib bundled with Haxe instead of the one currently [set](#set).
+> Use the version of Haxelib installed with Haxe in the system instead of the one currently [set](#set).
 >
 > Useful if your Haxelib update was broken.
 
