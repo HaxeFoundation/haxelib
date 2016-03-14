@@ -13,7 +13,7 @@ matrix:
       install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
         - sudo apt-get update
-        - sudo apt-get install haxe neko-dev libapache2-mod-neko -y
+        - sudo apt-get install haxe=1:3.3* neko-dev libapache2-mod-neko -y
         - mkdir ~/haxelib && haxelib setup ~/haxelib
     # haxe 3.2.1 + neko master
     - os: linux
