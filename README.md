@@ -57,55 +57,27 @@ A solution that combines the strengths of both approaches is in the making. Stay
 
 Initial compilation and setup:
 
-```
-# Initial checkout
-git clone https://github.com/HaxeFoundation/haxelib
-
-# Change to the checkout directory
-cd haxelib
-
-# Install all the libs
-haxelib install newsite.hxml
-
-# Compile the site
-haxe legacysite.hxml
-haxe newsite.hxml
-
-# copy assets, remember to modify dbconfig.json
-cp src/haxelib/server/.htaccess www/
-cp src/haxelib/server/dbconfig.json.example www/dbconfig.json
-cp src/legacyhaxelib/.htaccess www/legacy/
-cp src/legacyhaxelib/website.mtt www/legacy/
-cp src/legacyhaxelib/haxelib.css www/legacy/
-
-# If the database (www/legacy/haxelib.db) doesn't exist, run "setup"
-pushd www/legacy
-neko index.n setup
-popd
-
-# Make sure the server folders and databases are writeable.
-
-chmod a+w www
-chmod a+w www/tmp
-chmod a+w www/files
-chmod a+w www/files/3.0
-chmod a+w www/legacy
-chmod a+w www/haxelib.db
-chmod a+w www/legacy/haxelib.db
-```
-
-Start a local development server using [Docker](https://www.docker.com/):
+Use [Docker](https://www.docker.com/):
 ```
 docker-compose -f test/docker-compose.yml up
 ```
-Make sure "www/dbconfig.json" matches with the config in "test/docker-compose.yml".
-The server should now be available at `http://$(docker-machine ip)/`.
+
+The command above will copy the server source code and website resources into a container, compiles it, and then start Apache to serve it. To view the website, visit `http://$(docker-machine ip)/` (Windows and Mac) or `http://localhost/` (Linux).
+
+To stop the server:
+```
+docker-compose -f test/docker-compose.yml down
+```
+
+If we modify any of the server source code or website resources, we need to rebuild the image by the command as follows:
+```
+docker-compose -f test/docker-compose.yml build
+```
+
 To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
 ```
 neko bin/haxelib.n -R http://$(docker-machine ip)/ search foo
 ```
-
-We can keep the server running and try modify the contents in the "www" directory, or even recompile the server code (`haxe server.hxml`). Changes will be picked up immediately.
 
 To run integration tests with the local development server, set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT` and then compile "integration_tests.hxml":
 ```

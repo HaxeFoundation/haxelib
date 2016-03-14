@@ -1,9 +1,11 @@
 version: '2'
 services:
   web:
-    build: ..
+    image: andyli/tora
     ports:
       - "80:80"
+    volumes:
+      - ../www:/var/www/html
   dbHost:
     image: mariadb
     ports:
