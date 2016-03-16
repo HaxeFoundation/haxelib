@@ -122,28 +122,20 @@ class FsUtils {
     }
 
     static function isBrokenSymlink(path:String):Bool {
+        // TODO: figure out what this method actually does :)
+
         var errors = 0;
-        function isNeeded(error:String):Bool
-        {
-            return switch(error)
-            {
-                case "std@sys_file_type" |
-                     "std@file_full_path": true;
-                default: false;
+
+        function checkError(error:String) {
+            switch (error) {
+                case "std@sys_file_type" | "std@file_full_path": errors++;
+                default:
             }
         }
 
-        try{ FileSystem.isDirectory(path); }
-        catch(error:String)
-            if(isNeeded(error))
-                errors++;
-
-        try{ FileSystem.fullPath(path); }
-        catch(error:String)
-            if(isNeeded(error))
-                errors++;
+        try FileSystem.isDirectory(path) catch (error:String) checkError(error);
+        try FileSystem.fullPath(path) catch (error:String) checkError(error);
 
         return errors == 2;
     }
-
 }

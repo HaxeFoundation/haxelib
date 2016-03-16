@@ -23,8 +23,7 @@ package haxelib.client;
 
 import haxe.Json;
 
-class ConvertXml
-{
+class ConvertXml {
 	public static function convert(inXml:String) {
 		// Set up the default JSON structure
 		var json = {
@@ -45,13 +44,10 @@ class ConvertXml
 		json.name = project.get("name");
 		json.license = project.get("license");
 		json.url = project.get("url");
-		for (node in project)
-		{
-			switch (node.nodeType)
-			{
+		for (node in project) {
+			switch (node.nodeType) {
 				case #if (haxe_ver >= 3.2) Element #else Xml.Element #end:
-					switch (node.nodeName)
-					{
+					switch (node.nodeName) {
 						case "tag":
 							json.tags.push(node.get("v"));
 						case "user":
@@ -80,8 +76,7 @@ class ConvertXml
 		sb.add("{\n");
 
 		var firstRun = true;
-		for (f in Reflect.fields(json))
-		{
+		for (f in Reflect.fields(json)) {
 			if (!firstRun) sb.add(",\n");
 			firstRun = false;
 
