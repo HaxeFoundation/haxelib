@@ -40,10 +40,17 @@ To run haxelib client with this local server, prepend the arguments, `-R $SERVER
 neko bin/haxelib.n -R http://$(docker-machine ip):2000/ search foo
 ```
 
-To run integration tests with the local development server, set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT` and then compile "integration_tests.hxml":
+To run integration tests with the local development server:
 ```
+# prepare the test files
+haxe prepare_tests.hxml
+
+# set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT`
+# note that `HAXELIB_SERVER` is also used for the tests to connect to the MySQL server for resetting database
 export HAXELIB_SERVER=$(docker-machine ip)
 export HAXELIB_SERVER_PORT=2000
+
+# run the tests
 haxe integration_tests.hxml
 ```
 Note that the integration tests will reset the server database before and after each test.
@@ -55,7 +62,6 @@ Build files:
 * client.hxml: Build the current haxelib client.
 * client_tests.hxml: Build the client tests.
 * client_legacy.hxml: Build the haxelib client that works with Haxe 2.x.
-* prepare.hxml: Prepare and test the server.
 * server.hxml: Build the new website, and the Haxe remoting API.
 * server_tests.hxml: Build the new website tests.
 * server_each.hxml: Libraries and configs used by server.hxml and server_tests.hxml.

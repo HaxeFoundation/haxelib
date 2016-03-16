@@ -13,12 +13,6 @@ repo_integration_tests/
 # Runtime files
 *.tmp
 *.db
-www/dbconfig.json
-www/.htaccess
-
-# Files copied from /src/haxelib/
-www/dbconfig.json.example
-www/haxelib.css
 
 # IDE files
 .idea

@@ -79,22 +79,19 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
-	static var dbConfigExamplePath = Path.join(["src", "haxelib", "server", "dbconfig.json.example"]);
-
 	static function setupLocalServer():Void {
 		var ndllPath = getEnv("NEKOPATH");
 		if (ndllPath == null) ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
-		var dbConfig = Json.parse(getContent(dbConfigExamplePath));
-		function copyConfigs():Void {
-			saveContent(Path.join(["www", "dbconfig.json"]), Json.stringify({
-				user: dbConfig.user,
-				pass: dbConfig.pass,
-				host: "localhost",
-				database: dbConfig.database,
-			}));
-			copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
-		}
+		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
+		var dbConfig = Json.parse(getContent(dbConfigPath));
+		// update dbConfig.host to be "localhost"
+		saveContent(dbConfigPath, Json.stringify({
+			user: dbConfig.user,
+			pass: dbConfig.pass,
+			host: "localhost",
+			database: dbConfig.database,
+		}));
 		function writeApacheConf(confPath:String):Void {
 			var hasModNeko = {
 				var p = new sys.io.Process("apachectl", ["-M"]);
@@ -147,7 +144,6 @@ Listen 2000
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
-				copyConfigs();
 				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
 				Sys.sleep(2.5);
 				runCommand("apachectl", ["restart"]);
@@ -157,7 +153,6 @@ Listen 2000
 
 				runCommand("sudo", ["apt-get", "install", "apache2"]);
 
-				copyConfigs();
 				writeApacheConf("haxelib.conf");
 				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf.d/haxelib.conf"]);
 				runCommand("sudo", ["a2enmod", "rewrite"]);
@@ -183,10 +178,6 @@ Listen 2000
 				ip;
 		}
 		var serverPort = 2000;
-
-		var dbConfig = Json.parse(getContent(dbConfigExamplePath));
-		copy(dbConfigExamplePath, Path.join(["www", "dbconfig.json"]));
-		copy(Path.join(["src", "haxelib", "server", ".htaccess"]), Path.join(["www", ".htaccess"]));
 
 		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "up", "-d"]);
 

@@ -13,8 +13,6 @@ RUN haxelib install all --always
 
 COPY www /src/www/
 COPY src /src/src/
-COPY src/haxelib/server/dbconfig.json.example /src/dbconfig.json
-COPY src/haxelib/server/.htaccess /src/
 
 RUN rm -rf /var/www/html
 RUN ln -s /src/www /var/www/html
