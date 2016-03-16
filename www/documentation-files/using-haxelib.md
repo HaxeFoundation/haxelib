@@ -254,6 +254,8 @@ haxelib path hscript erazor buddy:1.0.0
 >
 > You can specify a version by appending `:version` to the library name. If no version is specified the set version is used.
 >
+> If a [development](#dev) version is set it'll be used even if a version is specified.
+>
 > This command is used by Haxe compiler to get required paths and flags for libraries.
 
 
@@ -452,7 +454,7 @@ haxelib run openfl create DisplayingABitmap
 
 > Libraries with either a `run.n` helper or a main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
-> You can specify the version to run by appending `:version`.
+> You can specify the version to run by appending `:version`, if the library has a [development](#dev) version set the version will be ignored.
 >
 > The library will receive the `HAXELIB_RUN` environment variable with value `"1"` and `HAXELIB_RUN_NAME` with the name of the library as value.
 
