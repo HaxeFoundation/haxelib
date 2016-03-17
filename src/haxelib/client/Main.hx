@@ -420,7 +420,7 @@ class Main {
 					}
 					if( settings.debug )
 						neko.Lib.rethrow(e);
-					print(Std.string(e));
+					print("Error: " + Std.string(e));
 					Sys.exit(1);
 				}
 				return;
