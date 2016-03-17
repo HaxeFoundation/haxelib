@@ -54,7 +54,7 @@ class ProgressOut extends haxe.io.Output {
 	var o : haxe.io.Output;
 	var cur : Int;
 	var startSize : Int;
-	var max : Int;
+	var max : Null<Int>;
 	var start : Float;
 
 	public function new(o, currentSize) {
