@@ -415,7 +415,7 @@ class Main {
 						Sys.exit(1);
 					}
 					if( e == "std@get_cwd" ) {
-						print("ERROR: Current working directory is unavailable");
+						print("Error: Current working directory is unavailable");
 						Sys.exit(1);
 					}
 					if( settings.debug )
