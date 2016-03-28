@@ -1,11 +1,15 @@
 version: "{build}"
 
+services:
+  - mysql
+
 install:
-    - cinst haxe -y
-    - RefreshEnv
-    - haxelib setup haxelib_repo
+  - cinst haxe -y
+  - RefreshEnv
+  - haxelib setup haxelib_repo
 
 build: off
 
 test_script:
-    - haxe ci.hxml
+  - haxe ci.hxml
+  - neko bin\RunCi.n

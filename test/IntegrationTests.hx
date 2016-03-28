@@ -149,6 +149,7 @@ class IntegrationTests extends TestBase {
 		var p = new Process("haxelib", ["setup", path]);
 		if (p.exitCode() != 0)
 			throw "unable to set haxelib repo to " + path;
+		p.close();
 	}
 
 	static function main():Void {
