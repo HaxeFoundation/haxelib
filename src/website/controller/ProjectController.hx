@@ -25,7 +25,7 @@ class ProjectController extends Controller {
 	@:route("/$projectName/versions/")
 	public function versionList( projectName:String ) {
 		var info = projectApi.projectInfo( projectName ).sure();
-		info.versions.sort(function(v1, v2) return SemVer.compare(v1.name, v2.name));
+		info.versions.sort(function(v1, v2) return SemVer.compare(v2.name, v1.name));
 		return new ViewResult({
 			title: 'All versions of $projectName',
 			project: projectName,
