@@ -551,14 +551,7 @@ class Main {
 			print("Please enter the following informations for registration");
 			password = doRegister(user);
 		} else {
-			password = Md5.encode(param("Password",true));
-			var attempts = 5;
-			while ( !site.checkPassword(user, password)) {
-				print ("Invalid password for " + user);
-				if (--attempts == 0)
-					throw 'Failed to input correct password';
-				password = Md5.encode(param('Password ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
-			}
+			password = readPassword(user);
 		}
 		site.checkDeveloper(infos.name,user);
 
@@ -603,6 +596,18 @@ class Main {
 		// ask the server to register the sent file
 		var msg = site.processSubmit(id,user,password);
 		print(msg);
+	}
+
+	function readPassword(user:String, prompt = "Password"):String {
+		var password = Md5.encode(param(prompt,true));
+		var attempts = 5;
+		while (!site.checkPassword(user, password)) {
+			print('Invalid password for $user');
+			if (--attempts == 0)
+				throw 'Failed to input correct password';
+			password = Md5.encode(param('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
+		}
+		return password;
 	}
 
 	function install() {
