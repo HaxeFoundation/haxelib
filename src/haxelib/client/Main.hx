@@ -1076,9 +1076,12 @@ class Main {
 				continue;
 			var p = Data.unsafe(p);
 			print("Checking " + p);
-			try doUpdate(p, state)
-			catch (e:Dynamic)
-				if (e != VcsError.VcsUnavailable) neko.Lib.rethrow(e);
+			try {
+				doUpdate(p, state);
+			} catch (e:VcsError) {
+				if (!e.match(VcsUnavailable(_)))
+					neko.Lib.rethrow(e);
+			}
 		}
 		if( state.updated )
 			print("Done");
@@ -1111,7 +1114,7 @@ class Main {
 		var vcs = Vcs.getVcsForDevLib(pdir, settings);
 		if(vcs != null) {
 			if(!vcs.available)
-				throw VcsError.VcsUnavailable;
+				throw VcsError.VcsUnavailable(vcs);
 
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(pdir + "/" + vcs.directory);
