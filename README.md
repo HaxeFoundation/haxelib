@@ -60,10 +60,10 @@ Note that the integration tests will reset the server database before and after 
 Build files:
 
 * client.hxml: Build the current haxelib client.
-* client_tests.hxml: Build the client tests.
+* client_tests.hxml: Build and run the client tests.
 * client_legacy.hxml: Build the haxelib client that works with Haxe 2.x.
 * server.hxml: Build the new website, and the Haxe remoting API.
-* server_tests.hxml: Build the new website tests.
+* server_tests.hxml: Build and run the new website tests.
 * server_each.hxml: Libraries and configs used by server.hxml and server_tests.hxml.
 * server_legacy.hxml: Build the legacy website.
 * integration_tests.hxml: Build and run tests that test haxelib client and server together.
