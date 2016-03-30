@@ -1,3 +1,2 @@
 -cp test
--neko bin/RunCi.n
--main RunCi
+-x RunCi

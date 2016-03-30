@@ -60,11 +60,14 @@ install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       brew update;
     fi
+  - yes | haxelib install all
+  - yes | haxelib install tora
+  - haxelib list
+  - haxelib run tora &
 
 script:
   # run our CI script
   - haxe ci.hxml
-  - neko bin/RunCi.n
   # Deploy to lib.haxe.org
   - if [ -n "$deploy_key_decrypt" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ -n "$DEPLOY" ]; then
       openssl aes-256-cbc -k "$deploy_key_decrypt" -in deploy_key.enc -out deploy_key -d;

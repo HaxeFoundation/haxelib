@@ -55,15 +55,10 @@ class RunCi {
 	}
 
 	static function compileServer():Void {
-		runCommand("haxelib", ["install", "server.hxml", "--always"]);
-		runCommand("haxelib", ["install", "server_each.hxml", "--always"]);
-		runCommand("haxelib", ["install", "server_tests.hxml", "--always"]);
-		runCommand("haxelib", ["list"]);
 		runCommand("haxe", ["server.hxml"]);
 	}
 
 	static function compileLegacyServer():Void {
-		runCommand("haxelib", ["install", "hx2compat"]);
 		runCommand("haxe", ["server_legacy.hxml"]);
 	}
 
@@ -77,7 +72,6 @@ class RunCi {
 
 	static function testClient():Void {
 		runCommand("haxe", ["client_tests.hxml"]);
-		runCommand("neko", ["bin/test.n"]);
 	}
 
 	static function testServer():Void {
@@ -163,6 +157,7 @@ Listen 2000
 			cnx.request('grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';');
 			cnx.close();
 		}
+
 		switch (systemName()) {
 			case "Windows":
 				configDb();
@@ -171,6 +166,20 @@ Listen 2000
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache2\\conf\\httpd.conf");
 				rename("bin\\httpd\\Apache2", "c:\\Apache2");
+				var serviceName = "HaxelibApache";
+				var httpd = "c:\\Apache2\\bin\\httpd.exe";
+				runCommand(httpd, ["-k", "install", "-n", serviceName]);
+				runCommand(httpd, ["-n", serviceName, "-t"]);
+				runCommand(httpd, ["-k", "start", "-n", serviceName]);
+
+				var toraPath = {
+					var p = new sys.io.Process("haxelib", ["path", "tora"]);
+					var path = p.stdout.readLine();
+					p.close();
+					path;
+				}
+				runCommand("nssm", ["install", "tora", Path.join([getEnv("NEKOPATH"), "neko.exe"]), Path.join([toraPath, "run.n"])]);
+				runCommand("nssm", ["start", "tora"]);
 
 				Sys.sleep(2.5);
 			case "Mac":
@@ -200,8 +209,6 @@ Listen 2000
 		}
 		Sys.putEnv("HAXELIB_SERVER", "localhost");
 		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
-
-		runCommand("haxelib", ["install", "tora"]);
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
@@ -251,49 +258,21 @@ Listen 2000
 		runCommand("docker-compose", ["-f", "test/docker-compose.yml", "down"]);
 	}
 
-	static function runWithLocalServer(test:Void->Void):Void {
-		var serviceName = "HaxelibApache";
-		var httpd = "c:\\Apache2\\bin\\httpd.exe";
-		switch (systemName()) {
-			case "Windows":
-				runCommand(httpd, ["-k", "install", "-n", serviceName]);
-				runCommand(httpd, ["-n", serviceName, "-t"]);
-				runCommand(httpd, ["-k", "start", "-n", serviceName]);
-			case _: //pass
-		}
-
-		var tora = new sys.io.Process("haxelib", ["run", "tora"]);
-		test();
-		tora.kill();
-		tora.close();
-
-		switch (systemName()) {
-			case "Windows":
-				runCommand(httpd, ["-k", "stop", "-n", serviceName]);
-				runCommand(httpd, ["-k", "uninstall", "-n", serviceName]);
-			case _: //pass
-		}
-	}
-
 	static function integrationTests():Void {
 		function test():Void {
 			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
 				case null, "development":
 					runCommand("haxe", ["integration_tests.hxml"]);
-					runCommand("neko", ["bin/integration_tests.n"]);
 				case "3.1.3":
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
-					runCommand("neko", ["bin/integration_tests.n"]);
 				case _:
 					runCommand("haxe", ["integration_tests.hxml"]);
-					runCommand("neko", ["bin/integration_tests.n"]);
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
-					runCommand("neko", ["bin/integration_tests.n"]);
 			}
 		}
 		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
 			setupLocalServer();
-			runWithLocalServer(test);
+			test();
 		} else {
 			runWithDockerServer(test);
 		}
@@ -332,14 +311,12 @@ Listen 2000
 
 		// integration test
 		switch (systemName()) {
-			case "Linux":
+			case "Windows", "Linux":
 				integrationTests();
 			case "Mac":
 				#if (haxe_ver >= 3.2)
 					integrationTests();
 				#end
-			case "Windows":
-				// pass
 			case _:
 				throw "Unknown system";
 		}
