@@ -18,3 +18,6 @@ repo_integration_tests/
 .idea
 
 deploy_key
+
+# Bower
+www/bower_components
