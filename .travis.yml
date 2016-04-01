@@ -11,6 +11,8 @@ matrix:
     - os: linux
       language: generic
       sudo: required
+      env:
+        - TRAVIS_HAXE_VERSION=development
       before_install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
         - sudo apt-get update
@@ -21,6 +23,7 @@ matrix:
       language: generic
       sudo: required
       env:
+        - TRAVIS_HAXE_VERSION=3.2.1
         - DEPLOY=1
       before_install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
@@ -62,6 +65,10 @@ install:
     fi
   - yes | haxelib install all
   - yes | haxelib install tora
+  # We need https://github.com/HaxeFoundation/hscript/commit/bd8c016bbadc93c2db8deb75d7056703ac3e3ff8
+  - if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
+    haxelib git hscript https://github.com/HaxeFoundation/hscript.git;
+    fi
   - haxelib list
   - haxelib run tora &
 
