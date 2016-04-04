@@ -55,7 +55,7 @@ class FsUtils {
         return a == b;
     }
 
-    public static function safeDir(dir:String, checkWritable = false):Void {
+    public static function safeDir(dir:String, checkWritable = false):Bool {
         if (FileSystem.exists(dir)) {
             if (!FileSystem.isDirectory(dir))
                 throw 'A file is preventing $dir to be created';
@@ -68,18 +68,20 @@ class FsUtils {
                 }
                 FileSystem.deleteFile(checkFile);
             }
+            return false;
         } else {
             try {
                 FileSystem.createDirectory(dir);
+                return true;
             } catch (_:Dynamic) {
                 throw 'You don\'t have enough user rights to create the directory $dir';
             }
         }
     }
 
-    public static function deleteRec(dir:String):Void {
+    public static function deleteRec(dir:String):Bool {
         if (!FileSystem.exists(dir))
-            return;
+            return false;
         for (p in FileSystem.readDirectory(dir)) {
             var path = Path.join([dir, p]);
 
@@ -99,6 +101,7 @@ class FsUtils {
             }
         }
         FileSystem.deleteDirectory(dir);
+        return true;
     }
 
     static function safeDelete(file:String):Bool {
@@ -119,28 +122,10 @@ class FsUtils {
     }
 
     static function isBrokenSymlink(path:String):Bool {
+        // TODO: figure out what this method actually does :)
         var errors = 0;
-        function isNeeded(error:String):Bool
-        {
-            return switch(error)
-            {
-                case "std@sys_file_type" |
-                     "std@file_full_path": true;
-                default: false;
-            }
-        }
-
-        try{ FileSystem.isDirectory(path); }
-        catch(error:String)
-            if(isNeeded(error))
-                errors++;
-
-        try{ FileSystem.fullPath(path); }
-        catch(error:String)
-            if(isNeeded(error))
-                errors++;
-
+        try FileSystem.isDirectory(path) catch (error:String) if (error == "std@sys_file_type") errors++;
+        try FileSystem.fullPath(path) catch (error:String) if (error == "std@file_full_path") errors++;
         return errors == 2;
     }
-
 }

@@ -39,7 +39,7 @@ class HomeController extends Controller {
 			pageUrl: context.request.uri,
 			latestProjects: latestProjects,
 			tags: tags,
-			exampleCode: CompileTime.readFile( "/website/homepage-example.txt" ),
+			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
 		});
 	}

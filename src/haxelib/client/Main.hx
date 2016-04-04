@@ -54,7 +54,7 @@ class ProgressOut extends haxe.io.Output {
 	var o : haxe.io.Output;
 	var cur : Int;
 	var startSize : Int;
-	var max : Int;
+	var max : Null<Int>;
 	var start : Float;
 
 	public function new(o, currentSize) {
@@ -132,9 +132,9 @@ class ProgressIn extends haxe.io.Input {
 }
 
 class Main {
+	static inline var HAXELIB_LIBNAME = "haxelib";
 
 	static var VERSION = SemVer.ofString('3.3.0');
-	static var APIVERSION = SemVer.ofString('3.0.0');
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
@@ -142,7 +142,7 @@ class Main {
 		port : 80,
 		dir : "",
 		url : "index.n",
-		apiVersion : APIVERSION.major+"."+APIVERSION.minor,
+		apiVersion : "3.0",
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
@@ -151,11 +151,15 @@ class Main {
 	var commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
 	var siteUrl : String;
 	var site : SiteProxy;
+	var isHaxelibRun : Bool;
 
 
-	function new()
-	{
+	function new() {
 		args = Sys.args();
+		isHaxelibRun = (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME);
+
+		if (isHaxelibRun)
+			Sys.setCwd(args.pop());
 
 		commands = new List();
 		addCommand("install", install, "install a given library, or all libraries from a hxml file", Basic);
@@ -174,24 +178,30 @@ class Main {
 
 		addCommand("submit", submit, "submit or update a library package", Development);
 		addCommand("register", register, "register a new user", Development);
-		addCommand("local", local, "install the specified package locally", Deprecated("Use haxelib install <file> instead"), false);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
-		addCommand("git", function()doVcs(VcsID.Git), "use Git repository as library", Development);
-		addCommand("hg", function()doVcs(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
+		addCommand("git", vcs.bind(VcsID.Git), "use Git repository as library", Development);
+		addCommand("hg", vcs.bind(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
-		addCommand("newrepo", newRepo, "[EXPERIMENTAL] create a new local repository", Miscellaneous, false);
+		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
 		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
-		addCommand("selfupdate", updateSelf, "update haxelib itself", Miscellaneous);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
 		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
 
+		// deprecated commands
+		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
+		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib --global update $HAXELIB_LIBNAME` instead'));
+
 		initSite();
 	}
 
-
+	function checkUpdate() {
+		var latest = try site.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
+		if (latest != null && latest > VERSION)
+			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
+	}
 
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
@@ -261,7 +271,8 @@ class Main {
 		quiet  : "print less messages, imply not --debug",
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
-		never  : "answer all questions with no"
+		never  : "answer all questions with no",
+		system : "run bundled haxelib version instead of latest update",
 	}
 
 	var settings: {
@@ -271,6 +282,7 @@ class Main {
 		always : Bool,
 		never  : Bool,
 		global : Bool,
+		system : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -282,6 +294,7 @@ class Main {
 			never: false,
 			flat: false,
 			global: false,
+			system: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -345,6 +358,15 @@ class Main {
 			}
 		}
 
+		if (!isHaxelibRun && !settings.system) {
+			var rep = try getGlobalRepository() catch (_:Dynamic) null;
+			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
+				argcur = 0; // send all arguments
+				doRun(rep, HAXELIB_LIBNAME, null);
+				return;
+			}
+		}
+
 		Cli.defaultAnswer =
 			switch [settings.always, settings.never] {
 				case [true, true]:
@@ -373,7 +395,10 @@ class Main {
 					default:
 				}
 				try {
-					if( c.net ) loadProxy();
+					if( c.net ) {
+						loadProxy();
+						checkUpdate();
+					}
 					c.f();
 				} catch( e : Dynamic ) {
 					if( e == "std@host_resolve" ) {
@@ -390,12 +415,12 @@ class Main {
 						Sys.exit(1);
 					}
 					if( e == "std@get_cwd" ) {
-						print("ERROR: Current working directory is unavailable");
+						print("Error: Current working directory is unavailable");
 						Sys.exit(1);
 					}
 					if( settings.debug )
 						neko.Lib.rethrow(e);
-					print(Std.string(e));
+					print("Error: " + Std.string(e));
 					Sys.exit(1);
 				}
 				return;
@@ -526,14 +551,7 @@ class Main {
 			print("Please enter the following informations for registration");
 			password = doRegister(user);
 		} else {
-			password = Md5.encode(param("Password",true));
-			var attempts = 5;
-			while ( !site.checkPassword(user, password)) {
-				print ("Invalid password for " + user);
-				if (--attempts == 0)
-					throw 'Failed to input correct password';
-				password = Md5.encode(param('Password ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
-			}
+			password = readPassword(user);
 		}
 		site.checkDeveloper(infos.name,user);
 
@@ -580,27 +598,38 @@ class Main {
 		print(msg);
 	}
 
+	function readPassword(user:String, prompt = "Password"):String {
+		var password = Md5.encode(param(prompt,true));
+		var attempts = 5;
+		while (!site.checkPassword(user, password)) {
+			print('Invalid password for $user');
+			if (--attempts == 0)
+				throw 'Failed to input correct password';
+			password = Md5.encode(param('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})', true));
+		}
+		return password;
+	}
+
 	function install() {
+		var rep = getRepository();
+
 		var prj = param("Library name or hxml file:");
 
 		// No library given, install libraries listed in *.hxml in given directory
-		if( prj == "all")
-		{
-			installFromAllHxml();
+		if( prj == "all") {
+			installFromAllHxml(rep);
 			return;
 		}
 
 		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
 			// *.hxml provided, install all libraries/versions in this hxml file
-			if( prj.endsWith(".hxml") )
-			{
-				installFromHxml(prj);
+			if( prj.endsWith(".hxml") ) {
+				installFromHxml(rep, prj);
 				return;
 			}
 			// *.zip provided, install zip as haxe library
-			if( prj.endsWith(".zip") )
-			{
-				doLocalInstall(prj);
+			if (prj.endsWith(".zip")) {
+				doInstallFile(rep, prj, true, true);
 				return;
 			}
 		}
@@ -609,11 +638,10 @@ class Main {
 		var inf = site.infos(prj);
 		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
-		doInstall(inf.name,version,version == inf.getLatest());
+		doInstall(rep,inf.name,version,version == inf.getLatest());
 	}
 
-	function getVersion( inf:ProjectInfos, ?reqversion:String )
-	{
+	function getVersion( inf:ProjectInfos, ?reqversion:String ) {
 		if( inf.versions.length == 0 )
 			throw "The library "+inf.name+" has not yet released a version";
 		var version = if( reqversion != null ) reqversion else inf.getLatest();
@@ -629,8 +657,7 @@ class Main {
 		return version;
 	}
 
-	function installFromHxml( path )
-	{
+	function installFromHxml( rep:String, path:String ) {
 		var targets  = [
 			'-java ' => 'hxjava',
 			'-cpp ' => 'hxcpp',
@@ -650,8 +677,7 @@ class Main {
 							libsToInstall[lib] = { name: lib, version: null }
 					}
 
-				if (l.startsWith("-lib"))
-				{
+				if (l.startsWith("-lib")) {
 					var key = l.substr(5);
 					var parts = key.split(":");
 					var libName = parts[0].trim();
@@ -670,66 +696,49 @@ class Main {
 		}
 		processHxml(path);
 
-		installMany(libsToInstall);
-	}
-
-	function installFromAllHxml()
-	{
-		var cwd = Sys.getCwd();
-		var hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
-		if (hxmlFiles.length > 0)
-		{
-			for (file in hxmlFiles)
-			{
-				print('Installing all libraries from $file:');
-				installFromHxml(cwd+file);
-			}
-		}
-		else
-		{
-			print ("No hxml files found in the current directory.");
-		}
-	}
-
-	function installMany( libs:Iterable<{name:String,version:String}> )
-	{
-		if (libs.empty())
+		if (libsToInstall.empty())
 			return;
 
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		print("Loading info about the required libraries");
-		for (l in libs)
-		{
+		for (l in libsToInstall) {
 			var inf = site.infos(l.name);
 			l.version = getVersion(inf, l.version);
 		}
 
 		// Print a list with all the info
 		print("Haxelib is going to install these libraries:");
-		for (l in libs)
-		{
+		for (l in libsToInstall) {
 			var vString = (l.version == null) ? "" : " - " + l.version;
 			print("  " + l.name + vString);
 		}
 
 		// Install if they confirm
-		if (ask("Continue?"))
-		{
-			for (l in libs)
-			{
-				doInstall(l.name, l.version, true);
-			}
+		if (ask("Continue?")) {
+			for (l in libsToInstall)
+				doInstall(rep, l.name, l.version, true);
 		}
 	}
 
-	function doInstall( project, version, setcurrent ) {
-		var rep = getRepository();
+	function installFromAllHxml(rep:String) {
+		var cwd = Sys.getCwd();
+		var hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
+		if (hxmlFiles.length > 0) {
+			for (file in hxmlFiles) {
+				print('Installing all libraries from $file:');
+				installFromHxml(rep, cwd + file);
+			}
+		} else {
+			print("No hxml files found in the current directory.");
+		}
+	}
 
+	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
 		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
 			print("You already have "+project+" version "+version+" installed");
-			setCurrent(project,version,true);
+			setCurrent(rep,project,version,true);
 			return;
 		}
 
@@ -764,13 +773,13 @@ class Main {
 		print("Downloading "+filename+"...");
 		h.customRequest(false,progress);
 
-		doInstallFile(filepath, setcurrent);
+		doInstallFile(rep,filepath, setcurrent);
 		try {
 			site.postInstall(project, version);
 		} catch (e:Dynamic) {}
 	}
 
-	function doInstallFile(filepath,setcurrent,nodelete = false) {
+	function doInstallFile(rep,filepath,setcurrent,nodelete = false) {
 		// read zip content
 		var f = File.read(filepath,true);
 		var zip = try {
@@ -785,8 +794,9 @@ class Main {
 		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
+		print('Installing ${infos.name}...');
 		// create directories
-		var pdir = getRepository() + Data.safe(infos.name);
+		var pdir = rep + Data.safe(infos.name);
 		safeDir(pdir);
 		pdir += "/";
 		var target = pdir + Data.safe(infos.version);
@@ -797,30 +807,38 @@ class Main {
 		var basepath = Data.locateBasePath(zip);
 
 		// unzip content
-		for( zipfile in zip ) {
+		var entries = [for (entry in zip) if (entry.fileName.startsWith(basepath)) entry];
+		var total = entries.length;
+		for (i in 0...total) {
+			var zipfile = entries[i];
 			var n = zipfile.fileName;
-			if( n.startsWith(basepath) ) {
-				// remove basepath
-				n = n.substr(basepath.length,n.length-basepath.length);
-				if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
-					throw "Invalid filename : "+n;
-				var dirs = ~/[\/\\]/g.split(n);
-				var path = "";
-				var file = dirs.pop();
-				for( d in dirs ) {
-					path += d;
-					safeDir(target+path);
-					path += "/";
-				}
-				if( file == "" ) {
-					if( path != "" ) print("  Created "+path);
-					continue; // was just a directory
-				}
-				path += file;
-				print("  Install "+path);
-				var data = Reader.unzip(zipfile);
-				File.saveBytes(target+path,data);
+			// remove basepath
+			n = n.substr(basepath.length,n.length-basepath.length);
+			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
+				throw "Invalid filename : "+n;
+
+			if (!settings.debug) {
+				var percent = Std.int((i / total) * 100);
+				Sys.print('${i + 1}/$total ($percent%)\r');
 			}
+
+			var dirs = ~/[\/\\]/g.split(n);
+			var path = "";
+			var file = dirs.pop();
+			for( d in dirs ) {
+				path += d;
+				safeDir(target+path);
+				path += "/";
+			}
+			if( file == "" ) {
+				if( path != "" && settings.debug ) print("  Created "+path);
+				continue; // was just a directory
+			}
+			path += file;
+			if (settings.debug)
+				print("  Install "+path);
+			var data = Reader.unzip(zipfile);
+			File.saveBytes(target+path,data);
 		}
 
 		// set current version
@@ -835,15 +853,12 @@ class Main {
 		print("Done");
 
 		// process dependencies
-		doInstallDependencies(infos.dependencies);
+		doInstallDependencies(rep, infos.dependencies);
 
 		return infos;
 	}
 
-	function doInstallDependencies( dependencies:Array<Dependency> )
-	{
-		var rep = getRepository();
-
+	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = rep + Data.safe(d.name);
@@ -856,22 +871,18 @@ class Main {
 
 			print("Installing dependency "+d.name+" "+d.version);
 			if( d.version == "" )
-				d.version = site.infos(d.name).getLatest();
+				d.version = site.getLatestVersion(d.name);
 
 			switch d.type {
 				case Haxelib:
-					doInstall(d.name, d.version, false);
+					doInstall(rep, d.name, d.version, false);
 				case Git:
-					doVcs(VcsID.Git, d.name, d.url, d.branch, d.subDir, d.version);
-				//TODO: add mercurial-dependency type to schema.json (https://github.com/HaxeFoundation/haxelib/blob/master/schema.json#L38)
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 				case Mercurial:
-					doVcs(VcsID.Hg, d.name, d.url, d.branch, d.subDir, d.version);
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 			}
 		}
 	}
-
-
-
 
 	function getConfigFile():String {
 		var home = null;
@@ -940,11 +951,13 @@ class Main {
 	}
 
 	function getRepository():String {
-		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR) ) {
-			var absolutePath = FileSystem.fullPath(REPODIR);
-			return Path.addTrailingSlash(absolutePath);
-		}
+		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR))
+			return Path.addTrailingSlash(FileSystem.fullPath(REPODIR));
+		else
+			return getGlobalRepository();
+	}
 
+	function getGlobalRepository():String {
 		var rep = getGlobalRepositoryPath(true);
 		if (!FileSystem.exists(rep))
 			throw "haxelib Repository " + rep + " does not exist. Please run `haxelib setup` again.";
@@ -1047,22 +1060,28 @@ class Main {
 	}
 
 	function update() {
+		var rep = getRepository();
+
 		var prj = paramOpt();
 		if (prj != null) {
-			if (!updateByName(prj))
+			prj = projectNameToDir(rep, prj); // get project name in proper case
+			if (!updateByName(rep, prj))
 				print(prj + " is up to date");
 			return;
 		}
 
-		var state = { rep : getRepository(), prompt : true, updated : false };
+		var state = { rep : rep, prompt : true, updated : false };
 		for( p in FileSystem.readDirectory(state.rep) ) {
 			if( p.charAt(0) == "." || !FileSystem.isDirectory(state.rep+"/"+p) )
 				continue;
 			var p = Data.unsafe(p);
 			print("Checking " + p);
-			try doUpdate(p, state)
-			catch (e:Dynamic)
-				if (e != VcsError.VcsUnavailable) neko.Lib.rethrow(e);
+			try {
+				doUpdate(p, state);
+			} catch (e:VcsError) {
+				if (!e.match(VcsUnavailable(_)))
+					neko.Lib.rethrow(e);
+			}
 		}
 		if( state.updated )
 			print("Done");
@@ -1070,16 +1089,32 @@ class Main {
 			print("All libraries are up-to-date");
 	}
 
-	function doUpdate( p : String, state ) {
+	function projectNameToDir( rep:String, project:String ) {
+		var p = project.toLowerCase();
+		var l = FileSystem.readDirectory(rep).filter(function (dir) return dir.toLowerCase() == p);
+
+		switch (l) {
+			case []: return project;
+			case [dir]: return Data.unsafe(dir);
+			case _: throw "Several name case for library " + project;
+		}
+	}
+
+	function updateByName(rep:String, prj:String) {
+		var state = { rep : rep, prompt : false, updated : false };
+		doUpdate(prj,state);
+		return state.updated;
+	}
+
+	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
 		var pdir = state.rep + Data.safe(p);
 
 		//TODO: get content from `.current` and use vcs only if there "dev".
 
-		var vcs:Vcs = Vcs.getVcsForDevLib(pdir, settings);
-		if(vcs != null)
-		{
+		var vcs = Vcs.getVcsForDevLib(pdir, settings);
+		if(vcs != null) {
 			if(!vcs.available)
-				throw VcsError.VcsUnavailable;
+				throw VcsError.VcsUnavailable(vcs);
 
 			var oldCwd = Sys.getCwd();
 			Sys.setCwd(pdir + "/" + vcs.directory);
@@ -1087,118 +1122,35 @@ class Main {
 
 			state.updated = success;
 			Sys.setCwd(oldCwd);
-		}
-		else
-		{
-			var inf = try site.infos(p) catch( e : Dynamic ) { Sys.println(e); return; };
-			p = inf.name;
-			if( !FileSystem.exists(pdir+"/"+Data.safe(inf.getLatest())) ) {
+		} else {
+			var latest = try site.getLatestVersion(p) catch( e : Dynamic ) { Sys.println(e); return; };
+
+			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
 				if( state.prompt ) {
-					if (!ask("Update "+p+" to "+inf.getLatest()))
+					if (!ask("Update "+p+" to "+latest))
 						return;
 				}
-				doInstall(p,inf.getLatest(),true);
+				doInstall(state.rep, p, latest,true);
 				state.updated = true;
 			} else
-				setCurrent(p, inf.getLatest(), true);
+				setCurrent(state.rep, p, latest, true);
 		}
 	}
-	function updateByName(prj:String) {
-		var state = { rep : getRepository(), prompt : false, updated : false };
-		doUpdate(prj,state);
-		return state.updated;
-	}
-
-
-
-	function rebuildSelf() {
-		var haxepath =
-			if (IS_WINDOWS) {
-				Sys.getEnv("HAXEPATH");
-			} else {
-				var p = new Process('which', ['haxelib']);
-				var path = new Path(realPath(p.stdout.readAll().toString())).dir + '/';
-				p.close();
-				path;
-			}
-
-		Sys.setCwd(haxepath);
-		function tryBuild() {
-			var p = new Process('haxe', ['-neko', 'test.n', '-lib', 'haxelib_client', '-main', 'haxelib.client.Main', '--no-output']);
-			var ret =
-				if (p.exitCode() == 0) None;
-				else Some(p.stderr.readAll().toString());
-			p.close();
-			return ret;
-		}
-
-
-		switch tryBuild() {
-			case None:
-
-				if (haxepath == null)
-					throw (IS_WINDOWS ? 'HAXEPATH environment variable not defined' : 'unable to locate haxelib through `which haxelib`');
-				else
-					haxepath = Path.addTrailingSlash(haxepath);
-
-				if (IS_WINDOWS) {
-					Sys.command('start', ['haxe', '-lib', 'haxelib_client', '--run', 'haxelib.client.Rebuild']);
-					print('rebuild launched');
-				}
-				else {
-					var p = new Process('haxelib', ['path', 'haxelib_client']);
-					if (p.exitCode() == 0) {
-						var args = [];
-						var classPath = "";
-						for (arg in p.stdout.readAll().toString().split('\n')) {
-							arg = arg.trim();
-							if (arg.charAt(0) == '-')
-								args.push(arg);
-							else if (arg.length > 0)
-								classPath = arg;
-						};
-
-						var file = haxepath+'haxelib';
-						try File.saveContent(
-							file,
-							'#!/bin/sh'
-							+'\n'+'OLDCWD=`pwd`'
-							+'\n'+'cd $classPath'
-							+'\n'+'exec haxe '+args.join(' ')+" --run haxelib.client.Main -cwd $OLDCWD $@"
-						)
-						catch (e:Dynamic)
-							throw 'Error writing file $file. Please ensure you have write permissions. \n  ' + Std.string(e);
-					}
-					else throw p.stdout.readAll();
-					p.close();
-				}
-			case Some(error):
-				throw 'Error compiling haxelib client: $error';
-		}
-
-	}
-
-	function updateSelf() {
-		settings.global = true;
-		if (updateByName('haxelib_client'))
-			print("Haxelib successfully updated.");
-		else
-			print("Haxelib was already up to date...");
-
-		rebuildSelf();
-	}
-
-
-
 
 	function remove() {
+		var rep = getRepository();
 		var prj = param("Library");
 		var version = paramOpt();
-		var rep = getRepository();
 		var pdir = rep + Data.safe(prj);
 		if( version == null ) {
 			if( !FileSystem.exists(pdir) )
 				throw "Library "+prj+" is not installed";
+
+			if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
+				print('Error: Removing "$HAXELIB_LIBNAME" requires the --system flag');
+				Sys.exit(1);
+			}
+
 			deleteRec(pdir);
 			print("Library "+prj+" removed");
 			return;
@@ -1219,18 +1171,16 @@ class Main {
 	}
 
 	function set() {
-		var prj = param("Library");
-		var version = param("Version");
-		setCurrent(prj,version,false);
+		setCurrent(getRepository(), param("Library"), param("Version"), false);
 	}
 
-	function setCurrent( prj : String, version : String, doAsk : Bool ) {
-		var pdir = getRepository() + Data.safe(prj);
+	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
+		var pdir = rep + Data.safe(prj);
 		var vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
 			print("Library "+prj+" version "+version+" is not installed");
 			if(ask("Would you like to install it?"))
-				doInstall(prj, version, true);
+				doInstall(rep, prj, version, true);
 			return;
 		}
 		if( getCurrent(pdir) == version )
@@ -1330,43 +1280,32 @@ class Main {
 	}
 
 
-	function removeExistingDevLib(proj:String):Void
-	{
+	function removeExistingDevLib(proj:String):Void {
 		//TODO: ask if existing repo have changes.
 
 		// find existing repo:
 		var vcs:Vcs = Vcs.getVcsForDevLib(proj, settings);
 		// remove existing repos:
-		while(vcs != null)
-		{
+		while(vcs != null) {
 			deleteRec(proj + "/" + vcs.directory);
 			vcs = Vcs.getVcsForDevLib(proj, settings);
 		}
 	}
 
-	function doVcs(id:VcsID, ?libName:String, ?url:String, ?branch:String, ?subDir:String, ?version:String)
-	{
+	inline function useVcs(id:VcsID, fn:Vcs->Void):Void {
 		// Prepare check vcs.available:
 		var vcs = Vcs.get(id, settings);
 		if(vcs == null || !vcs.available)
-			return print('Could not use $id, please make sure it is installed and available in your PATH.');
-
-		// if called with known values:
-		if(libName != null && url != null)
-			doVcsInstall(vcs, libName, url, branch, subDir, version);
-		else
-			doVcsInstall(vcs,
-			             param("Library name"),
-			             param(vcs.name + " path"),
-			             paramOpt(),
-			             paramOpt(),
-			             paramOpt()
-			);
+			throw 'Could not use $id, please make sure it is installed and available in your PATH.';
+		return fn(vcs);
 	}
 
-	function doVcsInstall(vcs:Vcs, libName:String, url:String, ?branch:String, ?subDir:String, ?version:String)
-	{
+	function vcs(id:VcsID) {
 		var rep = getRepository();
+		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
+	}
+
+	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
@@ -1385,6 +1324,7 @@ class Main {
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
+			deleteRec(libPath);
 			var message = switch(error) {
 				case VcsUnavailable(vcs):
 					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
@@ -1395,9 +1335,7 @@ class Main {
 				case CantCheckoutVersion(vcs, version, stderr):
 					'Could not checkout tag "$version": ' + stderr;
 			};
-			print(message);
-			deleteRec(libPath);
-			return;
+			throw message;
 		}
 
 
@@ -1414,7 +1352,7 @@ class Main {
 
 		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))
-			doInstallDependencies(Data.readData(File.getContent(jsonPath), false).dependencies);
+			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
 
 
@@ -1422,12 +1360,16 @@ class Main {
 		var rep = getRepository();
 		var project = param("Library");
 		var temp = project.split(":");
-		project = temp[0];
+		doRun(rep, temp[0], temp[1]);
+	}
+
+	function doRun( rep:String, project:String, version:String ) {
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+project+" is not installed";
 		pdir += "/";
-		var version = temp[1] != null ? temp[1] : getCurrent(pdir);
+		if (version == null)
+			version = getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
@@ -1444,7 +1386,7 @@ class Main {
 			if (infos.main == null) {
 				if( !FileSystem.exists('$vdir/run.n') )
 					throw 'Library $project version $version does not have a run script';
-				["neko", "run.n"];
+				["neko", vdir + "/run.n"];
 			} else {
 				var deps = infos.dependencies.toArray();
 				deps.push( { name: project, version: DependencyVersion.DEFAULT } );
@@ -1463,19 +1405,9 @@ class Main {
 			callArgs.push(args[i]);
 
 		Sys.putEnv("HAXELIB_RUN", "1");
+		Sys.putEnv("HAXELIB_RUN_NAME", project);
 		var cmd = callArgs.shift();
  		Sys.exit(Sys.command(cmd, callArgs));
-	}
-
-	function local() {
-		doLocalInstall(param("Package"));
-	}
-
-	function doLocalInstall(file:String) {
-		if (doInstallFile(file, true, true).name == 'haxelib_client')
-			if (ask('You have updated haxelib. Do you wish to rebuild it?')) {
-				rebuildSelf();
-			}
 	}
 
 	function proxy() {
@@ -1517,8 +1449,7 @@ class Main {
 		var xmlFile = cwd + "haxelib.xml";
 		var jsonFile = cwd + "haxelib.json";
 
-		if (!FileSystem.exists(xmlFile))
-		{
+		if (!FileSystem.exists(xmlFile)) {
 			print('No `haxelib.xml` file was found in the current directory.');
 			Sys.exit(0);
 		}
@@ -1532,11 +1463,21 @@ class Main {
 	}
 
 	function newRepo() {
-		FsUtils.safeDir(REPODIR, true);
+		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
+		var created = FsUtils.safeDir(path, true);
+		if (created)
+			print('Local repository created ($path)');
+		else
+			print('Local repository already exists ($path)');
 	}
 
 	function deleteRepo() {
-		FsUtils.deleteRec(REPODIR);
+		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
+		var deleted = FsUtils.deleteRec(path);
+		if (deleted)
+			print('Local repository deleted ($path)');
+		else
+			print('No local repository found ($path)');
 	}
 
 	// ----------------------------------
@@ -1548,4 +1489,13 @@ class Main {
 		new Main().process();
 	}
 
+
+	// deprecated commands
+	function local() {
+		doInstallFile(getRepository(), param("Package"), true, true);
+	}
+
+	function updateSelf() {
+		updateByName(getGlobalRepository(), HAXELIB_LIBNAME);
+	}
 }

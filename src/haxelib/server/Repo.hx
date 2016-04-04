@@ -80,6 +80,15 @@ class Repo implements SiteApi {
 		};
 	}
 
+	public function getLatestVersion( project : String ) : SemVer {
+		var p = Project.manager.select($name == project);
+		if( p == null )
+			throw "No such Project : "+project;
+
+		var vl = Version.manager.unsafeObjects('SELECT * FROM Version WHERE project = ${p.id} ORDER BY major DESC, minor DESC, patch DESC, ifnull(preview, 100) DESC, previewNum DESC LIMIT 1', false);
+		return vl.first().toSemver();
+	}
+
 	public function user( name : String ) : UserInfos {
 		var u = User.manager.search($name == name).first();
 		if( u == null )
@@ -316,14 +325,18 @@ class Repo implements SiteApi {
 			throw "No such Project : " + project;
 
 		var version = SemVer.ofString(version);
-		var v = Version.manager.select(
-			$project == p.id &&
-			$major == version.major &&
-			$minor == version.minor &&
-			$patch == version.patch &&
-			$preview == version.preview &&
-			$previewNum == version.previewNum
-		);
+		// don't use macro select because of
+		// https://github.com/HaxeFoundation/haxe/issues/4931
+		// and https://github.com/HaxeFoundation/haxe/issues/4932
+		var v = Version.manager.dynamicSearch({
+			project: p.id,
+			major: version.major,
+			minor: version.minor,
+			patch: version.patch,
+			preview: if (version.preview == null) null else version.preview.getIndex(),
+			previewNum: version.previewNum
+		}).first();
+
 		if( v == null )
 			throw "No such Version : " + version;
 		v.downloads++;

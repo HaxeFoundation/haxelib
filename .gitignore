@@ -7,17 +7,17 @@ dump/
 deploy/
 repo_integration_tests/
 
+# run.n is in the repo
+!/run.n
+
 # Runtime files
 *.tmp
 *.db
-www/dbconfig.json
-www/.htaccess
-
-# Files copied from /src/haxelib/
-www/dbconfig.json.example
-www/haxelib.css
 
 # IDE files
 .idea
 
 deploy_key
+
+# Bower
+www/bower_components

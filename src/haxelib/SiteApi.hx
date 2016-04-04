@@ -26,6 +26,7 @@ import haxelib.Data;
 interface SiteApi {
 	public function search( word : String ) : List<{ id : Int, name : String }>;
 	public function infos( project : String ) : ProjectInfos;
+	public function getLatestVersion( project : String ) : SemVer;
 	public function user( name : String ) : UserInfos;
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Bool;
 	public function isNewUser( name : String ) : Bool;

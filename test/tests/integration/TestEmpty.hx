@@ -2,6 +2,7 @@ package tests.integration;
 
 import haxe.*;
 import haxe.io.*;
+import haxelib.*;
 import IntegrationTests.*;
 using IntegrationTests;
 
@@ -43,11 +44,13 @@ class TestEmpty extends IntegrationTests {
 		var pathResult = haxelib(["path", "foo"]).result();
 		assertTrue(pathResult.code != 0);
 
-		var versionResult = haxelib(["version"]).result();
-		assertSuccess(versionResult);
+		if (clientVer > SemVer.ofString("3.1.0-rc.4")) {
+			var versionResult = haxelib(["version"]).result();
+			assertSuccess(versionResult);
 
-		var helpResult = haxelib(["help"]).result();
-		assertSuccess(helpResult);
+			var helpResult = haxelib(["help"]).result();
+			assertSuccess(helpResult);
+		}
 	}
 
 	function testWebsite():Void {

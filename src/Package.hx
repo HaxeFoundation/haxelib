@@ -5,11 +5,15 @@ import haxe.zip.Tools;
 
 import sys.io.File;
 import sys.FileSystem;
+import haxelib.client.Main.VERSION;
+import haxelib.Data.Infos;
 
 class Package {
     static var outPath = "package.zip";
 
     static function main() {
+        checkVersion();
+
         var entries = new List<Entry>();
 
         function add(path:String, ?target:String) {
@@ -44,32 +48,22 @@ class Package {
                 add('src/haxelib/$file');
 
         add("haxelib.json");
+        add("run.n");
         add("README.md");
-
-        // these are files provided for backward-compatibility, to make selfupdate work from old clients to the new version
-        var compat = [
-            {name: "src/tools/haxelib/Main.hx", content: "package tools.haxelib;class Main{static function main()@:privateAccess haxelib.client.Main.main();}"},
-            {name: "src/tools/haxelib/Rebuild.hx", content: "package tools.haxelib;class Rebuild{static function main()@:privateAccess haxelib.client.Rebuild.main();}"},
-        ];
-        for (item in compat) {
-            var bytes = haxe.io.Bytes.ofString(item.content);
-            var entry:Entry = {
-                fileName: item.name,
-                fileSize: bytes.length,
-                fileTime: Date.now(),
-                compressed: false,
-                dataSize: 0,
-                data: bytes,
-                crc32: Crc32.make(bytes)
-            };
-            Tools.compress(entry, 9);
-            entries.add(entry);
-        }
 
         Sys.println("Saving to " + outPath);
         var out = File.write(outPath, true);
         var writer = new Writer(out);
         writer.write(entries);
         out.close();
+    }
+
+    @:access(haxelib.client.Main.VERSION)
+    static function checkVersion() {
+        var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
+        if (json.version != VERSION) {
+            Sys.println('Error: Version in haxelib.json (${json.version}) does not match version in haxelib.client.Main.VERSION field ($VERSION)');
+            Sys.exit(1);
+        }
     }
 }

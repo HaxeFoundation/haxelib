@@ -1,11 +1,18 @@
 version: "{build}"
 
+services:
+  - mysql
+
 install:
-    - cinst haxe -y
-    - RefreshEnv
-    - haxelib setup haxelib_repo
+  - cinst haxe -y
+  - cinst nssm -y
+  - RefreshEnv
+  - haxelib setup haxelib_repo
+  - haxelib install all --always
+  - haxelib install tora
+  - haxelib list
 
 build: off
 
 test_script:
-    - haxe ci.hxml
+  - haxe ci.hxml

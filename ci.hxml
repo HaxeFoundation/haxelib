@@ -1,3 +1,2 @@
 -cp test
--main RunCi
---interp
+-x RunCi

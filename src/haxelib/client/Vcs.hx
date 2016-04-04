@@ -287,16 +287,14 @@ class Git extends Vcs {
 
 		Sys.setCwd(libPath);
 
-		if (branch != null) {
-			var ret = command(executable, ["checkout", branch]);
-			if (ret.code != 0)
-				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-		}
-
 		if (version != null) {
 			var ret = command(executable, ["checkout", "tags/" + version]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
+		} else if (branch != null) {
+			var ret = command(executable, ["checkout", branch]);
+			if (ret.code != 0)
+				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		// return prev. cwd:
