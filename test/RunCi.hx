@@ -207,6 +207,11 @@ Listen 2000
 			case name:
 				throw "System not supported: " + name;
 		}
+
+		Sys.setCwd("www");
+		runCommand("bower", ["install"]);
+		Sys.setCwd("..");
+
 		Sys.putEnv("HAXELIB_SERVER", "localhost");
 		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
 	}
