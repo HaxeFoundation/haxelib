@@ -4,6 +4,7 @@ services:
   - mysql
 
 install:
+  - npm -g install bower
   - cinst haxe -y
   - cinst nssm -y
   - RefreshEnv
