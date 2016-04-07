@@ -11,7 +11,7 @@ Each Haxe library requires a `haxelib.json` file in which the following attribut
 * license: The license under which the library is released. Can be `GPL`, `LGPL`, `BSD`, `Public` (for Public Domain) or `MIT`.
 * tags: An array of tag-strings which are used on the repository website to sort libraries.
 * description: The description of what the library is doing.
-* version: The version string of the library. This is detailed in [Versioning](haxelib-json-versioning.md).
+* version: The version string of the library. This is detailed in [Versioning](#versioning).
 * classPath: The path string to the source files.
 * releasenote: The release notes of the current version.
 * contributors: An array of user names which identify contributors to the library.
@@ -36,6 +36,8 @@ The following JSON is a simple example of a haxelib.json:
   }
 }
 ```
+
+<a name="versioning"></a>
 
 ### Versioning
 
