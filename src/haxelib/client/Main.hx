@@ -877,9 +877,9 @@ class Main {
 				case Haxelib:
 					doInstall(rep, d.name, d.version, false);
 				case Git:
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.version));
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 				case Mercurial:
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.version));
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 			}
 		}
 	}
@@ -1300,10 +1300,10 @@ class Main {
 
 	function vcs(id:VcsID) {
 		var rep = getRepository();
-		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt()));
+		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
 	}
 
-	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, version:String) {
+	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
@@ -1338,13 +1338,14 @@ class Main {
 
 
 		// finish it!
-		File.saveContent(proj + "/.current", vcs.directory);
-
-		print('Library $libName set to use ${vcs.name}.');
-
-		if(branch != null)
-			print('  Branch/Tag/Rev: $branch');
-		print('  Path: $libPath');
+		if (subDir != null) {
+			libPath += "/" + subDir;
+			File.saveContent(proj + "/.dev", libPath);
+			print("Development directory set to "+libPath);
+		} else {
+			File.saveContent(proj + "/.current", vcs.directory);
+			print("Library "+libName+" current version is now "+vcs.directory);
+		}
 
 		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))
