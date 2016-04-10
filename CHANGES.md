@@ -11,4 +11,5 @@
  - Fixed suggested repository path on Linux (#242)
  - Suggested repository path on OSX is now `/usr/local/lib/haxe/lib` (#250)
  - `haxelib install <file>.hxml` now checks hxml files recursively (#200)
+ - Git/Hg checkouts don't set dev mode now (#263)
  - Tons of smaller fixes, cleanups and optimizations

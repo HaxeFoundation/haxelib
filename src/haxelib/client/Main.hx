@@ -877,9 +877,9 @@ class Main {
 				case Haxelib:
 					doInstall(rep, d.name, d.version, false);
 				case Git:
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.version));
 				case Mercurial:
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.version));
 			}
 		}
 	}
@@ -1109,8 +1109,6 @@ class Main {
 	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
 		var pdir = state.rep + Data.safe(p);
 
-		//TODO: get content from `.current` and use vcs only if there "dev".
-
 		var vcs = Vcs.getVcsForDevLib(pdir, settings);
 		if(vcs != null) {
 			if(!vcs.available)
@@ -1284,7 +1282,7 @@ class Main {
 		//TODO: ask if existing repo have changes.
 
 		// find existing repo:
-		var vcs:Vcs = Vcs.getVcsForDevLib(proj, settings);
+		var vcs = Vcs.getVcsForDevLib(proj, settings);
 		// remove existing repos:
 		while(vcs != null) {
 			deleteRec(proj + "/" + vcs.directory);
@@ -1302,10 +1300,10 @@ class Main {
 
 	function vcs(id:VcsID) {
 		var rep = getRepository();
-		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt(), paramOpt()));
+		useVcs(id, function(vcs) doVcsInstall(rep, vcs, param("Library name"), param(vcs.name + " path"), paramOpt(), paramOpt()));
 	}
 
-	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
+	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, version:String) {
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
@@ -1340,15 +1338,13 @@ class Main {
 
 
 		// finish it!
-		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-
-		File.saveContent(proj + "/.dev", devPath);
+		File.saveContent(proj + "/.current", vcs.directory);
 
 		print('Library $libName set to use ${vcs.name}.');
 
 		if(branch != null)
 			print('  Branch/Tag/Rev: $branch');
-		print('  Path: $devPath');
+		print('  Path: $libPath');
 
 		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))

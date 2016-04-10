@@ -94,7 +94,6 @@ typedef Dependency = {
 	?version : DependencyVersion,
 	?type: DependencyType,
 	?url: String,
-	?subDir: String,
 	?branch: String,
 }
 
