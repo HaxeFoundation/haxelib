@@ -1109,8 +1109,6 @@ class Main {
 	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
 		var pdir = state.rep + Data.safe(p);
 
-		//TODO: get content from `.current` and use vcs only if there "dev".
-
 		var vcs = Vcs.getVcsForDevLib(pdir, settings);
 		if(vcs != null) {
 			if(!vcs.available)
@@ -1183,7 +1181,7 @@ class Main {
 				doInstall(rep, prj, version, true);
 			return;
 		}
-		if( getCurrent(pdir) == version )
+		if( File.getContent(pdir + "/.current").trim() == version )
 			return;
 		if( doAsk && !ask("Set "+prj+" to version "+version) )
 			return;
@@ -1284,7 +1282,7 @@ class Main {
 		//TODO: ask if existing repo have changes.
 
 		// find existing repo:
-		var vcs:Vcs = Vcs.getVcsForDevLib(proj, settings);
+		var vcs = Vcs.getVcsForDevLib(proj, settings);
 		// remove existing repos:
 		while(vcs != null) {
 			deleteRec(proj + "/" + vcs.directory);
@@ -1340,15 +1338,14 @@ class Main {
 
 
 		// finish it!
-		var devPath = libPath + (subDir == null ? "" : "/" + subDir);
-
-		File.saveContent(proj + "/.dev", devPath);
-
-		print('Library $libName set to use ${vcs.name}.');
-
-		if(branch != null)
-			print('  Branch/Tag/Rev: $branch');
-		print('  Path: $devPath');
+		if (subDir != null) {
+			libPath += "/" + subDir;
+			File.saveContent(proj + "/.dev", libPath);
+			print("Development directory set to "+libPath);
+		} else {
+			File.saveContent(proj + "/.current", vcs.directory);
+			print("Library "+libName+" current version is now "+vcs.directory);
+		}
 
 		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))

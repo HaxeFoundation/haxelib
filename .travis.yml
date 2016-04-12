@@ -63,6 +63,7 @@ install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       brew update;
     fi
+  - npm -g install bower
   - yes | haxelib install all
   - yes | haxelib install tora
   # We need https://github.com/HaxeFoundation/hscript/commit/bd8c016bbadc93c2db8deb75d7056703ac3e3ff8
@@ -83,6 +84,9 @@ script:
       ssh-add deploy_key;
       scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/;
       scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/;
+      pushd www;
+      bower install;
+      popd;
       git config --global user.name "TravisCI";
       git config --global user.email "travisci@haxe.org";
       haxelib run ufront deploy;
