@@ -1181,7 +1181,7 @@ class Main {
 				doInstall(rep, prj, version, true);
 			return;
 		}
-		if( getCurrent(pdir) == version )
+		if( File.getContent(pdir + "/.current").trim() == version )
 			return;
 		if( doAsk && !ask("Set "+prj+" to version "+version) )
 			return;
