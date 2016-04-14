@@ -1,45 +1,54 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+	"$schema": "http://json-schema.org/draft-04/schema#",
 	"description": "A haxelib project",
 	"type": "object",
 	"properties": {
 		"name": { "$ref": "#/definitions/projectName" },
-		"license": {
-			"description": "The open source license under which the project is licensed",
-			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT"]
-		},
-		"tags": {
-			"type": "array",
-			"items": { "$ref": "#/definitions/haxelibTag" },
-			"uniqueItems": true
+		"url": {
+			"description": "Project's website",
+			"type": "string",
+			"format": "uri"
 		},
 		"description": {
+			"description": "Short description of the project",
 			"type": "string"
 		},
+		"license": {
+			"description": "Open source license under which the project is licensed",
+			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT", "Apache"]
+		},
+		"version": { "$ref": "#/definitions/semver" },
 		"classPath": {
-			"description": "The folder in the package which contains the source files for this haxelib",
+			"description": "Folder in the package which contains the source files for this project",
 			"type": "string"
 		},
 		"contributors": {
+			"description": "List of project contributors that are allowed to upload to haxelib",
 			"type": "array",
 			"items": { "$ref": "#/definitions/userName" },
 			"minItems": 1,
 			"uniqueItems": true
 		},
-		"releasenote": {
-			"type": "string"
-		},
-		"version": { "$ref": "#/definitions/semver" },
-		"url": {
-			"type": "string",
-			"format": "uri"
+		"tags": {
+			"description": "List of tags for easier finding the project on haxelib",
+			"type": "array",
+			"items": { "$ref": "#/definitions/haxelibTag" },
+			"uniqueItems": true
 		},
 		"dependencies": {
 			"type": "object",
-			"additionalProperties": { "$ref": "#/definitions/dependancyVersion" }
+			"description": "Project's dependencies",
+			"patternProperties": {
+				"^[A-Za-z0-9_.-]{3,}$": { "$ref": "#/definitions/dependencyVersion" }
+			},
+			"additionalProperties": false
+		},
+		"releasenote": {
+			"description": "Short description of changes made in this version",
+			"type": "string"
 		}
 	},
-	"additionalProperties": true,
+	"additionalProperties": false,
 	"required": ["name", "license", "releasenote", "contributors", "version"],
 	"definitions": {
 		"userName": {
@@ -52,7 +61,13 @@
 			"description": "The name of a haxelib project",
 			"type": "string",
 			"minLength": 3,
-			"pattern": "^[A-Za-z0-9_.-]{3,}$"
+			"pattern": "^[A-Za-z0-9_.-]{3,}$",
+			"not": {
+				"anyOf": [
+					{"enum": ["haxe", "all"]},
+					{"pattern": "\\.(zip|hxml)$"}
+				]
+			}
 		},
 		"haxelibTag": {
 			"description": "A keyword or term associated with a haxelib project",
@@ -62,9 +77,10 @@
 		},
 		"semver": {
 			"type": "string",
-			"pattern": "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-(alpha|beta|rc)(\\.([0-9]+))?)?$"
+			"description": "Project's version",
+			"pattern": "^(\\d|[1-9]\\d*)\\.(\\d|[1-9]\\d*)\\.(\\d|[1-9]\\d*)(-(alpha|beta|rc)(\\.(\\d|[1-9]\\d*))?)?$"
 		},
-		"dependancyVersion": {
+		"dependencyVersion": {
 			"oneOf": [
 				{ "$ref": "#/definitions/semver" },
 				{
@@ -74,5 +90,4 @@
 			]
 		}
 	}
-			
 }
