@@ -99,6 +99,9 @@ typedef Dependency = {
 }
 
 typedef Infos = {
+	// IMPORTANT: if you change this or its fields types,
+	// make sure to update `schema.json` file accordingly,
+	// and make an update PR to https://github.com/SchemaStore/schemastore
 	var name : ProjectName;
 	@:optional var url : String;
 	@:optional var description : String;
