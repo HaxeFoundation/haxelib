@@ -6,6 +6,6 @@
 	"description": "The haxelib client",
 	"classPath": "src",
 	"version": "3.3.0",
-	"releasenote": "Correct behavior for locating base path",
+	"releasenote": "Initial release for Haxe 3.3",
 	"contributors": ["back2dos", "ncannasse", "jason", "Simn", "nadako"]
 }
