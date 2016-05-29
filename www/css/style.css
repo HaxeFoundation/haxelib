@@ -752,7 +752,7 @@ table .img-circle {
   max-width:none;
 }
 
-.homepage .tag {
+.tag.tag-inline {
   display:inline-block;
 }
 

@@ -56,11 +56,11 @@
 				<tr class="tags">
 					<th>Tags</th>
 					<td>
-						@{var i = 0;}
+            <ul class="tags unstyled">
 						@for( t in info.tags ) {
-							@{i++;}
-							<a href="/t/@t">@t</a>@if( i<info.tags.length ){, }
+							 <li class="tag tag-inline"><i class="fa fa-tag"></i> <a href="/t/@t/">@t</a></li>
 						}
+          </ul>
 					</td>
 				</tr>
 			</table>
