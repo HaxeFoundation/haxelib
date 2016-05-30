@@ -152,6 +152,7 @@ class Main {
 	var siteUrl : String;
 	var site : SiteProxy;
 	var isHaxelibRun : Bool;
+	var alreadyUpdatedVcsDependencies:Array<String> = [];
 
 
 	function new() {
@@ -612,6 +613,13 @@ class Main {
 
 	function install() {
 		var rep = getRepository();
+		
+		// if just install command we try to install from haxelib.json
+		if ( sys.FileSystem.exists("./haxelib.json") && !sys.FileSystem.isDirectory("./haxelib.json") && args.length == 1 )
+		{
+			installFromHaxelibJson( rep, "./haxelib.json");
+			return;
+		}
 
 		var prj = param("Library name or hxml file:");
 
@@ -719,6 +727,11 @@ class Main {
 			for (l in libsToInstall)
 				doInstall(rep, l.name, l.version, true);
 		}
+	}
+	
+	function installFromHaxelibJson( rep:String, path:String )
+	{
+		doInstallDependencies(rep, Data.readData(File.getContent(path), false).dependencies);
 	}
 
 	function installFromAllHxml(rep:String) {
@@ -869,9 +882,9 @@ class Main {
 				}
 			}
 
-			print("Installing dependency "+d.name+" "+d.version);
-			if( d.version == "" )
+			if( d.version == "" && d.type == DependencyType.Haxelib )
 				d.version = site.getLatestVersion(d.name);
+			print("Installing dependency "+d.name+" "+d.version);
 
 			switch d.type {
 				case Haxelib:
@@ -1304,21 +1317,40 @@ class Main {
 	}
 
 	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
+		
 		var proj = rep + Data.safe(libName);
 
 		// find & remove all existing repos:
-		removeExistingDevLib(proj);
+		//removeExistingDevLib(proj);
 		// currently we already kill all dev-repos for all supported Vcs.
-
-
+		
 		var libPath = proj + "/" + vcs.directory;
+		
+		var jsonPath = libPath + "/haxelib.json";
+		
+		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
+			print("You already have "+libName+" version "+vcs.directory+" installed.");
+			
+			if ( this.alreadyUpdatedVcsDependencies.indexOf( libName ) == -1 )
+			{
+				print("Updating "+libName+" version "+vcs.directory+" ...");
+				this.alreadyUpdatedVcsDependencies.push( libName );
+				updateByName(rep, libName);
+				setCurrent(rep, libName, vcs.directory, true);
+				
+				if(FileSystem.exists(jsonPath))
+					doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
+			}
+				
+			return;
+		}
 
 		// prepare for new repo
-		deleteRec(libPath);
-
+		//deleteRec(libPath);
+		
 
 		print("Installing " +libName + " from " +url);
-
+		
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
@@ -1347,7 +1379,6 @@ class Main {
 			print("Library "+libName+" current version is now "+vcs.directory);
 		}
 
-		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))
 			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
