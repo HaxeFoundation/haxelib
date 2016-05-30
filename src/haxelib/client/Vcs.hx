@@ -286,8 +286,8 @@ class Git extends Vcs {
 
 
 		Sys.setCwd(libPath);
-
-		if (version != null) {
+		
+		if (version != null && version != "") {
 			var ret = command(executable, ["checkout", "tags/" + version]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
