@@ -671,7 +671,7 @@ class Main {
 			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
-		var libsToInstall = new Map<String, {name:String,version:String}>();
+		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
 
 		function processHxml(path) {
 			var hxml = sys.io.File.getContent(path);
@@ -682,18 +682,44 @@ class Main {
 					if (l.startsWith(target)) {
 						var lib = targets[target];
 						if (!libsToInstall.exists(lib))
-							libsToInstall[lib] = { name: lib, version: null }
+							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
 					}
 
-				if (l.startsWith("-lib")) {
-					var key = l.substr(5);
-					var parts = key.split(":");
-					var libName = parts[0].trim();
-					var libVersion = if (parts.length > 1) parts[1].trim() else null;
+				if (l.startsWith("-lib"))
+				{
+					var key = l.substr(5).trim();
+					var parts = ~/:/.split(key);
+					var libName = parts[0];
+					var libVersion:String = null;
+					var branch:String = null;
+					var url:String = null;
+					var subDir:String = null;
+					var type:String;
+					
+					if ( parts.length > 1 )
+					{
+						if ( parts[1].startsWith("git:") )
+						{
+							
+							type = "git";
+							var urlParts = parts[1].substr(4).split("#");
+							url = urlParts[0];
+							branch = urlParts.length > 1 ? urlParts[1] : null;
+						}
+						else
+						{
+							type = "haxelib";
+							libVersion = parts[1];
+						}
+					}
+					else
+					{
+						type = "haxelib";
+					}
 
 					switch libsToInstall[key] {
 						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion } );
+							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
 						default:
 					}
 				}
@@ -710,7 +736,13 @@ class Main {
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		print("Loading info about the required libraries");
-		for (l in libsToInstall) {
+		for (l in libsToInstall)
+		{
+			if ( l.type == "git" )
+			{
+				// Do not check git repository infos
+				continue;
+			}
 			var inf = site.infos(l.name);
 			l.version = getVersion(inf, l.version);
 		}
@@ -724,8 +756,14 @@ class Main {
 
 		// Install if they confirm
 		if (ask("Continue?")) {
-			for (l in libsToInstall)
-				doInstall(rep, l.name, l.version, true);
+			for (l in libsToInstall) {
+				if ( l.type == "haxelib" )
+					doInstall(rep, l.name, l.version, true);
+				else if ( l.type == "git" )
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
+				else if ( l.type == "hg" )
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
+			}
 		}
 	}
 	
