@@ -615,9 +615,10 @@ class Main {
 		var rep = getRepository();
 		
 		// if just install command we try to install from haxelib.json
-		if ( args.length == argcur && sys.FileSystem.exists("./haxelib.json") && !sys.FileSystem.isDirectory("./haxelib.json") )
+		var defaultHaxelibJson = "./haxelib.json";
+		if ( args.length == argcur && sys.FileSystem.exists(defaultHaxelibJson) && !sys.FileSystem.isDirectory(defaultHaxelibJson) )
 		{
-			installFromHaxelibJson( rep, "./haxelib.json");
+			installFromHaxelibJson( rep, defaultHaxelibJson);
 			return;
 		}
 
