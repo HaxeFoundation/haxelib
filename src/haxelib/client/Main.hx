@@ -615,7 +615,7 @@ class Main {
 		var rep = getRepository();
 		
 		// if just install command we try to install from haxelib.json
-		if ( sys.FileSystem.exists("./haxelib.json") && !sys.FileSystem.isDirectory("./haxelib.json") && args.length == 1 )
+		if ( args.length == argcur && sys.FileSystem.exists("./haxelib.json") && !sys.FileSystem.isDirectory("./haxelib.json") )
 		{
 			installFromHaxelibJson( rep, "./haxelib.json");
 			return;
@@ -626,6 +626,11 @@ class Main {
 		// No library given, install libraries listed in *.hxml in given directory
 		if( prj == "all") {
 			installFromAllHxml(rep);
+			return;
+		}
+		else if ( prj.endsWith("haxelib.json") )
+		{
+			installFromHaxelibJson( rep, prj);
 			return;
 		}
 
