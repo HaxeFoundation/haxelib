@@ -628,11 +628,6 @@ class Main {
 			installFromAllHxml(rep);
 			return;
 		}
-		else if ( prj.endsWith("haxelib.json") )
-		{
-			installFromHaxelibJson( rep, prj);
-			return;
-		}
 
 		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
 			// *.hxml provided, install all libraries/versions in this hxml file
@@ -643,6 +638,12 @@ class Main {
 			// *.zip provided, install zip as haxe library
 			if (prj.endsWith(".zip")) {
 				doInstallFile(rep, prj, true, true);
+				return;
+			}
+			
+			if ( prj.endsWith("haxelib.json") )
+			{
+				installFromHaxelibJson( rep, prj);
 				return;
 			}
 		}
