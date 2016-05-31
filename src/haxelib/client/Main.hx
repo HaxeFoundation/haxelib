@@ -1378,7 +1378,7 @@ class Main {
 			
 			if ( this.alreadyUpdatedVcsDependencies.indexOf( libName ) == -1 )
 			{
-				print("Updating "+libName+" version "+vcs.directory+" ...");
+				print("Updating " + libName+" version " + vcs.directory + " ...");
 				this.alreadyUpdatedVcsDependencies.push( libName );
 				updateByName(rep, libName);
 				setCurrent(rep, libName, vcs.directory, true);
@@ -1394,7 +1394,7 @@ class Main {
 		//deleteRec(libPath);
 		
 
-		print("Installing " +libName + " from " +url);
+		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
 		
 		try {
 			vcs.clone(libPath, url, branch, version);
