@@ -105,10 +105,15 @@ class RunCi {
 
 			var confContent =
 (
-	if (systemName() == "Windows")
-		"LoadModule rewrite_module modules/mod_rewrite.so\n"
-	else
-		""
+	switch (systemName()) {
+		case "Windows":
+			"LoadModule rewrite_module modules/mod_rewrite.so\n";
+		case "Mac":
+			"LoadModule rewrite_module libexec/mod_rewrite.so\n" +
+			"LoadModule deflate_module libexec/mod_deflate.so\n";
+		case _:
+			"";
+	}
 ) +
 (
 	if (hasModNeko)
@@ -127,6 +132,7 @@ Listen 2000
     AllowOverride All
     Order allow,deny
     Allow from all
+    Require all granted
 </Directory>
 ';
 			var confOut = if (exists(confPath))
@@ -162,7 +168,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/win32/binaries/httpd-2.2.31-win32.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.20-win32-VC14.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache2\\conf\\httpd.conf");
 				rename("bin\\httpd\\Apache2", "c:\\Apache2");
@@ -183,17 +189,30 @@ Listen 2000
 
 				Sys.sleep(2.5);
 			case "Mac":
-				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
+				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
 
 				runCommand("mysql.server", ["start"]);
 				configDb();
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
-				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
+				writeApacheConf("/usr/local/etc/apache2/2.4/httpd.conf");
 				Sys.sleep(2.5);
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl("http://localhost:2000/");
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apache error log:");
+					println(sys.io.File.getContent("/usr/local/var/log/apache2/error_log"));
+					println("====================");
+					println("apache config:");
+					println(sys.io.File.getContent("/usr/local/etc/apache2/2.4/httpd.conf"));
+					println("====================");
+				}
 			case "Linux":
 				configDb();
 
