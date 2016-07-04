@@ -79,6 +79,8 @@ class RunCi {
 	}
 
 	static function setupLocalServer():Void {
+		var HAXELIB_SERVER = "localhost";
+		var HAXELIB_SERVER_PORT = "2000";
 		var ndllPath = getEnv("NEKOPATH");
 		if (ndllPath == null) ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
@@ -202,7 +204,7 @@ Listen 2000
 				Sys.sleep(2.5);
 
 				try {
-					haxe.Http.requestUrl("http://localhost:2000/");
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
 				} catch (e:Dynamic) {
 					println("Cannot open webpage.");
 					println("====================");
@@ -216,13 +218,32 @@ Listen 2000
 			case "Linux":
 				configDb();
 
-				runCommand("sudo", ["apt-get", "install", "apache2"]);
+				runCommand("sudo", ["apt-get", "install", "-y", "apache2"]);
+
+				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["a2enmod", "deflate"]);
 
 				writeApacheConf("haxelib.conf");
-				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf.d/haxelib.conf"]);
-				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf-enabled/haxelib.conf"]);
+				
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apachectl -V:");
+					command("sudo", ["apachectl", "-V"]);
+					println("====================");
+					println("apachectl -M:");
+					command("sudo", ["apachectl", "-M"]);
+					println("====================");
+					println("cat /var/log/apache2/error.log");
+					command("sudo", ["cat", "/var/log/apache2/error.log"]);
+					println("====================");
+				}
 			case name:
 				throw "System not supported: " + name;
 		}
@@ -231,8 +252,8 @@ Listen 2000
 		runCommand("bower", ["install"]);
 		Sys.setCwd("..");
 
-		Sys.putEnv("HAXELIB_SERVER", "localhost");
-		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
+		Sys.putEnv("HAXELIB_SERVER", HAXELIB_SERVER);
+		Sys.putEnv("HAXELIB_SERVER_PORT", HAXELIB_SERVER_PORT);
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
