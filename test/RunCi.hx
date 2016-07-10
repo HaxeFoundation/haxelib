@@ -109,7 +109,9 @@ class RunCi {
 (
 	switch (systemName()) {
 		case "Windows":
-			"LoadModule rewrite_module modules/mod_rewrite.so\n";
+			"LoadModule rewrite_module modules/mod_rewrite.so\n" +
+			"LoadModule filter_module modules/mod_filter.so\n" +
+			"LoadModule deflate_module modules/mod_deflate.so\n";
 		case "Mac":
 			"LoadModule rewrite_module libexec/mod_rewrite.so\n" +
 			"LoadModule deflate_module libexec/mod_deflate.so\n";
@@ -170,12 +172,14 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.20-win32-VC14.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.23-win32-VC14.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
-				writeApacheConf("bin\\httpd\\Apache2\\conf\\httpd.conf");
-				rename("bin\\httpd\\Apache2", "c:\\Apache2");
+				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
+
+				var apachePath = "c:\\Apache24";
+				rename("bin\\httpd\\Apache24", apachePath);
 				var serviceName = "HaxelibApache";
-				var httpd = "c:\\Apache2\\bin\\httpd.exe";
+				var httpd = Path.join([apachePath, "bin", "httpd.exe"]);
 				runCommand(httpd, ["-k", "install", "-n", serviceName]);
 				runCommand(httpd, ["-n", serviceName, "-t"]);
 				runCommand(httpd, ["-k", "start", "-n", serviceName]);
@@ -190,6 +194,19 @@ Listen 2000
 				runCommand("nssm", ["start", "tora"]);
 
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apache error log:");
+					println(sys.io.File.getContent(Path.join([apachePath, "logs", "error.log"])));
+					println("====================");
+					println("apache config:");
+					println(sys.io.File.getContent(Path.join([apachePath, "conf", "httpd.conf"])));
+					println("====================");
+				}
 			case "Mac":
 				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
 
@@ -323,13 +340,6 @@ Listen 2000
 		}
 	}
 
-	static function installDotNet11():Void {
-		// This is a msvcr71.dll in my own dropbox. If you want to obtain one, you probably shouldn't use my file. 
-		// Instead, install .Net Framework 1.1 from the link as follows
-		// https://www.microsoft.com/en-us/download/details.aspx?id=26
-		download("https://dl.dropboxusercontent.com/u/2661116/msvcr71.dll", Path.join([getEnv("NEKOPATH"), "msvcr71.dll"]));
-	}
-
 	static function main():Void {
 		// Note that package.zip output is also used by client tests, so it has to be run before that.
 		runCommand("haxe", ["package.hxml"]);
@@ -345,12 +355,6 @@ Listen 2000
 			compileClient();
 			testClient();
 			compileServer();
-
-			if (systemName() == "Windows") {
-				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
-				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-				installDotNet11();
-			}
 			testServer();
 		#end
 
