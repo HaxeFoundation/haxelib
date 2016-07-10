@@ -21,3 +21,5 @@ deploy_key
 
 # Bower
 www/bower_components
+
+.haxelib
