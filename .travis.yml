@@ -66,10 +66,18 @@ install:
   - npm -g install bower
   - yes | haxelib install all
   - yes | haxelib install tora
-  # We need https://github.com/HaxeFoundation/hscript/commit/bd8c016bbadc93c2db8deb75d7056703ac3e3ff8
+  # We need https://github.com/ufront/ufront-uftasks/commit/1ef09322eb51cf5d16bc1f9abeecaeb30542b62f
   - if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
-    haxelib git hscript https://github.com/HaxeFoundation/hscript.git;
+    yes | haxelib git ufront-uftasks https://github.com/ufront/ufront-uftasks.git;
     fi
+  # We need https://github.com/ufront/ufront-ufadmin/commit/4558fe0bb3534cda53396bc3b4b099a867f5b6a6
+  - if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
+    yes | haxelib git ufront-ufadmin https://github.com/ufront/ufront-ufadmin.git;
+    fi
+  # Make sure hscript is >= 2.0.5
+  - yes | haxelib update hscript
+  # Make sure hscript is > 0.1.4
+  - yes | haxelib update mcli
   - haxelib list
   - haxelib run tora > /dev/null 2>&1 &
 

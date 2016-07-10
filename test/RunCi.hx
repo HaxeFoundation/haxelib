@@ -82,7 +82,11 @@ class RunCi {
 		var HAXELIB_SERVER = "localhost";
 		var HAXELIB_SERVER_PORT = "2000";
 		var ndllPath = getEnv("NEKOPATH");
-		if (ndllPath == null) ndllPath = "/usr/lib/neko";
+		if (ndllPath == null)
+			if (exists("/usr/lib/x86_64-linux-gnu/neko"))
+				ndllPath = "/usr/lib/x86_64-linux-gnu/neko";
+			else
+				ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
 		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
 		var dbConfig = Json.parse(getContent(dbConfigPath));
