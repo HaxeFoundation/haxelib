@@ -71,7 +71,7 @@ install:
     haxelib git hscript https://github.com/HaxeFoundation/hscript.git;
     fi
   - haxelib list
-  - haxelib run tora &
+  - haxelib run tora > /dev/null 2>&1 &
 
 script:
   # run our CI script
