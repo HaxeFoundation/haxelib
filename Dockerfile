@@ -27,6 +27,9 @@ WORKDIR /src/www
 RUN bower install --allow-root
 
 COPY www /src/www/
+COPY src/legacyhaxelib/.htaccess /src/www/legacy/
+COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
+COPY src/legacyhaxelib/website.mtt /src/www/legacy/
 COPY src /src/src/
 
 RUN rm -rf /var/www/html
@@ -34,6 +37,7 @@ RUN ln -s /src/www /var/www/html
 
 WORKDIR /src
 
+RUN haxe server_legacy.hxml
 RUN haxe server.hxml
 
 EXPOSE 80
