@@ -2,14 +2,16 @@ package website.controller;
 
 import ufront.MVC;
 import ufront.ufadmin.controller.*;
-import website.api.ProjectListApi;
+import website.api.*;
 import website.model.SiteDb;
+import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
 using CleverSort;
 
 class HomeController extends Controller {
 
+	@inject public var projectApi:ProjectApi;
 	@inject public var projectListApi:ProjectListApi;
 
 	// Perform init() after dependency injection has occured.
@@ -55,6 +57,15 @@ class HomeController extends Controller {
 
 	@:route("/documentation/*")
 	public var documentationController:DocumentationController;
+
+	@:route("/files/3.0/$fileName")
+	public function downloadFile( fileName:String ) {
+		var path = '/files/3.0/$fileName';
+		projectApi.requireZipFile(path);
+		var r = new FilePathResult(Path.join([context.request.scriptDirectory, path]));
+		r.setContentTypeByFilename(Path.withoutDirectory(path));
+		return r;
+	}
 
 	@cacheRequest
 	@:route("/t/")

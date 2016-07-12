@@ -164,13 +164,29 @@ class ProjectApi extends UFApi {
 		#end
 	}
 
+	public function requireZipFile( path:String ):Void {
+		var localPath = Path.join([scriptDir, path]);
+		if (!sys.FileSystem.exists(localPath))
+			switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
+				case null:
+					// pass
+				case bucket:
+					var s3Path = Path.join(['s3://${bucket}', path]);
+					if (Sys.command("aws", ["s3", "cp", s3Path, localPath]) != 0) {
+						throw 'failed to download ${s3Path} to ${localPath}';
+					}
+			}
+	}
+
 	//
 	// Private API
 	//
 
 	/** Get a list of entries in a zip file. **/
 	function getZipEntries( projectName:String, version:String ):List<Entry> {
-		var path = scriptDir+getZipFilePath( projectName, version );
+		var path = getZipFilePath( projectName, version );
+		requireZipFile( path );
+		var path = Path.join([scriptDir, path]);
 		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw 'Invalid zip file $path: $e';
 		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
 		file.close();
