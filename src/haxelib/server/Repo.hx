@@ -22,6 +22,7 @@
 package haxelib.server;
 
 import haxe.io.Bytes;
+import haxe.io.Path;
 import neko.Web;
 
 import haxelib.Data;
@@ -285,10 +286,23 @@ class Repo implements SiteApi {
 		}
 
 		// update file
-		var target = REP_DIR + "/" + Data.fileName(p.name, infos.version);
+		var fileName = Data.fileName(p.name, infos.version);
+		var target = Path.join([REP_DIR, fileName]);
 		if (sys.FileSystem.exists(target))
 			sys.FileSystem.deleteFile(target);
 		sys.FileSystem.rename(path,target);
+
+		// upload file to S3
+		switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
+			case null:
+				// pass
+			case bucket:
+				var s3Path = Path.join(['s3://${bucket}', Data.REPOSITORY, fileName]);
+				if (Sys.command("aws", ["s3", "cp", target, s3Path]) != 0) {
+					throw 'failed to upload ${target} to ${s3Path}';
+				}
+		}
+
 		var semVer = SemVer.ofString(infos.version);
 
 		// update existing version
