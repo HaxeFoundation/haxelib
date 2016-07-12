@@ -155,13 +155,7 @@ class ProjectApi extends UFApi {
 	**/
 	public function getZipFilePath( project:String, version:String ):String {
 		var fileName = Data.fileName(project, version);
-		#if deploy
-			// On the haxe.org server, we want to access the repo from the old website.
-			// When we change the websites over we should probably move these over too.
-			return '../www/files/3.0/$fileName';
-		#else
-			return 'files/3.0/$fileName';
-		#end
+		return 'files/3.0/$fileName';
 	}
 
 	public function requireZipFile( path:String ):Void {
