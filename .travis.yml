@@ -107,3 +107,15 @@ cache:
 
 addons:
   ssh_known_hosts: lib.haxe.org
+
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  region: $AWS_REGION
+  app: $EB_APP
+  env: ${TRAVIS_BRANCH}-lib-haxe-org
+  bucket_name: $EB_BUCKET
+  on:
+    all_branches: true
+    condition: $DEPLOY && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH = development)
