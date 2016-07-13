@@ -159,6 +159,7 @@ class ProjectApi extends UFApi {
 	}
 
 	public function requireZipFile( path:String ):Void {
+		var tempPath = Path.join([scriptDir, "tmp", Std.string(Std.random(1000)), path]);
 		var localPath = Path.join([scriptDir, path]);
 		if (!sys.FileSystem.exists(localPath))
 			switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
@@ -166,8 +167,11 @@ class ProjectApi extends UFApi {
 					// pass
 				case bucket:
 					var s3Path = Path.join(['s3://${bucket}', path]);
-					if (Sys.command("aws", ["s3", "cp", s3Path, localPath]) != 0) {
-						throw 'failed to download ${s3Path} to ${localPath}';
+					if (Sys.command("aws", ["s3", "cp", s3Path, tempPath]) != 0) {
+						throw 'failed to download ${s3Path} to ${tempPath}';
+					}
+					if (Sys.command("mv", ["-f", tempPath, localPath]) != 0) {
+						throw 'failed to move ${tempPath} to ${localPath}';
 					}
 			}
 	}
