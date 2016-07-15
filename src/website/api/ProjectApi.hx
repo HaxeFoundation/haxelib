@@ -158,6 +158,27 @@ class ProjectApi extends UFApi {
 		return 'files/3.0/$fileName';
 	}
 
+	function command(cmd:String, ?args:Array<String>):Int {
+		var p = new sys.io.Process(cmd, args);
+		var exitCode = p.exitCode();
+		if (exitCode != 0) {
+			neko.Web.logMessage('command ${cmd} ${args} exited with ${exitCode}\n');
+			switch (p.stdout.readAll().toString().trim()) {
+				case "":
+					//pass
+				case stdout:
+					neko.Web.logMessage('stdout:\n${stdout}\n');
+			}
+			switch (p.stderr.readAll().toString().trim()) {
+				case "":
+					//pass
+				case stderr:
+					neko.Web.logMessage('stderr:\n${stderr}\n');
+			}
+		}
+		return exitCode;
+	}
+
 	public function requireZipFile( path:String ):Void {
 		var tempPath = Path.join([scriptDir, "tmp", Std.string(Std.random(1000)), path]);
 		var localPath = Path.join([scriptDir, path]);
@@ -167,10 +188,10 @@ class ProjectApi extends UFApi {
 					// pass
 				case bucket:
 					var s3Path = Path.join(['s3://${bucket}', path]);
-					if (Sys.command("aws", ["s3", "cp", s3Path, tempPath]) != 0) {
+					if (command("aws", ["s3", "cp", s3Path, tempPath]) != 0) {
 						throw 'failed to download ${s3Path} to ${tempPath}';
 					}
-					if (Sys.command("mv", ["-f", tempPath, localPath]) != 0) {
+					if (command("mv", ["-f", tempPath, localPath]) != 0) {
 						throw 'failed to move ${tempPath} to ${localPath}';
 					}
 			}
