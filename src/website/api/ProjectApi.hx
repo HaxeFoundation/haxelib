@@ -10,6 +10,8 @@ import ufront.cache.UFCache;
 import ufront.web.HttpError;
 import website.model.SiteDb;
 import haxe.ds.Option;
+import sys.*;
+import sys.io.*;
 using tink.CoreApi;
 using StringTools;
 using haxe.io.Path;
@@ -158,43 +160,23 @@ class ProjectApi extends UFApi {
 		return 'files/3.0/$fileName';
 	}
 
-	function command(cmd:String, ?args:Array<String>):Int {
-		var p = new sys.io.Process(cmd, args);
-		var exitCode = p.exitCode();
-		if (exitCode != 0) {
-			neko.Web.logMessage('command ${cmd} ${args} exited with ${exitCode}\n');
-			switch (p.stdout.readAll().toString().trim()) {
-				case "":
-					//pass
-				case stdout:
-					neko.Web.logMessage('stdout:\n${stdout}\n');
-			}
-			switch (p.stderr.readAll().toString().trim()) {
-				case "":
-					//pass
-				case stderr:
-					neko.Web.logMessage('stderr:\n${stderr}\n');
-			}
-		}
-		p.close();
-		return exitCode;
-	}
-
 	public function requireZipFile( path:String ):Void {
 		var tempPath = Path.join([scriptDir, "tmp", Std.string(Std.random(1000)), path]);
 		var localPath = Path.join([scriptDir, path]);
 		if (!sys.FileSystem.exists(localPath))
-			switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
-				case null:
+			switch ([Sys.getEnv("HAXELIB_S3BUCKET"), Sys.getEnv("AWS_DEFAULT_REGION")]) {
+				case [null, _] | [_, null]:
 					// pass
-				case bucket:
-					var s3Path = Path.join(['s3://${bucket}', path]);
-					if (command("aws", ["s3", "cp", s3Path, tempPath]) != 0) {
-						throw 'failed to download ${s3Path} to ${tempPath}';
-					}
-					if (command("mv", ["-f", tempPath, localPath]) != 0) {
-						throw 'failed to move ${tempPath} to ${localPath}';
-					}
+				case [bucket, region]:
+					var remoteUrl = Path.join(['http://${bucket}.s3-website-${region}.amazonaws.com', path]);
+					FileSystem.createDirectory(Path.directory(tempPath));
+					var out = File.write(tempPath);
+					var http = new haxe.Http(remoteUrl);
+					http.noShutdown = true;
+					http.customRequest(false, out);
+					if (FileSystem.exists(localPath))
+						FileSystem.deleteFile(localPath);
+					FileSystem.rename(tempPath, localPath);
 			}
 	}
 
