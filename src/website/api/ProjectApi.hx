@@ -176,6 +176,7 @@ class ProjectApi extends UFApi {
 					neko.Web.logMessage('stderr:\n${stderr}\n');
 			}
 		}
+		p.close();
 		return exitCode;
 	}
 
