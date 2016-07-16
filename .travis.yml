@@ -84,29 +84,6 @@ install:
 script:
   # run our CI script
   - haxe ci.hxml
-  # Deploy to lib.haxe.org
-  - if [ -n "$deploy_key_decrypt" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ -n "$DEPLOY" ]; then
-      openssl aes-256-cbc -k "$deploy_key_decrypt" -in deploy_key.enc -out deploy_key -d;
-      chmod 600 deploy_key;
-      chmod 600 ~/.ssh/config;
-      eval `ssh-agent -s`;
-      ssh-add deploy_key;
-      scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/;
-      scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/;
-      pushd www;
-      bower install;
-      popd;
-      git config --global user.name "TravisCI";
-      git config --global user.email "travisci@haxe.org";
-      haxelib run ufront deploy;
-    fi
-
-cache:
-  directories:
-    - deploy
-
-addons:
-  ssh_known_hosts: lib.haxe.org
 
 deploy:
   provider: elasticbeanstalk
