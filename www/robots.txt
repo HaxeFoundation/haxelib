@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /api/
+Disallow: /bower_components/
+Disallow: /files/
+Disallow: /tmp/
+Disallow: /p/*/*/files/
+Disallow: /p/*/*/download/
