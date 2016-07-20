@@ -176,7 +176,8 @@ class ProjectApi extends UFApi {
 					http.customRequest(false, out);
 					if (FileSystem.exists(localPath))
 						FileSystem.deleteFile(localPath);
-					FileSystem.rename(tempPath, localPath);
+					File.copy(tempPath, localPath);
+					FileSystem.deleteFile(tempPath);
 			}
 	}
 
