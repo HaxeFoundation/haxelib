@@ -34,6 +34,8 @@ COPY src /src/src/
 
 RUN rm -rf /var/www/html
 RUN ln -s /src/www /var/www/html
+RUN mkdir -p /var/www/html/files
+RUN mkdir -p /var/www/html/tmp
 
 WORKDIR /src
 
@@ -41,3 +43,4 @@ RUN haxe server_legacy.hxml
 RUN haxe server.hxml
 
 EXPOSE 80
+VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
