@@ -46,6 +46,10 @@ class Server {
 		var wasUpload = handleHaxelibUpload();
 		if ( wasUpload==false ) {
 			SiteDb.init();
+
+			var cacheAPI = new ufront.cache.DBCache.DBCacheApi();
+			cacheAPI.setup();
+
 			ufApp.executeRequest();
 			SiteDb.cleanup();
 		}
