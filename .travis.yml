@@ -95,4 +95,4 @@ deploy:
   bucket_name: $EB_BUCKET
   on:
     all_branches: true
-    condition: $DEPLOY && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH = development)
+    condition: $AWS_ACCESS_KEY && $DEPLOY && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH = development)
