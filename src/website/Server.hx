@@ -4,6 +4,7 @@ import website.controller.*;
 import ufront.mailer.*;
 import ufront.MVC;
 import sys.db.*;
+import haxe.io.*;
 
 import haxelib.server.SiteDb;
 import haxelib.server.Paths.*;
@@ -66,7 +67,7 @@ class Server {
 		neko.Web.parseMultipart(function(p,filename) {
 			if( p == "file" ) {
 				sid = Std.parseInt(filename);
-				file = sys.io.File.write(TMP_DIR+"/"+sid+".tmp",true);
+				file = sys.io.File.write(Path.join([TMP_DIR, sid+".tmp"]), true);
 			} else
 				throw p+" not accepted";
 		},function(data,pos,len) {

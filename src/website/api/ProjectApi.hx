@@ -5,6 +5,7 @@ import haxe.zip.Entry;
 import haxe.zip.Reader;
 import haxelib.Data;
 import haxelib.server.Repo;
+import haxelib.server.Paths.*;
 import ufront.api.UFApi;
 import ufront.cache.UFCache;
 import ufront.web.HttpError;
@@ -161,7 +162,7 @@ class ProjectApi extends UFApi {
 	}
 
 	public function requireZipFile( path:String ):Void {
-		var tempPath = Path.join([scriptDir, "tmp", Std.string(Std.random(1000)), path]);
+		var tempPath = Path.join([scriptDir, TMP_DIR_NAME, Std.string(Std.random(1000)), path]);
 		var localPath = Path.join([scriptDir, path]);
 		if (!sys.FileSystem.exists(localPath))
 			switch ([Sys.getEnv("HAXELIB_S3BUCKET"), Sys.getEnv("AWS_DEFAULT_REGION")]) {

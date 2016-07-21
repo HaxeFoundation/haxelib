@@ -21,19 +21,23 @@
  */
 package haxelib.server;
 
+import neko.Web;
+import haxe.io.*;
+
 class Paths {
-	static var RELATIVE_ROOT =
+	static public var CWD(default, null) =
 		#if haxelib_api
-			'../../';
+			Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
 		#else
-			'';
+			Web.getCwd();
 		#end
-	//TODO: these should be inline or read-only or whatever
-	static public var CWD = neko.Web.getCwd() + RELATIVE_ROOT;
-	static public var DB_CONFIG = CWD + "dbconfig.json";
-	static public var DB_FILE = CWD + "haxelib.db";
+	static public var DB_CONFIG_NAME(default, null) = "dbconfig.json";
+	static public var DB_CONFIG(default, null) = Path.join([CWD, DB_CONFIG_NAME]);
+	static public var DB_FILE_NAME(default, null) = "haxelib.db";
+	static public var DB_FILE(default, null) = Path.join([CWD, DB_FILE_NAME]);
 
-	static public var TMP_DIR = CWD + "tmp";
-	static public var REP_DIR = CWD + Data.REPOSITORY;
-
+	static public var TMP_DIR_NAME(default, null) = "tmp";
+	static public var TMP_DIR(default, null) = Path.join([CWD, TMP_DIR_NAME]);
+	static public var REP_DIR_NAME(default, null) = Data.REPOSITORY;
+	static public var REP_DIR(default, null) = Path.join([CWD, REP_DIR_NAME]);
 }
