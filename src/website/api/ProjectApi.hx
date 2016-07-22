@@ -4,6 +4,7 @@ import haxe.io.Bytes;
 import haxe.zip.Entry;
 import haxe.zip.Reader;
 import haxelib.Data;
+import haxelib.server.FileStorage;
 import haxelib.server.Repo;
 import haxelib.server.Paths.*;
 import ufront.api.UFApi;
@@ -157,29 +158,7 @@ class ProjectApi extends UFApi {
 		Get the path to the zip file (relative to the script directory).
 	**/
 	public function getZipFilePath( project:String, version:String ):String {
-		var fileName = Data.fileName(project, version);
-		return 'files/3.0/$fileName';
-	}
-
-	public function requireZipFile( path:String ):Void {
-		var tempPath = Path.join([scriptDir, TMP_DIR_NAME, Std.string(Std.random(1000)), path]);
-		var localPath = Path.join([scriptDir, path]);
-		if (!sys.FileSystem.exists(localPath))
-			switch ([Sys.getEnv("HAXELIB_S3BUCKET"), Sys.getEnv("AWS_DEFAULT_REGION")]) {
-				case [null, _] | [_, null]:
-					// pass
-				case [bucket, region]:
-					var remoteUrl = Path.join(['http://${bucket}.s3-website-${region}.amazonaws.com', path]);
-					FileSystem.createDirectory(Path.directory(tempPath));
-					var out = File.write(tempPath);
-					var http = new haxe.Http(remoteUrl);
-					http.noShutdown = true;
-					http.customRequest(false, out);
-					if (FileSystem.exists(localPath))
-						FileSystem.deleteFile(localPath);
-					File.copy(tempPath, localPath);
-					FileSystem.deleteFile(tempPath);
-			}
+		return Path.join([REP_DIR_NAME, Data.fileName(project, version)]);
 	}
 
 	//
@@ -188,13 +167,20 @@ class ProjectApi extends UFApi {
 
 	/** Get a list of entries in a zip file. **/
 	function getZipEntries( projectName:String, version:String ):List<Entry> {
-		var path = getZipFilePath( projectName, version );
-		requireZipFile( path );
-		var path = Path.join([scriptDir, path]);
-		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw 'Invalid zip file $path: $e';
-		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
-		file.close();
-		return zip;
+		return FileStorage.instance.readFile(
+			getZipFilePath( projectName, version ),
+			function(path) {
+				var file = File.read(path, true);
+				var zip = try {
+					haxe.zip.Reader.readZip(file);
+				} catch( e : Dynamic ) {
+					file.close();
+					neko.Lib.rethrow(e);
+				};
+				file.close();
+				return zip;
+			}
+		);
 	}
 
 	/** Attempt to extract the bytes of a file within a zip file. Will return null if the file was not found. **/

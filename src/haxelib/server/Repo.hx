@@ -30,14 +30,12 @@ import haxelib.Data;
 import haxelib.SemVer;
 import haxelib.server.Paths.*;
 import haxelib.server.SiteDb;
+import haxelib.server.FileStorage;
 
 class Repo implements SiteApi {
 
 	static function run() {
-		if( !sys.FileSystem.exists(TMP_DIR) )
-			sys.FileSystem.createDirectory(TMP_DIR);
-		if( !sys.FileSystem.exists(REP_DIR) )
-			sys.FileSystem.createDirectory(REP_DIR);
+		FileSystem.createDirectory(TMP_DIR);
 
 		var ctx = new haxe.remoting.Context();
 		ctx.addObject("api", new Repo());
@@ -147,192 +145,187 @@ class Repo implements SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
-		var path = Path.join([TMP_DIR, Std.parseInt(id)+".tmp"]);
+		return FileStorage.instance.readFile(
+			Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]),
+			function(path):String {
+				var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
+				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
+				file.close();
 
-		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
-		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
-		file.close();
+				var infos = Data.readInfos(zip,true);
+				var u = User.manager.search({ name : user }).first();
+				if( u == null || u.pass != pass )
+					throw "Invalid username or password";
 
-		var infos = Data.readInfos(zip,true);
-		var u = User.manager.search({ name : user }).first();
-		if( u == null || u.pass != pass )
-			throw "Invalid username or password";
+				var devs = infos.contributors.map(function(user) {
+					var u = User.manager.search({ name : user }).first();
+					if( u == null )
+						throw "Unknown user '"+user+"'";
+					return u;
+				});
 
-		var devs = infos.contributors.map(function(user) {
-			var u = User.manager.search({ name : user }).first();
-			if( u == null )
-				throw "Unknown user '"+user+"'";
-			return u;
-		});
+				var tags = Lambda.array(infos.tags);
+				tags.sort(Reflect.compare);
 
-		var tags = Lambda.array(infos.tags);
-		tags.sort(Reflect.compare);
+				var p = Project.manager.search({ name : infos.name }).first();
 
-		var p = Project.manager.search({ name : infos.name }).first();
-
-		// create project if needed
-		if( p == null ) {
-			p = new Project();
-			p.name = infos.name;
-			p.description = infos.description;
-			p.website = infos.url;
-			p.license = infos.license;
-			p.ownerObj = u;
-			p.insert();
-			for( u in devs ) {
-				var d = new Developer();
-				d.userObj = u;
-				d.projectObj = p;
-				d.insert();
-			}
-			for( tag in tags ) {
-				var t = new Tag();
-				t.tag = tag;
-				t.projectObj = p;
-				t.insert();
-			}
-		}
-
-		// check submit rights
-		var pdevs = Developer.manager.search({ project : p.id });
-		var isdev = false;
-		for( d in pdevs )
-			if( d.userObj.id == u.id ) {
-				isdev = true;
-				break;
-			}
-		if( !isdev )
-			throw "You are not a developer of this project";
-
-		var otags = Tag.manager.search({ project : p.id });
-		var curtags = otags.map(function(t) return t.tag).join(":");
-
-		var devsChanged = (pdevs.length != devs.length);
-		if (!devsChanged) { // same length, check whether elements are the same
-			for (d in pdevs) {
-				var exists = Lambda.exists(devs, function(u) return u.id == d.userObj.id);
-				if (!exists) {
-					devsChanged = true;
-					break;
-				}
-			}
-		}
-
-
-		// update public infos
-		if( devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
-			if( u.id != p.ownerObj.id )
-				throw "Only project owner can modify project infos";
-			p.description = infos.description;
-			p.website = infos.url;
-			p.license = infos.license;
-			p.update();
-			if( devsChanged ) {
-				for( d in pdevs )
-					d.delete();
-				for( u in devs ) {
-					var d = new Developer();
-					d.userObj = u;
-					d.projectObj = p;
-					d.insert();
-				}
-			}
-			if( tags.join(":") != curtags ) {
-				for( t in otags )
-					t.delete();
-				for( tag in tags ) {
-					var t = new Tag();
-					t.tag = tag;
-					t.projectObj = p;
-					t.insert();
-				}
-			}
-		}
-
-		// look for current version
-		var current = null;
-		for( v in Version.manager.search({ project : p.id }) )
-			if( v.name == infos.version ) {
-				current = v;
-				break;
-			}
-
-		// update documentation
-		var doc = null;
-		var docXML = Data.readDoc(zip);
-		if( docXML != null ) {
-			try {
-				var p = new haxe.rtti.XmlParser();
-				p.process(Xml.parse(docXML).firstElement(),null);
-				p.sort();
-				var roots = new Array();
-				for( x in p.root )
-					switch( x ) {
-					case TPackage(name,_,_):
-						switch( name ) {
-						case "flash","sys","cs","java","haxe","js","neko","cpp","php","python": // don't include haXe core types
-						default: roots.push(x);
-						}
-					default:
-						// don't include haXe root types
+				// create project if needed
+				if( p == null ) {
+					p = new Project();
+					p.name = infos.name;
+					p.description = infos.description;
+					p.website = infos.url;
+					p.license = infos.license;
+					p.ownerObj = u;
+					p.insert();
+					for( u in devs ) {
+						var d = new Developer();
+						d.userObj = u;
+						d.projectObj = p;
+						d.insert();
 					}
-				var s = new haxe.Serializer();
-				s.useEnumIndex = true;
-				s.useCache = true;
-				s.serialize(roots);
-				doc = s.toString();
-			} catch ( e:Dynamic ) {
-				// If documentation can't be generated, ignore it.
-			}
-		}
-
-		// update file
-		var fileName = Data.fileName(p.name, infos.version);
-		var target = Path.join([REP_DIR, fileName]);
-		if (FileSystem.exists(target))
-			FileSystem.deleteFile(target);
-		File.copy(path,target);
-		FileSystem.deleteFile(path);
-
-		// upload file to S3
-		switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
-			case null:
-				// pass
-			case bucket:
-				var s3Path = Path.join(['s3://${bucket}', Data.REPOSITORY, fileName]);
-				if (Sys.command("aws", ["s3", "cp", target, s3Path]) != 0) {
-					throw 'failed to upload ${target} to ${s3Path}';
+					for( tag in tags ) {
+						var t = new Tag();
+						t.tag = tag;
+						t.projectObj = p;
+						t.insert();
+					}
 				}
-		}
 
-		var semVer = SemVer.ofString(infos.version);
+				// check submit rights
+				var pdevs = Developer.manager.search({ project : p.id });
+				var isdev = false;
+				for( d in pdevs )
+					if( d.userObj.id == u.id ) {
+						isdev = true;
+						break;
+					}
+				if( !isdev )
+					throw "You are not a developer of this project";
 
-		// update existing version
-		if( current != null ) {
-			current.documentation = doc;
-			current.comments = infos.releasenote;
-			current.update();
-			return "Version "+current.name+" (id#"+current.id+") updated";
-		}
+				var otags = Tag.manager.search({ project : p.id });
+				var curtags = otags.map(function(t) return t.tag).join(":");
 
-		// add new version
-		var v = new Version();
-		v.projectObj = p;
-		v.major = semVer.major;
-		v.minor = semVer.minor;
-		v.patch = semVer.patch;
-		v.preview = semVer.preview;
-		v.previewNum = semVer.previewNum;
+				var devsChanged = (pdevs.length != devs.length);
+				if (!devsChanged) { // same length, check whether elements are the same
+					for (d in pdevs) {
+						var exists = Lambda.exists(devs, function(u) return u.id == d.userObj.id);
+						if (!exists) {
+							devsChanged = true;
+							break;
+						}
+					}
+				}
 
-		v.comments = infos.releasenote;
-		v.downloads = 0;
-		v.date = Date.now().toString();
-		v.documentation = doc;
-		v.insert();
+				// update public infos
+				if( devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
+					if( u.id != p.ownerObj.id )
+						throw "Only project owner can modify project infos";
+					p.description = infos.description;
+					p.website = infos.url;
+					p.license = infos.license;
+					p.update();
+					if( devsChanged ) {
+						for( d in pdevs )
+							d.delete();
+						for( u in devs ) {
+							var d = new Developer();
+							d.userObj = u;
+							d.projectObj = p;
+							d.insert();
+						}
+					}
+					if( tags.join(":") != curtags ) {
+						for( t in otags )
+							t.delete();
+						for( tag in tags ) {
+							var t = new Tag();
+							t.tag = tag;
+							t.projectObj = p;
+							t.insert();
+						}
+					}
+				}
 
-		p.versionObj = v;
-		p.update();
-		return "Version " + v.toSemver() + " (id#" + v.id + ") added";
+				// look for current version
+				var current = null;
+				for( v in Version.manager.search({ project : p.id }) )
+					if( v.name == infos.version ) {
+						current = v;
+						break;
+					}
+
+				// update documentation
+				var doc = null;
+				var docXML = Data.readDoc(zip);
+				if( docXML != null ) {
+					try {
+						var p = new haxe.rtti.XmlParser();
+						p.process(Xml.parse(docXML).firstElement(),null);
+						p.sort();
+						var roots = new Array();
+						for( x in p.root )
+							switch( x ) {
+							case TPackage(name,_,_):
+								switch( name ) {
+								case "flash","sys","cs","java","haxe","js","neko","cpp","php","python": // don't include haXe core types
+								default: roots.push(x);
+								}
+							default:
+								// don't include haXe root types
+							}
+						var s = new haxe.Serializer();
+						s.useEnumIndex = true;
+						s.useCache = true;
+						s.serialize(roots);
+						doc = s.toString();
+					} catch ( e:Dynamic ) {
+						// If documentation can't be generated, ignore it.
+					}
+				}
+
+				// update file
+				var fileName = Data.fileName(p.name, infos.version);
+				FileStorage.instance.writeFile(
+					Path.join([Paths.REP_DIR_NAME, fileName]),
+					function(targetPath) {
+						if (FileSystem.exists(targetPath))
+							FileSystem.deleteFile(targetPath);
+						File.copy(path, targetPath);
+						FileSystem.deleteFile(path);
+					}
+				);
+
+				var semVer = SemVer.ofString(infos.version);
+
+				// update existing version
+				if( current != null ) {
+					current.documentation = doc;
+					current.comments = infos.releasenote;
+					current.update();
+					return "Version "+current.name+" (id#"+current.id+") updated";
+				}
+
+				// add new version
+				var v = new Version();
+				v.projectObj = p;
+				v.major = semVer.major;
+				v.minor = semVer.minor;
+				v.patch = semVer.patch;
+				v.preview = semVer.preview;
+				v.previewNum = semVer.previewNum;
+
+				v.comments = infos.releasenote;
+				v.downloads = 0;
+				v.date = Date.now().toString();
+				v.documentation = doc;
+				v.insert();
+
+				p.versionObj = v;
+				p.update();
+				return "Version " + v.toSemver() + " (id#" + v.id + ") added";
+			}
+		);
 	}
 
 	public function postInstall( project : String, version : String ) {

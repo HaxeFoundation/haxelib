@@ -4,6 +4,7 @@ import ufront.MVC;
 import ufront.ufadmin.controller.*;
 import website.api.*;
 import website.model.SiteDb;
+import haxelib.server.FileStorage;
 import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
@@ -60,11 +61,14 @@ class HomeController extends Controller {
 
 	@:route("/files/3.0/$fileName")
 	public function downloadFile( fileName:String ) {
-		var path = '/files/3.0/$fileName';
-		projectApi.requireZipFile(path);
-		var r = new FilePathResult(Path.join([context.request.scriptDirectory, path]));
-		r.setContentTypeByFilename(Path.withoutDirectory(path));
-		return r;
+		return FileStorage.instance.readFile(
+			'/files/3.0/$fileName',
+			function(path) {
+				var r = new FilePathResult(path);
+				r.setContentTypeByFilename(Path.withoutDirectory(path));
+				return r;
+			}
+		);
 	}
 
 	@cacheRequest

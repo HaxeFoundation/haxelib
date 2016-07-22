@@ -3,10 +3,12 @@ package website;
 import website.controller.*;
 import ufront.mailer.*;
 import ufront.MVC;
+import sys.*;
 import sys.db.*;
+import sys.io.*;
 import haxe.io.*;
 
-import haxelib.server.SiteDb;
+import haxelib.server.*;
 import haxelib.server.Paths.*;
 
 class Server {
@@ -57,25 +59,31 @@ class Server {
 	}
 
 	static function handleHaxelibUpload():Bool {
-		if( !sys.FileSystem.exists(TMP_DIR) )
-			sys.FileSystem.createDirectory(TMP_DIR);
-		if( !sys.FileSystem.exists(REP_DIR) )
-			sys.FileSystem.createDirectory(REP_DIR);
-		var file = null;
+		FileSystem.createDirectory(TMP_DIR);
+		var tmpFile = null;
+		var tmpFileName = null;
+		var tmpFilePath = null;
 		var sid = null;
 		var bytes = 0;
-		neko.Web.parseMultipart(function(p,filename) {
+		neko.Web.parseMultipart(function(p,fileName) {
 			if( p == "file" ) {
-				sid = Std.parseInt(filename);
-				file = sys.io.File.write(Path.join([TMP_DIR, sid+".tmp"]), true);
+				sid = Std.parseInt(fileName);
+				tmpFile = sys.io.File.write(tmpFilePath = Path.join([TMP_DIR, tmpFileName = sid+".tmp"]), true);
 			} else
 				throw p+" not accepted";
 		},function(data,pos,len) {
 			bytes += len;
-			file.writeFullBytes(data,pos,len);
+			tmpFile.writeFullBytes(data,pos,len);
 		});
-		if( file != null ) {
-			file.close();
+		if( tmpFile != null ) {
+			tmpFile.close();
+			FileStorage.instance.writeFile(
+				Path.join([TMP_DIR_NAME, tmpFileName]),
+				function(dstPath) {
+					File.copy(tmpFilePath, dstPath);
+					FileSystem.deleteFile(tmpFilePath);
+				}
+			);
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
 			return true;
 		}
