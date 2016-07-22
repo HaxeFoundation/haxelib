@@ -59,7 +59,6 @@ class Server {
 	}
 
 	static function handleHaxelibUpload():Bool {
-		FileSystem.createDirectory(TMP_DIR);
 		var tmpFile = null;
 		var tmpFileName = null;
 		var tmpFilePath = null;
@@ -68,7 +67,9 @@ class Server {
 		neko.Web.parseMultipart(function(p,fileName) {
 			if( p == "file" ) {
 				sid = Std.parseInt(fileName);
-				tmpFile = sys.io.File.write(tmpFilePath = Path.join([TMP_DIR, tmpFileName = sid+".tmp"]), true);
+				tmpFilePath = Path.join([TMP_DIR, Std.string(Std.random(1000)), tmpFileName = sid+".tmp"]);
+				FileSystem.createDirectory(Path.directory(tmpFilePath));
+				tmpFile = sys.io.File.write(tmpFilePath, true);
 			} else
 				throw p+" not accepted";
 		},function(data,pos,len) {
