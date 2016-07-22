@@ -238,7 +238,7 @@ class S3FileStorage extends FileStorage {
 		if (FileSystem.exists(localFile))
 			FileSystem.deleteFile(localFile);
 		var s3Path = Path.join(['s3://${bucketName}', file]);
-		if (Sys.command("aws", ["s3", "ls", localFile, s3Path]) == 0)
+		if (Sys.command("aws", ["s3", "ls", s3Path]) == 0)
 		if (Sys.command("aws", ["s3", "rm", s3Path]) != 0)
 			throw 'failed to delete ${s3Path}';
 	}
