@@ -75,6 +75,22 @@ class FileStorage {
 	*/
 	public function writeFile<T>(file:RelPath, f:AbsPath->T):T
 		throw "should be implemented by subclass";
+
+	/**
+		Copy existing local `srcFile` to the storage as `dstFile`.
+		Existing `dstFile` will be overwritten.
+		If `move` is true, `srcFile` will be deleted, unless `dstFile` happens to located
+		at the same path of `srcFile`.
+	*/
+	public function importFile<T>(srcFile:AbsPath, dstFile:RelPath, move:Bool):Void
+		throw "should be implemented by subclass";
+
+	/**
+		Delete `file` in the storage.
+		It will be a no-op if `file` does not exist.
+	*/
+	public function deleteFile(file:RelPath):Void
+		throw "should be implemented by subclass";
 }
 
 class LocalFileStorage extends FileStorage {
@@ -107,6 +123,26 @@ class LocalFileStorage extends FileStorage {
 		var file:AbsPath = Path.join([path, file]);
 		FileSystem.createDirectory(Path.directory(file));
 		return f(file);
+	}
+
+	override public function importFile<T>(srcFile:AbsPath, dstFile:RelPath, move:Bool):Void {
+		var localFile:AbsPath = Path.join([path, dstFile]);
+		if (
+			FileSystem.exists(localFile) &&
+			FileSystem.fullPath(localFile) == FileSystem.fullPath(srcFile)
+		) {
+			// srcFile already located at dstFile
+			return;
+		}
+		File.copy(srcFile, localFile);
+		if (move)
+			FileSystem.deleteFile(srcFile);
+	}
+
+	override public function deleteFile(file:RelPath):Void {
+		var localFile:AbsPath = Path.join([path, file]);
+		if (FileSystem.exists(localFile))
+			FileSystem.deleteFile(localFile);
 	}
 }
 
@@ -174,5 +210,36 @@ class S3FileStorage extends FileStorage {
 			throw 'failed to upload ${localFile} to ${s3Path}';
 		}
 		return r;
+	}
+
+	override public function importFile<T>(srcFile:AbsPath, dstFile:RelPath, move:Bool):Void {
+		var localFile:AbsPath = Path.join([localPath, dstFile]);
+		function uploadToS3() {
+			var s3Path = Path.join(['s3://${bucketName}', dstFile]);
+			if (Sys.command("aws", ["s3", "cp", localFile, s3Path]) != 0)
+				throw 'failed to upload ${localFile} to ${s3Path}';
+		}
+		if (
+			FileSystem.exists(localFile) &&
+			FileSystem.fullPath(localFile) == FileSystem.fullPath(srcFile)
+		) {
+			// srcFile already located at dstFile
+			uploadToS3();
+			return;
+		}
+		File.copy(srcFile, localFile);
+		uploadToS3();
+		if (move)
+			FileSystem.deleteFile(srcFile);
+	}
+
+	override public function deleteFile(file:RelPath):Void {
+		var localFile:AbsPath = Path.join([localPath, file]);
+		if (FileSystem.exists(localFile))
+			FileSystem.deleteFile(localFile);
+		var s3Path = Path.join(['s3://${bucketName}', file]);
+		if (Sys.command("aws", ["s3", "ls", localFile, s3Path]) == 0)
+		if (Sys.command("aws", ["s3", "rm", s3Path]) != 0)
+			throw 'failed to delete ${s3Path}';
 	}
 }

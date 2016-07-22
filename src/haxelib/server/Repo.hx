@@ -145,8 +145,9 @@ class Repo implements SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
+		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
 		return FileStorage.instance.readFile(
-			Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]),
+			tmpFile,
 			function(path):String {
 				var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
@@ -286,15 +287,9 @@ class Repo implements SiteApi {
 
 				// update file
 				var fileName = Data.fileName(p.name, infos.version);
-				FileStorage.instance.writeFile(
-					Path.join([Paths.REP_DIR_NAME, fileName]),
-					function(targetPath) {
-						if (FileSystem.exists(targetPath))
-							FileSystem.deleteFile(targetPath);
-						File.copy(path, targetPath);
-						FileSystem.deleteFile(path);
-					}
-				);
+				var storage = FileStorage.instance;
+				storage.importFile(path, Path.join([Paths.REP_DIR_NAME, fileName]), true);
+				storage.deleteFile(tmpFile);
 
 				var semVer = SemVer.ofString(infos.version);
 

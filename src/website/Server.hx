@@ -67,7 +67,7 @@ class Server {
 		neko.Web.parseMultipart(function(p,fileName) {
 			if( p == "file" ) {
 				sid = Std.parseInt(fileName);
-				tmpFilePath = Path.join([TMP_DIR, Std.string(Std.random(1000)), tmpFileName = sid+".tmp"]);
+				tmpFilePath = Path.join([TMP_DIR, tmpFileName = sid+".tmp"]);
 				FileSystem.createDirectory(Path.directory(tmpFilePath));
 				tmpFile = sys.io.File.write(tmpFilePath, true);
 			} else
@@ -78,13 +78,8 @@ class Server {
 		});
 		if( tmpFile != null ) {
 			tmpFile.close();
-			FileStorage.instance.writeFile(
-				Path.join([TMP_DIR_NAME, tmpFileName]),
-				function(dstPath) {
-					File.copy(tmpFilePath, dstPath);
-					FileSystem.deleteFile(tmpFilePath);
-				}
-			);
+			FileStorage.instance
+				.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
 			return true;
 		}
