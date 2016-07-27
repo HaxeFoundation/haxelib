@@ -10,17 +10,26 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		nodejs-legacy \
 		git \
 		python-pip \
+		cmake \
+		build-essential \
+		libcurl4-gnutls-dev \
 	&& rm -r /var/lib/apt/lists/*
 
 RUN pip install awscli
 RUN npm -g install bower
 
-COPY server*.hxml /src/
-
-WORKDIR /src
 
 RUN haxelib setup /haxelib
+
+COPY server*.hxml /src/
+WORKDIR /src
 RUN haxelib install all --always
+
+RUN haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
+WORKDIR /haxelib/aws-sdk-neko/git
+RUN cmake .
+RUN cmake --build .
+RUN cp bin/aws.ndll /usr/lib/neko/aws.ndll
 
 COPY www/bower.json /src/www/
 WORKDIR /src/www

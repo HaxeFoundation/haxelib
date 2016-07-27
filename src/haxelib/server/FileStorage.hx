@@ -26,6 +26,9 @@ import sys.io.*;
 import haxe.io.Path;
 import haxelib.server.Paths;
 import neko.Web;
+import aws.*;
+import aws.s3.*;
+import aws.transfer.*;
 using Lambda;
 
 /**
@@ -49,7 +52,7 @@ class FileStorage {
 		switch (vars) {
 			case [bucket, region] if (vars.foreach(function(v) return v != null && v != "")):
 				Web.logMessage('using S3FileStorage with bucket $bucket in ${region}');
-				new S3FileStorage(Paths.CWD, bucket, 'http://${bucket}.s3-website-${region}.amazonaws.com/');
+				new S3FileStorage(Paths.CWD, bucket, region);
 			case _:
 				Web.logMessage('using LocalFileStorage');
 				new LocalFileStorage(Paths.CWD);
@@ -158,17 +161,36 @@ class S3FileStorage extends FileStorage {
 	public var bucketName(default, null):String;
 
 	/**
+		The region where the S3 bucket is located.
+		e.g. 'us-east-1'
+	*/
+	public var bucketRegion(default, null):aws.Region;
+
+	/**
 		The public endpoint of the S3 bucket.
 		e.g. 'http://${bucket}.s3-website-${region}.amazonaws.com/'
 	*/
-	public var bucketEndpoint(default, null):String;
+	public var bucketEndpoint(get, never):String;
+	function get_bucketEndpoint()
+		return 'http://${bucketName}.s3-website-${bucketRegion}.amazonaws.com/';
 
-	public function new(localPath:AbsPath, bucketName:String, bucketEndpoint:String):Void {
+	var transferClient(default, null):TransferClient;
+
+	static var awsInited = false;
+
+	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String):Void {
 		if (!Path.isAbsolute(localPath))
 			throw '`localPath` should be absolute, but $localPath is not.';
 		this.localPath = localPath;
 		this.bucketName = bucketName;
-		this.bucketEndpoint = bucketEndpoint;
+		this.bucketRegion = bucketRegion;
+
+		if (!awsInited) {
+			Aws.initAPI();
+			awsInited = true;
+		}
+
+		this.transferClient = new TransferClient(new S3Client(bucketRegion));
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
@@ -199,36 +221,44 @@ class S3FileStorage extends FileStorage {
 		return f(localFile);
 	}
 
+	function uploadToS3(localFile:AbsPath, file:RelPath, contentType = "application/octet-stream") {
+		var s3Path = Path.join(['s3://${bucketName}', file]);
+		var request = transferClient.uploadFile(localFile, bucketName, file, contentType);
+		while (!request.isDone()) {
+			Sys.sleep(0.01);
+		}
+		switch (request.getFailure()) {
+			case null:
+				//pass
+			case failure:
+				throw 'failed to upload ${localFile} to ${s3Path}\n${failure}';
+		}
+	}
+
 	override public function writeFile<T>(file:RelPath, f:AbsPath->T):T {
 		if (Path.isAbsolute(file))
 			throw 'readFile only accepts relative `file`. $file is is absolute.';
 		var localFile:AbsPath = Path.join([localPath, file]);
+		if (!FileSystem.exists(localFile))
+			throw '$localFile does not exist';
 		FileSystem.createDirectory(Path.directory(localFile));
 		var r = f(localFile);
-		var s3Path = Path.join(['s3://${bucketName}', file]);
-		if (Sys.command("aws", ["s3", "cp", localFile, s3Path]) != 0) {
-			throw 'failed to upload ${localFile} to ${s3Path}';
-		}
+		uploadToS3(localFile, file);
 		return r;
 	}
 
 	override public function importFile<T>(srcFile:AbsPath, dstFile:RelPath, move:Bool):Void {
 		var localFile:AbsPath = Path.join([localPath, dstFile]);
-		function uploadToS3() {
-			var s3Path = Path.join(['s3://${bucketName}', dstFile]);
-			if (Sys.command("aws", ["s3", "cp", localFile, s3Path]) != 0)
-				throw 'failed to upload ${localFile} to ${s3Path}';
-		}
 		if (
 			FileSystem.exists(localFile) &&
 			FileSystem.fullPath(localFile) == FileSystem.fullPath(srcFile)
 		) {
 			// srcFile already located at dstFile
-			uploadToS3();
+			uploadToS3(localFile, dstFile);
 			return;
 		}
 		File.copy(srcFile, localFile);
-		uploadToS3();
+		uploadToS3(localFile, dstFile);
 		if (move)
 			FileSystem.deleteFile(srcFile);
 	}
@@ -237,9 +267,10 @@ class S3FileStorage extends FileStorage {
 		var localFile:AbsPath = Path.join([localPath, file]);
 		if (FileSystem.exists(localFile))
 			FileSystem.deleteFile(localFile);
-		var s3Path = Path.join(['s3://${bucketName}', file]);
-		if (Sys.command("aws", ["s3", "ls", s3Path]) == 0)
-		if (Sys.command("aws", ["s3", "rm", s3Path]) != 0)
-			throw 'failed to delete ${s3Path}';
+		// TODO: use aws-sdk-neko to delete file
+		// var s3Path = Path.join(['s3://${bucketName}', file]);
+		// if (Sys.command("aws", ["s3", "ls", s3Path]) == 0)
+		// if (Sys.command("aws", ["s3", "rm", s3Path]) != 0)
+		// 	throw 'failed to delete ${s3Path}';
 	}
 }

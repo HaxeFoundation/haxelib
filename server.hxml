@@ -15,5 +15,6 @@ server_each.hxml
 -cp src
 -neko www/api/3.0/index.n
 -main haxelib.server.Repo
+-lib aws-sdk-neko
 -dce no
 -D haxelib_api
