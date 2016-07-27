@@ -78,6 +78,27 @@ install:
   - yes | haxelib update hscript
   # Make sure hscript is > 0.1.4
   - yes | haxelib update mcli
+  # Build aws-sdk-neko
+  - haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
+  - pushd $(haxelib config)/aws-sdk-neko/git
+  -   git submodule update --init
+  -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+        cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 .;
+      else
+        cmake .;
+      fi;
+  -   cmake --build .
+  -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+        sudo cp bin/aws.ndll ${NEKOPATH}/aws.ndll;
+      fi;
+  -   if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+        if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
+          sudo cp bin/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+        elif [ "${TRAVIS_HAXE_VERSION}" = "3.2.1" ]; then
+          sudo cp bin/aws.ndll /usr/lib/neko/aws.ndll;
+        fi;
+      fi;
+  - popd
   - haxelib list
   - haxelib run tora > /dev/null 2>&1 &
 

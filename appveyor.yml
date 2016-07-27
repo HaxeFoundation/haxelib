@@ -10,6 +10,7 @@ install:
   - RefreshEnv
   - haxelib setup haxelib_repo
   - haxelib install all --always
+  - haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
   - haxelib install tora
   - haxelib list
 
