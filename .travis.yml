@@ -82,11 +82,7 @@ install:
   - haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
   - pushd $(haxelib config)/aws-sdk-neko/git
   -   git submodule update --init
-  -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 .;
-      else
-        cmake .;
-      fi;
+  -   cmake .
   -   cmake --build .
   -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         sudo cp bin/aws.ndll ${NEKOPATH}/aws.ndll;
