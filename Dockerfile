@@ -28,8 +28,8 @@ RUN haxelib install all --always
 RUN haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
 WORKDIR /haxelib/aws-sdk-neko/git
 RUN cmake .
-RUN cmake --build .
-RUN cp bin/aws.ndll /usr/lib/neko/aws.ndll
+RUN cmake --build . --target aws.ndll
+RUN cp ndll/*/aws.ndll /usr/lib/neko/aws.ndll
 
 COPY www/bower.json /src/www/
 WORKDIR /src/www

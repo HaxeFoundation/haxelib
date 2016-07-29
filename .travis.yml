@@ -83,15 +83,15 @@ install:
   - pushd $(haxelib config)/aws-sdk-neko/git
   -   git submodule update --init
   -   cmake .
-  -   cmake --build .
+  -   cmake --build . --target aws.ndll
   -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         sudo cp bin/aws.ndll ${NEKOPATH}/aws.ndll;
       fi;
   -   if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
-          sudo cp bin/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+          sudo cp ndll/*/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
         elif [ "${TRAVIS_HAXE_VERSION}" = "3.2.1" ]; then
-          sudo cp bin/aws.ndll /usr/lib/neko/aws.ndll;
+          sudo cp ndll/*/aws.ndll /usr/lib/neko/aws.ndll;
         fi;
       fi;
   - popd
