@@ -62,7 +62,7 @@ class HomeController extends Controller {
 	@:route("/files/3.0/$fileName")
 	public function downloadFile( fileName:String ) {
 		return FileStorage.instance.readFile(
-			'/files/3.0/$fileName',
+			'files/3.0/$fileName',
 			function(path) {
 				var r = new FilePathResult(path);
 				r.setContentTypeByFilename(Path.withoutDirectory(path));
