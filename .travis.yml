@@ -85,7 +85,7 @@ install:
   -   cmake .
   -   cmake --build . --target aws.ndll
   -   if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        sudo cp bin/aws.ndll ${NEKOPATH}/aws.ndll;
+        sudo cp ndll/*/aws.ndll ${NEKOPATH}/aws.ndll;
       fi;
   -   if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
