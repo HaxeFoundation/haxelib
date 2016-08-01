@@ -11,6 +11,7 @@ matrix:
       dist: trusty
       env:
         - TRAVIS_HAXE_VERSION=development
+        - DEPLOY=1
       before_install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
         - sudo apt-get update
@@ -25,7 +26,6 @@ matrix:
       dist: trusty
       env:
         - USE_DOCKER=1
-        - DEPLOY=1
       services: [docker]
       before_install:
         - sudo apt-get update
