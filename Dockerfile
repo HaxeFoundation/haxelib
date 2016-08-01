@@ -25,8 +25,11 @@ COPY server*.hxml /src/
 WORKDIR /src
 RUN haxelib install all --always
 
-RUN haxelib git aws-sdk-neko https://github.com/andyli/aws-sdk-neko.git
-WORKDIR /haxelib/aws-sdk-neko/git
+RUN git clone https://github.com/andyli/aws-sdk-neko.git \
+	&& git checkout 85d3c9981e14545ef1e2c3ed79eae89d08499fff \
+	&& git submodule update --init
+RUN haxelib dev aws-sdk-neko aws-sdk-neko
+WORKDIR /src/aws-sdk-neko
 RUN cmake .
 RUN cmake --build . --target aws.ndll
 RUN cp ndll/*/aws.ndll /usr/lib/neko/aws.ndll
