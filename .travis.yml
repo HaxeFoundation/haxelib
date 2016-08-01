@@ -19,17 +19,23 @@ matrix:
         - sudo usermod -a -G travis www-data
     # haxe 3.2.1 + neko 2.1.0
     - os: linux
+      language: haxe
+      haxe: 3.2.1
       sudo: required
       dist: trusty
       env:
-        - TRAVIS_HAXE_VERSION=3.2.1
+        - USE_DOCKER=1
         - DEPLOY=1
+      services: [docker]
       before_install:
-        - sudo add-apt-repository ppa:haxe/releases -y
         - sudo apt-get update
-        - sudo apt-get install haxe=1:3.2.1* neko-dev libapache2-mod-neko mysql-server mysql-client -y
-        - mkdir ~/haxelib && haxelib setup ~/haxelib
-        - sudo usermod -a -G travis www-data
+        - sudo apt-get -o Dpkg::Options::=--force-confnew install docker-engine -y
+        - docker --version
+        # https://docs.travis-ci.com/user/docker/#Using-Docker-Compose
+        - sudo rm /usr/local/bin/docker-compose
+        - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+        - chmod +x docker-compose
+        - sudo mv docker-compose /usr/local/bin
     # haxe 3.1.3 + neko 2.0.0
     - os: linux
       language: haxe
@@ -91,7 +97,7 @@ install:
         if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
           sudo cp ndll/*/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
         elif [ "${TRAVIS_HAXE_VERSION}" = "3.2.1" ]; then
-          sudo cp ndll/*/aws.ndll /usr/lib/neko/aws.ndll;
+          sudo cp ndll/*/aws.ndll ${NEKOPATH}/aws.ndll;
         fi;
       fi;
   - popd
