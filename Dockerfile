@@ -48,16 +48,7 @@ RUN mkdir "$HAXELIB_PATH" && haxelib setup "$HAXELIB_PATH" \
 COPY server*.hxml /src/
 WORKDIR /src
 RUN haxelib install all --always
-
-RUN git clone https://github.com/andyli/aws-sdk-neko.git \
-	&& cd aws-sdk-neko \
-	&& git checkout 85d3c9981e14545ef1e2c3ed79eae89d08499fff \
-	&& git submodule update --init
-RUN haxelib dev aws-sdk-neko aws-sdk-neko
-WORKDIR /src/aws-sdk-neko
-RUN cmake .
-RUN cmake --build . --target aws.ndll
-RUN cp ndll/*/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
+RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 
 COPY www/bower.json /src/www/
 WORKDIR /src/www
