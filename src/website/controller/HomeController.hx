@@ -59,6 +59,11 @@ class HomeController extends Controller {
 	@:route("/documentation/*")
 	public var documentationController:DocumentationController;
 
+	/**
+		`/files` is backed by a `FileStorage`.
+		In production, it should be routed by httpd to S3 using mod_proxy, thus
+		this function should never be called.
+	*/
 	@:route("/files/3.0/$fileName")
 	public function downloadFile( fileName:String ) {
 		return FileStorage.instance.readFile(
