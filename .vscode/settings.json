@@ -1,3 +1,5 @@
 {
-    "haxe.buildFile": "client.hxml"
+    "haxe.displayConfigurations": [
+        ["client.hxml"]
+    ]
 }
