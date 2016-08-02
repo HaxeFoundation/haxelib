@@ -28,12 +28,12 @@ interface SiteApi {
 	public function infos( project : String ) : ProjectInfos;
 	public function getLatestVersion( project : String ) : SemVer;
 	public function user( name : String ) : UserInfos;
-	public function register( name : String, pass : String, mail : String, fullname : String ) : Bool;
+	public function register( name : String, pass : String, mail : String, fullname : String ) : Void;
 	public function isNewUser( name : String ) : Bool;
 	public function checkDeveloper( prj : String, user : String ) : Void;
 	public function checkPassword( user : String, pass : String ) : Bool;
 	public function getSubmitId() : String;
-	
+
 	public function processSubmit( id : String, user : String, pass : String ) : String;
 
 	public function postInstall( project : String, version : String):Void;

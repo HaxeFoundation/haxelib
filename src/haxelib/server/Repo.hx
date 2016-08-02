@@ -105,7 +105,7 @@ class Repo implements SiteApi {
 		};
 	}
 
-	public function register( name : String, pass : String, mail : String, fullname : String ) : Bool {
+	public function register( name : String, pass : String, mail : String, fullname : String ) : Void {
 		if( name.length < 3 )
 			throw "User name must be at least 3 characters";
 		if( !Data.alphanum.match(name) )
@@ -118,7 +118,6 @@ class Repo implements SiteApi {
 		u.email = mail;
 		u.fullname = fullname;
 		u.insert();
-		return null;
 	}
 
 	public function isNewUser( name : String ) : Bool {
