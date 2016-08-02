@@ -1,5 +1,6 @@
 {
     "haxe.displayConfigurations": [
-        ["client.hxml"]
+        ["client.hxml"],
+        ["server_each.hxml"]
     ]
 }
