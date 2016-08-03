@@ -25,6 +25,8 @@ docker-compose -f test/docker-compose.yml up -d
 
 The command above will copy the server source code and website resources into a container, compile it, and then start Apache to serve it.  To view the website, visit `http://localhost:2000/` (or `http://$(docker-machine ip):2000/` if the Docker Toolbox is used).
 
+Since the containers will expose port 2000 (web) and 3306 (MySQL), make sure there is no other local application listening to those ports. In case there is another MySQL instance listening to 3306, we will get an error similar to `Uncaught exception - mysql.c(509) : Failed to connect to mysql server`.
+
 To stop the server, run:
 ```
 docker-compose -f test/docker-compose.yml down
@@ -35,6 +37,8 @@ If we modify any of the server source code or website resources, we need to rebu
 docker-compose -f test/docker-compose.yml build
 docker-compose -f test/docker-compose.yml up -d
 ```
+
+To iterate quickly during development, we can use `-f test/docker-compose-dev.yml` in place of `-f test/docker-compose.yml` when starting the container. `-f test/docker-compose-dev.yml` mounts the repo's `/www` folder to the container, such that there is no need to rebuild and replace the running containers. Instead, after modifying the server source code or html templates, run `haxe server.hxml` and the container should pick up the changes immediately. The downside of this is that we have to make sure we've installed the right haxelib dependencies. Also, Docker only allow mounting folders in certain locations (e.g. `/Users` on Mac), so it may not work if we cloned the repo to `/my_projects/haxelib`.
 
 To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
 ```
@@ -50,8 +54,6 @@ haxe prepare_tests.hxml
 haxe integration_tests.hxml
 ```
 Note that the integration tests will reset the server database before and after each test.
-
-Since the containers will expose port 2000 (web) and 3306 (MySQL), make sure there is no other local application listening to those ports. In case there is another MySQL instance listening to 3306, we will get an error similar to `Uncaught exception - mysql.c(509) : Failed to connect to mysql server`.
 
 ### About this repo
 
