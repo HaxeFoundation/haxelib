@@ -15,29 +15,30 @@ For more documentation, please refer to http://lib.haxe.org/documentation/
 
 The server has to be compiled with Haxe 3.2.1+. It can be run in Apache using mod_neko / mod_tora.
 
-Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container.
+Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container. We would recommand to use the [Docker Platform](https://www.docker.com/products/docker) instead of the Docker Toolbox.
 
 To start, run:
 
 ```
-docker-compose -f test/docker-compose.yml up
+docker-compose -f test/docker-compose.yml up -d
 ```
 
-The command above will copy the server source code and website resources into a container, compile it, and then start Apache to serve it.  To view the website, visit `http://$(docker-machine ip):2000/` (Windows and Mac) or `http://localhost:2000/` (Linux).
+The command above will copy the server source code and website resources into a container, compile it, and then start Apache to serve it.  To view the website, visit `http://localhost:2000/` (or `http://$(docker-machine ip):2000/` if the Docker Toolbox is used).
 
 To stop the server, run:
 ```
 docker-compose -f test/docker-compose.yml down
 ```
 
-If we modify any of the server source code or website resources, we need to stop the server and then rebuild the image by running the command as follows:
+If we modify any of the server source code or website resources, we need to rebuild the image and replace the running container by issuing the commands as follows:
 ```
 docker-compose -f test/docker-compose.yml build
+docker-compose -f test/docker-compose.yml up -d
 ```
 
 To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
 ```
-neko bin/haxelib.n -R http://$(docker-machine ip):2000/ search foo
+neko bin/haxelib.n -R http://localhost:2000/ search foo
 ```
 
 To run integration tests with the local development server:
@@ -45,15 +46,12 @@ To run integration tests with the local development server:
 # prepare the test files
 haxe prepare_tests.hxml
 
-# set `HAXELIB_SERVER` and `HAXELIB_SERVER_PORT`
-# note that `HAXELIB_SERVER` is also used for the tests to connect to the MySQL server for resetting database
-export HAXELIB_SERVER=$(docker-machine ip)
-export HAXELIB_SERVER_PORT=2000
-
 # run the tests
 haxe integration_tests.hxml
 ```
 Note that the integration tests will reset the server database before and after each test.
+
+Since the containers will expose port 2000 (web) and 3306 (MySQL), make sure there is no other local application listening to those ports. In case there is another MySQL instance listening to 3306, we will get an error similar to `Uncaught exception - mysql.c(509) : Failed to connect to mysql server`.
 
 ### About this repo
 
