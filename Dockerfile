@@ -70,7 +70,9 @@ RUN mkdir -p /var/www/html/tmp
 WORKDIR /src
 
 RUN haxe server_legacy.hxml
-RUN haxe server.hxml
+RUN haxe server_website.hxml
+RUN haxe server_tasks.hxml
+RUN haxe server_api.hxml
 
 EXPOSE 80
 VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
