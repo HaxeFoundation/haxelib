@@ -68,7 +68,7 @@ class FileStorage {
 		It only guarantees `file` exists and the abolute path to it is valid within the call of `f`.
 	*/
 	public function readFile<T>(file:RelPath, f:AbsPath->T):T
-		throw "should be implemented by subclass";
+		return throw "should be implemented by subclass";
 
 	/**
 		Request writing `file` in the function `f`.
@@ -78,7 +78,7 @@ class FileStorage {
 		The abolute path to `file` may and may not contain previously written file.
 	*/
 	public function writeFile<T>(file:RelPath, f:AbsPath->T):T
-		throw "should be implemented by subclass";
+		return throw "should be implemented by subclass";
 
 	/**
 		Copy existing local `srcFile` to the storage as `dstFile`.
@@ -95,6 +95,20 @@ class FileStorage {
 	*/
 	public function deleteFile(file:RelPath):Void
 		throw "should be implemented by subclass";
+
+	function assertAbsolute(path:String):Void {
+		#if (haxe_ver >= 3.2) // Path.isAbsolute is added in haxe 3.2
+		if (!Path.isAbsolute(path))
+			throw '$path is not absolute.';
+		#end
+	}
+
+	function assertRelative(path:String):Void {
+		#if (haxe_ver >= 3.2) // Path.isAbsolute is added in haxe 3.2
+		if (Path.isAbsolute(path))
+			throw '$path is not relative.';
+		#end
+	}
 }
 
 class LocalFileStorage extends FileStorage {
@@ -107,14 +121,12 @@ class LocalFileStorage extends FileStorage {
 		Create a `FileStorage` located at a local directory specified by an absolute `path`.
 	*/
 	public function new(path:AbsPath):Void {
-		if (!Path.isAbsolute(path))
-			throw '`path` should be absolute, but $path is not.';
+		assertAbsolute(path);
 		this.path = path;
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
-		if (Path.isAbsolute(file))
-			throw 'readFile only accepts relative `file`. $file is is absolute.';
+		assertRelative(file);
 		var file:AbsPath = Path.join([path, file]);
 		if (!FileSystem.exists(file))
 			throw '$file does not exist.';
@@ -122,8 +134,7 @@ class LocalFileStorage extends FileStorage {
 	}
 
 	override public function writeFile<T>(file:RelPath, f:AbsPath->T):T {
-		if (Path.isAbsolute(file))
-			throw 'readFile only accepts relative `file`. $file is is absolute.';
+		assertRelative(file);
 		var file:AbsPath = Path.join([path, file]);
 		FileSystem.createDirectory(Path.directory(file));
 		return f(file);
@@ -181,8 +192,7 @@ class S3FileStorage extends FileStorage {
 	static var awsInited = false;
 
 	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String):Void {
-		if (!Path.isAbsolute(localPath))
-			throw '`localPath` should be absolute, but $localPath is not.';
+		assertAbsolute(localPath);
 		this.localPath = localPath;
 		this.bucketName = bucketName;
 		this.bucketRegion = bucketRegion;
@@ -196,8 +206,7 @@ class S3FileStorage extends FileStorage {
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
-		if (Path.isAbsolute(file))
-			throw 'readFile only accepts relative `file`. $file is is absolute.';
+		assertRelative(file);
 		var s3Path = Path.join(['s3://${bucketName}', file]);
 		var localFile:AbsPath = Path.join([localPath, file]);
 		if (!FileSystem.exists(localFile)) {
@@ -230,8 +239,7 @@ class S3FileStorage extends FileStorage {
 	}
 
 	override public function writeFile<T>(file:RelPath, f:AbsPath->T):T {
-		if (Path.isAbsolute(file))
-			throw 'readFile only accepts relative `file`. $file is is absolute.';
+		assertRelative(file);
 		var localFile:AbsPath = Path.join([localPath, file]);
 		if (!FileSystem.exists(localFile))
 			throw '$localFile does not exist';
