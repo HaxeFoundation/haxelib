@@ -14,9 +14,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-s
 		npm \
 		nodejs-legacy \
 		git \
-		python-pip \
-		cmake \
-		build-essential \
 		libcurl4-gnutls-dev \
 	&& rm -r /var/lib/apt/lists/*
 
@@ -37,8 +34,6 @@ RUN { \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
 
-
-RUN pip install awscli
 RUN npm -g install bower
 
 

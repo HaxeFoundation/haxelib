@@ -24,6 +24,7 @@ package legacyhaxelib;
 import legacyhaxelib.SiteDb;
 #end
 import haxe.rtti.CType;
+import haxelib.server.FileStorage;
 
 class Site {
 
@@ -39,25 +40,14 @@ class Site {
 	}
 
 	static function initDatabase() {
-		pullDatabaseFromS3();
-		db = neko.db.Sqlite.open(DB_FILE);
-		neko.db.Manager.cnx = db;
-		neko.db.Manager.initialize();
-	}
-
-	static function pullDatabaseFromS3() {
 		var path = "legacy/haxelib.db";
-		var localPath = DB_FILE;
-		if (!sys.FileSystem.exists(localPath))
-			switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
-				case null:
-					// pass
-				case bucket:
-					var s3Path = haxe.io.Path.join(['s3://${bucket}', path]);
-					if (Sys.command("aws", ["s3", "cp", s3Path, localPath]) != 0) {
-						throw 'failed to download ${s3Path} to ${localPath}';
-					}
-			}
+		FileStorage.instance.readFile(path, function(file) {
+			if (DB_FILE != file)
+				throw '$file should be the same as $DB_FILE';
+			db = neko.db.Sqlite.open(DB_FILE);
+			neko.db.Manager.cnx = db;
+			neko.db.Manager.initialize();
+		});
 	}
 
 	static function run() {

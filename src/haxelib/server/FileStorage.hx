@@ -28,6 +28,7 @@ import haxelib.server.Paths;
 import neko.Web;
 import aws.*;
 import aws.s3.*;
+import aws.s3.model.*;
 import aws.transfer.*;
 using Lambda;
 
@@ -174,6 +175,7 @@ class S3FileStorage extends FileStorage {
 	function get_bucketEndpoint()
 		return 'http://${bucketName}.s3-website-${bucketRegion}.amazonaws.com/';
 
+	var s3Client(default, null):S3Client;
 	var transferClient(default, null):TransferClient;
 
 	static var awsInited = false;
@@ -190,33 +192,25 @@ class S3FileStorage extends FileStorage {
 			awsInited = true;
 		}
 
-		this.transferClient = new TransferClient(new S3Client(bucketRegion));
+		this.transferClient = new TransferClient(this.s3Client = new S3Client(bucketRegion));
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
 		if (Path.isAbsolute(file))
 			throw 'readFile only accepts relative `file`. $file is is absolute.';
+		var s3Path = Path.join(['s3://${bucketName}', file]);
 		var localFile:AbsPath = Path.join([localPath, file]);
 		if (!FileSystem.exists(localFile)) {
-			var remoteUrl = Path.join([bucketEndpoint, file]);
-
-			// write to a tmp location to avoid data race when
-			// parallel process write to the target
-			var tempPath = Path.join([Paths.TMP_DIR, Std.string(Std.random(1000)), file]);
-			FileSystem.createDirectory(Path.directory(tempPath));
-			var out = File.write(tempPath);
-			var http = new haxe.Http(remoteUrl);
-			http.noShutdown = true;
-			http.customRequest(false, out);
-
-			// in case there is another parallel process that fetched the file
-			if (FileSystem.exists(localFile))
-				FileSystem.deleteFile(localFile);
-
-			// copy + delete instead of move to avoid issue when
-			// the tmp directory is in a different drive then the target
-			File.copy(tempPath, localFile);
-			FileSystem.deleteFile(tempPath);
+			var request = transferClient.downloadFile(localFile, bucketName, file);
+			while (!request.isDone()) {
+				Sys.sleep(0.01);
+			}
+			switch (request.getFailure()) {
+				case null:
+					//pass
+				case failure:
+					throw 'failed to download ${s3Path} to ${localPath}\n${failure}';
+			}
 		}
 		return f(localFile);
 	}
@@ -267,10 +261,14 @@ class S3FileStorage extends FileStorage {
 		var localFile:AbsPath = Path.join([localPath, file]);
 		if (FileSystem.exists(localFile))
 			FileSystem.deleteFile(localFile);
-		// TODO: use aws-sdk-neko to delete file
-		// var s3Path = Path.join(['s3://${bucketName}', file]);
-		// if (Sys.command("aws", ["s3", "ls", s3Path]) == 0)
-		// if (Sys.command("aws", ["s3", "rm", s3Path]) != 0)
-		// 	throw 'failed to delete ${s3Path}';
+
+		var del = new DeleteObjectRequest();
+		del.setBucket(bucketName);
+		del.setKey(file);
+		try {
+			s3Client.deleteObject(del);
+		} catch (e:Dynamic) {
+			// maybe the object does not exist
+		}
 	}
 }

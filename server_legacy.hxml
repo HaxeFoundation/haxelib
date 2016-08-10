@@ -1,4 +1,5 @@
--cp src 
+server_each.hxml
+-cp src
 -neko www/legacy/index.n
 -main legacyhaxelib.Site
 -lib hx2compat
