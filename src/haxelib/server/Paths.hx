@@ -38,6 +38,8 @@ class Paths {
 	static public var CWD(default, null):AbsPath =
 		#if haxelib_api
 			Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
+		#elseif haxelib_legacy
+			Path.normalize(Path.join([Web.getCwd(), ".."]));
 		#else
 			Web.getCwd();
 		#end

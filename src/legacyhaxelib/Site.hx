@@ -25,6 +25,7 @@ import legacyhaxelib.SiteDb;
 #end
 import haxe.rtti.CType;
 import haxelib.server.FileStorage;
+import haxe.io.Path;
 
 class Site {
 
@@ -42,7 +43,7 @@ class Site {
 	static function initDatabase() {
 		var path = "legacy/haxelib.db";
 		FileStorage.instance.readFile(path, function(file) {
-			if (DB_FILE != file)
+			if (Path.normalize(DB_FILE) != Path.normalize(file))
 				throw '$file should be the same as $DB_FILE';
 			db = neko.db.Sqlite.open(DB_FILE);
 			neko.db.Manager.cnx = db;
