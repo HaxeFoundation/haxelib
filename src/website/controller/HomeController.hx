@@ -2,14 +2,17 @@ package website.controller;
 
 import ufront.MVC;
 import ufront.ufadmin.controller.*;
-import website.api.ProjectListApi;
+import website.api.*;
 import website.model.SiteDb;
+import haxelib.server.FileStorage;
+import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
 using CleverSort;
 
 class HomeController extends Controller {
 
+	@inject public var projectApi:ProjectApi;
 	@inject public var projectListApi:ProjectListApi;
 
 	// Perform init() after dependency injection has occured.
@@ -55,6 +58,23 @@ class HomeController extends Controller {
 
 	@:route("/documentation/*")
 	public var documentationController:DocumentationController;
+
+	/**
+		`/files` is backed by a `FileStorage`.
+		In production, it should be routed by httpd to S3 using mod_proxy, thus
+		this function should never be called.
+	*/
+	@:route("/files/3.0/$fileName")
+	public function downloadFile( fileName:String ) {
+		return FileStorage.instance.readFile(
+			'files/3.0/$fileName',
+			function(path) {
+				var r = new FilePathResult(path);
+				r.setContentTypeByFilename(Path.withoutDirectory(path));
+				return r;
+			}
+		);
+	}
 
 	@cacheRequest
 	@:route("/t/")

@@ -1,9 +1,15 @@
 version: '2'
 services:
   web:
-    image: andyli/tora
+    build: ..
     ports:
       - "2000:80"
+    environment:
+      - HAXELIB_DB_HOST=dbHost
+      - HAXELIB_DB_PORT=3306
+      - HAXELIB_DB_USER=dbUser
+      - HAXELIB_DB_PASS=dbPass
+      - HAXELIB_DB_NAME=haxelib
     volumes:
       - ../www:/var/www/html
   dbHost:

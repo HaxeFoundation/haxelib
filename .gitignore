@@ -21,3 +21,10 @@ deploy_key
 
 # Bower
 www/bower_components
+
+.haxelib
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

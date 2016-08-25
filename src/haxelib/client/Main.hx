@@ -982,7 +982,7 @@ class Main {
 			// on windows, try to use haxe installation path
 			rep = getWindowsDefaultGlobalRepositoryPath();
 			if (create)
-				try safeDir(rep) catch(e:Dynamic) throw "Error accessing Haxelib repository: $e";
+				try safeDir(rep) catch(e:Dynamic) throw 'Error accessing Haxelib repository: $e';
 		}
 
 		return rep;

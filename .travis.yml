@@ -1,5 +1,3 @@
-language: haxe
-
 env:
   global:
     # deploy_key_decrypt
@@ -9,33 +7,23 @@ matrix:
   include:
     # haxe development + neko master
     - os: linux
-      language: generic
       sudo: required
+      dist: trusty
       env:
         - TRAVIS_HAXE_VERSION=development
-      before_install:
-        - sudo add-apt-repository ppa:haxe/snapshots -y
-        - sudo apt-get update
-        - sudo apt-get install haxe=1:3.3* neko-dev libapache2-mod-neko -y
-        - mkdir ~/haxelib && haxelib setup ~/haxelib
-    # haxe 3.2.1 + neko master
-    - os: linux
-      language: generic
-      sudo: required
-      env:
-        - TRAVIS_HAXE_VERSION=3.2.1
         - DEPLOY=1
       before_install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
-        - sudo add-apt-repository ppa:haxe/releases -y
         - sudo apt-get update
-        - sudo apt-get install haxe=1:3.2.1* neko-dev libapache2-mod-neko -y
+        - sudo apt-get install haxe=1:3.3* neko-dev libapache2-mod-neko mysql-server mysql-client -y
         - mkdir ~/haxelib && haxelib setup ~/haxelib
-    # haxe 3.1.3 + neko 2.0.0
+        - sudo usermod -a -G travis www-data
+    # haxe 3.2.1 + neko 2.1.0
     - os: linux
       language: haxe
-      haxe: 3.1.3
+      haxe: 3.2.1
       sudo: required
+      dist: trusty
       env:
         - USE_DOCKER=1
       services: [docker]
@@ -44,7 +32,25 @@ matrix:
         - sudo apt-get -o Dpkg::Options::=--force-confnew install docker-engine -y
         - docker --version
         # https://docs.travis-ci.com/user/docker/#Using-Docker-Compose
-        - sudo rm /usr/local/bin/docker-compose
+        - sudo rm -f /usr/local/bin/docker-compose
+        - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+        - chmod +x docker-compose
+        - sudo mv docker-compose /usr/local/bin
+    # haxe 3.1.3 + neko 2.0.0
+    - os: linux
+      language: haxe
+      haxe: 3.1.3
+      sudo: required
+      dist: trusty
+      env:
+        - USE_DOCKER=1
+      services: [docker]
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get -o Dpkg::Options::=--force-confnew install docker-engine -y
+        - docker --version
+        # https://docs.travis-ci.com/user/docker/#Using-Docker-Compose
+        - sudo rm -f /usr/local/bin/docker-compose
         - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
         - chmod +x docker-compose
         - sudo mv docker-compose /usr/local/bin
@@ -66,35 +72,44 @@ install:
   - npm -g install bower
   - yes | haxelib install all
   - yes | haxelib install tora
-  # We need https://github.com/HaxeFoundation/hscript/commit/bd8c016bbadc93c2db8deb75d7056703ac3e3ff8
+  # We need https://github.com/ufront/ufront-uftasks/commit/1ef09322eb51cf5d16bc1f9abeecaeb30542b62f
   - if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
-    haxelib git hscript https://github.com/HaxeFoundation/hscript.git;
+    yes | haxelib git ufront-uftasks https://github.com/ufront/ufront-uftasks.git;
     fi
+  # We need https://github.com/ufront/ufront-ufadmin/commit/4558fe0bb3534cda53396bc3b4b099a867f5b6a6
+  - if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
+    yes | haxelib git ufront-ufadmin https://github.com/ufront/ufront-ufadmin.git;
+    fi
+  # Make sure hscript is >= 2.0.5
+  - yes | haxelib update hscript
+  # Make sure hscript is > 0.1.4
+  - yes | haxelib update mcli
+  # copy aws.ndll to the right place
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+      sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Mac64/aws.ndll ${NEKOPATH}/aws.ndll;
+    fi;
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+      if [ "${TRAVIS_HAXE_VERSION}" = "development" ]; then
+        sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+      elif [ "${TRAVIS_HAXE_VERSION}" = "3.2.1" ]; then
+        sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Linux64/aws.ndll ${NEKOPATH}/aws.ndll;
+      fi;
+    fi;
   - haxelib list
-  - haxelib run tora &
+  - haxelib run tora > /dev/null 2>&1 &
 
 script:
   # run our CI script
   - haxe ci.hxml
-  # Deploy to lib.haxe.org
-  - if [ -n "$deploy_key_decrypt" ] && [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ -n "$DEPLOY" ]; then
-      openssl aes-256-cbc -k "$deploy_key_decrypt" -in deploy_key.enc -out deploy_key -d;
-      chmod 600 deploy_key;
-      eval `ssh-agent -s`;
-      ssh-add deploy_key;
-      scp haxelib@lib.haxe.org:/data/haxelib/www/.htaccess www/;
-      scp haxelib@lib.haxe.org:/data/haxelib/www/dbconfig.json www/;
-      pushd www;
-      bower install;
-      popd;
-      git config --global user.name "TravisCI";
-      git config --global user.email "travisci@haxe.org";
-      haxelib run ufront deploy;
-    fi
 
-cache:
-  directories:
-    - deploy
-
-addons:
-  ssh_known_hosts: lib.haxe.org
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  region: $AWS_REGION
+  app: $EB_APP
+  env: ${TRAVIS_BRANCH}-lib-haxe-org
+  bucket_name: $EB_BUCKET
+  on:
+    all_branches: true
+    condition: $AWS_ACCESS_KEY && $DEPLOY && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH = development)

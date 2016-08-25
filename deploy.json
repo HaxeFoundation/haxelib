@@ -1,10 +1,10 @@
 {
 	"files": [
 		"api/",
+		"bower_components/",
 		"css/",
 		"documentation-files/",
 		"img/",
-		"js/",
 		"view/",
 		"dbconfig.json",
 		"favicon.ico",

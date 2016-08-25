@@ -1,0 +1,4 @@
+server_each.hxml
+-lib ufront-uftasks
+-main website.Tasks
+-neko www/tasks.n

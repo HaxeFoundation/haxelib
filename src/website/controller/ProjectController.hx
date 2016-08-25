@@ -86,7 +86,7 @@ class ProjectController extends Controller {
 	@:route("/$projectName/$semver/download/")
 	public function download( projectName:String, semver:String ) {
 		var zipFile = projectApi.getZipFilePath( projectName, semver );
-		return new DirectFilePathResult( context.request.scriptDirectory+zipFile );
+		return new RedirectResult( "/" + zipFile, true );
 	}
 
 	@cacheRequest
