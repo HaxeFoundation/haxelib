@@ -613,14 +613,6 @@ class Main {
 
 	function install() {
 		var rep = getRepository();
-		
-		// if just install command we try to install from haxelib.json
-		var defaultHaxelibJson = "./haxelib.json";
-		if ( args.length == argcur && sys.FileSystem.exists(defaultHaxelibJson) && !sys.FileSystem.isDirectory(defaultHaxelibJson) )
-		{
-			installFromHaxelibJson( rep, defaultHaxelibJson);
-			return;
-		}
 
 		var prj = param("Library name or hxml file:");
 
