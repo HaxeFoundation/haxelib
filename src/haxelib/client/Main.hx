@@ -1382,10 +1382,6 @@ class Main {
 			return;
 		}
 
-		// prepare for new repo
-		//deleteRec(libPath);
-		
-
 		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
 		
 		try {
@@ -1404,7 +1400,6 @@ class Main {
 			};
 			throw message;
 		}
-
 
 		// finish it!
 		if (subDir != null) {
