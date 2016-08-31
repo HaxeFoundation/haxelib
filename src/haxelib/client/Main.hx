@@ -152,7 +152,7 @@ class Main {
 	var siteUrl : String;
 	var site : SiteProxy;
 	var isHaxelibRun : Bool;
-	var alreadyUpdatedVcsDependencies:Array<String> = [];
+	var alreadyUpdatedVcsDependencies:Map<String,String> = new Map<String,String>();
 
 
 	function new() {
@@ -1364,18 +1364,29 @@ class Main {
 		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
 			print("You already have "+libName+" version "+vcs.directory+" installed.");
 			
-			if ( this.alreadyUpdatedVcsDependencies.indexOf( libName ) == -1 )
+			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
+			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
+			
+			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
+				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
 			{
-				print("Updating " + libName+" version " + vcs.directory + " ...");
-				this.alreadyUpdatedVcsDependencies.push( libName );
-				updateByName(rep, libName);
-				setCurrent(rep, libName, vcs.directory, true);
-				
-				if(FileSystem.exists(jsonPath))
-					doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
+				deleteRec(libPath);
+				this.alreadyUpdatedVcsDependencies.set(libName, branch);
 			}
-				
-			return;
+			else
+			{
+				if (!wasUpdated)
+				{
+					print("Updating " + libName+" version " + vcs.directory + " ...");
+					this.alreadyUpdatedVcsDependencies.set(libName, branch);
+					updateByName(rep, libName);
+					setCurrent(rep, libName, vcs.directory, true);
+					
+					if(FileSystem.exists(jsonPath))
+						doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
+				}
+				return;
+			}
 		}
 
 		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
