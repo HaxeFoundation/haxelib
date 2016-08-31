@@ -1357,10 +1357,6 @@ class Main {
 		
 		var proj = rep + Data.safe(libName);
 
-		// find & remove all existing repos:
-		//removeExistingDevLib(proj);
-		// currently we already kill all dev-repos for all supported Vcs.
-		
 		var libPath = proj + "/" + vcs.directory;
 		
 		var jsonPath = libPath + "/haxelib.json";
