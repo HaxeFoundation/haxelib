@@ -80,7 +80,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 		for (f in fields) {
 			var value:String = Reflect.field(this, f);
 
-			var isGit = value != null && value.startsWith("git:"); 
+			var isGit = value != null && (value + "").startsWith("git:"); 
 			
 			if ( !isGit )
 			{
