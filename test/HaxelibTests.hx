@@ -53,6 +53,8 @@ class HaxelibTests {
 		}
 		r.add(new TestVcsNotFound());
 
+		r.add(new TestInstall());
+
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);
 	}
