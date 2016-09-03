@@ -315,7 +315,11 @@ class Repo implements SiteApi {
 				v.documentation = doc;
 				v.insert();
 
-				p.versionObj = v;
+				// p.versionObj is the one shown on the website
+				if (p.versionObj != null && p.versionObj.toSemver() < v.toSemver()) {
+					p.versionObj = v;
+				}
+
 				p.update();
 				return "Version " + v.toSemver() + " (id#" + v.id + ") added";
 			}
