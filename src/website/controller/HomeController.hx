@@ -165,7 +165,7 @@ class HomeController extends Controller {
 	}
 
 	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, author:String, description:String, version:String, downloads:Int }> {
-		return [for (p in list) {
+		return [for (p in list) if (p != null) {
 			name: p.name,
 			author: p.ownerObj.name,
 			description: p.description,
