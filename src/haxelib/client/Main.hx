@@ -362,6 +362,13 @@ class Main {
 		if (!isHaxelibRun && !settings.system) {
 			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
+				if (settings.debug) {
+					var pdir = rep + Data.safe(HAXELIB_LIBNAME);
+					var version = getCurrent(pdir);
+					var dev = try getDev(pdir) catch ( e : Dynamic ) null;
+					var vdir = dev != null ? dev : pdir + Data.safe(version);
+					print('[debug] using haxelib from "${vdir}"');
+				}
 				argcur = 0; // send all arguments
 				doRun(rep, HAXELIB_LIBNAME, null);
 				return;
