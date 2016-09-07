@@ -316,7 +316,7 @@ class Repo implements SiteApi {
 				v.insert();
 
 				// p.versionObj is the one shown on the website
-				if (p.versionObj != null && p.versionObj.toSemver() < v.toSemver()) {
+				if (p.versionObj == null || p.versionObj.toSemver() < v.toSemver()) {
 					p.versionObj = v;
 				}
 
