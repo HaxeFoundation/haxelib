@@ -149,6 +149,7 @@ class LocalFileStorage extends FileStorage {
 			// srcFile already located at dstFile
 			return;
 		}
+		FileSystem.createDirectory(Path.directory(localFile));
 		File.copy(srcFile, localFile);
 		if (move)
 			FileSystem.deleteFile(srcFile);
@@ -259,6 +260,7 @@ class S3FileStorage extends FileStorage {
 			uploadToS3(localFile, dstFile);
 			return;
 		}
+		FileSystem.createDirectory(Path.directory(localFile));
 		File.copy(srcFile, localFile);
 		uploadToS3(localFile, dstFile);
 		if (move)
