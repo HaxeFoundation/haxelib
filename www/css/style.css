@@ -646,8 +646,8 @@ html .gsc-search-box .gsc-input > input:focus, html .gsc-input-box-focus {
 }
 
 @media (min-width: 1200px) {
-	.navbar .search-link-menu { display: none; }
-	.navbar .search { display: block; }
+	.navbar .search-link-menu { display: block; }
+	.navbar .search { display: none; }
 }
 @media (max-width: 1199px) {
 	.navbar .search-link-menu { display: block; }
