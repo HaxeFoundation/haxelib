@@ -28,6 +28,7 @@ class ProjectController extends Controller {
 		info.versions.sort(function(v1, v2) return SemVer.compare(v2.name, v1.name));
 		return new ViewResult({
 			title: 'All versions of $projectName',
+			description: info.desc,
 			project: projectName,
 			allVersions: info.versions,
 			info: info,
@@ -57,6 +58,7 @@ class ProjectController extends Controller {
 		return new ViewResult({
 			title: '$projectName ($semver)',
 			project: projectName,
+			description: '${currentVersion.comments} - ${info.desc}',
 			allVersions: info.versions,
 			version: semver,
 			versionDate: Date.fromString(currentVersion.date).format('%F'),
@@ -106,6 +108,7 @@ class ProjectController extends Controller {
 		var data:TemplateData = {
 			title: 'Viewing $filePath on $projectName:$semver',
 			project: projectName,
+			description: info.desc,
 			info: info,
 			version: semver,
 			fileParts: rest,
