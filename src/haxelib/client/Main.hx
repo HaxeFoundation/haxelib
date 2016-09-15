@@ -1418,6 +1418,8 @@ class Main {
 			print("Library "+libName+" current version is now "+vcs.directory);
 		}
 
+		this.alreadyUpdatedVcsDependencies.set(libName, branch);
+
 		if(FileSystem.exists(jsonPath))
 			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
