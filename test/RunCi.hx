@@ -78,7 +78,7 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
-	static function setupLocalServer():Void {
+	static function runWithLocalServer(test:Void->Void):Void {
 		var HAXELIB_SERVER = "localhost";
 		var HAXELIB_SERVER_PORT = "2000";
 		var ndllPath = getEnv("NEKOPATH");
@@ -275,6 +275,16 @@ Listen 2000
 
 		Sys.putEnv("HAXELIB_SERVER", HAXELIB_SERVER);
 		Sys.putEnv("HAXELIB_SERVER_PORT", HAXELIB_SERVER_PORT);
+
+		test();
+
+		switch (systemName()) {
+			case "Mac":
+				runCommand("apachectl", ["stop"]);
+				runCommand("mysql.server", ["stop"]);
+			case _:
+				//pass
+		}
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
@@ -337,8 +347,7 @@ Listen 2000
 			}
 		}
 		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
-			setupLocalServer();
-			test();
+			runWithLocalServer(test);
 		} else {
 			runWithDockerServer(test);
 		}
