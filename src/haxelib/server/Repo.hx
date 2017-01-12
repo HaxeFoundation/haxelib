@@ -46,6 +46,8 @@ class Repo implements SiteApi {
 			throw "Invalid remoting call";
 	}
 
+	var submitHelper:ISubmitHelper = new SubmitHelper();
+	
 	public function new() {}
 
 	public function search( word : String ) : List<{ id : Int, name : String }> {
@@ -143,6 +145,30 @@ class Repo implements SiteApi {
 		return Std.string(Std.random(100000000));
 	}
 
+	function createProject(infos:Infos, devs:Array<User>, tags:Array<String>, owner:User):Project
+	{
+		var p = new Project();
+		p.name = infos.name;
+		p.description = infos.description;
+		p.website = infos.url;
+		p.license = infos.license;
+		p.ownerObj = owner;
+		p.insert();
+		for( u in devs ) {
+			var d = new Developer();
+			d.userObj = u;
+			d.projectObj = p;
+			d.insert();
+		}
+		for( tag in tags ) {
+			var t = new Tag();
+			t.tag = tag;
+			t.projectObj = p;
+			t.insert();
+		}
+		return p;
+	}
+	
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
 		return FileStorage.instance.readFile(
@@ -153,16 +179,11 @@ class Repo implements SiteApi {
 				file.close();
 
 				var infos = Data.readInfos(zip,true);
-				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass )
+				var u = submitHelper.getUser(infos, user);
+				if ( !submitHelper.checkSubmitRights(u, pass) )
 					throw "Invalid username or password";
 
-				var devs = infos.contributors.map(function(user) {
-					var u = User.manager.search({ name : user }).first();
-					if( u == null )
-						throw "Unknown user '"+user+"'";
-					return u;
-				});
+				var devs = submitHelper.getContributors(infos.contributors);
 
 				var tags = Lambda.array(infos.tags);
 				tags.sort(Reflect.compare);
@@ -171,25 +192,7 @@ class Repo implements SiteApi {
 
 				// create project if needed
 				if( p == null ) {
-					p = new Project();
-					p.name = infos.name;
-					p.description = infos.description;
-					p.website = infos.url;
-					p.license = infos.license;
-					p.ownerObj = u;
-					p.insert();
-					for( u in devs ) {
-						var d = new Developer();
-						d.userObj = u;
-						d.projectObj = p;
-						d.insert();
-					}
-					for( tag in tags ) {
-						var t = new Tag();
-						t.tag = tag;
-						t.projectObj = p;
-						t.insert();
-					}
+					p = createProject(infos, devs, tags, u);
 				}
 
 				// check submit rights
@@ -365,4 +368,37 @@ class Repo implements SiteApi {
 			neko.Lib.rethrow(error.e);
 	}
 
+}
+
+interface ISubmitHelper
+{
+	function checkSubmitRights(user:User, pass:String):Bool;
+	function getContributors(ids:Array<String>):Array<User>;
+	function getUser(infos:Infos, user:String):User;
+}
+
+class SubmitHelper implements ISubmitHelper
+{
+	public function new (){};
+	
+	public function getUser(infos:Infos, user:String):User
+	{
+		return User.manager.search({ name : user }).first();
+	}
+	
+	public function getContributors(ids:Array<String>):Array<User>
+	{
+		return ids.map(function(user) {
+			var u = User.manager.search({ name : user }).first();
+			if( u == null )
+				throw "Unknown user '"+user+"'";
+			return u;
+		});
+	}
+
+	public function checkSubmitRights(user:User, pass:String):Bool
+	{
+		return user != null && user.pass == pass;
+	}
+	
 }
