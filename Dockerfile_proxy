@@ -1,0 +1,55 @@
+# Build haxelib server as a Docker container.
+# Note that it doesn't contain a MySQL database, 
+# which need to be launched seperately. See test/docker-compose.yml on how to launch one.
+
+FROM ubuntu:trusty
+
+# apt-get dependencies of bower
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
+	&& add-apt-repository ppa:haxe/snapshots -y \
+	&& apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+		neko-dev \
+		haxe \
+		git \
+		libcurl4-gnutls-dev \
+	&& rm -r /var/lib/apt/lists/*
+
+
+RUN rm -rf /var/www/html \
+	&& mkdir -p /var/www/html \
+	&& chown -R www-data:www-data /var/www/html 
+	
+# haxelib
+ENV HAXELIB_PATH /haxelib
+RUN mkdir "$HAXELIB_PATH" && haxelib setup "$HAXELIB_PATH" \
+
+RUN mkdir /src
+
+COPY server_proxy.hxml /src/
+
+RUN ls /src/
+
+WORKDIR /src
+RUN haxelib install all --always
+RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+
+WORKDIR /src/www
+
+COPY www /src/www/
+COPY src /src/src/
+
+RUN rm -rf /var/www/html
+RUN ln -s /src/www /var/www/html
+RUN mkdir -p /var/www/html/files
+RUN mkdir -p /var/www/html/tmp
+
+WORKDIR /src
+
+RUN haxe server_proxy.hxml
+
+ENV PARENT_SERVER http://lib.haxe.org
+
+EXPOSE 80
+VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
+
+CMD nekotools server -p 80 -d /var/www/html/api/3.0/ -rewrite
