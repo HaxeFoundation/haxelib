@@ -188,14 +188,14 @@ class RepoProxy extends Repo
 		}
 		catch (e:Dynamic)
 		{
-			if (parentProxy != null)
-			{
-				infos = parentProxy.infos(project);
-			}
-			else
+			if(parentProxy == null)
 			{
 				neko.Lib.rethrow(e);
 			}
+		}
+		if (parentProxy != null)
+		{
+			infos = mergeInfos(infos, parentProxy.infos(project));
 		}
 		return infos;
 	}
@@ -209,14 +209,14 @@ class RepoProxy extends Repo
 		}
 		catch (e:Dynamic)
 		{
-			if (parentProxy != null)
-			{
-				result = parentProxy.getLatestVersion(project);
-			}
-			else
+			if(parentProxy == null)
 			{
 				neko.Lib.rethrow(e);
 			}
+		}
+		if (parentProxy != null)
+		{
+			result = getLatest(result, parentProxy.getLatestVersion(project));
 		}
 		return result;
 	}
@@ -237,6 +237,41 @@ class RepoProxy extends Repo
 		SiteDb.cleanup();
 		if( error != null )
 			neko.Lib.rethrow(error.e);
+	}
+	
+	static function getLatest(a:SemVer, b:SemVer):SemVer
+	{
+		if (a == null) return b;
+		if (b == null) return a;
+		
+		return (SemVer.compare(a, b) > 0)?a:b;
+	}
+	
+	static function mergeInfos(a:ProjectInfos, b:ProjectInfos):ProjectInfos
+	{
+		if (a == null) return b;
+		if (b == null) return a;
+		
+		var allVersions = [];
+		b.versions.map(function (v){
+			if (a.versions.indexOf(v) == -1) allVersions.push(v);
+		});
+		allVersions = allVersions.concat(a.versions);
+		allVersions.sort(function (a, b){
+			return SemVer.compare(a.name, b.name);
+		});
+		
+		return {
+			name : a.name,
+			curversion : null,
+			desc : a.desc,
+			versions: allVersions,
+			owner : a.owner,
+			website : a.website,
+			license : a.license,
+			downloads : a.downloads + b.downloads,
+			tags : a.tags,
+		};
 	}
 	
 }
