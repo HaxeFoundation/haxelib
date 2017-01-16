@@ -8,43 +8,18 @@ FROM ubuntu:trusty
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
 	&& add-apt-repository ppa:haxe/snapshots -y \
 	&& apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-		apache2 \
 		neko-dev \
 		haxe \
-		git \
-		libcurl4-gnutls-dev \
 	&& rm -r /var/lib/apt/lists/*
 
-# apache httpd
-RUN rm -rf /var/www/html \
-	&& mkdir -p /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
-	&& chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html 
-RUN a2enmod rewrite
-RUN a2enmod proxy
-RUN a2enmod proxy_http
-RUN mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
-COPY apache2.conf /etc/apache2/apache2.conf
-RUN { \
-		echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
-		echo 'LoadModule tora_module /usr/lib/x86_64-linux-gnu/neko/mod_tora2.ndll'; \
-		echo 'AddHandler tora-handler .n'; \
-	} > /etc/apache2/mods-enabled/tora.conf \
-	&& apachectl stop
-
-RUN rm -rf /var/www/html \
-	&& mkdir -p /var/www/html \
-	&& chown -R www-data:www-data /var/www/html 
-	
 # haxelib
 ENV HAXELIB_PATH /haxelib
-RUN mkdir "$HAXELIB_PATH" && haxelib setup "$HAXELIB_PATH" \
-	&& haxelib install tora 1.8.1
+RUN mkdir "$HAXELIB_PATH" && haxelib setup "$HAXELIB_PATH"
+
 
 RUN mkdir /src
 
 COPY server_proxy.hxml /src/
-
-RUN ls /src/
 
 WORKDIR /src
 RUN haxelib install all --always
@@ -57,14 +32,15 @@ COPY www/files /src/www/files
 COPY www/tmp /src/www/tmp
 COPY src /src/src/
 
-RUN rm -rf /var/www/html
-RUN ln -s /src/www /var/www/html
+RUN mkdir -p /var/www/html/api
 RUN mkdir -p /var/www/html/files
 RUN mkdir -p /var/www/html/tmp
 
 WORKDIR /src
 
 RUN haxe server_proxy.hxml
+
+RUN mv /src/www/api/* /var/www/html/api
 
 ENV PARENT_SERVER http://lib.haxe.org
 
@@ -73,5 +49,4 @@ VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
 
 WORKDIR /var/www/html/api/3.0
 
-#CMD nekotools server -p 80 -d . -rewrite
-CMD apachectl restart && haxelib run tora
+CMD ["nekotools", "server", "-h", "0.0.0.0", "-p", "80", "-d", ".", "-rewrite", "-log", "log.log"]
