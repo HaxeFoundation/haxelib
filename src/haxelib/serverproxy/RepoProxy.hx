@@ -37,7 +37,7 @@ class RepoProxy extends Repo
 		} else {
 			switch(neko.Web.getURI().split("/").filter(function(s) return !(s == null || s == ""))) {
 				case ['files', '3.0', file]:
-					processFileRequest(file);
+					processFileRequest(repo, file, parentServer);
 				case ['index.n']:
 					processFileUpload();
 				case _:
@@ -46,7 +46,7 @@ class RepoProxy extends Repo
 		}
 	}
 	
-	inline static function processFileRequest() {
+	inline static function processFileRequest(repo:RepoProxy, file:String, parentServer:String) {
 		trace("requesting file: " + file);
 		
 		var tmpFilePath = Path.join([CWD, 'files', '3.0', file]);
@@ -186,7 +186,7 @@ class RepoProxy extends Repo
 	
 	override public function getLatestVersion(project:String):SemVer {
 		var result = try {
-			super.getLatestVersion(project) 
+			super.getLatestVersion(project);
 		} catch (e:Dynamic) {
 			if(parentProxy == null)
 				neko.Lib.rethrow(e);
