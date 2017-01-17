@@ -49,4 +49,4 @@ VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
 
 WORKDIR /var/www/html/api/3.0
 
-CMD ["nekotools", "server", "-h", "0.0.0.0", "-p", "80", "-d", ".", "-rewrite", "-log", "log.log"]
+CMD nekotools server -h 0.0.0.0 -p 80 -d . -rewrite -log log.log > /dev/null
