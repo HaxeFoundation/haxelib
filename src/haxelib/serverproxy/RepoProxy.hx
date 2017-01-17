@@ -26,8 +26,7 @@ class RepoProxy extends Repo
 
 	var parentProxy:SiteProxy;
 
-	static function runProxy() 
-	{
+	static function runProxy() {
 		var parentServer = Sys.getEnv("PARENT_SERVER");
 		var repo = new RepoProxy(parentServer);
 		var ctx = new haxe.remoting.Context();
@@ -35,80 +34,75 @@ class RepoProxy extends Repo
 
 		if ( haxe.remoting.HttpConnection.handleRequest(ctx) ){
 			return;
-		}
-		else
-		{
-			switch(neko.Web.getURI().split("/").filter(function(s) return !(s == null || s == "")))
-			{
+		} else {
+			switch(neko.Web.getURI().split("/").filter(function(s) return !(s == null || s == ""))) {
 				case ['files', '3.0', file]:
-					trace("requesting file: " + file);
-					
-					var tmpFilePath = Path.join([CWD, 'files', '3.0', file]);
-					
-					if (FileSystem.exists(tmpFilePath))
-					{
-						var f = File.read(tmpFilePath);
-						Sys.print(f.readAll());
-						f.close();
-						return;
-					}
-					else if(parentServer != null)
-					{
-						
-						var sid = repo.getSubmitId();
-						var tmpFileName = sid + ".tmp";
-						tmpFilePath = Path.join([TMP_DIR, tmpFileName]);
-						FileSystem.createDirectory(Path.directory(tmpFilePath));
-						
-						var out = try File.append(tmpFilePath,true) catch (e:Dynamic) throw 'Failed to write to $tmpFilePath: $e';
-						out.seek(0, SeekEnd);
-						
-						var h = new Http(addFinalSlash(parentServer) + Data.REPOSITORY + "/" + file);
-						if (haxe.remoting.HttpConnection.TIMEOUT == 0)
-							h.cnxTimeout = 0;
-						
-						var has416Status = false;
-						h.onStatus = function(status) {
-							// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
-							if (status == 416) has416Status = true;
-						};
-						h.onError = function(e) {
-							out.close();
-
-							// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
-							if (!has416Status) {
-								FileSystem.deleteFile(tmpFilePath);
-								throw e;
-							}
-						};
-						trace("Downloading "+file+"...");
-						h.customRequest(false, out);
-						
-						var file = try sys.io.File.read(tmpFilePath, true) catch ( e : Dynamic ) throw "Invalid file id #" + sid;
-						var bytes = file.readAll();
-						file.seek(0, FileSeek.SeekBegin);
-						var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
-						file.close();
-						
-						FileStorage.instance.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
-						
-						repo.submitHelper = new ProxySubmitHelper();
-						repo.processSubmit(sid, null, null);
-						
-						Sys.print(bytes);
-						
-					}
+					processFileRequest(file);
 				case ['index.n']:
 					processFileUpload();
 				case _:
 					throw "Invalid remoting call";
 			}
 		}
-		
 	}
 	
-	static function processFileUpload()
-	{
+	inline static function processFileRequest() {
+		trace("requesting file: " + file);
+		
+		var tmpFilePath = Path.join([CWD, 'files', '3.0', file]);
+		
+		if (FileSystem.exists(tmpFilePath)) {
+			var f = File.read(tmpFilePath);
+			Sys.print(f.readAll());
+			f.close();
+			return;
+		} else if(parentServer != null) {
+			
+			var sid = repo.getSubmitId();
+			var tmpFileName = sid + ".tmp";
+			tmpFilePath = Path.join([TMP_DIR, tmpFileName]);
+			FileSystem.createDirectory(Path.directory(tmpFilePath));
+			
+			var out = try File.append(tmpFilePath,true) catch (e:Dynamic) throw 'Failed to write to $tmpFilePath: $e';
+			out.seek(0, SeekEnd);
+			
+			var h = new Http(addFinalSlash(parentServer) + Data.REPOSITORY + "/" + file);
+			if (haxe.remoting.HttpConnection.TIMEOUT == 0)
+				h.cnxTimeout = 0;
+			
+			var has416Status = false;
+			h.onStatus = function(status) {
+				// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
+				if (status == 416) has416Status = true;
+			};
+			h.onError = function(e) {
+				out.close();
+
+				// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
+				if (!has416Status) {
+					FileSystem.deleteFile(tmpFilePath);
+					throw e;
+				}
+			};
+			trace("Downloading "+file+"...");
+			h.customRequest(false, out);
+			
+			var file = try sys.io.File.read(tmpFilePath, true) catch ( e : Dynamic ) throw "Invalid file id #" + sid;
+			var bytes = file.readAll();
+			file.seek(0, FileSeek.SeekBegin);
+			var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
+			file.close();
+			
+			FileStorage.instance.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
+			
+			repo.submitHelper = new ProxySubmitHelper();
+			repo.processSubmit(sid, null, null);
+			
+			Sys.print(bytes);
+		}
+	}
+	
+	inline static function processFileUpload() {
 		var boundary = Web.getClientHeaders()
 			.filter(function(h:{value:String, header:String}) return (h.header == "Content-Type"))
 			.first().value.split("boundary=")[1];
@@ -153,70 +147,55 @@ class RepoProxy extends Repo
 		trace("File #"+sid+" accepted : "+bytes.length+" bytes written");
 	}
 	
-	static inline function addFinalSlash(url:String):String
-	{
+	static inline function addFinalSlash(url:String):String {
 		if (url.charAt(url.length - 1) != "/") url = url + "/";
 		return url;
 	}
 	
 	public function new(?parentServer:String) {
 		super();
-		if (parentServer != null)
-		{
+		if (parentServer != null) {
 			parentServer = addFinalSlash(parentServer);
 			var parentApiUrl = parentServer + "api/3.0/index.n";
 			parentProxy = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(parentApiUrl).api);
 		}
 	}
 	
-	override public function search(word:String):List<{id:Int, name:String}> 
-	{
+	override public function search(word:String):List<{id:Int, name:String}> {
 		var result = super.search(word);
-		if ((result == null || result.length == 0) && parentProxy != null)
-		{
+		if ((result == null || result.length == 0) && parentProxy != null) {
 			result = parentProxy.search(word);
 		}
 		return result;
 	}
 	
-	override public function infos(project:String):ProjectInfos 
-	{
-		var infos = null;
-		try
-		{
-			infos = super.infos(project);
-		}
-		catch (e:Dynamic)
-		{
+	override public function infos(project:String):ProjectInfos {
+		var infos = try {
+			super.infos(project);
+		} catch (e:Dynamic) {
 			if(parentProxy == null)
-			{
 				neko.Lib.rethrow(e);
-			}
+			else null;
 		}
-		if (parentProxy != null)
-		{
-			infos = mergeInfos(infos, parentProxy.infos(project));
+		if (parentProxy != null) {
+			var parentInfos = try parentProxy.infos(project) catch (_:Dynamic) null;
+			infos = mergeInfos(infos, parentInfos);
 		}
 		return infos;
 	}
 	
-	override public function getLatestVersion(project:String):SemVer 
-	{
-		var result = null;
-		try
-		{
-			result = super.getLatestVersion(project);
-		}
-		catch (e:Dynamic)
-		{
+	override public function getLatestVersion(project:String):SemVer {
+		var result = try {
+			super.getLatestVersion(project) 
+		} catch (e:Dynamic) {
 			if(parentProxy == null)
-			{
 				neko.Lib.rethrow(e);
-			}
+			else null;
 		}
-		if (parentProxy != null)
-		{
-			result = getLatest(result, parentProxy.getLatestVersion(project));
+		
+		if (parentProxy != null) {
+			var parentResult = try parentProxy.getLatestVersion(project) catch (_:Dynamic) null;
+			result = getLatest(result, parentResult);
 		}
 		return result;
 	}
@@ -239,16 +218,14 @@ class RepoProxy extends Repo
 			neko.Lib.rethrow(error.e);
 	}
 	
-	static function getLatest(a:SemVer, b:SemVer):SemVer
-	{
+	inline static function getLatest(a:SemVer, b:SemVer):SemVer {
 		if (a == null) return b;
 		if (b == null) return a;
 		
 		return (SemVer.compare(a, b) > 0)?a:b;
 	}
 	
-	static function mergeInfos(a:ProjectInfos, b:ProjectInfos):ProjectInfos
-	{
+	inline static function mergeInfos(a:ProjectInfos, b:ProjectInfos):ProjectInfos {
 		if (a == null) return b;
 		if (b == null) return a;
 		
@@ -277,17 +254,15 @@ class RepoProxy extends Repo
 }
 
 
-class ProxySubmitHelper implements ISubmitHelper
-{
+class ProxySubmitHelper implements ISubmitHelper {
+	
 	public function new (){};
 	
-	public function checkSubmitRights(user:User, pass:String):Bool 
-	{
+	public function checkSubmitRights(user:User, pass:String):Bool {
 		return true;
 	}
 	
-	public function getContributors(ids:Array<String>):Array<User> 
-	{
+	public function getContributors(ids:Array<String>):Array<User> {
 		return ids.map(function(user) {
 			var u = User.manager.search({ name : user }).first();
 			if (u == null)
@@ -296,16 +271,14 @@ class ProxySubmitHelper implements ISubmitHelper
 		});
 	}
 	
-	public function getUser(infos:Infos, user:String):User
-	{
+	public function getUser(infos:Infos, user:String):User {
 		var u = User.manager.search({ name : infos.contributors[0] }).first();
 		if (u == null)
 			u = makeUser(infos.contributors[0]);
 		return u;
 	}
 	
-	function makeUser(user:String):User
-	{
+	function makeUser(user:String):User {
 		var u = new User();
 		u.name = user;
 		u.fullname = user;
