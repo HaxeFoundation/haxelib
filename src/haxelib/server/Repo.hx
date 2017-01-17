@@ -145,8 +145,7 @@ class Repo implements SiteApi {
 		return Std.string(Std.random(100000000));
 	}
 
-	function createProject(infos:Infos, devs:Array<User>, tags:Array<String>, owner:User):Project
-	{
+	function createProject(infos:Infos, devs:Array<User>, tags:Array<String>, owner:User):Project {
 		var p = new Project();
 		p.name = infos.name;
 		p.description = infos.description;
@@ -370,24 +369,21 @@ class Repo implements SiteApi {
 
 }
 
-interface ISubmitHelper
-{
+interface ISubmitHelper {
 	function checkSubmitRights(user:User, pass:String):Bool;
 	function getContributors(ids:Array<String>):Array<User>;
 	function getUser(infos:Infos, user:String):User;
 }
 
-class SubmitHelper implements ISubmitHelper
-{
+class SubmitHelper implements ISubmitHelper {
+	
 	public function new (){};
 	
-	public function getUser(infos:Infos, user:String):User
-	{
+	public function getUser(infos:Infos, user:String):User {
 		return User.manager.search({ name : user }).first();
 	}
 	
-	public function getContributors(ids:Array<String>):Array<User>
-	{
+	public function getContributors(ids:Array<String>):Array<User> {
 		return ids.map(function(user) {
 			var u = User.manager.search({ name : user }).first();
 			if( u == null )
@@ -396,8 +392,7 @@ class SubmitHelper implements ISubmitHelper
 		});
 	}
 
-	public function checkSubmitRights(user:User, pass:String):Bool
-	{
+	public function checkSubmitRights(user:User, pass:String):Bool {
 		return user != null && user.pass == pass;
 	}
 	
