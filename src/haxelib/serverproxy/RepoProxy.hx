@@ -103,48 +103,29 @@ class RepoProxy extends Repo
 	}
 	
 	inline static function processFileUpload() {
-		var boundary = Web.getClientHeaders()
-			.filter(function(h:{value:String, header:String}) return (h.header == "Content-Type"))
-			.first().value.split("boundary=")[1];
-			
-		var data = Web.getPostData().split(boundary);
-		data = data.filter(function(s) return (s != null && s != "" && s != "--"));
-		
-		var fileContent = data[0];
-		
+		var tmpFile = null;
+		var tmpFileName = null;
+		var tmpFilePath = null;
 		var sid = null;
-		var lines = ~/\r?\n/.split(fileContent).map(function (line){
-			if (line.indexOf("Content-Disposition") >= 0)
-			{
-				line.split(" ").map(function (s){
-					if (s.indexOf("filename") == 0) sid = s.split("\"")[1];
-				});
-			}
+		var bytes = 0;
+		neko.Web.parseMultipart(function(p,fileName) {
+			if( p == "file" ) {
+				sid = Std.parseInt(fileName);
+				tmpFilePath = Path.join([TMP_DIR, tmpFileName = sid+".tmp"]);
+				FileSystem.createDirectory(Path.directory(tmpFilePath));
+				tmpFile = sys.io.File.write(tmpFilePath, true);
+			} else
+				throw p+" not accepted";
+		},function(data,pos,len) {
+			bytes += len;
+			tmpFile.writeFullBytes(data,pos,len);
 		});
-		
-		if (sid == null || Std.string(Std.parseInt(sid)) != sid) throw "Invalid filename";
-		
-		var zipHeader = new Utf8();
-		zipHeader.addChar(0x50);
-		zipHeader.addChar(0x4b);
-		zipHeader.addChar(0x03);
-		zipHeader.addChar(0x04);
-		
-		var beginning = fileContent.indexOf(zipHeader.toString());
-		if (beginning == -1) throw "Invalid zip file";
-		
-		var bytes = Bytes.ofString(fileContent.substr(beginning));
-		if (bytes == null || bytes.length == 0) throw "Invalid file";
-		
-		var tmpFileName = sid + ".tmp";
-		var tmpFilePath = Path.join([TMP_DIR, tmpFileName]);
-		FileSystem.createDirectory(Path.directory(tmpFilePath));
-		var tmpFile = sys.io.File.write(tmpFilePath, true);
-		tmpFile.writeBytes(bytes, 0, bytes.length);
-		tmpFile.close();
-		
-		FileStorage.instance.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
-		trace("File #"+sid+" accepted : "+bytes.length+" bytes written");
+		if( tmpFile != null ) {
+			tmpFile.close();
+			FileStorage.instance
+				.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
+			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
+		}
 	}
 	
 	static inline function addFinalSlash(url:String):String {
