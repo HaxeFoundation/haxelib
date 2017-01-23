@@ -934,7 +934,7 @@ class Main {
 		}
 	}
 
-	function getConfigFile():String {
+	static public function getConfigFile():String {
 		var home = null;
 		if (IS_WINDOWS) {
 			home = Sys.getEnv("USERPROFILE");
@@ -980,12 +980,14 @@ class Main {
 		return rep;
 	}
 
-	// on windows we have default global haxelib path - where haxe is installed
+	// The Windows haxe installer will setup %HAXEPATH%. We will default haxelib repo to %HAXEPATH%/lib.
+	// When there is no %HAXEPATH%, we will use a "haxelib" directory next to the config file, ".haxelib".
 	function getWindowsDefaultGlobalRepositoryPath():String {
 		var haxepath = Sys.getEnv("HAXEPATH");
-		if (haxepath == null)
-			throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
-		return Path.addTrailingSlash(haxepath.trim()) + REPNAME;
+		if (haxepath != null)
+			return Path.addTrailingSlash(haxepath.trim()) + REPNAME;
+		else
+			return Path.join([Path.directory(getConfigFile()), "haxelib"]);
 	}
 
 	function getSuggestedGlobalRepositoryPath():String {
@@ -1018,12 +1020,12 @@ class Main {
 
 	function setup() {
 		var rep = try getGlobalRepositoryPath() catch (_:Dynamic) null;
-		if (rep == null)
-			rep = getSuggestedGlobalRepositoryPath();
 
 		var configFile = getConfigFile();
 
 		if (args.length <= argcur) {
+			if (rep == null)
+				rep = getSuggestedGlobalRepositoryPath();
 			print("Please enter haxelib repository path with write access");
 			print("Hit enter for default (" + rep + ")");
 		}
