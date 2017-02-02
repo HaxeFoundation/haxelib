@@ -549,7 +549,7 @@ class Main {
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
-			print("Please enter the following informations for registration");
+			print("Please enter the following information for registration");
 			password = doRegister(user);
 		} else {
 			password = readPassword(user);

@@ -137,8 +137,8 @@ class Main {
 		addCommand("remove",remove,"remove a given library/version",false);
 		addCommand("set",set,"set the current version for a library",false);
 		addCommand("search",search,"list libraries matching a word");
-		addCommand("info",info,"list informations on a given library");
-		addCommand("user",user,"list informations on a given user");
+		addCommand("info",info,"list information on a given library");
+		addCommand("user",user,"list information on a given user");
 		addCommand("register",register,"register a new user");
 		addCommand("submit",submit,"submit or update a library package");
 		addCommand("setup",setup,"set the haxelib repository path",false);
@@ -331,7 +331,7 @@ class Main {
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
-			print("Please enter the following informations for registration");
+			print("Please enter the following information for registration");
 			password = doRegister(user);
 		} else {
 			if( infos.developers.length > 1 )
