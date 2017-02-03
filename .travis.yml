@@ -5,7 +5,7 @@ env:
 
 matrix:
   include:
-    # haxe development + neko master
+    # haxe development + neko development
     - os: linux
       sudo: required
       dist: trusty
@@ -16,7 +16,7 @@ matrix:
       before_install:
         - sudo add-apt-repository ppa:haxe/snapshots -y
         - sudo apt-get update
-        - sudo apt-get install haxe=1:3.4* neko-dev libapache2-mod-neko -y
+        - sudo apt-get install haxe neko-dev libapache2-mod-neko -y
         - mkdir ~/haxelib && haxelib setup ~/haxelib
         - sudo usermod -a -G travis www-data
     # haxe 3.2.1 + neko 2.1.0
