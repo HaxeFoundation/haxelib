@@ -64,6 +64,14 @@ class TestInstall extends TestBase
 		
 		checkLibrary(getLibraryName());
 	}
+
+	public function testInstallHaxelibHgParameter():Void
+	{
+		var r = runHaxelib(["--debug", "install", "hg.haxelib.json"]);
+		assertTrue(r.exitCode == 0);
+		
+		checkLibrary(getLibraryName(), "hg");
+	}
 	
 	public function testInstallHaxelibDependencyWithTag():Void
 	{
@@ -76,6 +84,18 @@ class TestInstall extends TestBase
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(Path.join([lib, "git", "README.md"])));
 	}
+
+	public function testInstallHaxelibHgDependencyWithTag():Void
+	{
+		var r = runHaxelib(["install", "hg.tag_haxelib.json"]);
+		assertTrue(r.exitCode == 0);
+		
+		var lib = getLibraryName();
+		checkLibrary(lib, "hg");
+		
+		// if that repo "README.md" was added in tag/rev.: "0.9.2"
+		assertFalse(FileSystem.exists(Path.join([lib, "hg", "README.md"])));
+	}
 	
 	function getLibraryName():String
 	{
@@ -85,7 +105,7 @@ class TestInstall extends TestBase
 		return details.dependencies.toArray()[0].name;
 	}
 	
-	function checkLibrary(lib:String):Void
+	function checkLibrary(lib:String, type = "git"):Void
 	{
 		// Library folder exists
 		var libFolder = Path.join([repo, lib]);
@@ -94,7 +114,7 @@ class TestInstall extends TestBase
 		
 		// Library version is set to git
 		var current = File.read(Path.join([libFolder, ".current"]), false);
-		assertTrue(current.readAll().toString() == "git");
+		assertTrue(current.readAll().toString() == type);
 		current.close();
 	}
 
