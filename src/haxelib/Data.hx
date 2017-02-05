@@ -81,19 +81,9 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 			var value:String = Reflect.field(this, f);
 
 			var isGit = value != null && (value + "").startsWith("git:"); 
+			var isHg = value != null && (value + "").startsWith("hg:"); 
 			
-			if ( !isGit )
-			{
-				result.push ({
-					name: f,
-					type: (DependencyType.Haxelib : DependencyType),
-					version: (cast value : DependencyVersion),
-					url: (null : String),
-					subDir: (null : String),
-					branch: (null : String),
-				});
-			}
-			else
+			if ( isGit )
 			{
 				value = value.substr(4);
 				var urlParts = value.split("#");
@@ -109,7 +99,33 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 					branch: (branch : String),
 				});
 			}
-			
+			else if ( isHg )
+			{
+				value = value.substr(3);
+				var urlParts = value.split("#");
+				var url = urlParts[0];
+				var branch = urlParts.length > 1 ? urlParts[1] : null;
+				
+				result.push ({
+					name: f,
+					type: (DependencyType.Mercurial : DependencyType),
+					version: (DependencyVersion.DEFAULT : DependencyVersion),
+					url: (url : String),
+					subDir: (null : String),
+					branch: (branch : String),
+				});
+			}
+			else
+			{
+				result.push ({
+					name: f,
+					type: (DependencyType.Haxelib : DependencyType),
+					version: (cast value : DependencyVersion),
+					url: (null : String),
+					subDir: (null : String),
+					branch: (null : String),
+				});
+			}
 			
 		}
 		
