@@ -699,9 +699,15 @@ class Main {
 					{
 						if ( parts[1].startsWith("git:") )
 						{
-							
 							type = "git";
 							var urlParts = parts[1].substr(4).split("#");
+							url = urlParts[0];
+							branch = urlParts.length > 1 ? urlParts[1] : null;
+						}
+						else if ( parts[1].startsWith("hg:") )
+						{
+							type = "hg";
+							var urlParts = parts[1].substr(3).split("#");
 							url = urlParts[0];
 							branch = urlParts.length > 1 ? urlParts[1] : null;
 						}
@@ -737,9 +743,9 @@ class Main {
 		print("Loading info about the required libraries");
 		for (l in libsToInstall)
 		{
-			if ( l.type == "git" )
+			if ( l.type == "git" || l.type == "hg" )
 			{
-				// Do not check git repository infos
+				// Do not check git/hg repository infos
 				continue;
 			}
 			var inf = site.infos(l.name);
