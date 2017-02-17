@@ -174,7 +174,7 @@ class Main {
 		addCommand("user", user, "list information on a given user", Information);
 		addCommand("config", config, "print the repository path", Information, false);
 		addCommand("path", path, "give paths to libraries", Information, false);
-		addCommand("version", version, "print the currently using haxelib version", Information, false);
+		addCommand("version", version, "print the currently used haxelib version", Information, false);
 		addCommand("help", usage, "display this list of options", Information, false);
 
 		addCommand("submit", submit, "submit or update a library package", Development);
