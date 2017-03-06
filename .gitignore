@@ -6,6 +6,8 @@ test/libraries/vsc/
 dump/
 deploy/
 repo_integration_tests/
+haxelib
+run.c
 
 # run.n is in the repo
 !/run.n
@@ -21,3 +23,28 @@ deploy_key
 
 # Bower
 www/bower_components
+
+.haxelib
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# CMake
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# VisualStudio
+*.vcxproj
+*.vcxproj.filters
+*.sln
+Win32
+haxelib.dir

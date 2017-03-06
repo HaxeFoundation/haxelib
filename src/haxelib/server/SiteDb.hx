@@ -123,7 +123,16 @@ class SiteDb {
 
 	static public function init() {
 		db =
-			if (sys.FileSystem.exists(DB_CONFIG))
+			if (Sys.getEnv("HAXELIB_DB_HOST") != null)
+				Mysql.connect({
+					"host":     Sys.getEnv("HAXELIB_DB_HOST"),
+					"port":     Std.parseInt(Sys.getEnv("HAXELIB_DB_PORT")),
+					"database": Sys.getEnv("HAXELIB_DB_NAME"),
+					"user":     Sys.getEnv("HAXELIB_DB_USER"),
+					"pass":     Sys.getEnv("HAXELIB_DB_PASS"),
+					"socket":   null
+				});
+			else if (sys.FileSystem.exists(DB_CONFIG))
 				Mysql.connect(haxe.Json.parse(sys.io.File.getContent(DB_CONFIG)));
 			else
 				Sqlite.open(DB_FILE);

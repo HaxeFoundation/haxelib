@@ -152,6 +152,7 @@ class Main {
 	var siteUrl : String;
 	var site : SiteProxy;
 	var isHaxelibRun : Bool;
+	var alreadyUpdatedVcsDependencies:Map<String,String> = new Map<String,String>();
 
 
 	function new() {
@@ -173,7 +174,7 @@ class Main {
 		addCommand("user", user, "list information on a given user", Information);
 		addCommand("config", config, "print the repository path", Information, false);
 		addCommand("path", path, "give paths to libraries", Information, false);
-		addCommand("version", version, "print the currently using haxelib version", Information, false);
+		addCommand("version", version, "print the currently used haxelib version", Information, false);
 		addCommand("help", usage, "display this list of options", Information, false);
 
 		addCommand("submit", submit, "submit or update a library package", Development);
@@ -548,7 +549,7 @@ class Main {
 		var password;
 		if( site.isNewUser(user) ) {
 			print("This is your first submission as '"+user+"'");
-			print("Please enter the following informations for registration");
+			print("Please enter the following information for registration");
 			password = doRegister(user);
 		} else {
 			password = readPassword(user);
@@ -632,6 +633,12 @@ class Main {
 				doInstallFile(rep, prj, true, true);
 				return;
 			}
+			
+			if ( prj.endsWith("haxelib.json") )
+			{
+				installFromHaxelibJson( rep, prj);
+				return;
+			}
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
@@ -663,7 +670,7 @@ class Main {
 			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
-		var libsToInstall = new Map<String, {name:String,version:String}>();
+		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
 
 		function processHxml(path) {
 			var hxml = sys.io.File.getContent(path);
@@ -674,18 +681,44 @@ class Main {
 					if (l.startsWith(target)) {
 						var lib = targets[target];
 						if (!libsToInstall.exists(lib))
-							libsToInstall[lib] = { name: lib, version: null }
+							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
 					}
 
-				if (l.startsWith("-lib")) {
-					var key = l.substr(5);
-					var parts = key.split(":");
-					var libName = parts[0].trim();
-					var libVersion = if (parts.length > 1) parts[1].trim() else null;
+				if (l.startsWith("-lib"))
+				{
+					var key = l.substr(5).trim();
+					var parts = ~/:/.split(key);
+					var libName = parts[0];
+					var libVersion:String = null;
+					var branch:String = null;
+					var url:String = null;
+					var subDir:String = null;
+					var type:String;
+					
+					if ( parts.length > 1 )
+					{
+						if ( parts[1].startsWith("git:") )
+						{
+							
+							type = "git";
+							var urlParts = parts[1].substr(4).split("#");
+							url = urlParts[0];
+							branch = urlParts.length > 1 ? urlParts[1] : null;
+						}
+						else
+						{
+							type = "haxelib";
+							libVersion = parts[1];
+						}
+					}
+					else
+					{
+						type = "haxelib";
+					}
 
 					switch libsToInstall[key] {
 						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion } );
+							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
 						default:
 					}
 				}
@@ -702,7 +735,13 @@ class Main {
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		print("Loading info about the required libraries");
-		for (l in libsToInstall) {
+		for (l in libsToInstall)
+		{
+			if ( l.type == "git" )
+			{
+				// Do not check git repository infos
+				continue;
+			}
 			var inf = site.infos(l.name);
 			l.version = getVersion(inf, l.version);
 		}
@@ -716,9 +755,20 @@ class Main {
 
 		// Install if they confirm
 		if (ask("Continue?")) {
-			for (l in libsToInstall)
-				doInstall(rep, l.name, l.version, true);
+			for (l in libsToInstall) {
+				if ( l.type == "haxelib" )
+					doInstall(rep, l.name, l.version, true);
+				else if ( l.type == "git" )
+					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
+				else if ( l.type == "hg" )
+					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
+			}
 		}
+	}
+	
+	function installFromHaxelibJson( rep:String, path:String )
+	{
+		doInstallDependencies(rep, Data.readData(File.getContent(path), false).dependencies);
 	}
 
 	function installFromAllHxml(rep:String) {
@@ -869,9 +919,9 @@ class Main {
 				}
 			}
 
-			print("Installing dependency "+d.name+" "+d.version);
-			if( d.version == "" )
+			if( d.version == "" && d.type == DependencyType.Haxelib )
 				d.version = site.getLatestVersion(d.name);
+			print("Installing dependency "+d.name+" "+d.version);
 
 			switch d.type {
 				case Haxelib:
@@ -884,7 +934,7 @@ class Main {
 		}
 	}
 
-	function getConfigFile():String {
+	static public function getConfigFile():String {
 		var home = null;
 		if (IS_WINDOWS) {
 			home = Sys.getEnv("USERPROFILE");
@@ -924,18 +974,20 @@ class Main {
 			// on windows, try to use haxe installation path
 			rep = getWindowsDefaultGlobalRepositoryPath();
 			if (create)
-				try safeDir(rep) catch(e:Dynamic) throw "Error accessing Haxelib repository: $e";
+				try safeDir(rep) catch(e:Dynamic) throw 'Error accessing Haxelib repository: $e';
 		}
 
 		return rep;
 	}
 
-	// on windows we have default global haxelib path - where haxe is installed
+	// The Windows haxe installer will setup %HAXEPATH%. We will default haxelib repo to %HAXEPATH%/lib.
+	// When there is no %HAXEPATH%, we will use a "haxelib" directory next to the config file, ".haxelib".
 	function getWindowsDefaultGlobalRepositoryPath():String {
 		var haxepath = Sys.getEnv("HAXEPATH");
-		if (haxepath == null)
-			throw "HAXEPATH environment variable not defined, please run haxesetup.exe first";
-		return Path.addTrailingSlash(haxepath.trim()) + REPNAME;
+		if (haxepath != null)
+			return Path.addTrailingSlash(haxepath.trim()) + REPNAME;
+		else
+			return Path.join([Path.directory(getConfigFile()), "haxelib"]);
 	}
 
 	function getSuggestedGlobalRepositoryPath():String {
@@ -968,12 +1020,12 @@ class Main {
 
 	function setup() {
 		var rep = try getGlobalRepositoryPath() catch (_:Dynamic) null;
-		if (rep == null)
-			rep = getSuggestedGlobalRepositoryPath();
 
 		var configFile = getConfigFile();
 
 		if (args.length <= argcur) {
+			if (rep == null)
+				rep = getSuggestedGlobalRepositoryPath();
 			print("Please enter haxelib repository path with write access");
 			print("Hit enter for default (" + rep + ")");
 		}
@@ -1304,21 +1356,43 @@ class Main {
 	}
 
 	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
+		
 		var proj = rep + Data.safe(libName);
 
-		// find & remove all existing repos:
-		removeExistingDevLib(proj);
-		// currently we already kill all dev-repos for all supported Vcs.
-
-
 		var libPath = proj + "/" + vcs.directory;
+		
+		var jsonPath = libPath + "/haxelib.json";
+		
+		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
+			print("You already have "+libName+" version "+vcs.directory+" installed.");
+			
+			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
+			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
+			
+			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
+				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
+			{
+				deleteRec(libPath);
+				this.alreadyUpdatedVcsDependencies.set(libName, branch);
+			}
+			else
+			{
+				if (!wasUpdated)
+				{
+					print("Updating " + libName+" version " + vcs.directory + " ...");
+					this.alreadyUpdatedVcsDependencies.set(libName, branch);
+					updateByName(rep, libName);
+					setCurrent(rep, libName, vcs.directory, true);
+					
+					if(FileSystem.exists(jsonPath))
+						doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
+				}
+				return;
+			}
+		}
 
-		// prepare for new repo
-		deleteRec(libPath);
-
-
-		print("Installing " +libName + " from " +url);
-
+		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
+		
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
@@ -1336,7 +1410,6 @@ class Main {
 			throw message;
 		}
 
-
 		// finish it!
 		if (subDir != null) {
 			libPath += "/" + subDir;
@@ -1347,7 +1420,8 @@ class Main {
 			print("Library "+libName+" current version is now "+vcs.directory);
 		}
 
-		var jsonPath = libPath + "/haxelib.json";
+		this.alreadyUpdatedVcsDependencies.set(libName, branch);
+
 		if(FileSystem.exists(jsonPath))
 			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
