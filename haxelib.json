@@ -7,8 +7,5 @@
 	"classPath": "src",
 	"version": "3.3.0",
 	"releasenote": "Initial release for Haxe 3.3",
-	"contributors": ["back2dos", "ncannasse", "jason", "Simn", "nadako"],
-	"dependencies": {
-		"record-macros": ""
-	}
+	"contributors": ["back2dos", "ncannasse", "jason", "Simn", "nadako"]
 }

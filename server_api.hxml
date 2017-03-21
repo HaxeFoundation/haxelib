@@ -2,5 +2,6 @@
 -neko www/api/3.0/index.n
 -main haxelib.server.Repo
 -lib aws-sdk-neko:0.2.0
+-lib record-macros
 -dce no
 -D haxelib_api
