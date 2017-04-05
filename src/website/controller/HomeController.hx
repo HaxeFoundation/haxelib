@@ -106,6 +106,7 @@ class HomeController extends Controller {
 			title: 'Haxelib Tags',
 			description: 'The 50 most popular tags for projects on Haxelib, sorted by the number of projects',
 			tags: tagList,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tagCloud: tagCloud,
 		});
 	}
