@@ -31,6 +31,7 @@ class ProjectController extends Controller {
 			description: info.desc,
 			project: projectName,
 			allVersions: info.versions,
+			htmlEscape: StringTools.htmlEscape,
 			info: info,
 		});
 	}
