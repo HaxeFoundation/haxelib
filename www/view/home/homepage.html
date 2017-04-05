@@ -27,7 +27,7 @@
 				<h4><i class="fa fa-tags"></i> Popular Tags</h4>
 				<ul class="list-unstyled">
 					@for( t in tags ) {
-						<li><i class="fa fa-tag"></i> <a href="/t/@t.tag/"><strong>@t.tag</strong> <span class="badge">@t.count</span></a></li>
+						<li><i class="fa fa-tag"></i> <a href="/t/@t.tag/"><strong>@escape(t.tag)</strong> <span class="badge">@t.count</span></a></li>
 					}
 				</ul>
 			</div>
@@ -47,8 +47,8 @@
 				<div>
 					@for( update in latestProjects ) {
 						<p>
-							<strong><a href="/p/@update.p.name/@update.v.name/">@htmlEscape(update.p.name)</a>:</strong> @htmlEscape(update.p.description)
-							<br /><strong>@htmlEscape(update.v.name):</strong>@htmlEscape(update.v.comments) 
+							<strong><a href="/p/@update.p.name/@update.v.name/">update.p.name</a>:</strong> @escape(update.p.description)
+							<br /><strong>update.v.name:</strong>@escape(update.v.comments) 
 						</p>
 					}
 				</div>

@@ -30,8 +30,8 @@ class ProjectController extends Controller {
 			title: 'All versions of $projectName',
 			description: info.desc,
 			project: projectName,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			allVersions: info.versions,
-			htmlEscape: StringTools.htmlEscape,
 			info: info,
 		});
 	}
