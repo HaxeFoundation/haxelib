@@ -48,7 +48,7 @@
 					@for( update in latestProjects ) {
 						<p>
 							<strong><a href="/p/@update.p.name/@update.v.name/">@update.p.name</a>:</strong> @update.p.description
-							<br /><strong>@update.v.name:</strong> @update.v.comments
+							<br /><strong>@update.v.name:</strong>@htmlEscape(update.v.comments) 
 						</p>
 					}
 				</div>

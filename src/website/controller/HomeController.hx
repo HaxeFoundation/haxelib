@@ -41,6 +41,7 @@ class HomeController extends Controller {
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
 			latestProjects: latestProjects,
+			htmlEscape: StringTools.htmlEscape,
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
