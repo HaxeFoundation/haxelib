@@ -41,6 +41,7 @@ class HomeController extends Controller {
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
 			latestProjects: latestProjects,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
@@ -105,6 +106,7 @@ class HomeController extends Controller {
 			title: 'Haxelib Tags',
 			description: 'The 50 most popular tags for projects on Haxelib, sorted by the number of projects',
 			tags: tagList,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tagCloud: tagCloud,
 		});
 	}
