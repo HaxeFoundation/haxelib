@@ -175,7 +175,7 @@ Listen 2000
 				pass: user.pass,
 				host: "localhost",
 				port: 3306,
-				database: "",
+				#if (haxe_ver < 4.0) database: "", #end
 			});
 			cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
 			cnx.request('create database ${dbConfig.database};');
