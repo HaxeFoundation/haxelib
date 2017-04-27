@@ -77,6 +77,7 @@ install:
       brew update;
     fi
   - npm -g install bower
+  - haxelib newrepo || mkdir -p .haxelib && haxelib setup .haxelib
   - yes | haxelib install all
   - yes | haxelib install tora
   # We need https://github.com/ufront/ufront-uftasks/commit/1ef09322eb51cf5d16bc1f9abeecaeb30542b62f
@@ -117,6 +118,7 @@ deploy:
   app: $EB_APP
   env: ${TRAVIS_BRANCH}-lib-haxe-org
   bucket_name: $EB_BUCKET
+  zip_file: eb.zip
   on:
     all_branches: true
     condition: $AWS_ACCESS_KEY && $DEPLOY && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH = development)

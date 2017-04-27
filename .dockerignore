@@ -4,4 +4,3 @@ bin
 test
 deploy_key
 www/bower_components
-.haxelib
