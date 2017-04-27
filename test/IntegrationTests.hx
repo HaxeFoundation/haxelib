@@ -8,7 +8,8 @@ using StringTools;
 using IntegrationTests;
 
 class IntegrationTests extends TestBase {
-	var haxelibBin:String = Path.join([Sys.getCwd(), "run.n"]);
+	static var projectRoot:String = Sys.getCwd();
+	var haxelibBin:String = Path.join([projectRoot, "run.n"]);
 	public var server(default, null):String = switch (Sys.getEnv("HAXELIB_SERVER")) {
 		case null:
 			"localhost";
@@ -125,9 +126,13 @@ class IntegrationTests extends TestBase {
 
 		deleteDirectory(repo);
 		haxelibSetup(repo);
+
+		Sys.setCwd(Path.join([projectRoot, "test"]));
 	}
 
 	override function tearDown():Void {
+		Sys.setCwd(projectRoot);
+
 		haxelibSetup(originalRepo);
 		deleteDirectory(repo);
 
