@@ -6,7 +6,7 @@ FROM ubuntu:trusty
 
 # apt-get dependencies of bower
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
-	&& add-apt-repository ppa:haxe/snapshots -y \
+	&& add-apt-repository ppa:haxe/releases -y \
 	&& apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		apache2 \
 		neko-dev \
