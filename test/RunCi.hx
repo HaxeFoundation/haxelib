@@ -65,16 +65,17 @@ class RunCi {
 	static function compileClient():Void {
 		runCommand("haxe", ["client.hxml"]);
 
-		var nekotoolsBootC = switch [Sys.getEnv("TRAVIS_HAXE_VERSION"), Sys.systemName()] {
-			case [null | "development", "Linux"]:
-				true;
-			case _:
-				false;
-		}
-		if (nekotoolsBootC) {
-			runCommand("cmake", ["."]);
-			runCommand("cmake", ["--build", "."]);
-		}
+		// only use it for Neko 2.2
+		// var nekotoolsBootC = switch [Sys.getEnv("TRAVIS_HAXE_VERSION"), Sys.systemName()] {
+		// 	case [null | "development", "Linux"]:
+		// 		true;
+		// 	case _:
+		// 		false;
+		// }
+		// if (nekotoolsBootC) {
+		// 	runCommand("cmake", ["."]);
+		// 	runCommand("cmake", ["--build", "."]);
+		// }
 	}
 
 	static function compileLegacyClient():Void {
