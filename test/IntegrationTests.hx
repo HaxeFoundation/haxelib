@@ -27,9 +27,12 @@ class IntegrationTests extends TestBase {
 
 	static var originalRepo(default, never) = {
 		var p = new Process("haxelib", ["config"]);
-		var repo = Path.normalize(p.stdout.readLine());
+		var originalRepo = Path.normalize(p.stdout.readLine());
 		p.close();
-		repo;
+		if (repo == originalRepo) {
+			throw "haxelib repo is the same as test repo: " + repo;
+		}
+		originalRepo;
 	};
 	static public var repo(default, never) = "repo_integration_tests";
 	static public var bar(default, never) = {
@@ -125,6 +128,7 @@ class IntegrationTests extends TestBase {
 		resetDB();
 
 		deleteDirectory(repo);
+		FileSystem.createDirectory(repo);
 		haxelibSetup(repo);
 
 		Sys.setCwd(Path.join([projectRoot, "test"]));
