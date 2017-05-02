@@ -380,10 +380,10 @@ Listen 2000
 		switch (Sys.getEnv("TRAVIS_BRANCH")) {
 			case null:
 				throw "unknown branch";
-			case "master", "staging":
+			case "master", "development":
 				//pass
 			case _:
-				Sys.println("branch is not master or staging, skip deploy");
+				Sys.println("branch is not master or development, skip deploy");
 				Sys.exit(0);
 		}
 
