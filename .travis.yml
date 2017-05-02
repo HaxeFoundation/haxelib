@@ -69,8 +69,8 @@ install:
     fi
   - npm -g install bower
   - haxelib newrepo || mkdir -p .haxelib && haxelib setup .haxelib
-  - yes | haxelib install all
-  - yes | haxelib install tora
+  - travis_retry haxelib install all --always
+  - travis_retry haxelib install tora --always
   # copy aws.ndll to the right place
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Mac64/aws.ndll ${NEKOPATH}/aws.ndll;
