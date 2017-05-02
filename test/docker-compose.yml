@@ -1,7 +1,8 @@
-version: '2'
+version: '3'
 services:
   web:
     build: ..
+    image: haxelib_web
     ports:
       - "2000:80"
     environment:

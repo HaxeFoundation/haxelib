@@ -8,12 +8,12 @@ env:
     - secure: "cWYcbB7z97sW4yZtz9qcYrEhFZktNjQMOraPm7Vy0FsCMqb4r314Fk8rJze+yDbOKGdsIz6VNHE8nlsQN3EgGiVFJnF8xv6GAlfHPuaVomP2vO7W0A+l7xVy2/326MQJP8JoMgdebDi71yxKeEhYA+mVliI9qql9yfD2YOBmilQ="
 
 install_docker: &install_docker
-  - sudo apt-get update
-  - sudo apt-get -o Dpkg::Options::=--force-confnew install docker-engine -y
+  - sudo apt-get update -qq
+  - sudo apt-get -o Dpkg::Options::=--force-confnew install docker-engine -qqy
   - docker --version
   # https://docs.travis-ci.com/user/docker/#Using-Docker-Compose
   - sudo rm -f /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   # https://github.com/travis-ci/travis-ci/issues/7008
