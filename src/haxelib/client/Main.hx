@@ -1057,6 +1057,41 @@ class Main {
 		return File.getContent(dir + "/.dev").trim();
 	}
 
+	function matchVersion( version, other ) {
+		if (version == "" || version == null)
+			return true;
+		if (other == "" || other == null)
+			return false;
+		var filter = version.replace(".","\\.").replace("*",".*");
+		return new EReg("^"+filter,"i").match(other);
+	}
+
+	function getVersionDir( version, dev, dir ) {
+		if ( dev != null ) {
+			var json = try File.getContent(dev+"/"+Data.JSON) catch( e : Dynamic ) null;
+			var inf = Data.readData(json, false);
+			if ( version == "dev" || matchVersion(version, inf.version) ) {
+				return dev;
+			}
+		}
+		var matches = [];
+		for( v in FileSystem.readDirectory(dir) ) {
+			if( v.charAt(0) == "." )
+				continue;
+			v = Data.unsafe(v);
+			var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
+			if (semver != null && matchVersion(version, semver))
+				matches.push(semver);
+		}
+		var best = null;
+		for( match in matches ) {
+			if (best == null || match > best) {
+				best = match;
+			}
+		}
+		return if (best != null) dir + "/" + Data.safe(best) else null;
+	}
+
 	function list() {
 		var rep = getRepository();
 		var folders = FileSystem.readDirectory(rep);
@@ -1248,9 +1283,9 @@ class Main {
 		var version = if( version != null ) version else getCurrent(pdir);
 
 		var dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = if (dev != null) dev else pdir + "/" + Data.safe(version);
+		var vdir = try getVersionDir(version,dev,pdir) catch (_:Dynamic) null;
 
-		if( !FileSystem.exists(vdir) )
+		if( vdir != null && !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
 
 		for( p in l )
