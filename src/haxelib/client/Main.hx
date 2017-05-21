@@ -964,10 +964,8 @@ class Main {
 	}
 
 	function getGlobalRepositoriesPath(create = false):String {
-		// first check the env var
 		var repEnv = Sys.getEnv("HAXELIB_PATH");
 
-		// try to read from user config
 		var repUser = try File.getContent(getConfigFile()).trim() catch (_:Dynamic) null;
 
 		var repSystem: String = null;
@@ -982,6 +980,10 @@ class Main {
 		}
 		if (repEnv == null && repUser == null && repSystem == null)
 			throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
+
+		// The first in the reps list will be writable repo for "haxelib install", so the order matters
+		// and that's why repUser is the first to try - it is the setting of "haxelib setup".
+		// Also the user setting (one of haxelib setup) should not hide settings from HAXELIB_PATH (distro installed libs)
 		var rep: String = "";
 		if (repUser != null)
 			rep += repUser;
@@ -1061,7 +1063,7 @@ class Main {
 
 			safeDir(r);
 		}
-		rep = reps.join(PATH_SEPARATOR);
+		rep = getWritableRepository(reps);
 		File.saveContent(configFile, rep);
 
 		print("haxelib repository is now " + rep);
