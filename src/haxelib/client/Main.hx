@@ -1021,15 +1021,15 @@ class Main {
 	}
 
 	function getGlobalRepositories():{writable: String, readonly: Array<String>} {
-	    var reps = getGlobalRepositoriesPath(true);
-	    if( reps.writable != null ) {
-		if (!FileSystem.exists(reps.writable))
-			throw "haxelib Repository " + reps.writable + " does not exist. Please run `haxelib setup` again.";
-		else if (!FileSystem.isDirectory(reps.writable))
-			throw "haxelib Repository " + reps.writable + " exists, but is a file, not a directory. Please remove it and run `haxelib setup` again.";
-	    }
-	    return { writable: if (reps.writable==null) null else Path.addTrailingSlash(reps.writable),
-	             readonly: reps.readonly.map(Path.addTrailingSlash) };
+		var reps = getGlobalRepositoriesPath(true);
+		if( reps.writable != null ) {
+			if (!FileSystem.exists(reps.writable))
+				throw "haxelib Repository " + reps.writable + " does not exist. Please run `haxelib setup` again.";
+			else if (!FileSystem.isDirectory(reps.writable))
+				throw "haxelib Repository " + reps.writable + " exists, but is a file, not a directory. Please remove it and run `haxelib setup` again.";
+		}
+		return { writable: if (reps.writable==null) null else Path.addTrailingSlash(reps.writable),
+		         readonly: reps.readonly.map(Path.addTrailingSlash) };
 	}
 
 	function setup() {
@@ -1075,90 +1075,90 @@ class Main {
 	}
 
 	function list() {
-	    var reps = getRepositories();
-	    for( rep in allReps(reps) ) {
-		var folders = FileSystem.readDirectory(rep);
-		var filter = paramOpt();
-		if ( filter != null )
-			folders = folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
-		var all = [];
-		for( p in folders ) {
-			if( p.charAt(0) == "." )
-				continue;
-
-			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
-			var dev = try getDev(rep + p) catch( e : Dynamic ) null;
-
-			var semvers = [];
-			var others = [];
-			for( v in FileSystem.readDirectory(rep+p) ) {
-				if( v.charAt(0) == "." )
+		var reps = getRepositories();
+		for( rep in allReps(reps) ) {
+			var folders = FileSystem.readDirectory(rep);
+			var filter = paramOpt();
+			if ( filter != null )
+				folders = folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
+			var all = [];
+			for( p in folders ) {
+				if( p.charAt(0) == "." )
 					continue;
-				v = Data.unsafe(v);
-				var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
-				if (semver != null)
-					semvers.push(semver);
-				else
-					others.push(v);
-			}
 
-			if (semvers.length > 0)
-				semvers.sort(SemVer.compare);
+				var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
+				var dev = try getDev(rep + p) catch( e : Dynamic ) null;
 
-			var versions = [];
-			for (v in semvers)
-				versions.push((v : String));
-			for (v in others)
-				versions.push(v);
-
-			if (dev == null) {
-				for (i in 0...versions.length) {
-					var v = versions[i];
-					if (v == current)
-						versions[i] = '[$v]';
+				var semvers = [];
+				var others = [];
+				for( v in FileSystem.readDirectory(rep+p) ) {
+					if( v.charAt(0) == "." )
+						continue;
+					v = Data.unsafe(v);
+					var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
+					if (semver != null)
+						semvers.push(semver);
+					else
+						others.push(v);
 				}
-			} else {
-				versions.push("[dev:"+dev+"]");
-			}
 
-			all.push(Data.unsafe(p) + ": "+versions.join(" "));
+				if (semvers.length > 0)
+					semvers.sort(SemVer.compare);
+
+				var versions = [];
+				for (v in semvers)
+					versions.push((v : String));
+				for (v in others)
+					versions.push(v);
+
+				if (dev == null) {
+					for (i in 0...versions.length) {
+						var v = versions[i];
+						if (v == current)
+							versions[i] = '[$v]';
+					}
+				} else {
+					versions.push("[dev:"+dev+"]");
+				}
+
+				all.push(Data.unsafe(p) + ": "+versions.join(" "));
+			}
+			all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
+			for (p in all) {
+				print(p);
+			}
 		}
-		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
-		for (p in all) {
-			print(p);
-		}
-	    }
   	}
 
 	function update() {
-	    var reps = getRepositories();
-	    for( rep in allReps(reps) ) {
-		var prj = paramOpt();
-		if (prj != null) {
-			prj = projectNameToDir(rep, prj); // get project name in proper case
-			if (!updateByName(reps, prj))
-				print(prj + " is up to date");
-			return;
-		}
-
-		var state = { reps : reps, prompt : true, updated : false };
-		for( p in FileSystem.readDirectory(rep) ) {
-			if( p.charAt(0) == "." || !FileSystem.isDirectory(rep+"/"+p) )
-				continue;
-			var p = Data.unsafe(p);
-			print("Checking " + p);
-			try {
-				doUpdate(p, state);
-			} catch (e:VcsError) {
-				if (!e.match(VcsUnavailable(_)))
-					neko.Lib.rethrow(e);
+		var reps = getRepositories();
+		for( rep in allReps(reps) ) {
+			var prj = paramOpt();
+			if (prj != null) {
+				prj = projectNameToDir(rep, prj); // get project name in proper case
+				if (!updateByName(reps, prj))
+					print(prj + " is up to date");
+				return;
 			}
+
+			var state = { reps : reps, prompt : true, updated : false };
+			for( p in FileSystem.readDirectory(rep) ) {
+				if( p.charAt(0) == "." || !FileSystem.isDirectory(rep+"/"+p) )
+					continue;
+				var p = Data.unsafe(p);
+				print("Checking " + p);
+				try {
+					doUpdate(p, state);
+				} catch (e:VcsError) {
+					if (!e.match(VcsUnavailable(_)))
+						neko.Lib.rethrow(e);
+				}
+			}
+			if( state.updated )
+				print("Done");
+			else
+				print("All libraries are up-to-date");
 		}
-		if( state.updated )
-			print("Done");
-		else
-			print("All libraries are up-to-date");
-	    }
   	}
 
 	function projectNameToDir( rep:String, project:String ) {
@@ -1208,38 +1208,38 @@ class Main {
 	}
 
 	function remove() {
-	    var reps = getRepositories();
-	    for( rep in allReps(reps) ) {
-		var prj = param("Library");
-		var version = paramOpt();
-		var pdir = rep + Data.safe(prj);
-		if( version == null ) {
-			if( !FileSystem.exists(pdir) )
-				throw "Library "+prj+" is not installed";
+		var reps = getRepositories();
+		for( rep in allReps(reps) ) {
+			var prj = param("Library");
+			var version = paramOpt();
+			var pdir = rep + Data.safe(prj);
+			if( version == null ) {
+				if( !FileSystem.exists(pdir) )
+					throw "Library "+prj+" is not installed";
 
-			if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
-				print('Error: Removing "$HAXELIB_LIBNAME" requires the --system flag');
-				Sys.exit(1);
+				if (prj == HAXELIB_LIBNAME && isHaxelibRun) {
+					print('Error: Removing "$HAXELIB_LIBNAME" requires the --system flag');
+					Sys.exit(1);
+				}
+
+				deleteRec(pdir);
+				print("Library "+prj+" removed");
+				return;
 			}
 
-			deleteRec(pdir);
-			print("Library "+prj+" removed");
-			return;
+			var vdir = pdir + "/" + Data.safe(version);
+			if( !FileSystem.exists(vdir) )
+				throw "Library "+prj+" does not have version "+version+" installed";
+
+			var cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
+			if( cur == version )
+				throw "Can't remove current version of library "+prj;
+			var dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
+			if( dev == vdir )
+				throw "Can't remove dev version of library "+prj;
+			deleteRec(vdir);
+			print("Library "+prj+" version "+version+" removed");
 		}
-
-		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) )
-			throw "Library "+prj+" does not have version "+version+" installed";
-
-		var cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
-		if( cur == version )
-			throw "Can't remove current version of library "+prj;
-		var dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
-		if( dev == vdir )
-			throw "Can't remove dev version of library "+prj;
-		deleteRec(vdir);
-		print("Library "+prj+" version "+version+" removed");
-	    }
   	}
 
 	function set() {
@@ -1459,7 +1459,7 @@ class Main {
 
 
 	function run() {
-                var allreps = allReps(getRepositories());
+		var allreps = allReps(getRepositories());
 		var project = param("Library");
 		var temp = project.split(":");
 		doRun(allreps, temp[0], temp[1]);
