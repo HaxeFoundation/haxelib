@@ -1071,14 +1071,7 @@ class Main {
 		return new EReg("^"+filter+"$","i").match(other);
 	}
 
-	function getVersionDir( version, dev, dir ) {
-		if ( dev != null ) {
-			var json = try File.getContent(dev+"/"+Data.JSON) catch( e : Dynamic ) null;
-			var inf = Data.readData(json, false);
-			if ( version == "dev" || matchVersion(version, inf.version) ) {
-				return dev;
-			}
-		}
+	function getVersionDir( version, dir ) {
 		var current = try getCurrent(dir) catch(e:Dynamic) null;
 		if ( current != null && matchVersion(version, current) ) {
 			return dir+"/"+Data.safe(current);
@@ -1300,8 +1293,8 @@ class Main {
 		var version = if( version != null ) version else getCurrent(pdir);
 
 		var dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = try getVersionDir(version,dev,pdir) catch (_:Dynamic) null;
-
+		var vdir = if (dev != null) dev else try getVersionDir(version,pdir) catch (_:Dynamic) null;
+		
 		if( vdir == null || !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
 
