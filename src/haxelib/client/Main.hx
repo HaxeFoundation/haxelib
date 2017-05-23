@@ -185,7 +185,6 @@ class Main {
 		//TODO: generate command about VCS by Vcs.getAll()
 		addCommand("git", vcs.bind(VcsID.Git), "use Git repository as library", Development);
 		addCommand("hg", vcs.bind(VcsID.Hg), "use Mercurial (hg) repository as library", Development);
-		addCommand("local", local, "install a local version of a library", Development, false);
 
 		addCommand("setup", setup, "set the haxelib repository path", Miscellaneous, false);
 		addCommand("newrepo", newRepo, "create a new local repository", Miscellaneous, false);
@@ -195,6 +194,7 @@ class Main {
 		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
 
 		// deprecated commands
+		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
 		addCommand("selfupdate", updateSelf, "update haxelib itself", Deprecated('Use `haxelib --global update $HAXELIB_LIBNAME` instead'));
 
 		initSite();
@@ -624,28 +624,44 @@ class Main {
 			return;
 		}
 
-		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
-			// *.hxml provided, install all libraries/versions in this hxml file
-			if( prj.endsWith(".hxml") ) {
-				installFromHxml(rep, prj);
-				return;
-			}
-			// *.zip provided, install zip as haxe library
-			if (prj.endsWith(".zip")) {
-				doInstallFile(rep, prj, true, true);
-				return;
-			}
-			
-			if ( prj.endsWith("haxelib.json") )
-			{
-				installFromHaxelibJson( rep, prj);
-				return;
+		var reqversion = paramOpt();
+		
+		if( sys.FileSystem.exists(prj) ) {
+			if( sys.FileSystem.isDirectory(prj) ) {
+				if( reqversion == null || Data.safe(reqversion) == Data.unsafe(reqversion) ) {
+					// path provided, install as local version
+					var json = try File.getContent(prj+"/"+Data.JSON) catch( e : Dynamic ) null;
+					var inf = try Data.readData(json, true) catch( e : Dynamic ) null;
+					if( inf != null ) {
+						var type = paramOpt();
+						doInstallLocal(rep, inf.name, type, prj, true);
+						return;
+					} else if ( !Data.alphanum.match(prj) ) {
+						throw prj + " is not a valid library path";
+					}
+				}
+			} else {
+				// *.hxml provided, install all libraries/versions in this hxml file
+				if( prj.endsWith(".hxml") ) {
+					installFromHxml(rep, prj);
+					return;
+				}
+				// *.zip provided, install zip as haxe library
+				if (prj.endsWith(".zip")) {
+					doInstallFile(rep, prj, true, true);
+					return;
+				}
+				
+				if ( prj.endsWith("haxelib.json") )
+				{
+					installFromHaxelibJson( rep, prj);
+					return;
+				}
 			}
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
 		var inf = site.infos(prj);
-		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
 		doInstall(rep,inf.name,version,version == inf.getLatest());
 	}
@@ -941,8 +957,9 @@ class Main {
 		}
 	}
 
-	function doInstallLocal( rep:String, project:String, type:String, dir:String ) {
+	function doInstallLocal( rep:String, project:String, type:String, dir:String, setcurrent:Bool ) {
 		var proj = rep + Data.safe(project);
+		type = (type == null) ? "local" : Data.safe(type);
 		if( !FileSystem.exists(proj) ) {
 			FileSystem.createDirectory(proj);
 		}
@@ -971,7 +988,10 @@ class Main {
 					print('Could not write to $localfile');
 				}
 			}
-		
+		}
+		if( setcurrent || !FileSystem.exists(proj+"/.current") ) {
+			File.saveContent(proj + "/.current", type);
+			print("  Current version is now "+type);
 		}
 	}
 
@@ -1142,6 +1162,23 @@ class Main {
 		return null;
 	}
 
+	function getVersionDirName( pdir, vdir ) {
+		for( v in FileSystem.readDirectory(pdir) ) {
+			if( v.charAt(0) == "." ) {
+				if (v == "." || v == ".." || v == ".current" || v == ".dev")
+					continue;
+				var dir = try getLocal(pdir, v.substr(1)) catch (_:Dynamic) null;
+				if (dir == vdir)
+					return v.substr(1);
+			} else {
+				var dir = pdir + "/" + v;
+				if ( dir == vdir )
+					return v;
+			}
+		}
+		return null;
+	}
+
 	function getVersionDir( version, dir ) {
 		var currentDir = getCurrentVersionDir(dir);
 		var current = try getJSONVersion(currentDir) catch (e:Dynamic) null;
@@ -1154,12 +1191,15 @@ class Main {
 			if( v.charAt(0) == "." ) {
 				if (v == "." || v == ".." || v == ".current" || v == ".dev")
 					continue;
-				vdir = try getLocal(dir, v.substr(1)) catch (_:Dynamic) null;
+				v = v.substr(1);
+				vdir = try getLocal(dir, v) catch (_:Dynamic) null;
 			} else {
 				vdir = dir+"/"+v;
 			}
 			if( vdir == null )
 				continue;
+			if( v == version )
+				return vdir;
 			var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
 			if ( semver == null ) {
 				var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
@@ -1229,7 +1269,7 @@ class Main {
 			if (dev == null) {
 				for (i in 0...versions.length) {
 					var v = versions[i];
-					if (v == current)
+					if (v == current || v.substr(0, v.indexOf(":")) == current)
 						versions[i] = '[$v]';
 				}
 			} else {
@@ -1307,8 +1347,8 @@ class Main {
 			Sys.setCwd(oldCwd);
 		} else {
 			var latest = try site.getLatestVersion(p) catch( e : Dynamic ) { Sys.println(e); return; };
-
-			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
+			var vdir = getVersionDir(latest, pdir);
+			if( vdir == null ) {
 				if( state.prompt ) {
 					if (!ask("Update "+p+" to "+latest))
 						return;
@@ -1316,7 +1356,7 @@ class Main {
 				doInstall(state.rep, p, latest,true);
 				state.updated = true;
 			} else
-				setCurrent(state.rep, p, latest, true);
+				setCurrent(state.rep, p, getVersionDirName(pdir, vdir), true);
 		}
 	}
 
@@ -1352,7 +1392,7 @@ class Main {
 		if( dev == vdir )
 			throw "Can't remove dev version of library "+prj;
 		if( islocal ) {
-			doInstallLocal(rep, prj, version, null);
+			doInstallLocal(rep, prj, version, null, false);
 			return;
 		}
 		deleteRec(vdir);
@@ -1365,9 +1405,8 @@ class Main {
 
 	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
 		var pdir = rep + Data.safe(prj);
-		var vdir = pdir + "/" + Data.safe(version);
-		var localdir = pdir + "/." + version;
-		if( !FileSystem.exists(vdir) && !FileSystem.exists(localdir) ){
+		var vdir = getVersionDir(version, pdir);
+		if( vdir == null ){
 			var semver = try SemVer.ofString(version) catch (_:Dynamic) null;
 			if( semver != null ) {
 				print("Library "+prj+" version "+version+" is not installed");
@@ -1378,12 +1417,15 @@ class Main {
 				throw "Library "+prj+" has no version "+version+" available";
 			}
 		}
-		if( File.getContent(pdir + "/.current").trim() == version )
+		if( vdir == getCurrentVersionDir(pdir) )
 			return;
-		if( doAsk && !ask("Set "+prj+" to version "+version) )
+		var vname = Data.unsafe(getVersionDirName(pdir, vdir));
+		version = getJSONVersion(vdir);
+		var vstr = (vname == version) ? vname : vname+" ("+version+")";
+		if( doAsk && !ask("Set "+prj+" to version "+vstr) )
 			return;
-		File.saveContent(pdir+"/.current",version);
-		print("Library "+prj+" current version is now "+version);
+		File.saveContent(pdir+"/.current",vname);
+		print("Library "+prj+" current version is now "+vstr);
 	}
 
 	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }> ) {
@@ -1471,27 +1513,6 @@ class Main {
 				}
 			}
 
-		}
-	}
-
-	function local() {
-		var rep = getRepository();
-
-		var path = param("Local library path:");
-		var type = paramOpt();
-		if( type == null ) type = "local";
-
-		if( FileSystem.exists(path) ) {
-			if( path.endsWith(".zip") && !sys.FileSystem.isDirectory(path) ) {
-				// support deprecated behavior
-				doInstallFile(rep, path, true, true);
-			} else if ( sys.FileSystem.isDirectory(path) ) {
-				var json = try File.getContent(path+"/"+Data.JSON) catch( e : Dynamic ) null;
-				if ( json != null ) {
-					var inf = Data.readData(json, false);
-					doInstallLocal(rep, inf.name, type, path);
-				}
-			}
 		}
 	}
 
@@ -1727,6 +1748,10 @@ class Main {
 
 
 	// deprecated commands
+	function local() {
+		doInstallFile(getRepository(), param("Package"), true, true);
+	}
+
 	function updateSelf() {
 		updateByName(getGlobalRepository(), HAXELIB_LIBNAME);
 	}
