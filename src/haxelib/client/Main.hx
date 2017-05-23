@@ -1068,7 +1068,7 @@ class Main {
 		if (other == "" || other == null)
 			return false;
 		var filter = version.replace(".","\\.").replace("*",".*");
-		return new EReg("^"+filter,"i").match(other);
+		return new EReg("^"+filter+"$","i").match(other);
 	}
 
 	function getVersionDir( version, dev, dir ) {
