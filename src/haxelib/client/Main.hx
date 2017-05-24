@@ -841,6 +841,8 @@ class Main {
 	}
 
 	function doInstallFile(reps:{writable:String, readonly: Array<String>},filepath,setcurrent,nodelete = false) {
+		if (reps.writable == null)
+			throw "haxelib Repository is not set. Please run `haxelib setup`.";
 		// read zip content
 		var f = File.read(filepath,true);
 		var zip = try {
@@ -920,6 +922,8 @@ class Main {
 	}
 
 	function doInstallDependencies( reps:{writable:String, readonly: Array<String>}, dependencies:Array<Dependency> ) {
+		if (reps.writable == null)
+			throw "haxelib Repository is not set. Please run `haxelib setup`.";
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = reps.writable + Data.safe(d.name);
@@ -1179,6 +1183,8 @@ class Main {
 	}
 
 	function doUpdate( p : String, state : { updated : Bool, reps : {writable:String, readonly: Array<String>}, prompt : Bool } ) {
+		if (state.reps.writable == null)
+			throw "haxelib Repository is not set. Please run `haxelib setup`.";
 		var pdir = state.reps.writable + Data.safe(p);
 
 		var vcs = Vcs.getVcsForDevLib(pdir, settings);
@@ -1387,6 +1393,8 @@ class Main {
 	}
 
 	function doVcsInstall(reps:{writable:String, readonly:Array<String>}, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
+		if (reps.writable == null)
+			throw "haxelib Repository is not set. Please run `haxelib setup`.";
 		
 		var proj = reps.writable + Data.safe(libName);
 
