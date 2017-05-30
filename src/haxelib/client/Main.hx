@@ -1628,7 +1628,7 @@ class Main {
 		if (version == null)
 			version = getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
-		var vdir = dev != null ? dev : pdir + Data.safe(version);
+		var vdir = dev != null ? dev : getVersionDir(version, pdir);
 
 		var infos =
 			try
