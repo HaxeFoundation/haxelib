@@ -1521,6 +1521,8 @@ class Main {
 		if( dir == null ) {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
+			if( !FileSystem.exists(proj+"/.current") )
+				try { FileSystem.deleteDirectory(proj); } catch (e:Dynamic) {}
 			print("Development directory disabled");
 		}
 		else {
