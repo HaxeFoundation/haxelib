@@ -633,7 +633,7 @@ class Main {
 					var json = try File.getContent(prj+"/"+Data.JSON) catch( e : Dynamic ) null;
 					var inf = try Data.readData(json, true) catch( e : Dynamic ) null;
 					if( inf != null ) {
-						var type = paramOpt();
+						var type = reqversion;
 						doInstallLocal(rep, inf.name, type, prj, true);
 						return;
 					} else if ( !Data.alphanum.match(prj) ) {
@@ -966,7 +966,8 @@ class Main {
 		if( reservedTypes.indexOf(type) > -1 ) {
 			throw "Local directory type " + type + " not allowed";
 		}
-		var localfile = proj+"/."+type;
+		var fileName = type == "local" ? ".local" : ".local_" + type;
+		var localfile = proj+"/"+fileName;
 		if( dir == null ) {
 			if( FileSystem.exists(localfile) )
 				FileSystem.deleteFile(localfile);
@@ -1119,7 +1120,16 @@ class Main {
 	}
 
 	function getLocal( dir, type = "local" ) {
-		return (FileSystem.exists(dir+"/."+type)) ? File.getContent(dir+"/."+type).trim() : null;
+		var fileName = type == "local" ? ".local" : ".local_" + type;
+		return (FileSystem.exists(dir+"/"+fileName)) ? File.getContent(dir+"/"+fileName).trim() : null;
+	}
+
+	function getLocalType( fileName ) {
+		if ( fileName == ".local" )
+			return "local";
+		if ( !StringTools.startsWith(fileName, ".local_") )
+			return null;
+		return fileName.substr(7);
 	}
 
 	function matchVersion( version, other ) {
@@ -1165,11 +1175,14 @@ class Main {
 	function getVersionDirName( pdir, vdir ) {
 		for( v in FileSystem.readDirectory(pdir) ) {
 			if( v.charAt(0) == "." ) {
-				if (v == "." || v == ".." || v == ".current" || v == ".dev")
+				if ( v == ".current" || v == ".dev" )
 					continue;
-				var dir = try getLocal(pdir, v.substr(1)) catch (_:Dynamic) null;
+				var type = getLocalType(v);
+				if ( type == null )
+					continue;
+				var dir = try getLocal(pdir, type) catch (_:Dynamic) null;
 				if (dir == vdir)
-					return v.substr(1);
+					return type;
 			} else {
 				var dir = pdir + "/" + v;
 				if ( dir == vdir )
@@ -1189,10 +1202,13 @@ class Main {
 		var vdir = null;
 		for( v in FileSystem.readDirectory(dir) ) {
 			if( v.charAt(0) == "." ) {
-				if (v == "." || v == ".." || v == ".current" || v == ".dev")
+				if ( v == ".current" || v == ".dev" )
 					continue;
-				v = v.substr(1);
-				vdir = try getLocal(dir, v) catch (_:Dynamic) null;
+				var type = getLocalType(v);
+				if ( type == null )
+					continue;
+				vdir = try getLocal(dir, type) catch (_:Dynamic) null;
+				v = type;
 			} else {
 				vdir = dir+"/"+v;
 			}
@@ -1239,7 +1255,9 @@ class Main {
 			for( v in FileSystem.readDirectory(rep+p) ) {
 				if( v.charAt(0) == "." ) {
 					if ( v != ".dev" && v != ".current" ) {
-						var type = v.substr(1);
+						var type = getLocalType(v);
+						if ( type == null )
+							continue;
 						var localdir = getLocal(rep+p, type);
 						if ( localdir != null ) {
 							others.push( type+":"+localdir );
@@ -1380,7 +1398,7 @@ class Main {
 		}
 
 		var vdir = pdir + "/" + Data.safe(version);
-		var localdir = pdir + "/." + version;
+		var localdir = pdir + "/." + (version == "local" ? "local" : "local_"+version);
 		var islocal = FileSystem.exists(localdir);
 		if( !FileSystem.exists(vdir) && !islocal )
 			throw "Library "+prj+" does not have version "+version+" installed";
@@ -1417,9 +1435,18 @@ class Main {
 				throw "Library "+prj+" has no version "+version+" available";
 			}
 		}
-		if( vdir == getCurrentVersionDir(pdir) )
-			return;
-		var vname = Data.unsafe(getVersionDirName(pdir, vdir));
+		var localdir = pdir + "/." + (version == "local" ? "local" : "local_"+version);
+		var islocal = FileSystem.exists(localdir);
+		var vname;
+		if( islocal ) {
+			if( version == getCurrent(pdir) )
+				return;
+			vname = version;
+		} else {
+			if( vdir == getCurrentVersionDir(pdir) )
+				return;
+			vname = Data.unsafe(getVersionDirName(pdir, vdir));
+		}
 		version = getJSONVersion(vdir);
 		var vstr = (vname == version) ? vname : vname+" ("+version+")";
 		if( doAsk && !ask("Set "+prj+" to version "+vstr) )
