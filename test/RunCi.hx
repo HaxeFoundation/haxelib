@@ -65,16 +65,17 @@ class RunCi {
 	static function compileClient():Void {
 		runCommand("haxe", ["client.hxml"]);
 
-		var nekotoolsBootC = switch [Sys.getEnv("TRAVIS_HAXE_VERSION"), Sys.systemName()] {
-			case [null | "development", "Linux"]:
-				true;
-			case _:
-				false;
-		}
-		if (nekotoolsBootC) {
-			runCommand("cmake", ["."]);
-			runCommand("cmake", ["--build", "."]);
-		}
+		// only use it for Neko 2.2
+		// var nekotoolsBootC = switch [Sys.getEnv("TRAVIS_HAXE_VERSION"), Sys.systemName()] {
+		// 	case [null | "development", "Linux"]:
+		// 		true;
+		// 	case _:
+		// 		false;
+		// }
+		// if (nekotoolsBootC) {
+		// 	runCommand("cmake", ["."]);
+		// 	runCommand("cmake", ["--build", "."]);
+		// }
 	}
 
 	static function compileLegacyClient():Void {
@@ -175,7 +176,7 @@ Listen 2000
 				pass: user.pass,
 				host: "localhost",
 				port: 3306,
-				database: "",
+				#if (haxe_ver < 4.0) database: "", #end
 			});
 			cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
 			cnx.request('create database ${dbConfig.database};');
@@ -364,6 +365,82 @@ Listen 2000
 		}
 	}
 
+	static function deploy():Void {
+		switch (Sys.getEnv("DEPLOY")) {
+			case null:
+				Sys.println("DEPLOY is not set to 1, skip deploy");
+				Sys.exit(0);
+			case "1":
+				//pass
+			case _:
+				Sys.println("DEPLOY is not set to 1, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch (Sys.getEnv("TRAVIS_BRANCH")) {
+			case null:
+				throw "unknown branch";
+			case "master", "development":
+				//pass
+			case _:
+				Sys.println("branch is not master or development, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch (Sys.getEnv("TRAVIS_PULL_REQUEST")) {
+			case "false":
+				// pass
+			case _:
+				Sys.println("it is a pull request build, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch ([
+			Sys.getEnv("DOCKER_USERNAME"),
+			Sys.getEnv("DOCKER_PASSWORD"),
+		]) {
+			case [null, _] | [_, null]:
+				Sys.println('missing a docker env var, skip deploy');
+				Sys.exit(0);
+			case [
+				docker_username,
+				docker_password
+			]:
+				if (Sys.command("docker", ["login", '-u=$docker_username', '-p=$docker_password']) != 0)
+					throw "docker login failed";
+		}
+
+		var commit = Sys.getEnv("TRAVIS_COMMIT");
+		var target = 'haxe/lib.haxe.org:${commit}';
+		runCommand("docker", ["tag", "haxelib_web", target]);
+		runCommand("docker", ["push", target]);
+
+		sys.io.File.saveContent("Dockerrun.aws.json", Json.stringify({
+			"AWSEBDockerrunVersion": "1",
+			"Image": {
+				"Name": target,
+				"Update": "true"
+			},
+			"Ports": [
+				{
+					"ContainerPort": "80"
+				}
+			],
+			"Volumes": [
+				{
+					"HostDirectory": "/media/docker_files",
+					"ContainerDirectory": "/var/www/html/files"
+				},
+				{
+					"HostDirectory": "/media/docker_tmp",
+					"ContainerDirectory": "/var/www/html/tmp"
+				}
+			]
+		}));
+
+		runCommand("zip", ["-r", "eb.zip", "Dockerrun.aws.json", ".ebextensions"]);
+	}
+
 	static function main():Void {
 		// Note that package.zip output is also used by client tests, so it has to be run before that.
 		runCommand("haxe", ["package.hxml"]);
@@ -393,5 +470,7 @@ Listen 2000
 			case _:
 				throw "Unknown system";
 		}
+
+		deploy();
 	}
 }

@@ -1,5 +1,6 @@
 package tests.integration;
 
+import haxe.io.Path;
 import IntegrationTests.*;
 using IntegrationTests;
 
@@ -11,7 +12,7 @@ class TestSimple extends IntegrationTests {
 		}
 
 		{
-			var r = haxelib(["submit", "test/libraries/libBar.zip", bar.pw]).result();
+			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
 			assertSuccess(r);
 		}
 
@@ -27,7 +28,7 @@ class TestSimple extends IntegrationTests {
 		}
 
 		{
-			var r = haxelib(["submit", "test/libraries/libFoo.zip", foo.pw]).result();
+			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo.zip"]), foo.pw]).result();
 			assertSuccess(r);
 		}
 

@@ -6,7 +6,7 @@ FROM ubuntu:trusty
 
 # apt-get dependencies of bower
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
-	&& add-apt-repository ppa:haxe/snapshots -y \
+	&& add-apt-repository ppa:haxe/releases -y \
 	&& apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		apache2 \
 		neko-dev \
@@ -28,8 +28,8 @@ RUN a2enmod proxy_http
 RUN mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
 COPY apache2.conf /etc/apache2/apache2.conf
 RUN { \
-		echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
-		echo 'LoadModule tora_module /usr/lib/x86_64-linux-gnu/neko/mod_tora2.ndll'; \
+		echo 'LoadModule neko_module /usr/lib/neko/mod_neko2.ndll'; \
+		echo 'LoadModule tora_module /usr/lib/neko/mod_tora2.ndll'; \
 		echo 'AddHandler tora-handler .n'; \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
@@ -38,14 +38,12 @@ RUN npm -g install bower
 
 
 # haxelib
-ENV HAXELIB_PATH /haxelib
-RUN mkdir "$HAXELIB_PATH" && haxelib setup "$HAXELIB_PATH" \
-	&& haxelib install tora 1.8.1
-
-COPY server*.hxml /src/
+ENV HAXELIB_PATH /src/.haxelib
+RUN mkdir /haxelib && haxelib setup /haxelib
 WORKDIR /src
-RUN haxelib install all --always
-RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+COPY .haxelib /src/.haxelib
+RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/neko/aws.ndll;
+COPY server*.hxml /src/
 
 COPY www/bower.json /src/www/
 WORKDIR /src/www

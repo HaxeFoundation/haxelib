@@ -6,6 +6,7 @@
 -lib markdown:1.0.0
 -lib cleversort
 -lib aws-sdk-neko:0.2.0
+-lib record-macros
 -D server
 -D getter_support
 # https://github.com/HaxeFoundation/haxe/issues/4903

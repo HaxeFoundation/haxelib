@@ -8,7 +8,7 @@ import haxe.io.*;
 class TestDev extends IntegrationTests {
 	function testDev():Void {
 		{
-			var r = haxelib(["dev", "Bar", "test/libraries/libBar"]).result();
+			var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
 			assertSuccess(r);
 		}
 
@@ -22,7 +22,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("test/libraries/libBar"))),
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath(Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])))),
 				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
 			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
@@ -46,7 +46,7 @@ class TestDev extends IntegrationTests {
 
 	function testWrongPath():Void {
 		{
-			var r = haxelib(["dev", "Bar", "test/libraries/libBar_not_exist"]).result();
+			var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar_not_exist"])]).result();
 			// assertTrue(r.code != 0); //TODO
 		}
 
@@ -60,7 +60,7 @@ class TestDev extends IntegrationTests {
 
 	function testNoHaxelibJson():Void {
 		{
-			var r = haxelib(["dev", "Bar", "bin"]).result();
+			var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "bin"])]).result();
 			assertSuccess(r);
 		}
 
@@ -74,7 +74,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "Bar"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("bin"))),
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath(Path.join([IntegrationTests.projectRoot, "bin"])))),
 				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
 			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
@@ -98,7 +98,7 @@ class TestDev extends IntegrationTests {
 
 	function testClassPath():Void {
 		{
-			var r = haxelib(["dev", "UseCp", "test/libraries/UseCp"]).result();
+			var r = haxelib(["dev", "UseCp", Path.join([IntegrationTests.projectRoot, "test/libraries/UseCp"])]).result();
 			assertSuccess(r);
 		}
 
@@ -112,7 +112,7 @@ class TestDev extends IntegrationTests {
 			var r = haxelib(["path", "UseCp"]).result();
 			var out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath("test/libraries/UseCp/lib/src"))),
+				Path.addTrailingSlash(Path.normalize(sys.FileSystem.fullPath(Path.join([IntegrationTests.projectRoot, "test/libraries/UseCp/lib/src"])))),
 				Path.addTrailingSlash(Path.normalize(out[0]))
 			);
 			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
