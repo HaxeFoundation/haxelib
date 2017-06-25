@@ -64,6 +64,18 @@ class RunCi {
 
 	static function compileClient():Void {
 		runCommand("haxe", ["client.hxml"]);
+
+		// only use it for Neko 2.2
+		// var nekotoolsBootC = switch [Sys.getEnv("TRAVIS_HAXE_VERSION"), Sys.systemName()] {
+		// 	case [null | "development", "Linux"]:
+		// 		true;
+		// 	case _:
+		// 		false;
+		// }
+		// if (nekotoolsBootC) {
+		// 	runCommand("cmake", ["."]);
+		// 	runCommand("cmake", ["--build", "."]);
+		// }
 	}
 
 	static function compileLegacyClient():Void {
@@ -78,9 +90,15 @@ class RunCi {
 		runCommand("haxe", ["server_tests.hxml"]);
 	}
 
-	static function setupLocalServer():Void {
+	static function runWithLocalServer(test:Void->Void):Void {
+		var HAXELIB_SERVER = "localhost";
+		var HAXELIB_SERVER_PORT = "2000";
 		var ndllPath = getEnv("NEKOPATH");
-		if (ndllPath == null) ndllPath = "/usr/lib/neko";
+		if (ndllPath == null)
+			if (exists("/usr/lib/x86_64-linux-gnu/neko"))
+				ndllPath = "/usr/lib/x86_64-linux-gnu/neko";
+			else
+				ndllPath = "/usr/lib/neko";
 		var DocumentRoot = Path.join([getCwd(), "www"]);
 		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
 		var dbConfig = Json.parse(getContent(dbConfigPath));
@@ -105,10 +123,17 @@ class RunCi {
 
 			var confContent =
 (
-	if (systemName() == "Windows")
-		"LoadModule rewrite_module modules/mod_rewrite.so\n"
-	else
-		""
+	switch (systemName()) {
+		case "Windows":
+			"LoadModule rewrite_module modules/mod_rewrite.so\n" +
+			"LoadModule filter_module modules/mod_filter.so\n" +
+			"LoadModule deflate_module modules/mod_deflate.so\n";
+		case "Mac":
+			"LoadModule rewrite_module libexec/mod_rewrite.so\n" +
+			"LoadModule deflate_module libexec/mod_deflate.so\n";
+		case _:
+			"";
+	}
 ) +
 (
 	if (hasModNeko)
@@ -127,6 +152,7 @@ Listen 2000
     AllowOverride All
     Order allow,deny
     Allow from all
+    Require all granted
 </Directory>
 ';
 			var confOut = if (exists(confPath))
@@ -150,7 +176,7 @@ Listen 2000
 				pass: user.pass,
 				host: "localhost",
 				port: 3306,
-				database: "",
+				#if (haxe_ver < 4.0) database: "", #end
 			});
 			cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
 			cnx.request('create database ${dbConfig.database};');
@@ -162,12 +188,14 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/win32/binaries/httpd-2.2.31-win32.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.25-win32-VC14.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
-				writeApacheConf("bin\\httpd\\Apache2\\conf\\httpd.conf");
-				rename("bin\\httpd\\Apache2", "c:\\Apache2");
+				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
+
+				var apachePath = "c:\\Apache24";
+				rename("bin\\httpd\\Apache24", apachePath);
 				var serviceName = "HaxelibApache";
-				var httpd = "c:\\Apache2\\bin\\httpd.exe";
+				var httpd = Path.join([apachePath, "bin", "httpd.exe"]);
 				runCommand(httpd, ["-k", "install", "-n", serviceName]);
 				runCommand(httpd, ["-n", serviceName, "-t"]);
 				runCommand(httpd, ["-k", "start", "-n", serviceName]);
@@ -182,28 +210,73 @@ Listen 2000
 				runCommand("nssm", ["start", "tora"]);
 
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apache error log:");
+					println(sys.io.File.getContent(Path.join([apachePath, "logs", "error.log"])));
+					println("====================");
+					println("apache config:");
+					println(sys.io.File.getContent(Path.join([apachePath, "conf", "httpd.conf"])));
+					println("====================");
+				}
 			case "Mac":
-				runCommand("brew", ["install", "homebrew/apache/httpd22", "mysql"]);
+				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
 
 				runCommand("mysql.server", ["start"]);
 				configDb();
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
-				writeApacheConf("/usr/local/etc/apache2/2.2/httpd.conf");
+				writeApacheConf("/usr/local/etc/apache2/2.4/httpd.conf");
 				Sys.sleep(2.5);
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apache error log:");
+					println(sys.io.File.getContent("/usr/local/var/log/apache2/error_log"));
+					println("====================");
+					println("apache config:");
+					println(sys.io.File.getContent("/usr/local/etc/apache2/2.4/httpd.conf"));
+					println("====================");
+				}
 			case "Linux":
 				configDb();
 
-				runCommand("sudo", ["apt-get", "install", "apache2"]);
+				runCommand("sudo", ["apt-get", "install", "-y", "apache2"]);
+
+				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["a2enmod", "deflate"]);
 
 				writeApacheConf("haxelib.conf");
-				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf.d/haxelib.conf"]);
-				runCommand("sudo", ["a2enmod", "rewrite"]);
+				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf-enabled/haxelib.conf"]);
+				
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
+
+				try {
+					haxe.Http.requestUrl('http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}/');
+				} catch (e:Dynamic) {
+					println("Cannot open webpage.");
+					println("====================");
+					println("apachectl -V:");
+					command("sudo", ["apachectl", "-V"]);
+					println("====================");
+					println("apachectl -M:");
+					command("sudo", ["apachectl", "-M"]);
+					println("====================");
+					println("cat /var/log/apache2/error.log");
+					command("sudo", ["cat", "/var/log/apache2/error.log"]);
+					println("====================");
+				}
 			case name:
 				throw "System not supported: " + name;
 		}
@@ -212,8 +285,18 @@ Listen 2000
 		runCommand("bower", ["install"]);
 		Sys.setCwd("..");
 
-		Sys.putEnv("HAXELIB_SERVER", "localhost");
-		Sys.putEnv("HAXELIB_SERVER_PORT", "2000");
+		Sys.putEnv("HAXELIB_SERVER", HAXELIB_SERVER);
+		Sys.putEnv("HAXELIB_SERVER_PORT", HAXELIB_SERVER_PORT);
+
+		test();
+
+		switch (systemName()) {
+			case "Mac":
+				runCommand("apachectl", ["stop"]);
+				runCommand("mysql.server", ["stop"]);
+			case _:
+				//pass
+		}
 	}
 
 	static function runWithDockerServer(test:Void->Void):Void {
@@ -276,18 +359,86 @@ Listen 2000
 			}
 		}
 		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
-			setupLocalServer();
-			test();
+			runWithLocalServer(test);
 		} else {
 			runWithDockerServer(test);
 		}
 	}
 
-	static function installDotNet11():Void {
-		// This is a msvcr71.dll in my own dropbox. If you want to obtain one, you probably shouldn't use my file. 
-		// Instead, install .Net Framework 1.1 from the link as follows
-		// https://www.microsoft.com/en-us/download/details.aspx?id=26
-		download("https://dl.dropboxusercontent.com/u/2661116/msvcr71.dll", Path.join([getEnv("NEKOPATH"), "msvcr71.dll"]));
+	static function deploy():Void {
+		switch (Sys.getEnv("DEPLOY")) {
+			case null:
+				Sys.println("DEPLOY is not set to 1, skip deploy");
+				Sys.exit(0);
+			case "1":
+				//pass
+			case _:
+				Sys.println("DEPLOY is not set to 1, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch (Sys.getEnv("TRAVIS_BRANCH")) {
+			case null:
+				throw "unknown branch";
+			case "master", "development":
+				//pass
+			case _:
+				Sys.println("branch is not master or development, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch (Sys.getEnv("TRAVIS_PULL_REQUEST")) {
+			case "false":
+				// pass
+			case _:
+				Sys.println("it is a pull request build, skip deploy");
+				Sys.exit(0);
+		}
+
+		switch ([
+			Sys.getEnv("DOCKER_USERNAME"),
+			Sys.getEnv("DOCKER_PASSWORD"),
+		]) {
+			case [null, _] | [_, null]:
+				Sys.println('missing a docker env var, skip deploy');
+				Sys.exit(0);
+			case [
+				docker_username,
+				docker_password
+			]:
+				if (Sys.command("docker", ["login", '-u=$docker_username', '-p=$docker_password']) != 0)
+					throw "docker login failed";
+		}
+
+		var commit = Sys.getEnv("TRAVIS_COMMIT");
+		var target = 'haxe/lib.haxe.org:${commit}';
+		runCommand("docker", ["tag", "haxelib_web", target]);
+		runCommand("docker", ["push", target]);
+
+		sys.io.File.saveContent("Dockerrun.aws.json", Json.stringify({
+			"AWSEBDockerrunVersion": "1",
+			"Image": {
+				"Name": target,
+				"Update": "true"
+			},
+			"Ports": [
+				{
+					"ContainerPort": "80"
+				}
+			],
+			"Volumes": [
+				{
+					"HostDirectory": "/media/docker_files",
+					"ContainerDirectory": "/var/www/html/files"
+				},
+				{
+					"HostDirectory": "/media/docker_tmp",
+					"ContainerDirectory": "/var/www/html/tmp"
+				}
+			]
+		}));
+
+		runCommand("zip", ["-r", "eb.zip", "Dockerrun.aws.json", ".ebextensions"]);
 	}
 
 	static function main():Void {
@@ -305,12 +456,6 @@ Listen 2000
 			compileClient();
 			testClient();
 			compileServer();
-
-			if (systemName() == "Windows") {
-				// The Neko 2.0 Windows binary archive is missing "msvcr71.dll", which is a dependency of "sqlite.ndll".
-				// https://github.com/HaxeFoundation/haxe/issues/2008#issuecomment-176849497
-				installDotNet11();
-			}
 			testServer();
 		#end
 
@@ -325,5 +470,7 @@ Listen 2000
 			case _:
 				throw "Unknown system";
 		}
+
+		deploy();
 	}
 }

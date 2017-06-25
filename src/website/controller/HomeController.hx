@@ -2,14 +2,17 @@ package website.controller;
 
 import ufront.MVC;
 import ufront.ufadmin.controller.*;
-import website.api.ProjectListApi;
+import website.api.*;
 import website.model.SiteDb;
+import haxelib.server.FileStorage;
+import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
 using CleverSort;
 
 class HomeController extends Controller {
 
+	@inject public var projectApi:ProjectApi;
 	@inject public var projectListApi:ProjectListApi;
 
 	// Perform init() after dependency injection has occured.
@@ -38,6 +41,7 @@ class HomeController extends Controller {
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
 			latestProjects: latestProjects,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
@@ -55,6 +59,23 @@ class HomeController extends Controller {
 
 	@:route("/documentation/*")
 	public var documentationController:DocumentationController;
+
+	/**
+		`/files` is backed by a `FileStorage`.
+		In production, it should be routed by httpd to S3 using mod_proxy, thus
+		this function should never be called.
+	*/
+	@:route("/files/3.0/$fileName")
+	public function downloadFile( fileName:String ) {
+		return FileStorage.instance.readFile(
+			'files/3.0/$fileName',
+			function(path) {
+				var r = new FilePathResult(path);
+				r.setContentTypeByFilename(Path.withoutDirectory(path));
+				return r;
+			}
+		);
+	}
 
 	@cacheRequest
 	@:route("/t/")
@@ -85,6 +106,7 @@ class HomeController extends Controller {
 			title: 'Haxelib Tags',
 			description: 'The 50 most popular tags for projects on Haxelib, sorted by the number of projects',
 			tags: tagList,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tagCloud: tagCloud,
 		});
 	}
@@ -145,7 +167,7 @@ class HomeController extends Controller {
 	}
 
 	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, author:String, description:String, version:String, downloads:Int }> {
-		return [for (p in list) {
+		return [for (p in list) if (p != null && p.ownerObj != null && p.versionObj != null) {
 			name: p.name,
 			author: p.ownerObj.name,
 			description: p.description,

@@ -25,7 +25,7 @@
 			<a href="/p/@project/@v.name/" class="text-nowrap">@v.name</a>
 			<br /><small>@v.date.substr(0,10)</small>
 		</td>
-		<td>@v.comments</td>
+		<td>@escape(v.comments)</td>
 		<td><code class="text-nowrap">haxelib install @project @v.name</code></td>
 		<td>@v.downloads</td>
 		<!--<td>-->

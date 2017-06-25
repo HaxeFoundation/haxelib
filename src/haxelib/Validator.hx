@@ -59,7 +59,7 @@ class Validator {
 
 	function enforce(type:String)
 		return
-			macro @:pos(pos) if (!Std.is($i{ARG}, $i{type})) throw '$type expected';
+			macro @:pos(pos) if (!Std.is($i{ARG}, $i{type})) throw $v{'$type expected'};
 
 	function rename(e:Expr)
 		return switch e {

@@ -4,12 +4,16 @@ import haxe.io.Bytes;
 import haxe.zip.Entry;
 import haxe.zip.Reader;
 import haxelib.Data;
+import haxelib.server.FileStorage;
 import haxelib.server.Repo;
+import haxelib.server.Paths.*;
 import ufront.api.UFApi;
 import ufront.cache.UFCache;
 import ufront.web.HttpError;
 import website.model.SiteDb;
 import haxe.ds.Option;
+import sys.*;
+import sys.io.*;
 using tink.CoreApi;
 using StringTools;
 using haxe.io.Path;
@@ -154,14 +158,7 @@ class ProjectApi extends UFApi {
 		Get the path to the zip file (relative to the script directory).
 	**/
 	public function getZipFilePath( project:String, version:String ):String {
-		var fileName = Data.fileName(project, version);
-		#if deploy
-			// On the haxe.org server, we want to access the repo from the old website.
-			// When we change the websites over we should probably move these over too.
-			return '../www/files/3.0/$fileName';
-		#else
-			return 'files/3.0/$fileName';
-		#end
+		return Path.join([REP_DIR_NAME, Data.fileName(project, version)]);
 	}
 
 	//
@@ -170,11 +167,20 @@ class ProjectApi extends UFApi {
 
 	/** Get a list of entries in a zip file. **/
 	function getZipEntries( projectName:String, version:String ):List<Entry> {
-		var path = scriptDir+getZipFilePath( projectName, version );
-		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw 'Invalid zip file $path: $e';
-		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
-		file.close();
-		return zip;
+		return FileStorage.instance.readFile(
+			getZipFilePath( projectName, version ),
+			function(path) {
+				var file = File.read(path, true);
+				var zip = try {
+					haxe.zip.Reader.readZip(file);
+				} catch( e : Dynamic ) {
+					file.close();
+					neko.Lib.rethrow(e);
+				};
+				file.close();
+				return zip;
+			}
+		);
 	}
 
 	/** Attempt to extract the bytes of a file within a zip file. Will return null if the file was not found. **/

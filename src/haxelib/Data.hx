@@ -74,10 +74,46 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 	@:to public function toArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
-		return [for (f in fields) {
-			name: f,
-			version: (Reflect.field(this, f) : DependencyVersion),
-		}];
+		
+		var result:Array<Dependency> = new Array<Dependency>();
+		
+		for (f in fields) {
+			var value:String = Reflect.field(this, f);
+
+			var isGit = value != null && (value + "").startsWith("git:"); 
+			
+			if ( !isGit )
+			{
+				result.push ({
+					name: f,
+					type: (DependencyType.Haxelib : DependencyType),
+					version: (cast value : DependencyVersion),
+					url: (null : String),
+					subDir: (null : String),
+					branch: (null : String),
+				});
+			}
+			else
+			{
+				value = value.substr(4);
+				var urlParts = value.split("#");
+				var url = urlParts[0];
+				var branch = urlParts.length > 1 ? urlParts[1] : null;
+				
+				result.push ({
+					name: f,
+					type: (DependencyType.Git : DependencyType),
+					version: (DependencyVersion.DEFAULT : DependencyVersion),
+					url: (url : String),
+					subDir: (null : String),
+					branch: (branch : String),
+				});
+			}
+			
+			
+		}
+		
+		return result;
 	}
 	public inline function iterator()
 		return toArray().iterator();
@@ -176,10 +212,10 @@ abstract ProjectName(String) to String {
 
 class Data {
 
-	public static var JSON = "haxelib.json";
-	public static var DOCXML = "haxedoc.xml";
-	public static var REPOSITORY = "files/3.0";
-	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
+	public static var JSON(default, null) = "haxelib.json";
+	public static var DOCXML(default, null) = "haxedoc.xml";
+	public static var REPOSITORY(default, null) = "files/3.0";
+	public static var alphanum(default, null) = ~/^[A-Za-z0-9_.-]+$/;
 
 
 	public static function safe( name : String ) {

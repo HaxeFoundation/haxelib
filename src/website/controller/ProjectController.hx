@@ -28,7 +28,9 @@ class ProjectController extends Controller {
 		info.versions.sort(function(v1, v2) return SemVer.compare(v2.name, v1.name));
 		return new ViewResult({
 			title: 'All versions of $projectName',
+			description: info.desc,
 			project: projectName,
+			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			allVersions: info.versions,
 			info: info,
 		});
@@ -57,6 +59,7 @@ class ProjectController extends Controller {
 		return new ViewResult({
 			title: '$projectName ($semver)',
 			project: projectName,
+			description: '${currentVersion.comments} - ${info.desc}',
 			allVersions: info.versions,
 			version: semver,
 			versionDate: Date.fromString(currentVersion.date).format('%F'),
@@ -86,7 +89,7 @@ class ProjectController extends Controller {
 	@:route("/$projectName/$semver/download/")
 	public function download( projectName:String, semver:String ) {
 		var zipFile = projectApi.getZipFilePath( projectName, semver );
-		return new DirectFilePathResult( context.request.scriptDirectory+zipFile );
+		return new RedirectResult( "/" + zipFile, true );
 	}
 
 	@cacheRequest
@@ -106,6 +109,7 @@ class ProjectController extends Controller {
 		var data:TemplateData = {
 			title: 'Viewing $filePath on $projectName:$semver',
 			project: projectName,
+			description: info.desc,
 			info: info,
 			version: semver,
 			fileParts: rest,

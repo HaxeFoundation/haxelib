@@ -13,7 +13,7 @@
 			<tbody>
 				@for (t in tags) {
 					<tr>
-						<th><i class="fa fa-tag"></i> <a href="/t/@t.tag/">@t.tag</a></th>
+						<th><i class="fa fa-tag"></i> <a href="/t/@t.tag/">@escape(t.tag)</a></th>
 						<td>@t.count</td>
 					</tr>
 				}
@@ -23,7 +23,7 @@
 	<div class="col-lg-8">
 		<div class="tag-cloud text-center">
 			@for (t in tagCloud) {
-				<a href="/t/@t.tag/" style="font-size: @(t.size)px">@t.tag</a>
+				<a href="/t/@t.tag/" style="font-size: @(t.size)px">@escape(t.tag)</a>
 			}
 		</div>
 	</div>
