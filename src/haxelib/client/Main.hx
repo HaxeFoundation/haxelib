@@ -154,6 +154,12 @@ class Main {
 	var isHaxelibRun : Bool;
 	var alreadyUpdatedVcsDependencies:Map<String,String> = new Map<String,String>();
 
+	macro static function rethrow(e) {
+		return if (haxe.macro.Context.defined("neko"))
+			macro neko.Lib.rethrow(e);
+		else
+			macro throw e;
+	}
 
 	function new() {
 		args = Sys.args();
@@ -324,7 +330,7 @@ class Main {
 							print("Directory " + dir + " unavailable");
 							Sys.exit(1);
 						}
-						neko.Lib.rethrow(e);
+						rethrow(e);
 					}
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
@@ -420,7 +426,7 @@ class Main {
 						Sys.exit(1);
 					}
 					if( settings.debug )
-						neko.Lib.rethrow(e);
+						rethrow(e);
 					print("Error: " + Std.string(e));
 					Sys.exit(1);
 				}
@@ -839,8 +845,7 @@ class Main {
 			// file is corrupted, remove it
 			if (!nodelete)
 				FileSystem.deleteFile(filepath);
-			neko.Lib.rethrow(e);
-			throw e;
+			rethrow(e);
 		}
 		f.close();
 		var infos = Data.readInfos(zip,false);
@@ -1132,7 +1137,7 @@ class Main {
 				doUpdate(p, state);
 			} catch (e:VcsError) {
 				if (!e.match(VcsUnavailable(_)))
-					neko.Lib.rethrow(e);
+					rethrow(e);
 			}
 		}
 		if( state.updated )
