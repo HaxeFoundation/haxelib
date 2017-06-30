@@ -1157,16 +1157,16 @@ class Main {
 		var current = try getCurrent(dir) catch (e:Dynamic) null;
 		if ( current != null ) {
 			var semver = try SemVer.ofString(current) catch (_:Dynamic) null;
+			var vdir = dir+"/"+Data.safe(current);
 			if ( semver == null ) {
-				var vdir = dir+"/"+Data.safe(current);
 				if ( !sys.FileSystem.exists(vdir) ) {
 					var localdir = getLocal(dir, current);
 					if( localdir != null )
 						vdir = localdir;
 				}
-				if ( sys.FileSystem.exists(vdir) ) {
-					return vdir;
-				}
+			}
+			if ( sys.FileSystem.exists(vdir) ) {
+				return vdir;
 			}
 		}
 		return null;
