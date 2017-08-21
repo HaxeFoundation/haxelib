@@ -188,7 +188,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.25-win32-VC14.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VC15/binaries/httpd-2.4.27-Win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
