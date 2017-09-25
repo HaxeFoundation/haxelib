@@ -22,6 +22,7 @@
 package haxelib;
 
 import haxe.ds.Option;
+import haxe.ds.List;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
