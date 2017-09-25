@@ -23,7 +23,7 @@ package haxelib.client;
 
 import haxe.crypto.Md5;
 import haxe.*;
-import haxe.ds.List;
+import haxe.ds.*;
 import haxe.io.BytesOutput;
 import haxe.io.Path;
 import haxe.zip.*;
