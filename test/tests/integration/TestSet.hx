@@ -1,5 +1,6 @@
 package tests.integration;
 
+import haxe.io.*;
 import IntegrationTests.*;
 using IntegrationTests;
 using StringTools;
@@ -12,12 +13,12 @@ class TestSet extends IntegrationTests {
 		}
 
 		{
-			var r = haxelib(["submit", "test/libraries/libBar.zip", bar.pw]).result();
+			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
 			assertSuccess(r);
 		}
 
 		{
-			var r = haxelib(["submit", "test/libraries/libBar2.zip", bar.pw]).result();
+			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]), bar.pw]).result();
 			assertSuccess(r);
 		}
 
