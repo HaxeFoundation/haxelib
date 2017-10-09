@@ -188,11 +188,11 @@ class Vcs implements IVcs {
 	}
 
 	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void {
-		throw "This method must be overriden.";
+		throw "This method must be overridden.";
 	}
 
 	public function update(libName:String):Bool {
-		throw "This method must be overriden.";
+		throw "This method must be overridden.";
 	}
 }
 

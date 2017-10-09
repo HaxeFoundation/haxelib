@@ -975,7 +975,7 @@ class Main {
 			// on unixes, try to read system-wide config
 			rep = try File.getContent("/etc/.haxelib").trim() catch (_:Dynamic) null;
 			if (rep == null)
-				throw "This is the first time you are runing haxelib. Please run `haxelib setup` first";
+				throw "This is the first time you are running haxelib. Please run `haxelib setup` first";
 		} else {
 			// on windows, try to use haxe installation path
 			rep = getWindowsDefaultGlobalRepositoryPath();

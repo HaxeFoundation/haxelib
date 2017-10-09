@@ -573,7 +573,7 @@ class Main {
 				}
 				return rep+"\\";
 			} else
-				throw "This is the first time you are runing haxelib. Please run haxelib setup first";
+				throw "This is the first time you are running haxelib. Please run haxelib setup first";
 		}
 		rep = StringTools.trim(rep);
 		if( setup ) {
