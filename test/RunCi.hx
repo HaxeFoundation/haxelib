@@ -230,7 +230,7 @@ Listen 2000
 					println("====================");
 				}
 			case "Mac":
-				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
+				runCommand("brew", ["install", "httpd", "mysql"]);
 
 				runCommand("brew", ["services", "start", "mysql"]);
 
