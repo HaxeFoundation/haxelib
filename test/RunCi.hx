@@ -226,14 +226,14 @@ Listen 2000
 			case "Mac":
 				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
 
-				runCommand("mysql.server", ["start"]);
+				runCommand("brew", ["services", "start", "mysql"]);
 				configDb();
 
-				runCommand("apachectl", ["start"]);
+				runCommand("brew", ["services", "start", "httpd"]);
 				Sys.sleep(2.5);
 				writeApacheConf("/usr/local/etc/apache2/2.4/httpd.conf");
 				Sys.sleep(2.5);
-				runCommand("apachectl", ["restart"]);
+				runCommand("brew", ["services", "restart", "httpd"]);
 				Sys.sleep(2.5);
 
 				try {
@@ -292,8 +292,8 @@ Listen 2000
 
 		switch (systemName()) {
 			case "Mac":
-				runCommand("apachectl", ["stop"]);
-				runCommand("mysql.server", ["stop"]);
+				runCommand("brew", ["services", "stop", "httpd"]);
+				runCommand("brew", ["services", "stop", "mysql"]);
 			case _:
 				//pass
 		}
