@@ -171,17 +171,23 @@ Listen 2000
 			else
 				{ user: "root", pass: "" };
 
-			var cnx = sys.db.Mysql.connect({
-				user: user.user,
-				pass: user.pass,
-				host: "localhost",
-				port: 3306,
-				#if (haxe_ver < 4.0) database: "", #end
-			});
-			cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
-			cnx.request('create database ${dbConfig.database};');
-			cnx.request('grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';');
-			cnx.close();
+			for (i in 0...5) try {
+				var cnx = sys.db.Mysql.connect({
+					user: user.user,
+					pass: user.pass,
+					host: "localhost",
+					port: 3306,
+					#if (haxe_ver < 4.0) database: "", #end
+				});
+				cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
+				cnx.request('create database ${dbConfig.database};');
+				cnx.request('grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';');
+				cnx.close();
+				return;
+			} catch (e:Dynamic) {
+				Sys.sleep(5.0);
+			}
+			throw "cannot config database";
 		}
 
 		switch (systemName()) {
@@ -227,6 +233,7 @@ Listen 2000
 				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
 
 				runCommand("brew", ["services", "start", "mysql"]);
+
 				configDb();
 
 				runCommand("brew", ["services", "start", "httpd"]);
