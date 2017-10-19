@@ -238,7 +238,7 @@ Listen 2000
 
 				runCommand("brew", ["services", "start", "httpd"]);
 				Sys.sleep(2.5);
-				writeApacheConf("/usr/local/etc/apache2/2.4/httpd.conf");
+				writeApacheConf("/usr/local/etc/httpd/httpd.conf");
 				Sys.sleep(2.5);
 				runCommand("brew", ["services", "restart", "httpd"]);
 				Sys.sleep(2.5);
