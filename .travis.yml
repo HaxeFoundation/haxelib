@@ -27,9 +27,9 @@ matrix:
         - USE_DOCKER=1
       services: [docker]
       before_install: *install_docker
-    # haxe 3.4.2
+    # haxe 3.4.4
     - os: linux
-      haxe: 3.4.2
+      haxe: 3.4.4
       env:
         - USE_DOCKER=1
         - DEPLOY=1
@@ -53,7 +53,7 @@ matrix:
     - os: osx
       haxe: development
     - os: osx
-      haxe: 3.4.2
+      haxe: 3.4.4
     - os: osx
       haxe: 3.2.1
     - os: osx
