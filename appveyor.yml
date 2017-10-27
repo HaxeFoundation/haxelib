@@ -9,7 +9,7 @@ install:
   - cinst nssm -y
   - cinst curl -y
   - RefreshEnv
-  - haxelib setup haxelib_repo
+  - haxelib setup %HOME%/haxelib_repo
   - haxelib install all --always
   - haxelib install tora
   - haxelib list
