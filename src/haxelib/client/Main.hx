@@ -135,7 +135,8 @@ class ProgressIn extends haxe.io.Input {
 class Main {
 	static inline var HAXELIB_LIBNAME = "haxelib";
 
-	static var VERSION = SemVer.ofString('3.3.0');
+	static var VERSION:SemVer = SemVer.ofString(getHaxelibVersion());
+	static var VERSION_LONG:String = getHaxelibVersionLong();
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
@@ -160,6 +161,38 @@ class Main {
 			macro neko.Lib.rethrow(e);
 		else
 			macro throw e;
+	}
+
+	macro static function getHaxelibVersion() {
+		var haxelibJson:Infos = Json.parse(File.getContent("haxelib.json"));
+		return macro $v{haxelibJson.version};
+	}
+
+	macro static function getHaxelibVersionLong() {
+		var version:String = VERSION;
+		var p;
+		try {
+			//get commit sha
+			p = new sys.io.Process("git", ["rev-parse", "HEAD"]);
+			var sha = p.stdout.readAll().toString().trim();
+			p.close();
+
+			//check to see if there is changes, staged or not
+			p = new sys.io.Process("git", ["status", "--porcelain"]);
+			var changes = p.stdout.readAll().toString().trim();
+			p.close();
+
+			version += switch(changes) {
+				case "":
+					' ($sha)';
+				case _:
+					' ($sha - dirty)';
+			}
+			return macro $v{version};
+		} catch(e:Dynamic) {
+			if (p != null) p.close();
+			return macro $v{version};
+		}
 	}
 
 	function new() {
@@ -245,7 +278,7 @@ class Main {
 	}
 
 	function version() {
-		print(VERSION);
+		print(VERSION_LONG);
 	}
 
 	function usage() {
@@ -259,7 +292,7 @@ class Main {
 			else cats[i].push(c);
 		}
 
-		print("Haxe Library Manager " + VERSION + " - (c)2006-2016 Haxe Foundation");
+		print('Haxe Library Manager $VERSION - (c)2006-2017 Haxe Foundation');
 		print("  Usage: haxelib [command] [options]");
 
 		for (cat in cats) {
@@ -440,6 +473,7 @@ class Main {
 
 	inline function createHttpRequest(url:String):Http {
 		var req = new Http(url);
+		req.addHeader("User-Agent", 'haxelib $VERSION_LONG');
 		if (haxe.remoting.HttpConnection.TIMEOUT == 0)
 			req.cnxTimeout = 0;
 		return req;
