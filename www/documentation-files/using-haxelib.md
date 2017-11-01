@@ -1,11 +1,11 @@
 # Using Haxelib
 
-If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments. Access the <http://lib.haxe.org> website to view all the libraries available.
+If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments. 
 
 The following commands are available:
 
 <div class="row">
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#basic">Basic</a></h4>
   <ul>
     <li><a href="#install">install</a></li>
@@ -16,7 +16,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#information">Information</a></h4>
   <ul>
     <li><a href="#search">search</a></li>
@@ -29,7 +29,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#development">Development</a></h4>
   <ul>
     <li><a href="#submit">submit</a></li>
@@ -42,7 +42,7 @@ The following commands are available:
 </div>
 
 <div class="row">
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#miscellaneous">Miscellaneous</a></h4>
   <ul>
     <li><a href="#setup">setup</a></li>
@@ -54,7 +54,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#flags">Flags</a></h4>
   <ul>
     <li><a href="#flat">--flat</a></li>
@@ -67,7 +67,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
     <li><a href="#cwd">-cwd</a></li>

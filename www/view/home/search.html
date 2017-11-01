@@ -1,15 +1,18 @@
 <h1><i class="fa fa-search"></i> @title</h1>
 
-<p class="lead">@description</p>
 
-<form action="/search/" method="GET">
-	<div class="input-group">
-		<input type="search" name="v" class="form-control" placeholder="Search Haxelib for..." @if(searchTerm!=null){ value="@searchTerm" } />
-		<span class="input-group-btn">
-			<input type="submit" class="btn btn-primary" value="Search" />
-		</span>
-	</div>
+<form action="/search/" method="GET" class="form-search">
+  <div class="control-group">
+    <div class="controls">
+        <span class="add-on"><i class="icon-envelope"></i></span>
+        <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+        <input type="submit" class="btn btn-default" value="Search" />
+    </div>
+  </div>
 </form>
+
+  
+<p class="lead">@description</p>
 
 @if (projects!=null && projects.length>0) {
 	<table class="table table-compact table-hover">
@@ -35,14 +38,19 @@
 			}
 		</tbody>
 	</table>
+
 }
 else if (projects!=null && projects.length==0) {
 	<p>No search results found.</p>
+<br/>
 }
 
+<br/>
 <p class="alert alert-info">
 	<a href="https://www.google.com/search?q=site:lib.haxe.org @searchTerm">
 		<strong>Not found what you are looking for?</strong>
 		Search Haxelib for "@searchTerm" using Google instead.
 	</a>
 </p>
+<br/>
+<br/>
