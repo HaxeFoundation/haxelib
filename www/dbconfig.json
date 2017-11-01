@@ -1,6 +1,6 @@
 { 
-	"user" : "root", 
-	"pass" : "", 
-	"host" : "localhost", 
+	"user" : "dbUser", 
+	"pass" : "dbPass", 
+	"host" : "dbHost", 
 	"database" : "haxelib"
 }
