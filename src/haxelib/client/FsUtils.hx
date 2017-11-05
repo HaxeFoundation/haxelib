@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2016 Haxe Foundation
+ * Copyright (C)2005-2017 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,10 @@ using StringTools;
 class FsUtils {
     static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
-    //recursively follow symlink
+    /**
+      recursively follow symlink
+      TODO: this method does not (yet) work on Windows
+    */
     public static function realPath(path:String):String {
         var proc = new sys.io.Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]);
         var ret = switch (proc.stdout.readAll().toString()) {
@@ -57,8 +60,14 @@ class FsUtils {
 
     public static function safeDir(dir:String, checkWritable = false):Bool {
         if (FileSystem.exists(dir)) {
-            if (!FileSystem.isDirectory(dir))
-                throw 'A file is preventing $dir to be created';
+            if (!FileSystem.isDirectory(dir)) {
+                try {
+                    // if this call is successful then 'dir' it is not a file but a symlink to a directory
+                    FileSystem.readDirectory(dir);
+                } catch (ex:Dynamic) {
+                    throw 'A file is preventing the required directory $dir to be created';
+                }
+            }
             if (checkWritable) {
                 var checkFile = dir+"/haxelib_writecheck.txt";
                 try {
