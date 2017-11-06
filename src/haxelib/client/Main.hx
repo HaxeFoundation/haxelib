@@ -627,7 +627,13 @@ class Main {
 		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) throw e;
 		h.onData = print;
-		h.fileTransfer("file",id,new ProgressIn(new haxe.io.BytesInput(data),data.length),data.length);
+
+		var inp = if ( settings.quiet == false )
+			new ProgressIn(new haxe.io.BytesInput(data),data.length);
+		else
+			new haxe.io.BytesInput(data);
+
+		h.fileTransfer("file", id, inp, data.length);
 		print("Sending data.... ");
 		h.request(true);
 
@@ -845,7 +851,10 @@ class Main {
 		if (currentSize > 0)
 			h.addHeader("range", "bytes="+currentSize + "-");
 
-		var progress = new ProgressOut(out, currentSize);
+		var progress = if (settings.quiet == false )
+			new ProgressOut(out, currentSize);
+		else
+			out;
 
 		var has416Status = false;
 		h.onStatus = function(status) {
@@ -907,7 +916,7 @@ class Main {
 			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
 				throw "Invalid filename : "+n;
 
-			if (!settings.debug) {
+			if (settings.debug) {
 				var percent = Std.int((i / total) * 100);
 				Sys.print('${i + 1}/$total ($percent%)\r');
 			}
