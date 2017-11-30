@@ -471,6 +471,9 @@ Listen 2000
 			compileClient();
 			testClient();
 			compileServer();
+		#end
+		// buddy is only compatiable with haxe 3.4+
+		#if (haxe_ver >= 3.4)
 			testServer();
 		#end
 

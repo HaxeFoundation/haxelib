@@ -1,7 +1,7 @@
 server_each.hxml
 -cp test
 # Now the testing libs
--lib buddy:0.18.1
+-lib buddy:2.8.1
 -lib mockatoo
 -lib utest
 --no-inline
