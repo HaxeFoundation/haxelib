@@ -5,6 +5,7 @@ services:
 
 install:
   - npm -g install bower
+  - ps: Set-Service wuauserv -StartupType Manual
   - cinst haxe -y
   - cinst nssm -y
   - cinst curl -y
