@@ -184,7 +184,7 @@ Listen 2000
 					pass: user.pass,
 					host: "localhost",
 					port: 3306,
-					#if (haxe_ver < 4.0) database: "", #end
+					#if (haxe_ver < 4.0) database: "mysql", #end
 				});
 				cnx.request('create user if not exists \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
 				cnx.request('create database if not exists ${dbConfig.database};');
