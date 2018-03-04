@@ -213,7 +213,8 @@ class Main {
 		addCommand("info", info, "list information on a given library", Information);
 		addCommand("user", user, "list information on a given user", Information);
 		addCommand("config", config, "print the repository path", Information, false);
-		addCommand("path", path, "give paths to libraries", Information, false);
+		addCommand("path", path, "give paths to libraries' sources and necessary build definitions", Information, false);
+		addCommand("libpath", libpath, "returns the root path of a library", Information, false);
 		addCommand("version", version, "print the currently used haxelib version", Information, false);
 		addCommand("help", usage, "display this list of options", Information, false);
 
@@ -1290,7 +1291,7 @@ class Main {
 		print("Library "+prj+" current version is now "+version);
 	}
 
-	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }> ) {
+	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }>, ?returnDependencies : Bool = true ) {
 		var pdir = rep + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
@@ -1306,14 +1307,16 @@ class Main {
 			if( p.project == prj ) {
 				if( p.version == version )
 					return;
-				throw "Library "+prj+" has two version included "+version+" and "+p.version;
+				throw "Library "+prj+" has two versions included : "+version+" and "+p.version;
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		var inf = Data.readData(json,false);
 		l.add({ project : prj, version : version, dir : Path.addTrailingSlash(vdir), info: inf });
-		for( d in inf.dependencies )
-			if( !Lambda.exists(l, function(e) return e.project == d.name) )
-				checkRec(rep,d.name,if( d.version == "" ) null else d.version,l);
+		if( returnDependencies ) {
+			for( d in inf.dependencies )
+				if( !Lambda.exists(l, function(e) return e.project == d.name) )
+					checkRec(rep,d.name,if( d.version == "" ) null else d.version,l);
+		}
 	}
 
 	function path() {
@@ -1321,7 +1324,7 @@ class Main {
 		var list = new List();
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
-			checkRec(rep, a[0],a[1],list);
+			checkRec(rep, a[0], a[1], list);
 		}
 		for( d in list ) {
 			var ndir = d.dir + "ndll";
@@ -1341,6 +1344,16 @@ class Main {
 			Sys.println(dir);
 
 			Sys.println("-D " + d.project + "="+d.info.version);
+		}
+	}
+
+	function libpath( ) {
+		var rep = getRepository();
+		while( argcur < args.length ) {
+			var a = args[argcur++].split(":");
+			var results = new List();
+			checkRec(rep, a[0], a[1], results, false);
+			if( !results.isEmpty() ) Sys.println(results.first().dir);
 		}
 	}
 
