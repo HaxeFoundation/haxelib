@@ -172,6 +172,11 @@ class Main {
 		var version:String = VERSION;
 		var p;
 		try {
+			//check if the .git folder exist
+			//prevent getting the git info of a parent directory
+			if (!FileSystem.isDirectory(".git"))
+				throw "Not a git repo.";
+
 			//get commit sha
 			p = new sys.io.Process("git", ["rev-parse", "HEAD"]);
 			var sha = p.stdout.readAll().toString().trim();
