@@ -147,6 +147,8 @@ class Main {
 		apiVersion : "3.0",
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
+	
+	static var reservedTypes = [ "dev", "current", "hg", "git" ];
 
 	var argcur : Int;
 	var args : Array<String>;
@@ -675,28 +677,44 @@ class Main {
 			return;
 		}
 
-		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
-			// *.hxml provided, install all libraries/versions in this hxml file
-			if( prj.endsWith(".hxml") ) {
-				installFromHxml(rep, prj);
-				return;
-			}
-			// *.zip provided, install zip as haxe library
-			if (prj.endsWith(".zip")) {
-				doInstallFile(rep, prj, true, true);
-				return;
-			}
-			
-			if ( prj.endsWith("haxelib.json") )
-			{
-				installFromHaxelibJson( rep, prj);
-				return;
+		var reqversion = paramOpt();
+		
+		if( sys.FileSystem.exists(prj) ) {
+			if( sys.FileSystem.isDirectory(prj) ) {
+				if( reqversion == null || Data.safe(reqversion) == Data.unsafe(reqversion) ) {
+					// path provided, install as local version
+					var json = try File.getContent(prj+"/"+Data.JSON) catch( e : Dynamic ) null;
+					var inf = try Data.readData(json, true) catch( e : Dynamic ) null;
+					if( inf != null ) {
+						var type = reqversion;
+						doInstallLocal(rep, inf.name, type, prj, true);
+						return;
+					} else if ( !Data.alphanum.match(prj) ) {
+						throw prj + " is not a valid library path";
+					}
+				}
+			} else {
+				// *.hxml provided, install all libraries/versions in this hxml file
+				if( prj.endsWith(".hxml") ) {
+					installFromHxml(rep, prj);
+					return;
+				}
+				// *.zip provided, install zip as haxe library
+				if (prj.endsWith(".zip")) {
+					doInstallFile(rep, prj, true, true);
+					return;
+				}
+				
+				if ( prj.endsWith("haxelib.json") )
+				{
+					installFromHaxelibJson( rep, prj);
+					return;
+				}
 			}
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
 		var inf = site.infos(prj);
-		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
 		doInstall(rep,inf.name,version,version == inf.getLatest());
 	}
@@ -705,16 +723,21 @@ class Main {
 		if( inf.versions.length == 0 )
 			throw "The library "+inf.name+" has not yet released a version";
 		var version = if( reqversion != null ) reqversion else inf.getLatest();
-		var found = false;
+		var matches = [];
+		var best = null;
 		for( v in inf.versions )
-			if( v.name == version ) {
-				found = true;
-				break;
+			if( matchVersion(version,v.name) ) {
+				matches.push(v.name);
 			}
-		if( !found )
+		for( match in matches ) {
+			if (best == null || match > best) {
+				best = match;
+			}
+		}
+		if( best == null )
 			throw "No such version "+version+" for library "+inf.name;
 
-		return version;
+		return best;
 	}
 
 	function installFromHxml( rep:String, path:String ) {
@@ -989,6 +1012,45 @@ class Main {
 		}
 	}
 
+	function doInstallLocal( rep:String, project:String, type:String, dir:String, setcurrent:Bool ) {
+		var proj = rep + Data.safe(project);
+		type = (type == null) ? "local" : Data.safe(type);
+		if( !FileSystem.exists(proj) ) {
+			FileSystem.createDirectory(proj);
+		}
+		if( reservedTypes.indexOf(type) > -1 ) {
+			throw "Local directory type " + type + " not allowed";
+		}
+		var fileName = type == "local" ? ".local" : ".local_" + type;
+		var localfile = proj+"/"+fileName;
+		if( dir == null ) {
+			if( FileSystem.exists(localfile) )
+				FileSystem.deleteFile(localfile);
+			print("Library "+project+" version "+type+" removed");
+		}
+		else {
+			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
+				dir = dir.substr(0,-1);
+			}
+			if (!FileSystem.exists(dir)) {
+				print('Directory $dir does not exist');
+			} else {
+				dir = FileSystem.fullPath(dir);
+				try {
+					File.saveContent(localfile, dir);
+					print("Library "+project+" version "+type+" set to "+dir);
+				}
+				catch (e:Dynamic) {
+					print('Could not write to $localfile');
+				}
+			}
+		}
+		if( setcurrent || !FileSystem.exists(proj+"/.current") ) {
+			File.saveContent(proj + "/.current", type);
+			print("  Current version is now "+type);
+		}
+	}
+
 	static public function getConfigFile():String {
 		var home = null;
 		if (IS_WINDOWS) {
@@ -1112,6 +1174,123 @@ class Main {
 		return File.getContent(dir + "/.dev").trim();
 	}
 
+	function getLocal( dir, type = "local" ) {
+		var fileName = type == "local" ? ".local" : ".local_" + type;
+		return (FileSystem.exists(dir+"/"+fileName)) ? File.getContent(dir+"/"+fileName).trim() : null;
+	}
+
+	function getLocalType( fileName ) {
+		if ( fileName == ".local" )
+			return "local";
+		if ( !StringTools.startsWith(fileName, ".local_") )
+			return null;
+		return fileName.substr(7);
+	}
+
+	function matchVersion( version, other ) {
+		if (version == "" || version == null)
+			return true;
+		if (other == "" || other == null)
+			return false;
+		var filter = version.replace(".","\\.").replace("*",".*");
+		return new EReg("^"+filter+"$","i").match(other);
+	}
+
+	function getJSONVersion( dir ) {
+		var semver = null;
+		if ( sys.FileSystem.exists(dir) && sys.FileSystem.isDirectory(dir) ) {
+			var json = try File.getContent(dir+"/"+Data.JSON) catch( e : Dynamic ) null;
+			if ( json != null ) {
+				var inf = Data.readData(json, false);
+				semver = try SemVer.ofString(inf.version) catch (_:Dynamic) null;
+			}
+		}
+		return semver;
+	}
+
+	function getCurrentVersionDir( dir ) {
+		var current = try getCurrent(dir) catch (e:Dynamic) null;
+		if ( current != null ) {
+			var semver = try SemVer.ofString(current) catch (_:Dynamic) null;
+			var vdir = dir+"/"+Data.safe(current);
+			if ( semver == null ) {
+				if ( !sys.FileSystem.exists(vdir) ) {
+					var localdir = getLocal(dir, current);
+					if( localdir != null )
+						vdir = localdir;
+				}
+			}
+			if ( sys.FileSystem.exists(vdir) ) {
+				return vdir;
+			}
+		}
+		return null;
+	}
+
+	function getVersionDirName( pdir, vdir ) {
+		for( v in FileSystem.readDirectory(pdir) ) {
+			if( v.charAt(0) == "." ) {
+				if ( v == ".current" || v == ".dev" )
+					continue;
+				var type = getLocalType(v);
+				if ( type == null )
+					continue;
+				var dir = try getLocal(pdir, type) catch (_:Dynamic) null;
+				if (dir == vdir)
+					return type;
+			} else {
+				var dir = pdir + "/" + v;
+				if ( dir == vdir )
+					return v;
+			}
+		}
+		return null;
+	}
+
+	function getVersionDir( version, dir ) {
+		var currentDir = getCurrentVersionDir(dir);
+		var current = try getJSONVersion(currentDir) catch (e:Dynamic) null;
+		if ( current != null && matchVersion(version, current) ) {
+			return currentDir;
+		}
+		var matches = [];
+		var vdir = null;
+		for( v in FileSystem.readDirectory(dir) ) {
+			if( v.charAt(0) == "." ) {
+				if ( v == ".current" || v == ".dev" )
+					continue;
+				var type = getLocalType(v);
+				if ( type == null )
+					continue;
+				vdir = try getLocal(dir, type) catch (_:Dynamic) null;
+				v = type;
+			} else {
+				vdir = dir+"/"+v;
+			}
+			if( vdir == null )
+				continue;
+			if( v == version )
+				return vdir;
+			var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
+			if ( semver == null ) {
+				var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
+				if ( json != null ) {
+					var inf = Data.readData(json, false);
+					semver = try SemVer.ofString(inf.version) catch (_:Dynamic) null;
+				}
+			}
+			if (semver != null && matchVersion(version, semver))
+				matches.push({ dir: vdir, ver: semver });
+		}
+		var best:Dynamic = null;
+		for( match in matches ) {
+			if (best == null || match.ver > best.ver) {
+				best = match;
+			}
+		}
+		return if (best != null) best.dir else null;
+	}
+
 	function list() {
 		var rep = getRepository();
 		var folders = FileSystem.readDirectory(rep);
@@ -1129,8 +1308,20 @@ class Main {
 			var semvers = [];
 			var others = [];
 			for( v in FileSystem.readDirectory(rep+p) ) {
-				if( v.charAt(0) == "." )
+				if( v.charAt(0) == "." ) {
+					if ( v != ".dev" && v != ".current" ) {
+						var type = getLocalType(v);
+						if ( type == null )
+							continue;
+						var localdir = getLocal(rep+p, type);
+						if ( localdir != null ) {
+							others.push( type+":"+localdir );
+						} else {
+							others.push( type );
+						}
+					}
 					continue;
+				}
 				v = Data.unsafe(v);
 				var semver = try SemVer.ofString(v) catch (_:Dynamic) null;
 				if (semver != null)
@@ -1151,7 +1342,7 @@ class Main {
 			if (dev == null) {
 				for (i in 0...versions.length) {
 					var v = versions[i];
-					if (v == current)
+					if (v == current || v.substr(0, v.indexOf(":")) == current)
 						versions[i] = '[$v]';
 				}
 			} else {
@@ -1229,8 +1420,8 @@ class Main {
 			Sys.setCwd(oldCwd);
 		} else {
 			var latest = try site.getLatestVersion(p) catch( e : Dynamic ) { Sys.println(e); return; };
-
-			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
+			var vdir = getVersionDir(latest, pdir);
+			if( vdir == null ) {
 				if( state.prompt ) {
 					if (!ask("Update "+p+" to "+latest))
 						return;
@@ -1238,7 +1429,7 @@ class Main {
 				doInstall(state.rep, p, latest,true);
 				state.updated = true;
 			} else
-				setCurrent(state.rep, p, latest, true);
+				setCurrent(state.rep, p, getVersionDirName(pdir, vdir), true);
 		}
 	}
 
@@ -1262,7 +1453,9 @@ class Main {
 		}
 
 		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) )
+		var localdir = pdir + "/." + (version == "local" ? "local" : "local_"+version);
+		var islocal = FileSystem.exists(localdir);
+		if( !FileSystem.exists(vdir) && !islocal )
 			throw "Library "+prj+" does not have version "+version+" installed";
 
 		var cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
@@ -1271,6 +1464,10 @@ class Main {
 		var dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
 		if( dev == vdir )
 			throw "Can't remove dev version of library "+prj;
+		if( islocal ) {
+			doInstallLocal(rep, prj, version, null, false);
+			return;
+		}
 		deleteRec(vdir);
 		print("Library "+prj+" version "+version+" removed");
 	}
@@ -1281,19 +1478,36 @@ class Main {
 
 	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
 		var pdir = rep + Data.safe(prj);
-		var vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) ){
-			print("Library "+prj+" version "+version+" is not installed");
-			if(ask("Would you like to install it?"))
-				doInstall(rep, prj, version, true);
-			return;
+		var vdir = getVersionDir(version, pdir);
+		if( vdir == null ){
+			var semver = try SemVer.ofString(version) catch (_:Dynamic) null;
+			if( semver != null ) {
+				print("Library "+prj+" version "+version+" is not installed");
+				if(ask("Would you like to install it?"))
+					doInstall(rep, prj, version, true);
+				return;
+			} else {
+				throw "Library "+prj+" has no version "+version+" available";
+			}
 		}
-		if( File.getContent(pdir + "/.current").trim() == version )
+		var localdir = pdir + "/." + (version == "local" ? "local" : "local_"+version);
+		var islocal = FileSystem.exists(localdir);
+		var vname;
+		if( islocal ) {
+			if( version == getCurrent(pdir) )
+				return;
+			vname = version;
+		} else {
+			if( vdir == getCurrentVersionDir(pdir) )
+				return;
+			vname = Data.unsafe(getVersionDirName(pdir, vdir));
+		}
+		version = getJSONVersion(vdir);
+		var vstr = (vname == version) ? vname : vname+" ("+version+")";
+		if( doAsk && !ask("Set "+prj+" to version "+vstr) )
 			return;
-		if( doAsk && !ask("Set "+prj+" to version "+version) )
-			return;
-		File.saveContent(pdir+"/.current",version);
-		print("Library "+prj+" current version is now "+version);
+		File.saveContent(pdir+"/.current",vname);
+		print("Library "+prj+" current version is now "+vstr);
 	}
 
 	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }>, ?returnDependencies : Bool = true ) {
@@ -1303,9 +1517,9 @@ class Main {
 		var version = if( version != null ) version else getCurrent(pdir);
 
 		var dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = if (dev != null) dev else pdir + "/" + Data.safe(version);
-
-		if( !FileSystem.exists(vdir) )
+		var vdir = if (dev != null) dev else try getVersionDir(version,pdir) catch (_:Dynamic) null;
+		
+		if( vdir == null || !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";
 
 		for( p in l )
@@ -1374,6 +1588,8 @@ class Main {
 		if( dir == null ) {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
+			if( !FileSystem.exists(proj+"/.current") )
+				try { FileSystem.deleteDirectory(proj); } catch (e:Dynamic) {}
 			print("Development directory disabled");
 		}
 		else {
@@ -1395,7 +1611,6 @@ class Main {
 
 		}
 	}
-
 
 	function removeExistingDevLib(proj:String):Void {
 		//TODO: ask if existing repo have changes.
@@ -1509,7 +1724,7 @@ class Main {
 		if (version == null)
 			version = getCurrent(pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
-		var vdir = dev != null ? dev : pdir + Data.safe(version);
+		var vdir = dev != null ? dev : getVersionDir(version, pdir);
 
 		var infos =
 			try
