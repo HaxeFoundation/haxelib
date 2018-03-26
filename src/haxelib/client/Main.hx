@@ -1570,11 +1570,9 @@ class Main {
 		Http.PROXY = proxy;
 		print("Testing proxy...");
 		try Http.requestUrl("http://www.google.com") catch( e : Dynamic ) {
-			var ignoreFail = param("Proxy connection failed. Use it anyway? (Y/n)");
-			while(ignoreFail != 'Y' && ignoreFail != 'n') {
-				ignoreFail = param("Please, answer Y or n. Use failed configuration? (Y/n)");
+			if(!ask("Proxy connection failed. Use it anyway")) {
+				return;
 			}
-			if(ignoreFail == 'n') return;
 		}
 		File.saveContent(rep + "/.proxy", haxe.Serializer.run(proxy));
 		print("Proxy setup done");
