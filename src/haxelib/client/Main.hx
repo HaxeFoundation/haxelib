@@ -686,7 +686,7 @@ class Main {
 				doInstallFile(rep, prj, true, true);
 				return;
 			}
-			
+
 			if ( prj.endsWith("haxelib.json") )
 			{
 				installFromHaxelibJson( rep, prj);
@@ -747,12 +747,12 @@ class Main {
 					var url:String = null;
 					var subDir:String = null;
 					var type:String;
-					
+
 					if ( parts.length > 1 )
 					{
 						if ( parts[1].startsWith("git:") )
 						{
-							
+
 							type = "git";
 							var urlParts = parts[1].substr(4).split("#");
 							url = urlParts[0];
@@ -818,7 +818,7 @@ class Main {
 			}
 		}
 	}
-	
+
 	function installFromHaxelibJson( rep:String, path:String )
 	{
 		doInstallDependencies(rep, Data.readData(File.getContent(path), false).dependencies);
@@ -1423,19 +1423,19 @@ class Main {
 	}
 
 	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
-		
+
 		var proj = rep + Data.safe(libName);
 
 		var libPath = proj + "/" + vcs.directory;
-		
+
 		var jsonPath = libPath + "/haxelib.json";
-		
+
 		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
 			print("You already have "+libName+" version "+vcs.directory+" installed.");
-			
+
 			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
 			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
-			
+
 			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
 				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
 			{
@@ -1450,7 +1450,7 @@ class Main {
 					this.alreadyUpdatedVcsDependencies.set(libName, branch);
 					updateByName(rep, libName);
 					setCurrent(rep, libName, vcs.directory, true);
-					
+
 					if(FileSystem.exists(jsonPath))
 						doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 				}
@@ -1459,7 +1459,7 @@ class Main {
 		}
 
 		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
-		
+
 		try {
 			vcs.clone(libPath, url, branch, version);
 		} catch(error:VcsError) {
@@ -1570,8 +1570,9 @@ class Main {
 		Http.PROXY = proxy;
 		print("Testing proxy...");
 		try Http.requestUrl("http://www.google.com") catch( e : Dynamic ) {
-			print("Proxy connection failed");
-			return;
+			if(!ask("Proxy connection failed. Use it anyway")) {
+				return;
+			}
 		}
 		File.saveContent(rep + "/.proxy", haxe.Serializer.run(proxy));
 		print("Proxy setup done");
