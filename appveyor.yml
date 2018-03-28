@@ -5,11 +5,12 @@ services:
 
 install:
   - npm -g install bower
+  - ps: Set-Service wuauserv -StartupType Manual
   - cinst haxe -y
   - cinst nssm -y
   - cinst curl -y
   - RefreshEnv
-  - haxelib setup haxelib_repo
+  - haxelib setup %HOME%/haxelib_repo
   - haxelib install all --always
   - haxelib install tora
   - haxelib list

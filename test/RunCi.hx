@@ -93,12 +93,19 @@ class RunCi {
 	static function runWithLocalServer(test:Void->Void):Void {
 		var HAXELIB_SERVER = "localhost";
 		var HAXELIB_SERVER_PORT = "2000";
-		var ndllPath = getEnv("NEKOPATH");
-		if (ndllPath == null)
-			if (exists("/usr/lib/x86_64-linux-gnu/neko"))
-				ndllPath = "/usr/lib/x86_64-linux-gnu/neko";
-			else
-				ndllPath = "/usr/lib/neko";
+		var ndllPath = switch (getEnv("NEKOPATH")) {
+			case null:
+				if (exists("/usr/lib/x86_64-linux-gnu/neko"))
+					"/usr/lib/x86_64-linux-gnu/neko";
+				else if (exists("/usr/local/lib/neko"))
+					"/usr/local/lib/neko";
+				else if (exists("/usr/lib/neko"))
+					"/usr/lib/neko";
+				else
+					throw "no idea where the ndll files are";
+			case nekopath:
+				nekopath;
+		}
 		var DocumentRoot = Path.join([getCwd(), "www"]);
 		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
 		var dbConfig = Json.parse(getContent(dbConfigPath));
@@ -129,8 +136,8 @@ class RunCi {
 			"LoadModule filter_module modules/mod_filter.so\n" +
 			"LoadModule deflate_module modules/mod_deflate.so\n";
 		case "Mac":
-			"LoadModule rewrite_module libexec/mod_rewrite.so\n" +
-			"LoadModule deflate_module libexec/mod_deflate.so\n";
+			"LoadModule rewrite_module lib/httpd/modules/mod_rewrite.so\n" +
+			"LoadModule deflate_module lib/httpd/modules/mod_deflate.so\n";
 		case _:
 			"";
 	}
@@ -171,24 +178,31 @@ Listen 2000
 			else
 				{ user: "root", pass: "" };
 
-			var cnx = sys.db.Mysql.connect({
-				user: user.user,
-				pass: user.pass,
-				host: "localhost",
-				port: 3306,
-				#if (haxe_ver < 4.0) database: "", #end
-			});
-			cnx.request('create user \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
-			cnx.request('create database ${dbConfig.database};');
-			cnx.request('grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';');
-			cnx.close();
+			for (i in 0...5) try {
+				var cnx = sys.db.Mysql.connect({
+					user: user.user,
+					pass: user.pass,
+					host: "localhost",
+					port: 3306,
+					#if (haxe_ver < 4.0) database: "mysql", #end
+				});
+				cnx.request('create user if not exists \'${dbConfig.user}\'@\'localhost\' identified by \'${dbConfig.pass}\';');
+				cnx.request('create database if not exists ${dbConfig.database};');
+				cnx.request('grant all on ${dbConfig.database}.* to \'${dbConfig.user}\'@\'localhost\';');
+				cnx.close();
+				return;
+			} catch (e:Dynamic) {
+				trace(e);
+				Sys.sleep(5.0);
+			}
+			throw "cannot config database";
 		}
 
 		switch (systemName()) {
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/VC14/binaries/httpd-2.4.25-win32-VC14.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VC15/binaries/httpd-2.4.33-Win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
@@ -224,14 +238,15 @@ Listen 2000
 					println("====================");
 				}
 			case "Mac":
-				runCommand("brew", ["install", "homebrew/apache/httpd24", "mysql"]);
+				runCommand("brew", ["install", "httpd", "mysql"]);
 
 				runCommand("mysql.server", ["start"]);
+
 				configDb();
 
 				runCommand("apachectl", ["start"]);
 				Sys.sleep(2.5);
-				writeApacheConf("/usr/local/etc/apache2/2.4/httpd.conf");
+				writeApacheConf("/usr/local/etc/httpd/httpd.conf");
 				Sys.sleep(2.5);
 				runCommand("apachectl", ["restart"]);
 				Sys.sleep(2.5);
@@ -241,11 +256,11 @@ Listen 2000
 				} catch (e:Dynamic) {
 					println("Cannot open webpage.");
 					println("====================");
-					println("apache error log:");
-					println(sys.io.File.getContent("/usr/local/var/log/apache2/error_log"));
-					println("====================");
 					println("apache config:");
-					println(sys.io.File.getContent("/usr/local/etc/apache2/2.4/httpd.conf"));
+					println(sys.io.File.getContent("/usr/local/etc/httpd/httpd.conf"));
+					println("====================");
+					println("apache error log:");
+					println(sys.io.File.getContent("/usr/local/var/log/httpd/error_log"));
 					println("====================");
 				}
 			case "Linux":
@@ -456,6 +471,9 @@ Listen 2000
 			compileClient();
 			testClient();
 			compileServer();
+		#end
+		// buddy is only compatiable with haxe 3.4+
+		#if (haxe_ver >= 3.4)
 			testServer();
 		#end
 

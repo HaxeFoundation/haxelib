@@ -22,6 +22,7 @@
 package haxelib;
 
 import haxelib.Data;
+import haxe.ds.*;
 
 interface SiteApi {
 	public function search( word : String ) : List<{ id : Int, name : String }>;

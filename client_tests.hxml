@@ -1,5 +1,6 @@
 -cp src
 -cp test
+-lib hx3compat
 -main HaxelibTests
 -debug
 -neko bin/test.n

@@ -14,6 +14,7 @@ class HomeController extends Controller {
 
 	@inject public var projectApi:ProjectApi;
 	@inject public var projectListApi:ProjectListApi;
+	@inject public var userApi:UserApi;
 
 	// Perform init() after dependency injection has occured.
 	@inject public function init( ctx:HttpContext ) {
@@ -34,13 +35,15 @@ class HomeController extends Controller {
 
 	@:route("/")
 	public function homepage() {
-		var latestProjects = projectListApi.latest( 10 ).sure();
-		var tags = projectListApi.getTagList( 10 ).sure();
+		var latestProjects = projectListApi.latest( 7 ).sure();
+		var users = userApi.getUserList().sure().splice(0, 10);
+		var tags = projectListApi.getTagList( 20 ).sure();
 		return new ViewResult({
 			title: "Haxelib - the Haxe package manager",
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
 			latestProjects: latestProjects,
+			users: users,
 			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
@@ -124,9 +127,11 @@ class HomeController extends Controller {
 			return new ViewResult({
 				title: 'Tag: $tagName',
 				icon: 'fa-tag',
+				currentTag: tagName,
+				tags: projectListApi.getTagList( 50 ).sure(),
 				description: 'A list of all projects on Haxelib with the tag "$tagName"',
 				projects: list,
-			}, "projectList.html");
+			}, "tagProjectList.html");
 		}
 	}
 

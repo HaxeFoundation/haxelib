@@ -1,11 +1,11 @@
 # Using Haxelib
 
-If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments. Access the <http://lib.haxe.org> website to view all the libraries available.
+If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments. 
 
 The following commands are available:
 
 <div class="row">
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#basic">Basic</a></h4>
   <ul>
     <li><a href="#install">install</a></li>
@@ -16,7 +16,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#information">Information</a></h4>
   <ul>
     <li><a href="#search">search</a></li>
@@ -24,12 +24,13 @@ The following commands are available:
     <li><a href="#user">user</a></li>
     <li><a href="#config">config</a></li>
     <li><a href="#path">path</a></li>
+    <li><a href="#libpath">libpath</a></li>
     <li><a href="#version">version</a></li>
     <li><a href="#help">help</a></li>
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#development">Development</a></h4>
   <ul>
     <li><a href="#submit">submit</a></li>
@@ -42,7 +43,7 @@ The following commands are available:
 </div>
 
 <div class="row">
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#miscellaneous">Miscellaneous</a></h4>
   <ul>
     <li><a href="#setup">setup</a></li>
@@ -54,7 +55,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#flags">Flags</a></h4>
   <ul>
     <li><a href="#flat">--flat</a></li>
@@ -67,7 +68,7 @@ The following commands are available:
   </ul>
 </div>
 
-<div class="col-md-4">
+<div class="span3">
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
     <li><a href="#cwd">-cwd</a></li>
@@ -249,14 +250,52 @@ haxelib path hscript:2.0.0
 haxelib path hscript erazor buddy
 haxelib path hscript erazor buddy:1.0.0
 ```
+Example output :
+```
+haxelib path openfl hxcpp format
+--macro openfl._internal.utils.ExtraParams.include()
+/usr/local/lib/haxe/lib/openfl/6.5.3/
+-D openfl=6.5.3
+/usr/local/lib/haxe/lib/hxcpp/git/
+-D hxcpp=3.4.0
+/usr/local/lib/haxe/lib/format/3,3,0/
+-D format=3.3.0
+```
 
-> Prints the path to one or more libraries, as well as any dependencies and compiler definitions required by those libraries.
+> Prints the source paths to one or more libraries, as well as any dependencies and compiler definitions required by those libraries.
 >
 > You can specify a version by appending `:version` to the library name. If no version is specified the set version is used.
 >
 > If a [development](#dev) version is set it'll be used even if a version is specified.
 >
 > This command is used by Haxe compiler to get required paths and flags for libraries.
+
+
+
+<a name="libpath" class="anch"></a>
+
+#### `haxelib libpath`
+
+```
+haxelib libpath [project-name[:version]...]
+haxelib libpath hscript
+haxelib libpath hscript:2.0.0
+haxelib libpath hscript erazor buddy
+haxelib libpath hscript erazor buddy:1.0.0
+```
+Example output :
+```
+haxelib libpath hxcpp format hscript
+/usr/local/lib/haxe/lib/hxcpp/git/
+/usr/local/lib/haxe/lib/format/3,3,0/
+/usr/local/lib/haxe/lib/hxcpp/2,1,1/
+```
+
+> Prints the root path of one or more libraries. Will output 1 path per line.
+>
+> You can specify a version by appending `:version` to the library name. If no version is specified the set version is used.
+>
+> If a [development](#dev) version is set it'll be used even if a version is specified.
 
 
 

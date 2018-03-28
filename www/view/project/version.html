@@ -3,7 +3,7 @@
 
 
 <div class="row">
-	<div class="col-lg-8">
+	<div class="span8">
 
 		<!-- Title and description -->
 		<h1>@project <small>@version</small></h1>
@@ -20,7 +20,7 @@
 
 		<!-- Links and buttons -->
 		<div class="btn-toolbar">
-			<a class="btn btn-primary" href="@downloadUrl"><i class="fa fa-download"></i> <strong>Download @project:@version</strong></a>
+			<a class="btn btn-success" href="@downloadUrl"><i class="fa fa-download"></i> <strong>Download @project:@version</strong></a>
 			<a class="btn btn-default" href="/p/@project/versions/">Other Versions</a>
 			<a class="btn btn-default" href="/p/@project/@version/files/">Files</a>
 			<!-- <a class="btn btn-default" href="/p/@project/@version/doc/">API Docs</a> -->
@@ -34,7 +34,7 @@
 		}
 
 	</div>
-	<div class="col-lg-4">
+	<div class="span4">
 
 		<!-- Project details -->
 		<div class="table-responsive">
@@ -56,11 +56,11 @@
 				<tr class="tags">
 					<th>Tags</th>
 					<td>
-						@{var i = 0;}
+            <ul class="tags unstyled">
 						@for( t in info.tags ) {
-							@{i++;}
-							<a href="/t/@t">@t</a>@if( i<info.tags.length ){, }
+							 <li class="tag tag-inline"><i class="fa fa-tag"></i> <a href="/t/@t/">@t</a></li>
 						}
+          </ul>
 					</td>
 				</tr>
 			</table>

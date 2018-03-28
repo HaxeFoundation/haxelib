@@ -5,9 +5,10 @@
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
 	<meta name="viewport" content="width=device-width" />
 	<title>@title</title>
-	<link href="/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-	<link href="/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet">
-	<link rel="stylesheet" type="text/css" href="/css/style.css"/><!-- TODO: revert style.css to be same as haxe.org? -->
+	<link href="//haxe.org/css/bootstrap.min.css" rel="stylesheet">
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/css/style.css"/>
+	<link rel="stylesheet" type="text/css" href="/css/haxe-nav.css"/>
 	<!--<link rel="stylesheet" type="text/css" href="/css/haxelib.css"/>-->
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
 	<link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:200,600,600italic,400' rel='stylesheet' type='text/css'>
@@ -39,36 +40,29 @@
 
 <body>
 
-<div class="section nav">
-	<nav class="navbar navbar-inverse navbar-fixed-top">
-		<div class="container">
-			<!-- Brand and toggle get grouped for better mobile display -->
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="//haxe.org/"><img src="//haxe.org/img/haxe-logo-horizontal-on-dark.svg" width="107" height="21" alt="Haxe Logo" title="Go to Haxe.org Website" onerror="this.src='/img/haxe-logo-horizontal-on-dark.png'" /></a>
-			</div>
+<nav class="section nav dark">
+		<div class="navbar navbar-fixed-top navbar-inverse">
+			<div class="navbar-inner">
+				<button class="btn btn-navbar" data-target=".nav-collapse" data-toggle="collapse" type="button"><span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span></button> <a class="brand haxe-logo" href="https://haxe.org/"><img alt="Haxe" height="21" onerror="this.src='https://haxe.org/img/haxe-logo-horizontal-on-dark.png'" src="https://haxe.org/img/haxe-logo-horizontal-on-dark.svg" width="107" /></a>
+				<a class="brand sub lib" href="/">LIB</a>
 
-			<!-- Collect the nav links, forms, and other content for toggling -->
-			<div class="collapse navbar-collapse" id="navbar-collapse">
-				<ul class="nav navbar-nav">
-					<li class="active"><a href="/">Haxelib <span class="sr-only">(current)</span></a></li>
+				<div class="nav-collapse collapse">
+				<ul class="nav pull-right search-link-menu">
+					<li><a href="/search"><i class="fa fa-search"></i></a></li>
+				</ul>
+				<ul class="nav">
 					<li class="dropdown">
-						<a href="/all" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Browse Projects <span class="caret"></span></a>
+						<a href="/all" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-folder-open-o"></i> Browse Projects <span class="caret"></span></a>
 						<ul class="dropdown-menu" role="menu">
-							<li><a href="/t/"><i class="fa fa-tags"></i> Browse by Tag</a></li>
-							<li><a href="/all/"><i class="fa fa-star"></i> Browse by Popularity</a></li>
-							<li><a href="/u/"><i class="fa fa-user"></i>  Browse by Author</a></li>
+							<li><a href="/all/"><i class="fa fa-star"></i> Browse by popularity</a></li>
+							<li><a href="/t/"><i class="fa fa-tags"></i> Browse by tag</a></li>
+							<li><a href="/u/"><i class="fa fa-user"></i>  Browse by author</a></li>
 							<!--<li><a href="/recent/">Recently Updated</a></li>-->
 							<!--<li class="divider"></li>-->
 						</ul>
 					</li>
 					<li class="dropdown">
-						<a href="/documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
+						<a href="/documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-file-o"></i> Documentation <span class="caret"></span></a>
 						<ul class="dropdown-menu" role="menu">
 							@for (url in documentationPages.keys()) {
 								<li @if(url==currentPage){ class="active" }><a href="@url">@documentationPages.get(url)</a></li>
@@ -78,57 +72,44 @@
 							<li><a href="//lib.haxe.org/legacy/"><i class="fa fa-folder-open-o"></i> Haxe 2 Haxelib repository</a></li>
 						</ul>
 					</li>
-				</ul>
-				<form action="/search/" method="GET" class="navbar-form navbar-right visible-lg" role="search">
-
-					<div class="form-group search">
-
-						<div class="input-group">
-							<input type="text" name="v" class="form-control" placeholder="Search Haxelib for..." @if(searchTerm!=null){ value="@searchTerm" } />
-							<span class="input-group-btn">
-								<button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
-							</span>
-						</div>
-						<!--<div id="cse-search-form" style="width: 100%;"></div>-->
-						<!--<script src="//www.google.com/jsapi" type="text/javascript"></script>-->
-						<!--<script type="text/javascript">-->
-							<!--google.load('search', '1', {language : 'en', style : google.loader.themes.V2_DEFAULT});-->
-							<!--google.setOnLoadCallback(function() {-->
-								<!--var customSearchOptions = {};  var customSearchControl = new google.search.CustomSearchControl(-->
-								<!--'008143996983163686627:ohovhuovssi', customSearchOptions);-->
-								<!--customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);-->
-								<!--var options = new google.search.DrawOptions();-->
-								<!--options.setAutoComplete(true);-->
-								<!--customSearchControl.setAutoCompletionId('008143996983163686627:ohovhuovssi+qptype:1');-->
-								<!--options.enableSearchboxOnly("/search", "s");-->
-								<!--customSearchControl.draw('cse-search-form', options);-->
-							<!--}, true);-->
-							<!--</script>-->
-					</div>
-
-					<!--<div class="form-group">-->
-						<!--<input type="text" class="form-control" placeholder="Search">-->
-					<!--</div>-->
-					<!--<button type="submit" class="btn btn-default">Submit</button>-->
-				</form>
-				<ul class="nav navbar-nav navbar-right">
-					<li class="hidden-lg"><a href="/search"><i class="fa fa-search"></i> Search</a></li>
-					<!-- TODO: some login / logout type links. -->
-					<!--<li class="dropdown">-->
-						<!--<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Dropdown <span class="caret"></span></a>-->
-						<!--<ul class="dropdown-menu" role="menu">-->
-							<!--<li><a href="#">Action</a></li>-->
-							<!--<li><a href="#">Another action</a></li>-->
-							<!--<li><a href="#">Something else here</a></li>-->
-							<!--<li class="divider"></li>-->
-							<!--<li><a href="#">Separated link</a></li>-->
-						<!--</ul>-->
-					<!--</li>-->
-				</ul>
-			</div><!-- /.navbar-collapse -->
-		</div><!-- /.container-fluid -->
+					
+					<li class=" divider"></li>
+					<li class="dropdown">
+  						<a class="dropdown-toggle" data-toggle="dropdown" href="https://haxe.org/documentation/">Learn Haxe <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="https://haxe.org/documentation/introduction/" rel="external">Introduction</a></li>
+							<li><a href="https://haxe.org/manual/" rel="external">Manual</a></li>
+							<li><a href="https://code.haxe.org" rel="external">Code Cookbook</a></li>
+							<li><a href="https://api.haxe.org" rel="external">API Documentation</a></li>
+							<li class="divider"></li>
+							<li><a href="https://haxe.org/videos/" rel="external">Videos</a></a></li>
+							<li class="divider"></li>
+							<li><a href="https://try.haxe.org" rel="external">Try Haxe online</a></li>
+							<li class="active"><a href="https://lib.haxe.org" rel="external">Haxelib</a></li>
+						</ul>
+  					</li>
+					<li class="dropdown">
+						<a href="/HaxeFoundation" data-toggle="dropdown" class="dropdown-toggle">Connect <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="https://github.com/HaxeFoundation" rel="external"><i class="fa fa-github"></i> Github</a></li>
+							<li><a href="https://github.com/HaxeFoundation/haxe/issues" rel="external"><i class="fa fa-github"></i> Bug reports</a></li>
+							<li><a href="https://stackoverflow.com/questions/tagged/haxe" rel="external"><i class="fa fa-stack-exchange"></i> Stack Overflow</a></li>
+							<li><a href="http://community.haxe.org/" rel="external"><i class="fa fa-envelope-o"></i> Forums</a></li>
+							<li><a href="https://gitter.im/HaxeFoundation/haxe" rel="external nofollow"><i class="fa fa-comments-o"></i> Chat</a></li>
+							<li><a href="https://haxe.org/blog"><i class="fa fa-rss"></i> Blog</a></li>
+							<li class="divider"></li>
+							<li><a href="https://www.facebook.com/haxe.org/" rel="external"><i class="fa fa-facebook"></i> Facebook</a></li>
+							<li><a href="https://twitter.com/search?q=%23haxe" rel="external"><i class="fa fa-twitter"></i> #haxe</a></li>
+							<li><a href="https://twitter.com/haxelang" rel="external"><i class="fa fa-twitter"></i> @@haxelang</a></li>
+							<li><a href="https://twitter.com/haxe_org" rel="external"><i class="fa fa-twitter"></i> @@haxe_org</a></li>
+							<li class="divider"></li>
+							<li><a href="https://haxe.org/foundation/contact.html">Contact</a></li>
+						</ul>
+					</li>
+				</ul></div>
+			</div>
+		</div>
 	</nav>
-</div>
 
 <div class="page-wrap">
 	@if( useWrapper ) {
@@ -147,14 +128,15 @@
 	<div class="container">
 		<div class="copyright">
 			<p>&copy;@todaysDate.getFullYear()
-				<a href="//haxe.org/foundation/" title="Haxe Foundation Website" class="hf-link">Haxe Foundation</a>
+				<a href="//haxe.org/foundation/" title="Haxe Foundation Website" class="hf-link">Haxe Foundation</a> | 
+				<a href="https://github.com/HaxeFoundation/haxelib" title="Haxelib Github Repository" class="hf-link">Haxelib on Github</a>
 		</div>
 	</div>
 </footer>
 
-<script src="/bower_components/jquery/dist/jquery.min.js"></script>
-<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-<script src="//haxe.org/js/client.js"></script>
+<script src="//haxe.org/js/jquery.min.js"></script>
+<script src="//haxe.org/js/bootstrap.min.js"></script>
+<script src="//haxe.org/js/client.min.js"></script>
 <!-- Google Tag Manager -->
 <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-N6H4RQ"
                   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>

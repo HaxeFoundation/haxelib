@@ -2,7 +2,7 @@
 	<h1>@project <small>All Versions</small></h1>
 	<p class="lead">@info.desc</p>
 	<div class="btn-toolbar">
-		<a class="btn btn-primary" href="/p/@project/@info.curversion/">Current Version</a>
+		<a class="btn btn-success" href="/p/@project/@info.curversion/">Current Version</a>
 		<a class="btn btn-default" href="@info.website">Project Website</a>
 	</div>
 	<p></p>
@@ -23,7 +23,7 @@
 	<tr>
 		<td>
 			<a href="/p/@project/@v.name/" class="text-nowrap">@v.name</a>
-			<br /><small>@v.date.substr(0,10)</small>
+			<br /><small style="white-space: nowrap">@v.date.substr(0,10)</small>
 		</td>
 		<td>@escape(v.comments)</td>
 		<td><code class="text-nowrap">haxelib install @project @v.name</code></td>

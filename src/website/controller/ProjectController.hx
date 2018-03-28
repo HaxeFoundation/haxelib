@@ -47,7 +47,7 @@ class ProjectController extends Controller {
 
 		var downloadUrl = '/p/$projectName/$semver/download/';
 
-		var readmeHTML = switch projectApi.readContentFromZip( projectName, semver, "README.md" ) {
+		var readmeHTML = switch projectApi.readContentFromZip( projectName, semver, "README.md", false ) {
 			case Success(Some(readme)): markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
 			case Success(None): ""; // No README.
 			case Failure(err):

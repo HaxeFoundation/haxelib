@@ -15,7 +15,7 @@ For more documentation, please refer to http://lib.haxe.org/documentation/
 
 The server has to be compiled with Haxe 3.2.1+. It can be run in Apache using mod_neko / mod_tora.
 
-Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container. We would recommand to use the [Docker Platform](https://www.docker.com/products/docker) instead of the Docker Toolbox.
+Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container. We would recommend to use the [Docker Platform](https://www.docker.com/products/docker) instead of the Docker Toolbox.
 
 To start, run:
 
@@ -38,7 +38,7 @@ docker-compose -f test/docker-compose.yml build
 docker-compose -f test/docker-compose.yml up -d
 ```
 
-To iterate quickly during development, we can use `-f test/docker-compose-dev.yml` in place of `-f test/docker-compose.yml` when starting the container. `-f test/docker-compose-dev.yml` mounts the repo's `/www` folder to the container, such that there is no need to rebuild and replace the running containers. Instead, after modifying the server source code or html templates, run `haxe server.hxml` and the container should pick up the changes immediately. The downside of this is that we have to make sure we've installed the right haxelib dependencies. Also, Docker only allow mounting folders in certain locations (e.g. `/Users` on Mac), so it may not work if we cloned the repo to `/my_projects/haxelib`.
+To iterate quickly during development, we can use `-f test/docker-compose-dev.yml` in place of `-f test/docker-compose.yml` when starting the container. `-f test/docker-compose-dev.yml` mounts the repo's `/www` folder to the container, such that there is no need to rebuild and replace the running containers. Instead, after modifying the server source code or html templates, run `haxe server.hxml` and the container should pick up the changes immediately. The downside of this is that we have to make sure we've installed the right haxelib dependencies. Also, Docker only allows mounting folders in certain locations (e.g. `/Users` on Mac), so it may not work if we cloned the repo to `/my_projects/haxelib`.
 
 To run haxelib client with this local server, prepend the arguments, `-R $SERVER_URL`, to each of the haxelib commands, e.g.:
 ```

@@ -1,6 +1,6 @@
 {
 	"name": "haxelib",
-	"url" : "http://haxe.org/haxelib",
+	"url" : "https://lib.haxe.org/documentation/",
 	"license": "GPL",
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",

@@ -70,7 +70,7 @@ class HomeControllerTest extends BuddySuite {
 					.onTheApp( haxelibSite )
 					.itShouldLoad( HomeController, "tag", ["games"] )
 					.itShouldReturn( ViewResult, function(result) {
-						Assert.same( result.templateSource, TFromEngine("home/projectList.html") );
+						Assert.same( result.templateSource, TFromEngine("home/tagProjectList.html") );
 						Assert.same( result.layoutSource, TFromEngine("layout.html") );
 						// TODO: check that the matching projects are correct
 					})

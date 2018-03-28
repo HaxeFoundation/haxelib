@@ -8,6 +8,8 @@ import sys.FileSystem;
 import haxelib.client.Main.VERSION;
 import haxelib.Data.Infos;
 
+using StringTools;
+
 class Package {
     static var outPath = "package.zip";
 
@@ -58,11 +60,20 @@ class Package {
         out.close();
     }
 
-    @:access(haxelib.client.Main.VERSION)
     static function checkVersion() {
+        var runVersion = {
+            var p = new sys.io.Process("neko", ["run.n", "version"]);
+            var v = p.stdout.readAll().toString().trim();
+            p.close();
+            v;
+        }
         var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
-        if (json.version != VERSION) {
-            Sys.println('Error: Version in haxelib.json (${json.version}) does not match version in haxelib.client.Main.VERSION field ($VERSION)');
+        if (!runVersion.startsWith(json.version + " ")) {
+            Sys.println('Error: Version in haxelib.json (${json.version}) does not match `neko run.n version` ($runVersion)');
+            Sys.exit(1);
+        }
+        if (runVersion.indexOf("dirty") >= 0) {
+            Sys.println('Error: run.n was compiled with dirty source');
             Sys.exit(1);
         }
     }
