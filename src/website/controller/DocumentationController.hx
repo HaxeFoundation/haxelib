@@ -28,9 +28,6 @@ class DocumentationController extends Controller {
 		var pages = new OrderedStringMap();
 		pages.set( "/documentation/", "Getting Started" );
 		pages.set( "/documentation/using-haxelib/", "Using Haxelib" );
-		pages.set( "/documentation/haxelib-basics/", "Haxelib install" );
-		pages.set( "/documentation/creating-a-haxelib-package/", "Creating a Haxelib" );
-		pages.set( "/documentation/creating-a-haxelib-package/", "Creating a Haxelib" );
 		pages.set( "/documentation/creating-a-haxelib-package/", "Creating a Haxelib" );
 		// pages.set( "/documentation/faq/", "FAQ" );
 		// pages.set( "/documentation/api/", "API" );
