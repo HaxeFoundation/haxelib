@@ -1,66 +1,87 @@
-
-
-
-
 <div class="row">
 	<div class="span8">
-
-		<!-- Title and description -->
-		<h1>@project <small>@version</small></h1>
-		<p class="lead">@info.desc</p>
-		<p><small>Released @versionDate.</small></p>
-
-		<!-- Installation Instruction -->
-		<p></p>
+		<div>
+			<h1><i class="fa fa-star"></i> @project</h1>
+			<p class="lead">@info.desc<br/><a href="@info.website">@info.website <span class="fa fa-external-link"></span></a></p>
+		</div>
+		
+		<ul class="nav nav-tabs nav-justified" role="tablist">
+			<li @if( version==info.curversion ) {class="active"}><a href="/p/@project/">Current version <small>@version</small></a></li>
+			<li @if( version!=info.curversion ) {class="active"}><a href="/p/@project/versions/">All Versions <small>(@allVersions.length)</small></a></li>
+			<li><a href="/p/@project/@info.curversion/files/">Files</a></li>
+		</ul>
+		
+		@if (false) {<!-- Warning if they're looking at an old version -->}
+		@if( version!=info.curversion ) {
+			<p class="alert alert-warning">This is not the latest stable version of @project. See version <a href="/p/@project/@info.curversion/">@info.curversion</a> for the latest version.</p>
+		}
+		
+		
+		@if (false) {<!-- Installation Instruction -->}
+		@if( version==info.curversion ) {
 		<div class="well">
 			<p>To install, run:</p>
 			<pre><code>haxelib install @project @version</code></pre>
 			<p>See <a href="/documentation/using-haxelib/">using Haxelib</a> in Haxelib documentation for more information.</p>
+			<a href=""></a>
 		</div>
-
-		<!-- Links and buttons -->
-		<div class="btn-toolbar">
-			<a class="btn btn-success" href="@downloadUrl"><i class="fa fa-download"></i> <strong>Download @project:@version</strong></a>
-			<a class="btn btn-default" href="/p/@project/versions/">Other Versions</a>
-			<a class="btn btn-default" href="/p/@project/@version/files/">Files</a>
-			<!-- <a class="btn btn-default" href="/p/@project/@version/doc/">API Docs</a> -->
-			<a class="btn btn-default" href="@info.website">Project Website</a>
-		</div>
-
-		<!-- Warning if they're looking at an old version -->
-		<p></p>
-		@if( version!=info.curversion ) {
-			<p class="alert alert-warning">This is not the latest stable version of @project. See version <a href="/p/@project/@info.curversion/">@info.curversion</a> for the latest version.</p>
+		}
+		
+		@if (false) {<!-- Readme -->}
+		@if (readme!="") {
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-book"></i> README.md</h3>
+				</div>
+				<article class="panel-body readme site-content">
+					@readme
+				</article>
+			</div>
 		}
 
 	</div>
 	<div class="span4">
-
-		<!-- Project details -->
-		<div class="table-responsive">
+		
+		@if (false) {<!-- Project details -->}
+		<div class="table-responsive project-details">
 			<table class="table table-condensed">
-				<tr class="owner"><th>Maintainer</th><td><a href="/u/@info.owner">@info.owner</a></td></tr>
-				<tr class="url"><th>Website</th><td><a href="@info.website">@info.website</a></td></tr>
-				<tr class="social">
-					<th>Social</th>
+				<tr>
+					<td width="50%">
+						<strong>Contributors</strong><br/>
+					</td>
 					<td>
+						@for(d in info.contributors) { 
+							<a href="/u/@d.name">@d.name</a><br/>
+						}
+					</td>
+				</tr>
+				<tr>
+					<td><strong>Version</strong><br/>@info.curversion</a></td>
+					<td><strong>Published</strong><br/><span title="@versionDate">@formatDate(versionDate)</span></td>
+				</tr>
+					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
+					
+				</tr>
+				<tr class="tags">
+					<td colspan="2">
+						<ul class="tags unstyled">
+							@for( t in info.tags ) {
+								 <li class="tag tag-inline"><i class="fa fa-tag"></i> <a href="/t/@t/">@t</a></li>
+							}
+						</ul>
+					</td>
+				</tr>
+				<tr id="github-info" style="display:none">
+					<td>
+						<p><strong>Repository</strong></p>
+						<span id="github-user-image"></span>
+					</td>
+					<td>
+						<p id="github-user-website"></p>
 						<div class="hidden" id="github-buttons">
 							<iframe id="github-button-star" src="" frameborder="0" scrolling="0" width="100" height="20"></iframe>
 							<iframe id="github-button-fork" src="" frameborder="0" scrolling="0" width="100" height="20"></iframe>
 						</div>
-					</td>
-				</tr>
-				<tr class="version"><th>Current version</th><td>@info.curversion</td></tr>
-				<tr class="owner"><th>Statistics</th><td>Installed <strong>@info.downloads</strong> times</td></tr>
-				<tr class="license"><th>License</th><td>@info.license</td></tr>
-				<tr class="tags">
-					<th>Tags</th>
-					<td>
-            <ul class="tags unstyled">
-						@for( t in info.tags ) {
-							 <li class="tag tag-inline"><i class="fa fa-tag"></i> <a href="/t/@t/">@t</a></li>
-						}
-          </ul>
 					</td>
 				</tr>
 			</table>
@@ -69,28 +90,21 @@
 	</div>
 </div>
 
-<hr/>
-
-@if (readme!="") {
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title"><i class="fa fa-book"></i> README.md</h3>
-		</div>
-		<article class="panel-body readme site-content">
-			@readme
-		</article>
-	</div>
-}
-
+@if (info.website.indexOf("github.com") > -1) {
+@{var githubInfo = info.website.split("github.com/").pop().split("/");}
+@{var githubUser = githubInfo[0];}
+@{var githubRepo = githubInfo[1];}
 <script>
-	var website = "@info.website";
-	if (website.indexOf("github.com") > -1)
-	{
-		var githubInfo = website.split("github.com/").pop().split("/");
-		var githubUser = githubInfo[0];
-		var githubRepo = githubInfo[1];
-		document.getElementById("github-button-star").src = "https://ghbtns.com/github-btn.html?user="+githubUser+"&repo="+githubRepo+"&type=star&count=true";
-		document.getElementById("github-button-fork").src = "https://ghbtns.com/github-btn.html?user="+githubUser+"&repo="+githubRepo+"&type=fork&count=true";
-		document.getElementById("github-buttons").className = "show";
-	}
+var baseGithubUrl = "https://ghbtns.com/github-btn.html?user=@githubUser";
+@if (githubRepo != null) { baseGithubUrl += "&repo=@githubRepo"; }
+
+document.getElementById("github-info").style.display = "table-row";
+
+document.getElementById("github-button-star").src = baseGithubUrl + "&type=star&count=true";
+document.getElementById("github-button-fork").src = baseGithubUrl + "&type=fork&count=true";
+document.getElementById("github-buttons").className = "show";
+
+document.getElementById("github-user-website").innerHTML = '<span class="fa fa-github"></span> <a href="@info.website">@githubUser</a>';
+document.getElementById("github-user-image").innerHTML = '<a href="@info.website"><img src="https://github.com/'+'@githubUser'+'.png?size=160" width="80" height="80" title="@githubUser on GitHub"/></a>';
 </script>
+}

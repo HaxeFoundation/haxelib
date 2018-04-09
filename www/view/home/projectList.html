@@ -1,6 +1,18 @@
 <h1><i class="fa @icon"></i> @title</h1>
 <p class="lead">@description</p>
 
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
+	
 <table class="table table-compact table-hover project-list">
 	<thead>
 		<tr>
@@ -18,7 +30,7 @@
 					<br/><small><a href="/u/@p.author/">@@@p.author</a></small>
 				</th>
 				<td>@p.description</td>
-				<td>@p.version</td>
+				<td>@p.version.name<br/><small title="@p.version.date">@formatDate(p.version.date)</small></td>
 				<td>@p.downloads</td>
 			</tr>
 		}

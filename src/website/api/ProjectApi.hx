@@ -31,8 +31,8 @@ class ProjectApi extends UFApi {
 	@inject public var cacheCnx:UFCacheConnectionSync;
 
 	/** Extensions that should be loaded as a text file. **/
-	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess"];
-	public static var imgExtensions:Array<String> = ["jpg","jpeg","gif","png"];
+	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess","yml","gitignore","conf","html","mtt","htm"];
+	public static var imgExtensions:Array<String> = ["jpg","jpeg","gif","png","svg","ico"];
 
 	/**
 		Load the ProjectInfos for the given project.
@@ -69,9 +69,9 @@ class ProjectApi extends UFApi {
 						// Exact match! It's a file, not a directory. Now, check the type and load it.
 						fileInfo =
 							if ( textExtensions.indexOf(extension)>-1 )
-								Text( Reader.unzip(entry).toString(), extension );
+								Text( Reader.unzip(entry).toString(), extension, entry.fileSize );
 							else if ( imgExtensions.indexOf(extension)>-1 )
-								Image( Reader.unzip(entry), extension );
+								Image( Reader.unzip(entry), extension, entry.fileSize );
 							else
 								Binary( entry.fileSize );
 						break;
@@ -227,9 +227,9 @@ class ProjectApi extends UFApi {
 **/
 enum FileInformation {
 	/** A text file, with it's String content and extension. **/
-	Text( content:String, extension:String );
+	Text( content:String, extension:String, size:Int );
 	/** A text file, with it's Bytes content and extension. **/
-	Image( content:Bytes, extension:String );
+	Image( content:Bytes, extension:String, size:Int );
 	/** A binary file that we can't display, together with it's size. **/
 	Binary( size:Int );
 	/** A directory listing, with separate arrays for subdirs and files. **/
