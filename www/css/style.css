@@ -384,30 +384,35 @@ html pre, html pre code {
 	line-height: 20px;
 	white-space: pre;
 	overflow-x: auto;
+	tab-size: 20px;
 }
-pre, div.pre {
-	color: #333;
-	background-color: #f3f3f3;
-	border: 1px solid #bbb;
-	margin: 15px;
-	padding: 5px;
-	padding-left: 20px;
+code.prettyprint { 
+  display: block;
+  color: #333;
+  padding: 0.5em;
 }
-pre .kwd, div.pre .kwd {
-	color: #008;
+code.prettyprint .type  {
+  color: #0086b3;
 }
-pre .val, div.pre .val {
-	color: #448;
+code.prettyprint .kwd {
+  color: #00a;
 }
-pre .str, div.pre .str {
-	color: #800;
+code.prettyprint .val  {
+  color: #44a;
 }
-pre .cmt, div.pre .cmt {
-	color: #080;
+code.prettyprint .str, code.prettyprint .str .kwd, code.prettyprint .str .val, code.prettyprint .str .type {
+  color: #a00;
 }
-/* Make sure keywords inside comments are not highlighted*/
-pre .cmt .kwd, pre .cmt .str, pre .cmt .val {
-	color: #080;
+code.prettyprint .cmt {
+  color: #998;
+  font-style: italic;
+}
+code.prettyprint .ereg, code.prettyprint .ereg .type {
+  color: #f01;
+}
+/* Make sure keywords inside comments are not highlighted */
+code.prettyprint .cmt .kwd, code.prettyprint .cmt .str, code.prettyprint .cmt .val, code.prettyprint .cmt .type {
+  color: #998;
 }
 
 /**

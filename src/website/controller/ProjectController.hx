@@ -3,6 +3,7 @@ package website.controller;
 import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
+import highlighter.Highlighter;
 import haxe.ds.Option;
 import markdown.AST;
 import Markdown;
@@ -151,22 +152,31 @@ class ProjectController extends Controller {
 			case Text(str,ext,size):
 				if ( ["md","mdown","markdown"].indexOf(ext)>-1 ) {
 					str = Markdown.markdownToHtml( str );
+					str = str.replace("<script", "&lt;script"); // disallow scripts
 					data["type"] = "markdown";
 				}
 				else {
 					data["type"] = "text";
+					
+					// make sure tags are rendered correctly
+					str = str.replace("<", "&lt;").replace(">", "&gt;");
+					
+					if (["xml","html","htm","mtt"].indexOf(ext)>-1) {
+						str = Util.syntaxHighlightHTML(str);
+					}
+					else if (ext == "hx") str = Highlighter.syntaxHighlightHaxe(str);
+					else if (ext == "hxml") str = Highlighter.syntaxHighlightHXML(str);
 				}
-				if (["xml","html","htm","mtt"].indexOf(ext)>-1) {
-					data["fileContent"] = str.replace("<","&lt;").replace(">","&gt;");
-				} else {
-					data["fileContent"] = str;
-				}
+				
+				data["fileContent"] = str;
 				data["size"] = getSize(size);
 				data["highlightLanguage"] = ext;
+				
 			case Image(bytes,ext,size):
 				data["filename"] = rest[rest.length-1];
 				data["type"] = "img";
 				data["size"] = getSize(size);
+				
 			case Binary(size):
 				data["filename"] = rest[rest.length-1];
 				data["size"] = getSize(size);
@@ -176,7 +186,7 @@ class ProjectController extends Controller {
 		vr.helpers["extensionAllowed"] = function(file:String) return ProjectApi.textExtensions.has(file.extension().toLowerCase());
 		return vr;
 	}
-
+	
 	static function getSize(size:Int) {
 		if (size == null) return null;
 		var kb = Math.round(size / 1024 * 10) / 10;

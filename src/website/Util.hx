@@ -45,4 +45,12 @@ class Util {
 			return years > 1 ? '$years years ago' : '$years year ago';
 		}
 	}
+	
+	public static function syntaxHighlightHTML(code:String):String {
+		var html = code;
+		html = ~/(("|')(.+?)?\2)/g.replace(html, "<span class=str>$1</span>");
+		html = ~/(&lt;\\?)(.+?)(\/|\s|&gt;)/g.replace(html, "$1<span class=kwd>$2</span>$3");
+		
+		return html;
+	}
 }

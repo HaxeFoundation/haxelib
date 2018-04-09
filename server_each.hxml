@@ -7,6 +7,7 @@
 -lib cleversort
 -lib aws-sdk-neko:0.2.0
 -lib record-macros
+-lib html-haxe-code-highlighter:0.1.2
 -D server
 -D getter_support
 # https://github.com/HaxeFoundation/haxe/issues/4903
