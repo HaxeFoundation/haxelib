@@ -66,18 +66,20 @@
 				@{var popular = popularProjects(i * 3, 3);}
 				@for (j in 0...popular.length) {
 					@{var p = popular[j];}
-					<p>
-						<strong class="title"><a href="/p/@p.name/">@p.name</a></strong><br/> by <a href="/u/@p.author/">@p.author</a><br/>
-						<em>@escape(p.description)</em><br/>
-						<small>
-							<a href="/p/@p.name/@p.version.toSemver()">@p.version.toSemver()</a> &nbsp;<span title="@p.version.date">published @formatDate(p.version.date)</span> <br/>
-							<strong>@p.downloads downloads</strong>
-						</small>
-						<div class="btn-toolbar">
-							<a class="btn btn-default" href="/p/@p.name/"><i class="fa fa-star"></i> View project page</a>
-						</div>
-					</p>
-					@if(j<2){<hr/>}
+					@if(p != null) {
+						<p>
+							<strong class="title"><a href="/p/@p.name/">@p.name</a></strong><br/> by <a href="/u/@p.author/">@p.author</a><br/>
+							<em>@escape(p.description)</em><br/>
+							<small>
+								<a href="/p/@p.name/@p.version.toSemver()">@p.version.toSemver()</a> &nbsp;<span title="@p.version.date">published @formatDate(p.version.date)</span> <br/>
+								<strong>@p.downloads downloads</strong>
+							</small>
+							<div class="btn-toolbar">
+								<a class="btn btn-default" href="/p/@p.name/"><i class="fa fa-star"></i> View project page</a>
+							</div>
+						</p>
+						@if(j<2){<hr/>}
+					}
 				}
 			</div>
 			}
@@ -88,6 +90,7 @@
 			@for( i in 0...3) {
 			<div class="span4">
 				@for( update in latestProjects(i * 4, 4) ) {
+					@if(update != null) {
 					<p>
 						<strong class="title"><a href="/p/@update.p.name/">@update.p.name</a></strong><br/>
 						<small>
@@ -95,6 +98,7 @@
 							<a href="/p/@update.p.name/@update.v.name">@update.v.name</a> &nbsp;<span title="@update.v.date">updated @formatDate(update.v.date)</span>
 						</small>
 					</p>
+					}
 				}
 			</div>
 			}
