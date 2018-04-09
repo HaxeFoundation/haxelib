@@ -112,10 +112,12 @@
 			@for( i in 0...6) {
 			<div class="span2">
 				@for( u in users(i*3, 3) ) {
-				<p class="user">
-						<img src="//www.gravatar.com/avatar/@(u.emailHash).jpg?s=144" class="img-circle" width="48" height="48" alt="Avatar of @u.user.name" />
-						<strong><a href="/u/@u.user.name/">@u.user.fullname</a></strong><br/><small>(@u.projects.length&nbsp;projects)</small>
-					</p>
+					@if (u != null){
+						<p class="user">
+							<img src="//www.gravatar.com/avatar/@(u.emailHash).jpg?s=144" class="img-circle" width="48" height="48" alt="Avatar of @u.user.name" />
+							<strong><a href="/u/@u.user.name/">@u.user.fullname</a></strong><br/><small>(@u.projects.length&nbsp;projects)</small>
+						</p>
+					}
 				}
 				</div>
 			}
