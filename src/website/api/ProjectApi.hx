@@ -31,7 +31,7 @@ class ProjectApi extends UFApi {
 	@inject public var cacheCnx:UFCacheConnectionSync;
 
 	/** Extensions that should be loaded as a text file. **/
-	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess","yml","gitignore","conf","html","mtt","htm"];
+	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess","yml","gitignore","conf","html","mtt","htm","js","css","less","scss"];
 	public static var imgExtensions:Array<String> = ["jpg","jpeg","gif","png","svg","ico"];
 
 	/**
