@@ -64,6 +64,7 @@ class ProjectController extends Controller {
 			title: '$projectName ($semver)',
 			project: projectName,
 			description: '${currentVersion.comments} - ${info.desc}',
+			comments: currentVersion.comments,
 			allVersions: info.versions,
 			version: semver,
 			versionDate: Date.fromString(currentVersion.date).format('%F'),

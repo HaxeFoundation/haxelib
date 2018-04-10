@@ -16,22 +16,26 @@
 			<p class="alert alert-warning">This is not the latest stable version of @project. See version <a href="/p/@project/@info.curversion/">@info.curversion</a> for the latest version.</p>
 		}
 		
-		
 		@if (false) {<!-- Installation Instruction -->}
 		@if( version==info.curversion ) {
 		<div class="well">
 			<p>To install, run:</p>
 			<pre><code>haxelib install @project @version</code></pre>
 			<p>See <a href="/documentation/using-haxelib/">using Haxelib</a> in Haxelib documentation for more information.</p>
-			<a href=""></a>
 		</div>
+		}
+		
+		@if (comments != null && comments.length > 0) { 
+			<h2><i class="fa fa-book"></i> @project @version Release notes</h2>
+			<p>@escape(comments)</p>
+			<hr/>
 		}
 		
 		@if (false) {<!-- Readme -->}
 		@if (readme!="") {
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title"><i class="fa fa-book"></i> README.md</h3>
+					<h2 class="panel-title"><i class="fa fa-book"></i> README.md</h2>
 				</div>
 				<article class="panel-body readme site-content">
 					@readme
