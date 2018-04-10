@@ -7,14 +7,17 @@ FROM ubuntu:trusty
 # apt-get dependencies of bower
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
 	&& add-apt-repository ppa:haxe/releases -y \
-	&& apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	&& apt-get update && apt-get upgrade -y \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		apache2 \
 		neko-dev \
 		haxe \
-		npm \
-		nodejs-legacy \
+		curl \
 		git \
 		libcurl4-gnutls-dev \
+	&& curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
+		nodejs \
 	&& rm -r /var/lib/apt/lists/*
 
 
@@ -34,7 +37,6 @@ RUN { \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
 
-RUN npm config set registry="http://registry.npmjs.org/"
 RUN npm -g install bower
 
 
