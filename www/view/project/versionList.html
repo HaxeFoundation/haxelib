@@ -26,8 +26,9 @@ var serieData = data.series[0];
 data.labels.reverse();
 serieData.reverse();
 for (var i=0;i<serieData.length;i++) {
+	var t = serieData[i].data;
 	serieData[i].data+=total;
-	total+=serieData[i].data;
+	total+=t;
 }
 
 var options = {

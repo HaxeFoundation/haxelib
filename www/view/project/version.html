@@ -17,13 +17,12 @@
 		}
 		
 		@if (false) {<!-- Installation Instruction -->}
-		@if( version==info.curversion ) {
 		<div class="well">
 			<p>To install, run:</p>
-			<pre><code>haxelib install @project @version</code></pre>
+			<pre><code>haxelib install @project @version</code> <a class="btn btn-small pull-right" href="/p/@project/@version/download/" title="Download @project:@version zip"><i class="fa fa-download"></i></a></pre>
 			<p>See <a href="/documentation/using-haxelib/">using Haxelib</a> in Haxelib documentation for more information.</p>
+			
 		</div>
-		}
 		
 		@if (comments != null && comments.length > 0) { 
 			<h2><i class="fa fa-book"></i> @project @version Release notes</h2>
