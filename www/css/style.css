@@ -3,13 +3,14 @@
 **/
 * {
 	margin: 0;
+	box-sizing:border-box;
 }
 html, body {
 	height: 100%;
 }
 .page-wrap {
 	margin-bottom: 0; /* equal to footer height */
-  flex: 1 0 auto; 
+	flex: 1 0 auto; 
 }
 .page-wrap:after {
 	content: "";
@@ -383,30 +384,35 @@ html pre, html pre code {
 	line-height: 20px;
 	white-space: pre;
 	overflow-x: auto;
+	tab-size: 20px;
 }
-pre, div.pre {
-	color: #333;
-	background-color: #f3f3f3;
-	border: 1px solid #bbb;
-	margin: 15px;
-	padding: 5px;
-	padding-left: 20px;
+code.prettyprint { 
+  display: block;
+  color: #333;
+  padding: 0.5em;
 }
-pre .kwd, div.pre .kwd {
-	color: #008;
+code.prettyprint .type  {
+  color: #0086b3;
 }
-pre .val, div.pre .val {
-	color: #448;
+code.prettyprint .kwd {
+  color: #00a;
 }
-pre .str, div.pre .str {
-	color: #800;
+code.prettyprint .val  {
+  color: #44a;
 }
-pre .cmt, div.pre .cmt {
-	color: #080;
+code.prettyprint .str, code.prettyprint .str .kwd, code.prettyprint .str .val, code.prettyprint .str .type {
+  color: #a00;
 }
-/* Make sure keywords inside comments are not highlighted*/
-pre .cmt .kwd, pre .cmt .str, pre .cmt .val {
-	color: #080;
+code.prettyprint .cmt {
+  color: #998;
+  font-style: italic;
+}
+code.prettyprint .ereg, code.prettyprint .ereg .type {
+  color: #f01;
+}
+/* Make sure keywords inside comments are not highlighted */
+code.prettyprint .cmt .kwd, code.prettyprint .cmt .str, code.prettyprint .cmt .val, code.prettyprint .cmt .type {
+  color: #998;
 }
 
 /**
@@ -682,17 +688,47 @@ h2 i.fa, h3 i.fa, h4 i.fa, h5 i.fa {
 	margin: 0;
 	padding-left: 0;
 }
-.breadcrumb > li:first-child {
-	padding-left: 0;
+.panel.file-list {
+	margin-bottom: 20px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0,0,0,.05);
 }
-pre.panel-body {
-	margin: 0;
+.panel .btn-toolbar.pull-right {
+	margin-right:10px;
+	margin-top: 5px;
+}
+.panel .btn-toolbar li{
+	padding-left:0;
+}
+.panel-disabled.panel-body {
+	background-color:#f5f5f5;
+	padding:1em 2em 2em 2em;
+}
+
+.breadcrumb li:not(:first-child):before {
+	content: "/";
+	display:inline-block;
+	padding-right: 10px;
+}
+
+.panel-body {
 	border: none;
 	background: white;
+	width:100%;
+	padding:1em;
 }
+.panel-body pre {
+	border-color:#ddd;
+	background:#fcfcfc;
+}
+
 /** Project lists. **/
 .project-list small {
 	font-weight: normal;
+	color:#999;
+	display:inline-block;
+	width:100px;
 }
 /** Homepage Banner **/
 .section.homepage-banner {
@@ -748,6 +784,12 @@ pre.panel-body {
   }
 }
 
+.project-details table td {
+	padding-top:0.5em;
+	padding-bottom:0.5em;
+	word-break:break-all;
+}
+
 table .img-circle {
   max-width:none;
 }
@@ -784,6 +826,29 @@ pre.example .comment {
   float:left;
   margin-right:10px;
 }
-.user {
-  clear:both;
+
+.popular-libs-list .title, .popular-libs-list .title {
+	font-size:21px;
+}
+
+.well form, .well .control-group {
+	margin:0;
+}
+
+.file-list .list-group a {
+	display:block;
+	padding: 6px 3px;
+	line-height: 20px;
+}
+.file-list .list-group a:not(:first-child) {
+	border-top: 1px solid #eaecef;
+}
+.file-list .list-group .fa {
+	padding-right:10px;
+}
+.file-list .list-group a:hover {
+	background:#f0f0f0;
+}
+.tag-list h3 a {
+	text-decoration:none;
 }

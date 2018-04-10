@@ -1,21 +1,51 @@
 
+<h1><i class="fa fa-tag"></i> @title</h1>
+<p class="lead">@description</p>
 
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
+	
 <div class="row">
 	<div class="span3">
     <h2>All Tags</h2>
 		<ul class="tags unstyled">
-				@for (t in tags) {
-					<li class="tag"><i class="fa fa-tag"></i> <a href="/t/@t.tag/">@escape(t.tag)</a> <small>(@t.count)</small></li>
-				}
+			@for (t in tags) {
+				<li class="tag"><i class="fa fa-tag"></i> <a href="/t/@t.tag/">@escape(t.tag)</a> <small>(@t.count)</small></li>
+			}
 		</ul>
 	</div>
 	<div class="span9">
-		<h1><i class="fa fa-tag"></i> @title</h1>
-		<p class="lead">@description</p>
-		<div class="tag-cloud text-center">
-			@for (t in tagCloud) {
-				<a href="/t/@t.tag/" style="font-size: @(t.size)px">@escape(t.tag)</a>
+		<div class="tag-list"> 
+			@for (i in 0...min(tags.length, 10)) {
+				@{var t = tags[i];}
+				<h3><a href="/t/@t.tag/"><small class="fa fa-tag"></small> @escape(t.tag)</a></h3>
+				<div class="row">
+					@for( i in 0...3) {
+					<div class="span3">
+						@for( p in taggedProjects(t.tag, i * 3, 3) ) {
+							<p>
+								<strong class="title"><a href="/p/@p.name/">@p.name</a></strong><br/>
+								<small>
+									<a href="/p/@p.name/@p.version.name">@p.version.name</a> &nbsp;<span title="@p.version.date">updated @formatDate(p.version.date)</span>
+								</small>
+							</p>
+						}
+					</div>
+					}
+				</div>
+				<a href="/t/@t.tag/" class="btn">More haxelibs tagged with "@escape(t.tag)" <small>(@t.count)</small></a>
+				<hr/>
 			}
 		</div>
 	</div>
 </div>
+ 

@@ -5,6 +5,7 @@
 test/libraries/vsc/
 dump/
 deploy/
+haxelib_repo/
 repo_integration_tests/
 haxelib
 run.c

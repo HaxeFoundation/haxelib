@@ -3,6 +3,7 @@ package website.controller;
 import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
+import highlighter.Highlighter;
 import haxe.ds.Option;
 import markdown.AST;
 import Markdown;
@@ -11,6 +12,7 @@ using haxe.io.Path;
 using CleverSort;
 using Lambda;
 using DateTools;
+using StringTools;
 
 class ProjectController extends Controller {
 
@@ -26,6 +28,8 @@ class ProjectController extends Controller {
 	public function versionList( projectName:String ) {
 		var info = projectApi.projectInfo( projectName ).sure();
 		info.versions.sort(function(v1, v2) return SemVer.compare(v2.name, v1.name));
+		
+
 		return new ViewResult({
 			title: 'All versions of $projectName',
 			description: info.desc,
@@ -60,6 +64,7 @@ class ProjectController extends Controller {
 			title: '$projectName ($semver)',
 			project: projectName,
 			description: '${currentVersion.comments} - ${info.desc}',
+			comments: currentVersion.comments,
 			allVersions: info.versions,
 			version: semver,
 			versionDate: Date.fromString(currentVersion.date).format('%F'),
@@ -106,47 +111,91 @@ class ProjectController extends Controller {
 		var filePath = rest.join("/");
 		var downloadLink = baseUri+'$projectName/$semver/raw-files/$filePath';
 		var info = projectApi.projectInfo( projectName ).sure();
+		
+		if ( semver==null )
+			semver = info.curversion;
+		var currentVersion = info.versions.find( function(v) return v.name==semver );
+		if ( currentVersion==null )
+			throw HttpError.pageNotFound();
+			
 		var data:TemplateData = {
 			title: 'Viewing $filePath on $projectName:$semver',
 			project: projectName,
 			description: info.desc,
 			info: info,
+			allVersions: info.versions,
+			versionDate: Date.fromString(currentVersion.date).format('%F'),
 			version: semver,
+			size: null,
 			fileParts: rest,
 			filePath: filePath,
+			fileExt: Path.extension(filePath),
 			downloadLink: downloadLink,
+			icon: function(file:String) {
+				return switch Path.extension(file) {
+					case "zip"|"rar"|"tar.gx": "file-archive-o";
+					case "pdf": "file-pdf-o";
+					case "hx"|"hxml": "file-code-o";
+					case "jpg"|"jpeg"|"gif"|"png"|"svg"|"ico": "file-image-o";
+					case "txt"|"md"|"mdown"|"markdown": "file-text-o";
+					case other: "file-o";
+				}
+			},
 			type: "download",
 		};
-
+		
 		switch projectApi.getInfoForPath( projectName, semver, filePath ).sure() {
 			case Directory(dirs,files):
 				data["type"] = "directory";
 				data["dirListing"] = dirs;
 				data["fileListing"] = files;
 				data["currentDir"] = baseUri+'$projectName/$semver/files/$filePath'.removeTrailingSlashes();
-			case Text(str,ext):
+			case Text(str,ext,size):
 				if ( ["md","mdown","markdown"].indexOf(ext)>-1 ) {
 					str = Markdown.markdownToHtml( str );
+					str = str.replace("<script", "&lt;script"); // disallow scripts
 					data["type"] = "markdown";
 				}
 				else {
 					data["type"] = "text";
+					
+					// make sure tags are rendered correctly
+					str = str.replace("<", "&lt;").replace(">", "&gt;");
+					
+					if (["xml","html","htm","mtt"].indexOf(ext)>-1) {
+						str = Util.syntaxHighlightHTML(str);
+					}
+					else if (ext == "hx") str = Highlighter.syntaxHighlightHaxe(str);
+					else if (ext == "hxml") str = Highlighter.syntaxHighlightHXML(str);
 				}
+				
 				data["fileContent"] = str;
-				data["extension"] = ext;
+				data["size"] = getSize(size);
 				data["highlightLanguage"] = ext;
-			case Image(bytes,ext):
+				
+			case Image(bytes,ext,size):
 				data["filename"] = rest[rest.length-1];
 				data["type"] = "img";
+				data["size"] = getSize(size);
+				
 			case Binary(size):
 				data["filename"] = rest[rest.length-1];
-				var sizeInKb = Math.round(size/1024*10) / 10;
-				data["size"] = sizeInKb + "kb";
+				data["size"] = getSize(size);
 		}
 
 		var vr = new ViewResult( data );
 		vr.helpers["extensionAllowed"] = function(file:String) return ProjectApi.textExtensions.has(file.extension().toLowerCase());
 		return vr;
+	}
+	
+	static function getSize(size:Int) {
+		if (size == null) return null;
+		var kb = Math.round(size / 1024 * 10) / 10;
+		if (kb > 1000) {
+			return (Math.round(kb / 100) / 10) + "mb";
+		} else {
+			return kb + "kb";
+		}
 	}
 
 	// TODO: write some tests...
