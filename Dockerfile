@@ -28,12 +28,13 @@ RUN a2enmod proxy_http
 RUN mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
 COPY apache2.conf /etc/apache2/apache2.conf
 RUN { \
-		echo 'LoadModule neko_module /usr/lib/neko/mod_neko2.ndll'; \
-		echo 'LoadModule tora_module /usr/lib/neko/mod_tora2.ndll'; \
+		echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
+		echo 'LoadModule tora_module /usr/lib/x86_64-linux-gnu/neko/mod_tora2.ndll'; \
 		echo 'AddHandler tora-handler .n'; \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
 
+RUN npm config set registry="http://registry.npmjs.org/"
 RUN npm -g install bower
 
 
@@ -42,7 +43,7 @@ ENV HAXELIB_PATH /src/.haxelib
 RUN mkdir /haxelib && haxelib setup /haxelib
 WORKDIR /src
 COPY .haxelib /src/.haxelib
-RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/neko/aws.ndll;
+RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
 
 COPY www/bower.json /src/www/
