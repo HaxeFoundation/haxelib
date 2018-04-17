@@ -18,22 +18,43 @@
 <script>
 var data = {
   labels: [ @for (i in 0...allVersions.length) {'v@allVersions[i].name'@if(i<allVersions.length-1){, }}],
-  series: [ [@for (i in 0...allVersions.length) { {data: @allVersions[i].downloads}@if(i<allVersions.length-1){, }}] ]
+  series: [ [@for (i in 0...allVersions.length) { {x: Date.parse('@allVersions[i].date'), y: @allVersions[i].downloads}@if(i<allVersions.length-1){, }}] ]
 };
 
+
 var total = 0;
+
 var serieData = data.series[0];
 data.labels.reverse();
 serieData.reverse();
 for (var i=0;i<serieData.length;i++) {
-	var t = serieData[i].data;
-	serieData[i].data+=total;
-	total+=t;
+	var t = serieData[i].y;
+	serieData[i].y += total;
+	total += t;
 }
+
+console.log(serieData);
 
 var options = {
 	fullWidth: true
 };
+
+options.axisX = {
+	type: Chartist.FixedScaleAxis,
+	divisor: 10,
+	labelInterpolationFnc: function(value) {
+		var d = new Date(value);
+		var m = d.getMonth() + 1;
+		var YYYY = d.getFullYear();
+		var MM = m < 10 ? "0" + m : "" + m;
+		return YYYY + "/" + MM;
+	}
+}
+
+var serieData = data.series[0];
+if (serieData.length > 100) {
+	
+}
 new Chartist.Line('#downloads-chart', data, options);
 </script>
 }
@@ -61,5 +82,4 @@ new Chartist.Line('#downloads-chart', data, options);
 	}
 	</tbody>
 </table>
-	
 	
