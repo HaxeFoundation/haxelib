@@ -25,7 +25,7 @@ class Util {
  
 		var days = Math.floor(remainingMs / dayInMs);
 		var years = Std.int(days / 356);
-		var months = Std.int(days / 30); // nope, it doesnt work like that eh
+		var months = Std.int(days / 30.4167); // should be accurate enough
 		var weeks = Std.int(days / 7); 
 		 
 		if (years == 0) { 
