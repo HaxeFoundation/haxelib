@@ -30,20 +30,9 @@
 			<a class="btn btn-default btn-large" href="/all/"><i class="fa fa-star"></i> <strong>View all Haxelibs</strong></a>
 			<a class="btn btn-default btn-large" href="/t/"><i class="fa fa-tags"></i> Browse by tag</a>
 			<a class="btn btn-default btn-large" href="/u/"><i class="fa fa-user"></i> Browse by author</a>
-			<a class="btn btn-default btn-large" href="/documentation/">Documentation</a>
+			<a class="btn btn-default btn-large" href="/documentation/">Learn Haxelib</a>
 		</div>
 		<hr/>
-		<!-- <div class="col-md-5">
-			<h4><i class="fa fa-star"></i> Featured Project</h4>
-			<h5><a href="/p/munit/">munit</a></h5>
-			<p class="lead">MassiveUnit, or munit, is a full featured unit testing framework by Massive Interactive.</p>
-			<p>With support for AS3, JS, Neko and CPP, automatic test importers, support for ignoring tests, asynchronous tests and more, it's a great library.</p>
-			<pre><code>haxelib install munit</code></pre>
-			<div class="btn-toolbar">
-				<a class="btn btn-primary" href="/p/munit/">View project page</a>
-				<a class="btn btn-default" href="#">View older featured projects</a>
-			</div>
-		</div> -->
 		
 		<h4><strong>Many libraries are just one <code>haxelib install</code> away.</strong> This example demonstrates some of <a href="/documentation/using-haxelib/">all haxelib commands</a>.</h4>
 		
@@ -59,6 +48,27 @@
 		
 		<hr/>
 		
+		<h1><i class="fa fa-paperclip"></i> Recently updated</h1>
+		<div class="row popular-libs-list">
+			@for( i in 0...3) {
+			<div class="span4">
+				@for( update in latestProjects(i * 4, 4) ) {
+					@if(update != null) {
+					<p>
+						<strong class="title"><a href="/p/@update.p.name/">@update.p.name</a></strong><br/>
+						<small class="description">
+							@if (update.v.comments !=null && update.v.comments.length>0){<em>@escape(update.v.comments)</em><br />}
+							<a href="/p/@update.p.name/@update.v.name">@update.v.name</a> &nbsp;<span title="@update.v.date">updated @formatDate(update.v.date)</span>
+						</small>
+					</p>
+					}
+				}
+			</div>
+			}
+		</div>
+			
+		<hr/>
+		
 		<h1><i class="fa fa-star"></i> Popular libraries</h1>
 		<div class="row popular-libs-list">
 			@for( i in 0...3) {
@@ -69,7 +79,7 @@
 					@if(p != null) {
 						<p>
 							<strong class="title"><a href="/p/@p.name/">@p.name</a></strong><br/> by <a href="/u/@p.author/">@p.author</a><br/>
-							<em>@escape(p.description)</em><br/>
+							<em class="description">@escape(p.description)</em><br/>
 							<small>
 								<a href="/p/@p.name/@p.version.toSemver()">@p.version.toSemver()</a> &nbsp;<span title="@p.version.date">published @formatDate(p.version.date)</span> <br/>
 								<strong>@p.downloads downloads</strong>
@@ -84,28 +94,10 @@
 			</div>
 			}
 		</div>
-		<hr/>
-		<h1><i class="fa fa-paperclip"></i> Recently updated</h1>
-		<div class="row popular-libs-list">
-			@for( i in 0...3) {
-			<div class="span4">
-				@for( update in latestProjects(i * 4, 4) ) {
-					@if(update != null) {
-					<p>
-						<strong class="title"><a href="/p/@update.p.name/">@update.p.name</a></strong><br/>
-						<small>
-							@if (update.v.comments !=null && update.v.comments.length>0){<em>@escape(update.v.comments)</em><br />}
-							<a href="/p/@update.p.name/@update.v.name">@update.v.name</a> &nbsp;<span title="@update.v.date">updated @formatDate(update.v.date)</span>
-						</small>
-					</p>
-					}
-				}
-			</div>
-			}
-		</div>
 		
+		<a class="btn btn-default" href="/all/"><strong>See all haxelibs</strong></a>
 		<hr/>
-					
+		
 		<h1><i class="fa fa-user"></i> Popular contributors</h1>
 		<br/>
 		<div class="row contributors-list">
@@ -122,5 +114,6 @@
 				</div>
 			}
 		</div>
+		<a class="btn btn-default" href="/u/"><strong>See all contributors</strong></a>
 	</div>
 </div>

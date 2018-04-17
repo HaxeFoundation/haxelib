@@ -857,3 +857,7 @@ pre.example .comment {
 .tag-list h3 a {
 	text-decoration:none;
 }
+
+.description {
+	word-break: break-word;
+}
