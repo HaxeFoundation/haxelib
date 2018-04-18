@@ -1,15 +1,17 @@
+
+<div>
+	<h1><i class="fa fa-star"></i> @project</h1>
+	<p class="lead">@info.desc<br/><a href="@info.website">@info.website <span class="fa fa-external-link"></span></a></p>
+</div>
+
+<ul class="nav nav-tabs nav-justified" role="tablist">
+	<li class="active"><a href="/p/@project/@if(version!=info.curversion) {@version}">@project <small>@version</small></a></li>
+	<li><a href="/p/@project/@info.curversion/files/">Files</a></li>
+	<li><a href="/p/@project/versions/">All Versions <small>(@allVersions.length)</small></a></li>
+</ul>
+
 <div class="row">
 	<div class="span8">
-		<div>
-			<h1><i class="fa fa-star"></i> @project</h1>
-			<p class="lead">@info.desc<br/><a href="@info.website">@info.website <span class="fa fa-external-link"></span></a></p>
-		</div>
-		
-		<ul class="nav nav-tabs nav-justified" role="tablist">
-			<li @if( version==info.curversion ) {class="active"}><a href="/p/@project/">Current version <small>@version</small></a></li>
-			<li @if( version!=info.curversion ) {class="active"}><a href="/p/@project/versions/">All Versions <small>(@allVersions.length)</small></a></li>
-			<li><a href="/p/@project/@info.curversion/files/">Files</a></li>
-		</ul>
 		
 		@if (false) {<!-- Warning if they're looking at an old version -->}
 		@if( version!=info.curversion ) {
@@ -23,28 +25,67 @@
 			<p>See <a href="/documentation/using-haxelib/">using Haxelib</a> in Haxelib documentation for more information.</p>
 			
 		</div>
-		
-		@if (comments != null && comments.length > 0) { 
-			<h2><i class="fa fa-book"></i> @project @version Release notes</h2>
-			<p>@escape(comments)</p>
-			<hr/>
-		}
-		
-		@if (false) {<!-- Readme -->}
-		@if (readme!="") {
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h2 class="panel-title"><i class="fa fa-book"></i> README.md</h2>
-				</div>
-				<article class="panel-body readme site-content">
-					@readme
-				</article>
-			</div>
-		}
 
+		<ul class="nav nav-tabs nav-justified" role="tablist">
+			@if(hasReadme){<li @if (type == "readme") {class="active"}><a href="/p/@project/@info.curversion">About</a></li>}
+			<li @if (type =="releasenotes") {class="active"}><a href="/p/@project/@info.curversion/releasenotes">Release notes</a></li>
+			@if(hasChangelog){<li @if (type =="changelog") {class="active"}><a href="/p/@project/@info.curversion/changelog">Changelog</a></li>}
+			@if(hasLicense){<li @if (type =="license") {class="active"}><a href="/p/@project/@info.curversion/license/" >License</a></li>}
+		</ul>
+
+		@if (type == "readme") {
+			@if (false) {<!-- README -->}
+			@if (hasReadme) {
+				<div class="tab-pane panel panel-default active" id="readme">
+					<div class="panel-heading">
+						<h1 class="panel-title"><i class="fa fa-book"></i> README.md</h1>
+					</div>
+					<article class="panel-body readme site-content">
+						@readme
+					</article>
+				</div>
+			}
+		}
+			
+		@if (type == "releasenotes") {
+			<section class="tab-pane" id="releasenotes">
+			@if (hasReleaseNotes) { 
+				<h1><i class="fa fa-book"></i> @project @version Release notes</h1>
+				<p>@escape(releaseNotes)</p>
+			}
+			</section>
+		}
+		
+		@if (type == "changelog") {
+			@if (false) {<!-- CHANGELOG -->}
+			@if (hasChangelog) {
+				<div class="tab-pane panel panel-default" id="changelog">
+					<div class="panel-heading">
+						<h1 c1ass="panel-title"><i class="fa fa-book"></i> CHANGELOG.md</h1>
+					</div>
+					<article class="panel-body changelog site-content">
+						@changelog
+					</article>
+				</div>
+			}
+		}
+			
+			
+		@if (type == "license") {
+			@if (false) {<!-- LICENSE -->}
+			@if (hasLicense) {
+				<div class="tab-pane panel panel-default" id="license">
+					<div class="panel-heading">
+						<h1 c1ass="panel-title"><i class="fa fa-book"></i> LICENSE.md</h1>
+					</div>
+					<article class="panel-body changelog site-content">
+						@license
+					</article>
+				</div>
+			}
+		}
 	</div>
 	<div class="span4">
-		
 		@if (false) {<!-- Project details -->}
 		<div class="table-responsive project-details">
 			<table class="table table-condensed">
@@ -59,7 +100,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td><strong>Version</strong><br/>@info.curversion</a></td>
+					<td><strong>Version</strong><br/>@version</a></td>
 					<td><strong>Published</strong><br/><span title="@versionDate">@formatDate(versionDate)</span></td>
 				</tr>
 					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
@@ -108,6 +149,6 @@ document.getElementById("github-button-fork").src = baseGithubUrl + "&type=fork&
 document.getElementById("github-buttons").className = "show";
 
 document.getElementById("github-user-website").innerHTML = '<span class="fa fa-github"></span> <a href="@info.website">@githubUser</a>';
-document.getElementById("github-user-image").innerHTML = '<a href="@info.website"><img src="https://github.com/'+'@githubUser'+'.png?size=160" width="80" height="80" title="@githubUser on GitHub"/></a>';
+document.getElementById("github-user-image").innerHTML = '<a href="@info.website"><img src="https://github.com/'+'@githubUser'+'.png?size=512" width="100%" title="@githubUser on GitHub"/></a>';
 </script>
 }

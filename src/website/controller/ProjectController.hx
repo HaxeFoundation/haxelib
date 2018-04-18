@@ -39,42 +39,9 @@ class ProjectController extends Controller {
 			info: info,
 		});
 	}
-
-	@:route("/$projectName/$semver")
-	public function version( projectName:String, ?semver:String ) {
-		var info = projectApi.projectInfo( projectName ).sure();
-		if ( semver==null )
-			semver = info.curversion;
-		var currentVersion = info.versions.find( function(v) return v.name==semver );
-		if ( currentVersion==null )
-			throw HttpError.pageNotFound();
-
-		var downloadUrl = '/p/$projectName/$semver/download/';
-
-		var readmeHTML = switch projectApi.readContentFromZip( projectName, semver, "README.md", false ) {
-			case Success(Some(readme)): markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
-			case Success(None): ""; // No README.
-			case Failure(err):
-				ufError( err.message );
-				ufError( err.toString() );
-				"";
-		}
-
-		return new ViewResult({
-			title: '$projectName ($semver)',
-			project: projectName,
-			description: '${currentVersion.comments} - ${info.desc}',
-			comments: currentVersion.comments,
-			allVersions: info.versions,
-			version: semver,
-			versionDate: Date.fromString(currentVersion.date).format('%F'),
-			info: info,
-			downloadUrl: downloadUrl,
-			readme: readmeHTML,
-		}, "version.html");
-	}
-
+	
 	function markdownToHtml(markdown:String, prefix:String) {
+		
 		// this function is basically a copy of Markdown.markdownToHtml
 		// default md->html rendering function, but it adds a filter that
 		// fixes relative URLs in IMG tags
@@ -152,7 +119,7 @@ class ProjectController extends Controller {
 				data["currentDir"] = baseUri+'$projectName/$semver/files/$filePath'.removeTrailingSlashes();
 			case Text(str,ext,size):
 				if ( ["md","mdown","markdown"].indexOf(ext)>-1 ) {
-					str = Markdown.markdownToHtml( str );
+					str = markdownToHtml( str, '/p/$projectName/$semver/raw-files/' );
 					str = str.replace("<script", "&lt;script"); // disallow scripts
 					data["type"] = "markdown";
 				}
@@ -210,6 +177,86 @@ class ProjectController extends Controller {
 				throw HttpError.pageNotFound();
 		}
 	}
+	
+	@:route("/$projectName/$semver/readme/")
+	public function readme( projectName:String, semver:String ) {
+		return getVersion(projectName, semver, "readme");
+	}
+	@:route("/$projectName/$semver/license/")
+	public function license( projectName:String, semver:String ) {
+		return getVersion(projectName, semver, "license");
+	}
+	@:route("/$projectName/$semver/releasenotes/")
+	public function releasenotes( projectName:String, semver:String ) {
+		return getVersion(projectName, semver, "releasenotes");
+	}
+	@:route("/$projectName/$semver/changelog/")
+	public function changelog( projectName:String, semver:String ) {
+		return getVersion(projectName, semver, "changelog");
+	}
+	
+	@:route("/$projectName/$semver/")
+	public function version( projectName:String, ?semver:String ) {
+		return getVersion(projectName, semver);
+	}
+	
+	private function getVersion( projectName:String, ?semver:String, ?type:String ) {
+		var info = projectApi.projectInfo( projectName ).sure();
+		if ( semver==null )
+			semver = info.curversion;
+		var currentVersion = info.versions.find( function(v) return v.name==semver );
+		if ( currentVersion==null )
+			throw HttpError.pageNotFound();
+
+		var downloadUrl = '/p/$projectName/$semver/download/';
+		
+		function getHTML(files:Array<String>) {
+			for(file in files) { 
+				switch projectApi.readContentFromZip( projectName, semver, file, false ) {
+					case Success(Some(readme)): return markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
+					case Success(None): // No README.
+					case Failure(err):
+						// ufError( err.message );
+						// ufError( err.toString() );
+				};
+			}
+			return "";
+		}
+		
+		var semverCommas = semver.replace(".", ",");
+		
+		var changelog = getHTML(['CHANGELOG.md', '$projectName/CHANGELOG.md', '$semver/CHANGELOG.md', '$semverCommas/CHANGELOG.md']);
+		var readme = getHTML(['README.md', '$projectName/README.md', '$semver/README.md', '$semverCommas/README.md']);
+		var license = getHTML(['LICENSE.md', '$projectName/LICENSE.md', '$semver/LICENSE.md', '$semverCommas/README.md']);
+		var releaseNotes = currentVersion.comments;
+		
+		// whitelist type, fall back to readme. unless there is no readme, then go to releasenotes tab
+		if (!(type == 'license' || type == 'changelog' || type == 'releasenotes' || type == 'changelog' || type == 'readme')) {
+			type = "readme";
+			if (readme == "") type = "releasenotes";
+		} 
+		
+		return new ViewResult({
+			title: '$projectName ($semver)',
+			project: projectName,
+			description: '${currentVersion.comments} - ${info.desc}',
+			allVersions: info.versions,
+			version: semver,
+			versionDate: Date.fromString(currentVersion.date).format('%F'),
+			info: info,
+			downloadUrl: downloadUrl,
+			type: type,
+			changelog:changelog,
+			readme:readme,
+			license:license,
+			releaseNotes:releaseNotes,
+			hasReleaseNotes: currentVersion.comments != null && currentVersion.comments.length > 0,
+			hasReadme: readme != "",
+			hasChangelog: changelog != "",
+			hasLicense: license != "",
+		}, "version.html");
+	}
+
 }
 
 private class MarkdownImgRelativeSrcFixer implements NodeVisitor {
@@ -227,9 +274,10 @@ private class MarkdownImgRelativeSrcFixer implements NodeVisitor {
             if (!ABSOLUTE_URL_RE.match(url))
                 element.attributes["src"] = prefix + url;
         }
-        return element.children != null;
+        return false;
     }
 
     public function visitText(text:TextNode):Void {}
     public function visitElementAfter(element:ElementNode):Void {}
 }
+

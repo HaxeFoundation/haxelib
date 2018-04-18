@@ -790,6 +790,11 @@ h2 i.fa, h3 i.fa, h4 i.fa, h5 i.fa {
 	word-break:break-all;
 }
 
+.project-details table tr:first-child td {
+	border:0;
+	padding-top:0;
+}
+
 table .img-circle {
   max-width:none;
 }
