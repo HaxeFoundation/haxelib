@@ -41,17 +41,16 @@ class HomeController extends Controller {
 	@:route("/")
 	public function homepage() {
 		var allProjects =  projectListApi.all().sure();
-		var libByDeps = new Map<Project, Array<Project>>();
 		
 		var latestProjects =  projectListApi.latest( 12 * 3 ).sure() ;
 		var popularProjects = prepareProjectList( projectListApi.all().sure() );
 		var users = userApi.getUserList().sure();
 		var tags = projectListApi.getTagList( 25 ).sure();
 		
-		var yep = new Map<String, Bool>();
+		var hasRecentProject = new Map<String, Bool>();
 		latestProjects = [for (p in latestProjects) {
-			if (p.p !=null && !yep.exists(p.p.name)) {
-				yep.set(p.p.name, true);
+			if (p.p !=null && !hasRecentProject.exists(p.p.name)) {
+				hasRecentProject.set(p.p.name, true);
 				p;
 			}
 		}];
@@ -72,6 +71,19 @@ class HomeController extends Controller {
 
 	@:route("/p/*")
 	public var projectController:ProjectController;
+
+	@:route("/recent/")
+	public function recent() {
+		var latestProjects =  projectListApi.latest( 100 ).sure();
+		
+		latestProjects = [for (p in latestProjects) if (p.p != null ) p];
+		
+		return new ViewResult({
+			title: "Recent updates - the Haxe package manager",
+			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
+			projects: latestProjects,
+		});
+	}
 
 	@:route("/u/*")
 	public var userController:UserController;

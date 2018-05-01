@@ -1,0 +1,52 @@
+<h1><i class="fa fa-paperclip"></i> Latest updates</h1>
+<p class="lead">List of recent changes per library</p>
+
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
+
+<div class="popular-libs-list">
+@{ var prevDate = null;}
+@{ var i = 0;}
+@for( update in projects ) {
+	@{ var curDate = formatDate(update.v.date); }
+	
+	
+	@if(update != null) {
+		@if(prevDate != curDate) { 
+			@if(i % 3 != 0) { </div><hr/> }
+			<h2>@curDate</h2>
+			@{i = 0;}
+		} 
+		
+		@if(i % 3 == 0) { 
+			<div class="row">
+		}
+		
+		<div class="span4">
+			<p>
+				<strong class="title"><a href="/p/@update.p.name/@update.v.name">@update.p.name</a> <small>@update.v.name</small></strong>
+				<p class="description">
+					@if (update.v.comments != null && update.v.comments.length > 0){<em>@escape(update.v.comments)</em><br />}
+				</p>
+				
+				@{prevDate = curDate;}
+			</p>
+			@{i = i + 1;}
+		</div>
+			
+		@if(i % 3 == 0) { 
+			</div><hr/>
+		}
+		
+	}
+}
+</div>
