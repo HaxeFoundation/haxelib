@@ -235,7 +235,7 @@ class ProjectController extends Controller {
 		// whitelist type, fall back to readme. unless there is no readme, then go to releasenotes tab
 		if (!(type == 'license' || type == 'changelog' || type == 'releasenotes' || type == 'changelog' || type == 'readme')) {
 			type = "readme";
-			if (readme != null) type = "releasenotes";
+			if (readme == null) type = "releasenotes";
 		} 
 		
 		return new ViewResult({
