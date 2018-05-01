@@ -253,9 +253,9 @@ class ProjectController extends Controller {
 			license:license,
 			releaseNotes:releaseNotes,
 			hasReleaseNotes: currentVersion.comments != null && currentVersion.comments.length > 0,
-			hasReadme: readme.length != null,
-			hasChangelog: changelog.length  != null,
-			hasLicense: license.length  != null,
+			hasReadme: readme != null,
+			hasChangelog: changelog != null,
+			hasLicense: license != null,
 		}, "version.html");
 	}
 
