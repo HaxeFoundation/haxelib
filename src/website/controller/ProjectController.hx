@@ -29,7 +29,6 @@ class ProjectController extends Controller {
 		var info = projectApi.projectInfo( projectName ).sure();
 		info.versions.sort(function(v1, v2) return SemVer.compare(v2.name, v1.name));
 		
-
 		return new ViewResult({
 			title: 'All versions of $projectName',
 			description: info.desc,
@@ -182,14 +181,17 @@ class ProjectController extends Controller {
 	public function readme( projectName:String, semver:String ) {
 		return getVersion(projectName, semver, "readme");
 	}
+	
 	@:route("/$projectName/$semver/license/")
 	public function license( projectName:String, semver:String ) {
 		return getVersion(projectName, semver, "license");
 	}
+	
 	@:route("/$projectName/$semver/releasenotes/")
 	public function releasenotes( projectName:String, semver:String ) {
 		return getVersion(projectName, semver, "releasenotes");
 	}
+	
 	@:route("/$projectName/$semver/changelog/")
 	public function changelog( projectName:String, semver:String ) {
 		return getVersion(projectName, semver, "changelog");
@@ -220,7 +222,7 @@ class ProjectController extends Controller {
 						// ufError( err.toString() );
 				};
 			}
-			return "";
+			return null;
 		}
 		
 		var semverCommas = semver.replace(".", ",");
@@ -233,7 +235,7 @@ class ProjectController extends Controller {
 		// whitelist type, fall back to readme. unless there is no readme, then go to releasenotes tab
 		if (!(type == 'license' || type == 'changelog' || type == 'releasenotes' || type == 'changelog' || type == 'readme')) {
 			type = "readme";
-			if (readme == "") type = "releasenotes";
+			if (readme != null) type = "releasenotes";
 		} 
 		
 		return new ViewResult({
@@ -251,9 +253,9 @@ class ProjectController extends Controller {
 			license:license,
 			releaseNotes:releaseNotes,
 			hasReleaseNotes: currentVersion.comments != null && currentVersion.comments.length > 0,
-			hasReadme: readme != "",
-			hasChangelog: changelog != "",
-			hasLicense: license != "",
+			hasReadme: readme.length != null,
+			hasChangelog: changelog.length  != null,
+			hasLicense: license.length  != null,
 		}, "version.html");
 	}
 
