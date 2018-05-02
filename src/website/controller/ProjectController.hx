@@ -248,7 +248,7 @@ class ProjectController extends Controller {
 		// whitelist type, fall back to readme. unless there is no readme, then go to releasenotes tab
 		if (!(type == 'license' || type == 'changelog' || type == 'releasenotes' || type == 'changelog' || type == 'readme')) {
 			type = "readme";
-			if (readme != null) type = "releasenotes";
+			if (readme == null) type = "releasenotes";
 		} 
 		
 		return new ViewResult({
@@ -266,9 +266,9 @@ class ProjectController extends Controller {
 			license:license,
 			releaseNotes:releaseNotes,
 			hasReleaseNotes: currentVersion.comments != null && currentVersion.comments.length > 0,
-			hasReadme: readme.length != null,
-			hasChangelog: changelog.length  != null,
-			hasLicense: license.length  != null,
+			hasReadme: readme != null,
+			hasChangelog: changelog != null,
+			hasLicense: license != null,
 		}, "version.html");
 	}
 
