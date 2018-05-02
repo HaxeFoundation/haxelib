@@ -80,7 +80,7 @@ class HomeController extends Controller {
 		
 		return new ViewResult({
 			title: "Recent updates - the Haxe package manager",
-			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
+			description: "List of the most recent changes of Haxe libraries.",
 			projects: latestProjects,
 		});
 	}
