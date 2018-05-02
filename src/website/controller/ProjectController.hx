@@ -212,7 +212,7 @@ class ProjectController extends Controller {
 
 		var downloadUrl = '/p/$projectName/$semver/download/';
 		
-		function getHTML(files:Array<String>) {
+		function getHTML(files:List<String>) {
 			for(file in files) { 
 				switch projectApi.readContentFromZip( projectName, semver, file, false ) {
 					case Success(Some(readme)): return markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
@@ -227,9 +227,22 @@ class ProjectController extends Controller {
 		
 		var semverCommas = semver.replace(".", ",");
 		
-		var changelog = getHTML(['CHANGELOG.md', '$projectName/CHANGELOG.md', '$semver/CHANGELOG.md', '$semverCommas/CHANGELOG.md']);
-		var readme = getHTML(['README.md', '$projectName/README.md', '$semver/README.md', '$semverCommas/README.md']);
-		var license = getHTML(['LICENSE.md', '$projectName/LICENSE.md', '$semver/LICENSE.md', '$semverCommas/README.md']);
+		var changelog = getHTML([
+			for (changelog in ["releases", "changelog"]) 
+				for (extension in [".md", ".txt", ""]) 
+					['$changelog$extension', '$projectName/$changelog$extension', '$semverCommas/$changelog$extension']
+			].flatten());
+			
+		var readme = getHTML([for (extension in [".md", ".txt", ""])
+				['README.$extension', '$projectName/README.$extension', '$semverCommas/README$extension']
+			].flatten());
+			
+		var license = getHTML([
+			for (extension in [".md", ".txt", ""]) 
+				['LICENSE.md', '$projectName/LICENSE$extension', '$semverCommas/LICENSE$extension']
+				
+			].flatten());
+			
 		var releaseNotes = currentVersion.comments;
 		
 		// whitelist type, fall back to readme. unless there is no readme, then go to releasenotes tab
