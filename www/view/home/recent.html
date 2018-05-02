@@ -13,40 +13,27 @@
 	</form>
 </center>
 
-<div class="popular-libs-list">
 @{ var prevDate = null;}
-@{ var i = 0;}
-@for( update in projects ) {
+<table class="table table-compact table-hover project-list">
+@for (update in projects) {
 	@{ var curDate = formatDate(update.v.date); }
-	
-	
-	@if(update != null) {
-		@if(prevDate != curDate) { 
-			@if(i % 3 != 0) { </div><hr/> }
-			<h2>@curDate</h2>
-			@{i = 0;}
-		} 
-		
-		@if(i % 3 == 0) { 
-			<div class="row">
-		}
-		
-		<div class="span4">
-			<p>
-				<strong class="title"><a href="/p/@update.p.name/@update.v.name">@update.p.name</a> <small>@update.v.name</small></strong>
-				<p class="description">
-					@if (update.v.comments != null && update.v.comments.length > 0){<em>@escape(update.v.comments)</em><br />}
-				</p>
-				
-				@{prevDate = curDate;}
-			</p>
-			@{i = i + 1;}
-		</div>
-			
-		@if(i % 3 == 0) { 
-			</div><hr/>
-		}
-		
-	}
+	@if(prevDate != curDate) { 
+		<tr><td colspan="3" style="border:0"><h2>@curDate</h2></td></tr>
+		<tr>
+			<th>Project</th>
+			<th>Changes</th>
+			<th>Version</th>
+		</tr>
+	} 
+	<tr>
+		<th>
+			<a href="/p/@update.p.name/">@update.p.name</a>
+			<br/><small><a href="/u/@update.p.author/">@@@update.p.author</a></small>
+		</th>
+		<td>@if (update.v.comments != null && update.v.comments.length > 0){<em>@escape(update.v.comments)</em>}</td>
+		<td>@update.v.name<br/><small title="@formatDate(update.v.date)">@update.v.date</small></td>
+	</tr>
+
+	@{prevDate = curDate;}
 }
-</div>
+</table>
