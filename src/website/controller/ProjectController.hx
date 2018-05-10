@@ -212,7 +212,7 @@ class ProjectController extends Controller {
 
 		var downloadUrl = '/p/$projectName/$semver/download/';
 		
-		function getHTML(files:List<String>) {
+		function getHTML(files:Array<String>) {
 			for(file in files) { 
 				switch projectApi.readContentFromZip( projectName, semver, file, false ) {
 					case Success(Some(readme)): return markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
@@ -230,18 +230,20 @@ class ProjectController extends Controller {
 		var changelog = getHTML([
 			for (changelog in ["releases", "changelog"]) 
 				for (extension in [".md", ".txt", ""]) 
-					['$changelog$extension', '$projectName/$changelog$extension', '$semverCommas/$changelog$extension']
-			].flatten());
+					for (p in ['$changelog$extension', '$projectName/$changelog$extension', '$semverCommas/$changelog$extension'])
+						p
+			]);
 			
 		var readme = getHTML([for (extension in [".md", ".txt", ""])
-				['README.$extension', '$projectName/README.$extension', '$semverCommas/README$extension']
-			].flatten());
+				for (p in ['README.$extension', '$projectName/README.$extension', '$semverCommas/README$extension'])
+					p
+			]);
 			
 		var license = getHTML([
 			for (extension in [".md", ".txt", ""]) 
-				['LICENSE.md', '$projectName/LICENSE$extension', '$semverCommas/LICENSE$extension']
-				
-			].flatten());
+				for (p in ['LICENSE.md', '$projectName/LICENSE$extension', '$semverCommas/LICENSE$extension'])
+					p
+			]);
 			
 		var releaseNotes = currentVersion.comments;
 		
