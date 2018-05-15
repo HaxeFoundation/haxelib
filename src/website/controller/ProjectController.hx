@@ -216,7 +216,7 @@ class ProjectController extends Controller {
 			for(file in files) { 
 				switch projectApi.readContentFromZip( projectName, semver, file, false ) {
 					case Success(Some(readme)): return markdownToHtml(readme, '/p/$projectName/$semver/raw-files/');
-					case Success(None): // No README.
+					case Success(None): // No file found.
 					case Failure(err):
 						// ufError( err.message );
 						// ufError( err.toString() );
@@ -235,13 +235,13 @@ class ProjectController extends Controller {
 			]);
 			
 		var readme = getHTML([for (extension in [".md", ".txt", ""])
-				for (p in ['README.$extension', '$projectName/README.$extension', '$semverCommas/README$extension'])
+				for (p in ['README$extension', '$projectName/README$extension', '$semverCommas/README$extension'])
 					p
 			]);
 			
 		var license = getHTML([
 			for (extension in [".md", ".txt", ""]) 
-				for (p in ['LICENSE.md', '$projectName/LICENSE$extension', '$semverCommas/LICENSE$extension'])
+				for (p in ['LICENSE$extension', '$projectName/LICENSE$extension', '$semverCommas/LICENSE$extension'])
 					p
 			]);
 			
