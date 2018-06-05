@@ -253,7 +253,7 @@ class Main {
 	function initSite() {
 		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
 		var remotingUrl =  siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url;
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).api);
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).resolve("api"));
 	}
 
 	function param( name, ?passwd ) {
