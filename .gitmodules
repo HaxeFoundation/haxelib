@@ -1,0 +1,3 @@
+[submodule "hx3compat"]
+	path = hx3compat
+	url = https://github.com/haxefoundation/hx3compat
