@@ -51,7 +51,17 @@ class ProjectController extends Controller {
 			document.parseRefLinks(lines);
 			var blocks = document.parseLines(lines);
 			for (block in blocks) block.accept(imgSrcfixer); // fix relative image links
-			return Markdown.renderHtml(blocks);
+			
+			var html = Markdown.renderHtml(blocks);
+			
+			// prefix relative image urls in generated html (for plain <img>-tags)
+			var regexp  = ~/<img src=(["'])(?!(https?:\/)?\/)(.+?)\1/ig;
+			while(regexp.match(html)) {
+				var url = prefix + regexp.matched(3);
+				html = '<img src="${url}"${regexp.matchedRight()}';
+			}
+			
+			return html;
 		} catch (e:Dynamic) {
 			return '<pre>$e</pre>';
 		}
@@ -291,7 +301,7 @@ private class MarkdownImgRelativeSrcFixer implements NodeVisitor {
             if (!ABSOLUTE_URL_RE.match(url))
                 element.attributes["src"] = prefix + url;
         }
-        return false;
+        return element.children != null;
     }
 
     public function visitText(text:TextNode):Void {}
