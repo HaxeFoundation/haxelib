@@ -106,6 +106,7 @@
 					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
 					
 				</tr>
+				@if (info.tags != null && info.tags.length > 0) { 
 				<tr class="tags">
 					<td colspan="2">
 						<ul class="tags unstyled">
@@ -115,6 +116,7 @@
 						</ul>
 					</td>
 				</tr>
+				}
 				<tr id="github-info" style="display:none">
 					<td>
 						<p><strong>Repository</strong></p>
