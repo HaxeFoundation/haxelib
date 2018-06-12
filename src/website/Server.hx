@@ -3,15 +3,20 @@ package website;
 import website.controller.*;
 import ufront.mailer.*;
 import ufront.MVC;
+import sys.*;
 import sys.db.*;
+import sys.io.*;
+import haxe.io.*;
 
-import haxelib.server.SiteDb;
+import haxelib.server.*;
 import haxelib.server.Paths.*;
 
 class Server {
 	static var ufApp:UfrontApplication;
 
 	static function main() {
+		// this is a temporary fix from https://github.com/dpeek/haxe-markdown/pull/26
+		@:privateAccess markdown.BlockParser.TableSyntax.TABLE_PATTERN = new EReg('^(.+?:?\\|:?)+(.+)$', '');
 
 		ufApp = new UfrontApplication({
 			indexController: HomeController,
@@ -44,49 +49,37 @@ class Server {
 		var wasUpload = handleHaxelibUpload();
 		if ( wasUpload==false ) {
 			SiteDb.init();
+
+			var cacheAPI = new ufront.cache.DBCache.DBCacheApi();
+			cacheAPI.setup();
+
 			ufApp.executeRequest();
 			SiteDb.cleanup();
 		}
 	}
 
 	static function handleHaxelibUpload():Bool {
-		if( !sys.FileSystem.exists(TMP_DIR) )
-			sys.FileSystem.createDirectory(TMP_DIR);
-		if( !sys.FileSystem.exists(REP_DIR) )
-			sys.FileSystem.createDirectory(REP_DIR);
-		var file = null;
+		var tmpFile = null;
+		var tmpFileName = null;
+		var tmpFilePath = null;
 		var sid = null;
 		var bytes = 0;
-		//RAPTORS: the whole handling for nekotools is seriously evil
-		if (Sys.executablePath().indexOf('nekotools') == -1)
-			neko.Web.parseMultipart(function(p,filename) {
-				if( p == "file" ) {
-					sid = Std.parseInt(filename);
-					file = sys.io.File.write(TMP_DIR+"/"+sid+".tmp",true);
-				} else
-					throw p+" not accepted";
-			},function(data,pos,len) {
-				bytes += len;
-				file.writeFullBytes(data,pos,len);
-			});
-		else {
-			var post = neko.Web.getPostData();
-			if (post != null) {
-				var index = post.indexOf('PK');
-				if (index == -1)
-					throw 'Invalid Zip - or so I claim';
-
-				var start = post.substr(0, index);
-				var data = post.substr(index);
-
-				sid = Std.parseInt(start.split('filename="').pop());
-				file = sys.io.File.write(TMP_DIR + "/" + sid + ".tmp", true);
-				bytes = data.length;//thank got neko does not use utf8
-				file.writeString(data);
-			}
-		}
-		if( file != null ) {
-			file.close();
+		neko.Web.parseMultipart(function(p,fileName) {
+			if( p == "file" ) {
+				sid = Std.parseInt(fileName);
+				tmpFilePath = Path.join([TMP_DIR, tmpFileName = sid+".tmp"]);
+				FileSystem.createDirectory(Path.directory(tmpFilePath));
+				tmpFile = sys.io.File.write(tmpFilePath, true);
+			} else
+				throw p+" not accepted";
+		},function(data,pos,len) {
+			bytes += len;
+			tmpFile.writeFullBytes(data,pos,len);
+		});
+		if( tmpFile != null ) {
+			tmpFile.close();
+			FileStorage.instance
+				.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
 			return true;
 		}

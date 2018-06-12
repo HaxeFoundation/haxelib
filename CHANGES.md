@@ -1,0 +1,15 @@
+## next version (2016-??-??)
+
+ - New haxelib self-updating mechanism (#172, #293)
+ - Haxelib new version notification (#282)
+ - Partial download resume support (#133)
+ - Respect `-notimeout` for uploading and downloading files (#235)
+ - `haxelib run` now sets `HAXELIB_RUN_NAME` environment variable to the library name (#293)
+ - Fixed order of library versions in `haxelib list` (#83)
+ - Merged `upgrade` and `update` commands (#188)
+ - Deprecated now redundant commands: `local`, `selfupdate` (#288)
+ - Fixed suggested repository path on Linux (#242)
+ - Suggested repository path on OSX is now `/usr/local/lib/haxe/lib` (#250)
+ - `haxelib install <file>.hxml` now checks hxml files recursively (#200)
+ - Git/Hg checkouts don't set dev mode unless subdir is specified now (#263)
+ - Tons of smaller fixes, cleanups and optimizations

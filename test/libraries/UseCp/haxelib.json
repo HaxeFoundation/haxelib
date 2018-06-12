@@ -1,0 +1,11 @@
+{
+	"name": "UseCp",
+	"url" : "http://example.org",
+	"license": "GPL",
+	"tags": [],
+	"description": "This project use a deep class path.",
+	"version": "0.0.1",
+	"releasenote": "Initial release, everything is working correctly",
+	"classPath": "lib/src",
+	"contributors": ["Bar"]
+}

@@ -1,0 +1,39 @@
+<h1><i class="fa fa-paperclip"></i> Latest updates</h1>
+<p class="lead">@description</p>
+
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
+
+@{ var prevDate = null;}
+<table class="table table-compact table-hover project-list">
+@for (update in projects) {
+	@{ var curDate = formatDate(update.v.date); }
+	@if(prevDate != curDate) { 
+		<tr><td colspan="3" style="border:0"><h2>@curDate</h2></td></tr>
+		<tr>
+			<th>Project</th>
+			<th>Changes</th>
+			<th>Version</th>
+		</tr>
+	} 
+	<tr>
+		<th>
+			<a href="/p/@update.p.name/">@update.p.name</a>
+			<!--br/><small><a href="/u/@update.p.author/">@@@update.p.author</a></small-->
+		</th>
+		<td>@if (update.v.comments != null && update.v.comments.length > 0){<em>@escape(update.v.comments)</em>}</td>
+		<td>@update.v.name<br/><small title="@formatDate(update.v.date)">@update.v.date</small></td>
+	</tr>
+
+	@{prevDate = curDate;}
+}
+</table>

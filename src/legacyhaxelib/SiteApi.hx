@@ -245,7 +245,8 @@ class SiteApi {
 		// update file
 		var target = Site.REP_DIR+"/"+Data.fileName(p.name,infos.version);
 		if( current != null ) sys.FileSystem.deleteFile(target);
-		sys.FileSystem.rename(path,target);
+		sys.io.File.copy(path,target);
+		sys.FileSystem.deleteFile(path);
 
 		// update existing version
 		if( current != null ) {

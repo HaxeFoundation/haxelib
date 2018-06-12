@@ -1,0 +1,10 @@
+{
+	"name": "Bar",
+	"url" : "http://example.org",
+	"license": "MIT",
+	"tags": ["bar", "version2"],
+	"description": "This project is an example of an haxelib project",
+	"version": "2.0.0",
+	"releasenote": "Version 2.",
+	"contributors": ["Bar"]
+}

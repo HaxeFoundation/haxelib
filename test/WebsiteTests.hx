@@ -9,14 +9,13 @@ import twl.webapp.*;
 import twl.*;
 import buddy.*;
 
-@:build(buddy.GenerateMain.withSuites([
+class WebsiteTests implements Buddy<[
 	website.controller.DocumentationControllerTest,
 	website.controller.HomeControllerTest,
 	// website.controller.ProjectControllerTest,
 	website.controller.RSSControllerTest,
 	// website.controller.UserControllerTest,
-]))
-class WebsiteTests {
+]> {
 	static var ufApp:UfrontApplication;
 
 	public static function getTestApp():UfrontApplication {

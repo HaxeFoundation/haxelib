@@ -4,12 +4,16 @@ import haxe.io.Bytes;
 import haxe.zip.Entry;
 import haxe.zip.Reader;
 import haxelib.Data;
+import haxelib.server.FileStorage;
 import haxelib.server.Repo;
+import haxelib.server.Paths.*;
 import ufront.api.UFApi;
 import ufront.cache.UFCache;
 import ufront.web.HttpError;
 import website.model.SiteDb;
 import haxe.ds.Option;
+import sys.*;
+import sys.io.*;
 using tink.CoreApi;
 using StringTools;
 using haxe.io.Path;
@@ -27,8 +31,8 @@ class ProjectApi extends UFApi {
 	@inject public var cacheCnx:UFCacheConnectionSync;
 
 	/** Extensions that should be loaded as a text file. **/
-	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess"];
-	public static var imgExtensions:Array<String> = ["jpg","jpeg","gif","png"];
+	public static var textExtensions:Array<String> = ["md","txt","hx","hxml","json","xml","htaccess","yml","gitignore","conf","html","mtt","htm","js","css","less","scss"];
+	public static var imgExtensions:Array<String> = ["jpg","jpeg","gif","png","svg","ico"];
 
 	/**
 		Load the ProjectInfos for the given project.
@@ -65,9 +69,9 @@ class ProjectApi extends UFApi {
 						// Exact match! It's a file, not a directory. Now, check the type and load it.
 						fileInfo =
 							if ( textExtensions.indexOf(extension)>-1 )
-								Text( Reader.unzip(entry).toString(), extension );
+								Text( Reader.unzip(entry).toString(), extension, entry.fileSize );
 							else if ( imgExtensions.indexOf(extension)>-1 )
-								Image( Reader.unzip(entry), extension );
+								Image( Reader.unzip(entry), extension, entry.fileSize );
 							else
 								Binary( entry.fileSize );
 						break;
@@ -78,6 +82,14 @@ class ProjectApi extends UFApi {
 						fileInfo = Directory( dirListing.dirs, dirListing.files );
 						break;
 					}
+				}
+				if (fileInfo == null) {
+					// If it's still null, handle one more case: there's no zip entry for the requested directory,
+					// but there are entries for files in it. Get listing of that directory and if it's not empty,
+					// return it.
+					var dirListing = getDirListing( zip, path );
+					if (dirListing.dirs.length > 0 || dirListing.files.length > 0)
+						fileInfo = Directory( dirListing.dirs, dirListing.files );
 				}
 				return fileInfo;
 			}).sure();
@@ -146,14 +158,7 @@ class ProjectApi extends UFApi {
 		Get the path to the zip file (relative to the script directory).
 	**/
 	public function getZipFilePath( project:String, version:String ):String {
-		var fileName = Data.fileName(project, version);
-		#if deploy
-			// On the haxe.org server, we want to access the repo from the old website.
-			// When we change the websites over we should probably move these over too.
-			return '../www/files/3.0/$fileName';
-		#else
-			return 'files/3.0/$fileName';
-		#end
+		return Path.join([REP_DIR_NAME, Data.fileName(project, version)]);
 	}
 
 	//
@@ -162,11 +167,20 @@ class ProjectApi extends UFApi {
 
 	/** Get a list of entries in a zip file. **/
 	function getZipEntries( projectName:String, version:String ):List<Entry> {
-		var path = scriptDir+getZipFilePath( projectName, version );
-		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw 'Invalid zip file $path: $e';
-		var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
-		file.close();
-		return zip;
+		return FileStorage.instance.readFile(
+			getZipFilePath( projectName, version ),
+			function(path) {
+				var file = File.read(path, true);
+				var zip = try {
+					haxe.zip.Reader.readZip(file);
+				} catch( e : Dynamic ) {
+					file.close();
+					neko.Lib.rethrow(e);
+				};
+				file.close();
+				return zip;
+			}
+		);
 	}
 
 	/** Attempt to extract the bytes of a file within a zip file. Will return null if the file was not found. **/
@@ -213,9 +227,9 @@ class ProjectApi extends UFApi {
 **/
 enum FileInformation {
 	/** A text file, with it's String content and extension. **/
-	Text( content:String, extension:String );
+	Text( content:String, extension:String, size:Int );
 	/** A text file, with it's Bytes content and extension. **/
-	Image( content:Bytes, extension:String );
+	Image( content:Bytes, extension:String, size:Int );
 	/** A binary file that we can't display, together with it's size. **/
 	Binary( size:Int );
 	/** A directory listing, with separate arrays for subdirs and files. **/

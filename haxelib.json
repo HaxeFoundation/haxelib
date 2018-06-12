@@ -1,11 +1,11 @@
 {
-	"name": "haxelib_client",
-	"url" : "http://haxe.org/haxelib",
+	"name": "haxelib",
+	"url" : "https://lib.haxe.org/documentation/",
 	"license": "GPL",
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
-	"version": "3.2.0-rc.3",
-	"releasenote": "Correct behavior for locating base path",
-	"contributors": ["back2dos", "ncannasse", "jason", "Simn"]
+	"version": "3.3.0",
+	"releasenote": "Initial release for Haxe 3.3",
+	"contributors": ["back2dos", "ncannasse", "jason", "Simn", "nadako"]
 }

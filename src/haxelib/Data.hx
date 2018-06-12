@@ -22,6 +22,7 @@
 package haxelib;
 
 import haxe.ds.Option;
+import haxe.ds.*;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
@@ -48,6 +49,7 @@ typedef ProjectInfos = {
 	var desc : String;
 	var website : String;
 	var owner : String;
+	var contributors : Array<{ name:String, fullname:String }>;
 	var license : String;
 	var curversion : String;
 	var downloads : Int;
@@ -74,10 +76,46 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 	@:to public function toArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
-		return [for (f in fields) {
-			name: f,
-			version: (Reflect.field(this, f) : DependencyVersion),
-		}];
+		
+		var result:Array<Dependency> = new Array<Dependency>();
+		
+		for (f in fields) {
+			var value:String = Reflect.field(this, f);
+
+			var isGit = value != null && (value + "").startsWith("git:"); 
+			
+			if ( !isGit )
+			{
+				result.push ({
+					name: f,
+					type: (DependencyType.Haxelib : DependencyType),
+					version: (cast value : DependencyVersion),
+					url: (null : String),
+					subDir: (null : String),
+					branch: (null : String),
+				});
+			}
+			else
+			{
+				value = value.substr(4);
+				var urlParts = value.split("#");
+				var url = urlParts[0];
+				var branch = urlParts.length > 1 ? urlParts[1] : null;
+				
+				result.push ({
+					name: f,
+					type: (DependencyType.Git : DependencyType),
+					version: (DependencyVersion.DEFAULT : DependencyVersion),
+					url: (url : String),
+					subDir: (null : String),
+					branch: (branch : String),
+				});
+			}
+			
+			
+		}
+		
+		return result;
 	}
 	public inline function iterator()
 		return toArray().iterator();
@@ -99,6 +137,9 @@ typedef Dependency = {
 }
 
 typedef Infos = {
+	// IMPORTANT: if you change this or its fields types,
+	// make sure to update `schema.json` file accordingly,
+	// and make an update PR to https://github.com/SchemaStore/schemastore
 	var name : ProjectName;
 	@:optional var url : String;
 	@:optional var description : String;
@@ -131,12 +172,10 @@ abstract ProjectName(String) to String {
 	@:to function toValidatable():Validatable
 		return {
 			validate:
-				function ():Option<{ error: String }> {
+				function ():Option<String> {
 					for (r in rules)
 						if (!r.check(this))
-							return Some( {
-								error: r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`')
-							});
+							return Some(r.msg.replace('%VALUE', '`' + Json.stringify(this) + '`'));
 						return None;
 				}
 		}
@@ -166,7 +205,7 @@ abstract ProjectName(String) to String {
 
 	static public function ofString(s:String)
 		return switch new ProjectName(s) {
-			case _.toValidatable().validate() => Some({ error: e }): throw e;
+			case _.toValidatable().validate() => Some(e): throw e;
 			case v: v;
 		}
 
@@ -175,10 +214,10 @@ abstract ProjectName(String) to String {
 
 class Data {
 
-	public static var JSON = "haxelib.json";
-	public static var DOCXML = "haxedoc.xml";
-	public static var REPOSITORY = "files/3.0";
-	public static var alphanum = ~/^[A-Za-z0-9_.-]+$/;
+	public static var JSON(default, null) = "haxelib.json";
+	public static var DOCXML(default, null) = "haxedoc.xml";
+	public static var REPOSITORY(default, null) = "files/3.0";
+	public static var alphanum(default, null) = ~/^[A-Za-z0-9_.-]+$/;
 
 
 	public static function safe( name : String ) {
@@ -271,56 +310,6 @@ class Data {
 		}
 	}
 
-	static function doCheck(doc:Infos)
-		//return Validator.validate(doc);
-		return //This is generated from the above macro, which seems not to run in --run mode
-			(function(v:haxelib.Data.Infos) {
-				if (!Reflect.isObject(v)) throw "object expected";
-				if (Reflect.hasField(v, "classPath") && v.classPath != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.classPath);
-				if (!Reflect.hasField(v, "contributors")) throw ("missing field " + "contributors") else {
-					(function(v:Array<String>) {
-						if (!Std.is(v, Array)) throw "Array expected";
-						for (v in v) (function(v:String) if (!Std.is(v, String)) throw "String expected")(v);
-					})(v.contributors);
-					(function(v:Array<String>) {
-						if (!(v.length > 0)) throw 'Specify at least one contributor';
-					})(v.contributors);
-				};
-				if (Reflect.hasField(v, "dependencies") && v.dependencies != null) (function(v:StdTypes.Null<haxelib.Data.Dependencies>) {
-					if (!Reflect.isObject(v)) throw "object expected";
-					for (f in Reflect.fields(v)) {
-						var v:haxelib.Data.DependencyVersion = Reflect.field(v, f);
-						switch ((v : haxelib.Validator.Validatable)).validate() {
-							case Some({ error : e }):{
-								throw e;
-							};
-							case None:
-						};
-					};
-				})(v.dependencies);
-				if (Reflect.hasField(v, "description") && v.description != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.description);
-				if (!Reflect.hasField(v, "license")) throw ("missing field " + "license") else (function(v:haxelib.Data.License) if (!Lambda.has([haxelib.Data.License.Gpl, haxelib.Data.License.Lgpl, haxelib.Data.License.Mit, haxelib.Data.License.Bsd, haxelib.Data.License.Public, haxelib.Data.License.Apache], v)) throw 'Invalid value ' + v + ' for ' + "License")(v.license);
-				if (Reflect.hasField(v, "main") && v.main != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.main);
-				if (!Reflect.hasField(v, "name")) throw ("missing field " + "name") else (function(v:haxelib.Data.ProjectName) switch ((v : haxelib.Validator.Validatable)).validate() {
-					case Some({ error : e }):{
-						throw e;
-					};
-					case None:
-				})(v.name);
-				if (!Reflect.hasField(v, "releasenote")) throw ("missing field " + "releasenote") else (function(v:String) if (!Std.is(v, String)) throw "String expected")(v.releasenote);
-				if (Reflect.hasField(v, "tags") && v.tags != null) (function(v:StdTypes.Null<Array<String>>) {
-					if (!Std.is(v, Array)) throw "Array expected";
-					for (v in v) (function(v:String) if (!Std.is(v, String)) throw "String expected")(v);
-				})(v.tags);
-				if (Reflect.hasField(v, "url") && v.url != null) (function(v:StdTypes.Null<String>) if (!Std.is(v, String)) throw "String expected")(v.url);
-				if (!Reflect.hasField(v, "version")) throw ("missing field " + "version") else (function(v:haxelib.SemVer) switch ((v : haxelib.Validator.Validatable)).validate() {
-					case Some({ error : e }):{
-						throw e;
-					};
-					case None:
-				})(v.version);
-			})(doc);
-
 	public static function readData( jsondata: String, check : Bool ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
@@ -338,7 +327,7 @@ class Data {
 				}
 
 		if (check)
-			doCheck(doc);
+			Validator.validate(doc);
 		else {
 			if (!doc.version.valid)
 				doc.version = SemVer.DEFAULT;

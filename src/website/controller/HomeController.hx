@@ -2,15 +2,19 @@ package website.controller;
 
 import ufront.MVC;
 import ufront.ufadmin.controller.*;
-import website.api.ProjectListApi;
+import website.api.*;
 import website.model.SiteDb;
+import haxelib.server.FileStorage;
+import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
 using CleverSort;
 
 class HomeController extends Controller {
 
+	@inject public var projectApi:ProjectApi;
 	@inject public var projectListApi:ProjectListApi;
+	@inject public var userApi:UserApi;
 
 	// Perform init() after dependency injection has occured.
 	@inject public function init( ctx:HttpContext ) {
@@ -27,25 +31,59 @@ class HomeController extends Controller {
 		ViewResult.globalValues.set( "documentationPages", DocumentationController.getDocumentationPages() );
 		ViewResult.globalValues.set( "description", "Haxe is an open source toolkit based on a modern, high level, strictly typed programming language." );
 		ViewResult.globalValues.set( "searchTerm", ctx.session.get('searchTerm') );
+		ViewResult.globalValues.set( "escape", Util.escape);
+		ViewResult.globalValues.set( "formatDate", Util.formatDate);
+		ViewResult.globalValues.set( "extension", Path.extension);
+		ViewResult.globalValues.set( "min", Math.min);
+		ViewResult.globalValues.set( "max", Math.max);
 	}
 
 	@:route("/")
 	public function homepage() {
-		var latestProjects = projectListApi.latest( 10 ).sure();
-		var tags = projectListApi.getTagList( 10 ).sure();
+		var allProjects =  projectListApi.all().sure();
+		
+		var latestProjects =  projectListApi.latest( 12 * 3 ).sure() ;
+		var popularProjects = prepareProjectList( projectListApi.all().sure() );
+		var users = userApi.getUserList().sure();
+		var tags = projectListApi.getTagList( 25 ).sure();
+		
+		var hasRecentProject = new Map<String, Bool>();
+		latestProjects = [for (p in latestProjects) {
+			if (p.p !=null && !hasRecentProject.exists(p.p.name)) {
+				hasRecentProject.set(p.p.name, true);
+				p;
+			}
+		}];
+		
 		return new ViewResult({
 			title: "Haxelib - the Haxe package manager",
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
-			latestProjects: latestProjects,
+			latestProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) latestProjects[i]],
+			popularProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) popularProjects[i]],
+			users: function(offset:Int, total:Int) return [for (i in offset...offset+total) users[i]],
+			
 			tags: tags,
-			exampleCode: CompileTime.readFile( "/website/homepage-example.txt" ),
+			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
 		});
 	}
 
 	@:route("/p/*")
 	public var projectController:ProjectController;
+
+	@:route("/recent/")
+	public function recent() {
+		var latestProjects =  projectListApi.latest( 100 ).sure();
+		
+		latestProjects = [for (p in latestProjects) if (p.p != null ) p];
+		
+		return new ViewResult({
+			title: "Recent updates - the Haxe package manager",
+			description: "List of the most recent changes of Haxe libraries.",
+			projects: latestProjects,
+		});
+	}
 
 	@:route("/u/*")
 	public var userController:UserController;
@@ -55,6 +93,23 @@ class HomeController extends Controller {
 
 	@:route("/documentation/*")
 	public var documentationController:DocumentationController;
+
+	/**
+		`/files` is backed by a `FileStorage`.
+		In production, it should be routed by httpd to S3 using mod_proxy, thus
+		this function should never be called.
+	*/
+	@:route("/files/3.0/$fileName")
+	public function downloadFile( fileName:String ) {
+		return FileStorage.instance.readFile(
+			'files/3.0/$fileName',
+			function(path) {
+				var r = new FilePathResult(path);
+				r.setContentTypeByFilename(Path.withoutDirectory(path));
+				return r;
+			}
+		);
+	}
 
 	@cacheRequest
 	@:route("/t/")
@@ -83,9 +138,13 @@ class HomeController extends Controller {
 
 		return new ViewResult({
 			title: 'Haxelib Tags',
-			description: 'The 50 most popular tags for projects on Haxelib, sorted by the number of projects',
+			description: 'Projects of popular tags on Haxelib',
 			tags: tagList,
 			tagCloud: tagCloud,
+			taggedProjects: function(tagName:String, offset:Int, total:Int) {
+				var projects = prepareProjectList( projectListApi.byTag( tagName ).sure() );
+				return [for (i in offset...offset + total) projects[i]];
+			}
 		});
 	}
 
@@ -102,9 +161,11 @@ class HomeController extends Controller {
 			return new ViewResult({
 				title: 'Tag: $tagName',
 				icon: 'fa-tag',
+				currentTag: tagName,
+				tags: projectListApi.getTagList( 50 ).sure(),
 				description: 'A list of all projects on Haxelib with the tag "$tagName"',
 				projects: list,
-			}, "projectList.html");
+			}, "tagProjectList.html");
 		}
 	}
 
@@ -144,13 +205,14 @@ class HomeController extends Controller {
 		return result;
 	}
 
-	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, author:String, description:String, version:String, downloads:Int }> {
-		return [for (p in list) {
+	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, user:User, author:String, description:String, version:Version, downloads:Int }> {
+		return [for (p in list) if (p != null && p.ownerObj != null && p.versionObj != null) {
 			name: p.name,
+			user: p.ownerObj,
 			author: p.ownerObj.name,
 			description: p.description,
-			version: p.versionObj.toSemver(),
-			downloads: p.downloads
+			version: p.versionObj,
+			downloads: p.downloads,
 		}];
 	}
 

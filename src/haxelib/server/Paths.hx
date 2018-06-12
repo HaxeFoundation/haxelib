@@ -21,19 +21,34 @@
  */
 package haxelib.server;
 
+import neko.Web;
+import haxe.io.*;
+
+/**
+	Absolute path.
+*/
+typedef AbsPath = String;
+
+/**
+	Relative path.
+*/
+typedef RelPath = String;
+
 class Paths {
-	static var RELATIVE_ROOT =
+	static public var CWD(default, null):AbsPath =
 		#if haxelib_api
-			'../../';
+			Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
+		#elseif haxelib_legacy
+			Path.normalize(Path.join([Web.getCwd(), ".."]));
 		#else
-			'';
+			Web.getCwd();
 		#end
-	//TODO: these should be inline or read-only or whatever
-	static public var CWD = neko.Web.getCwd() + RELATIVE_ROOT;
-	static public var DB_CONFIG = CWD + "dbconfig.json";
-	static public var DB_FILE = CWD + "haxelib.db";
+	static public var DB_CONFIG_NAME(default, null):RelPath = "dbconfig.json";
+	static public var DB_CONFIG(default, null):AbsPath = Path.join([CWD, DB_CONFIG_NAME]);
+	static public var DB_FILE_NAME(default, null):RelPath = "haxelib.db";
+	static public var DB_FILE(default, null):AbsPath = Path.join([CWD, DB_FILE_NAME]);
 
-	static public var TMP_DIR = CWD + "tmp";
-	static public var REP_DIR = CWD + Data.REPOSITORY;
-
+	static public var TMP_DIR_NAME(default, null):RelPath = "tmp";
+	static public var TMP_DIR(default, null):AbsPath = Path.join([CWD, TMP_DIR_NAME]);
+	static public var REP_DIR_NAME(default, null):RelPath = Data.REPOSITORY;
 }

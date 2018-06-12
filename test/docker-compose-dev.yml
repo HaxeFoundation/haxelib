@@ -1,0 +1,28 @@
+version: '3'
+services:
+  web:
+    build: ..
+    image: haxelib_web
+    ports:
+      - "2000:80"
+    environment:
+      - HAXELIB_DB_HOST=dbHost
+      - HAXELIB_DB_PORT=3306
+      - HAXELIB_DB_USER=dbUser
+      - HAXELIB_DB_PASS=dbPass
+      - HAXELIB_DB_NAME=haxelib
+    volumes:
+      - ../www:/var/www/html
+  dbHost:
+    image: mariadb
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=haxelib
+      - MYSQL_USER=dbUser
+      - MYSQL_PASSWORD=dbPass
+    volumes:
+      - database:/var/lib/mysql
+volumes:
+  database: {}

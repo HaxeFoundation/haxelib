@@ -134,7 +134,7 @@ class Vcs implements IVcs {
 		switch (commandResult) {
 			case {code: 0}: //pass
 			case {code: code, out:out}:
-				if (!settings.debug) 
+				if (!settings.debug)
 					Sys.stderr().writeString(out);
 				Sys.exit(code);
 		}
@@ -188,11 +188,11 @@ class Vcs implements IVcs {
 	}
 
 	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void {
-		throw "This method must be overriden.";
+		throw "This method must be overridden.";
 	}
 
 	public function update(libName:String):Bool {
-		throw "This method must be overriden.";
+		throw "This method must be overridden.";
 	}
 }
 
@@ -247,7 +247,7 @@ class Git extends Vcs {
 			||
 			command(executable, ["diff", "--cached", "--exit-code"]).code != 0
 		) {
-			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version?")) {
+			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version")) {
 				sure(command(executable, ["reset", "--hard"]));
 			} else {
 				if (!settings.quiet)
@@ -287,16 +287,14 @@ class Git extends Vcs {
 
 		Sys.setCwd(libPath);
 
-		if (branch != null) {
-			var ret = command(executable, ["checkout", branch]);
-			if (ret.code != 0)
-				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-		}
-
-		if (version != null) {
+		if (version != null && version != "") {
 			var ret = command(executable, ["checkout", "tags/" + version]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
+		} else if (branch != null) {
+			var ret = command(executable, ["checkout", branch]);
+			if (ret.code != 0)
+				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
 
 		// return prev. cwd:
@@ -347,7 +345,7 @@ class Mercurial extends Vcs {
 		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
 			if (!settings.quiet)
 				Sys.println(diff.out);
-			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version?")) {
+			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version")) {
 				sure(command(executable, ["update", "--clean"]));
 			} else {
 				changed = false;
