@@ -1,11 +1,19 @@
-<h1>@project <small>@version</small></h1>
-<p class="lead">@info.desc</p>
 
-<div class="panel panel-default">
+<div>
+	<h1><i class="fa fa-star"></i> @project</h1>
+	<p class="lead">@info.desc<br/><a href="@info.website">@info.website <span class="fa fa-external-link"></span></a></p>
+</div>
+
+<ul class="nav nav-tabs nav-justified" role="tablist">
+	<li><a href="/p/@project/@if(version!=info.curversion) {@info.curversion}">@project <small>@version</small></a></li>
+	<li class="active"><a href="/p/@project/@info.curversion/files/">Files</a></li>
+	<li><a href="/p/@project/versions/">All Versions <small>(@allVersions.length)</small></a></li>
+</ul>
+
+<div class="panel panel-default file-list">
 	<div class="panel-heading">
 		<div class="btn-toolbar pull-right">
-			@if( type=="text" && extension=="hx" ) { <a href="#" class="btn btn-default"><i class="fa fa-cogs"></i> View API Docs</a> }
-			@if( type!="directory" ) { <a href="@downloadLink" class="btn btn-default"><i class="fa fa-download"></i> Download</a> }
+			@if( type!="directory" && (type=="text" || type=="markdown" || type=="img")) { <a href="@downloadLink" class="btn btn-default"><i class="fa fa-download"></i> Download</a> }
 			<div class="btn-group">
 				<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 					@version <span class="caret"></span>
@@ -23,51 +31,52 @@
 				var i = 0;
 				var breadcrumbBase = baseUri+project+"/"+version+"/files";
 			}
-			<li>
-				@if ( type=="directory" ) { <i class="fa fa-folder"></i> }
-				else if ( type=="text" ) { <i class="fa fa-file"></i> }
-			</li>
-			<li><a href="@breadcrumbBase">@project : @version</a></li>
+			<li><a href="@breadcrumbBase"><strong>@project : @version</strong></a></li>
 			@while(i < fileParts.length) {
 				@if (i+1<fileParts.length){
 					<li><a href="@breadcrumbBase/@fileParts.slice(0,i+1).join('/')">@fileParts[i]</a></li>
 				}
 				else {
-					<li class="active">@fileParts[i]</li>
+					<li class="active">@fileParts[i] @if(size!=null){<small>(@size)</small>}</li>
 				}
 				@{ i++; }
 			}
 		</ol>
 	</div>
-	@if ( type=="directory" ) {
-		<!-- Show the directory list -->
-
-		<div class="list-group">
-			@for (dir in dirListing) { <a href="@currentDir/@dir/" class="list-group-item"><i class="fa fa-folder"></i> @dir/</a> }
-			@for (file in fileListing) { <a href="@currentDir/@file" class="list-group-item" @if(extensionAllowed(file)==false) { rel="nofollow"}><i class="fa fa-file"></i> @file</a> }
-		</div>
-	}
-	else if ( type=="text" ) {
-		<!-- Show the content -->
-		<pre class="panel-body"><code class="prettyprint haxe">@fileContent</code></pre>
-		<!--<div class="panel-body">-->
-		<!--</div>-->
-	}
-	else if ( type=="markdown" ) {
-		<div class="panel-body">
-			@fileContent
-		</div>
-	}
-	else if ( type=="img" ) {
-		<!-- Display an image -->
-		<div class="panel-body text-center">
-			<img src="@downloadLink" alt="Viewing image @filename... sorry we don't have a better description"/>
-		</div>
-	}
-	else {
-		<!-- Show a link to download the file -->
-		<div class="panel-body text-center">
-			<a href="@downloadLink" class="btn btn-success btn-large"><i class="fa fa-download"></i> Download @filename (@size)</a>
-		</div>
-	}
+		@if ( type=="directory" ) {
+			<div class="panel-body">
+				<!-- Show the directory list -->
+				<div class="list-group">
+					@for (dir in dirListing) { <a href="@currentDir/@dir/" class="list-group-item"><i class="fa fa-folder"></i>@dir/</a> }
+					@for (file in fileListing) { <a href="@currentDir/@file" class="list-group-item" @if(extensionAllowed(file)==false) { rel="nofollow"}><i class="fa fa-@icon(file)"></i>@file</a>}
+				</div>
+			</div>
+		}
+		else if ( type=="text" ) {
+			<div class="panel-body">
+				<h1>@fileParts[fileParts.length-1]</h1>
+				<!-- Show the content -->
+				<pre><code class="prettyprint @if(fileExt=="hx"){haxe}else {@fileExt}">@fileContent</code></pre>
+				
+			</div>
+		}
+		else if ( type=="markdown" ) {
+			<div class="panel-body">@fileContent</div>
+		}
+		else if ( type=="img" ) {
+			<div class="panel-body">
+				<h1>@fileParts[fileParts.length-1]</h1>
+				<!-- Display an image -->
+				<img src="@downloadLink" alt="@filename"/>
+			</div>
+		}
+		else {
+			<div class="panel-body panel-disabled">
+				<h1>@fileParts[fileParts.length-1]</h1>
+				<p>This file cannot be viewed</p>
+				<!-- Show a link to download the file -->
+				<a href="@downloadLink" class="btn btn-success"><i class="fa fa-download"></i> Download @filename (@size)</a>
+			</div>
+		}
+	</div>
 </div>

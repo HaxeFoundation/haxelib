@@ -73,6 +73,7 @@ class Repo implements SiteApi {
 					date : v.date
 				}],
 			owner : p.ownerObj.name,
+			contributors : [for (d in Developer.manager.search( $project==p.id)) {name: d.userObj.name, fullname: d.userObj.fullname}],
 			website : p.website,
 			license : p.license,
 			downloads : totalDownloads,

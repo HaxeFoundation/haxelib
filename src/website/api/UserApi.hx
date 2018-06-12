@@ -25,7 +25,7 @@ class UserApi extends UFApi {
 			var projects = [for (j in projectJoins) j.projectObj];
 			projects.cleverSort( -_.downloads );
 
-			return Success( new Pair(user,projects) );
+			return Success( new Pair(user, projects) );
 		}
 		catch ( e:Dynamic ) return Failure( Error.withData('Failed to fetch user profile for $username', e) );
 	}

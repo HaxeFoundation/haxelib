@@ -1,21 +1,70 @@
+
 <div>
-	<h1>@project <small>All Versions</small></h1>
-	<p class="lead">@info.desc</p>
-	<div class="btn-toolbar">
-		<a class="btn btn-success" href="/p/@project/@info.curversion/">Current Version</a>
-		<a class="btn btn-default" href="@info.website">Project Website</a>
-	</div>
-	<p></p>
-	<p><a href="@info.website">@info.website</a></p>
+	<h1><i class="fa fa-star"></i> @project</h1>
+	<p class="lead">@info.desc<br/><a href="@info.website">@info.website <span class="fa fa-external-link"></span></a></p>
 </div>
+
+<ul class="nav nav-tabs nav-justified" role="tablist">
+	<li><a href="/p/@project/">@project <small>@info.curversion</small></a></li>
+	<li><a href="/p/@project/@info.curversion/files/">Files</a></li>
+	<li class="active"><a href="/p/@project/versions/">All Versions <small>(@allVersions.length)</small></a></li>
+</ul>
+
+@if (allVersions.length > 1) {
+<div id="downloads-chart"></div>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+<script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<script>
+var data = {
+  labels: [ @for (i in 0...allVersions.length) {'v@allVersions[i].name'@if(i<allVersions.length-1){, }}],
+  series: [ [@for (i in 0...allVersions.length) { {x: Date.parse('@allVersions[i].date'), y: @allVersions[i].downloads}@if(i<allVersions.length-1){, }}] ]
+};
+
+
+var total = 0;
+
+var serieData = data.series[0];
+data.labels.reverse();
+serieData.reverse();
+for (var i=0;i<serieData.length;i++) {
+	var t = serieData[i].y;
+	serieData[i].y += total;
+	total += t;
+}
+
+console.log(serieData);
+
+var options = {
+	fullWidth: true
+};
+
+options.axisX = {
+	type: Chartist.FixedScaleAxis,
+	divisor: 10,
+	labelInterpolationFnc: function(value) {
+		var d = new Date(value);
+		var m = d.getMonth() + 1;
+		var YYYY = d.getFullYear();
+		var MM = m < 10 ? "0" + m : "" + m;
+		return YYYY + "/" + MM;
+	}
+}
+
+var serieData = data.series[0];
+if (serieData.length > 100) {
+	
+}
+new Chartist.Line('#downloads-chart', data, options);
+</script>
+}
 
 <table class="table table-hover table-condensed">
 	<thead>
 		<tr>
-			<th>Version</th>
+			<th width="100">Version</th>
 			<th>Release Notes</th>
-			<th>Install</th>
-			<th>Downloads</th>
+			<th width="220">Install</th>
+			<th width="100">Downloads</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -23,19 +72,13 @@
 	<tr>
 		<td>
 			<a href="/p/@project/@v.name/" class="text-nowrap">@v.name</a>
-			<br /><small style="white-space: nowrap">@v.date.substr(0,10)</small>
+			<br /><small style="white-space: nowrap" title="@v.date">@formatDate(v.date)</small>
 		</td>
 		<td>@escape(v.comments)</td>
 		<td><code class="text-nowrap">haxelib install @project @v.name</code></td>
 		<td>@v.downloads</td>
-		<!--<td>-->
-			<!--<div class="btn-toolbar btn-group">-->
-				<!--<a class="btn btn-small btn-default" href="/p/@project/@v.name/">View Version</a>-->
-				<!--<a class="btn btn-small btn-default" href="/p/@project/@v.name/files/">Files</a>-->
-				<!--<a class="btn btn-small btn-default" href="/p/@project/@v.name/api/">API Docs</a>-->
-			<!--</div>-->
-		<!--</td>-->
 	</tr>
 	}
 	</tbody>
 </table>
+	

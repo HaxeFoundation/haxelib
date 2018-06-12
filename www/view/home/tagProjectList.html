@@ -1,4 +1,19 @@
 
+<h1><i class="fa @icon"></i> Tagged with <em>@currentTag</em></h1>
+<p class="lead">@description</p>
+
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
+	
 <div class="row">
 	<div class="span3">
     <h2>All Tags</h2>
@@ -9,8 +24,6 @@
 		</ul>
 	</div>
 	<div class="span9">
-		<h1><i class="fa @icon"></i> Tagged with <em>@currentTag</em></h1>
-		<p class="lead">@description</p>
 
 <table class="table table-compact table-hover project-list">
 	<thead>
@@ -29,7 +42,7 @@
 					<br/><small><a href="/u/@p.author/">@@@p.author</a></small>
 				</th>
 				<td>@p.description</td>
-				<td>@p.version</td>
+				<td>@p.version.name</td>
 				<td>@p.downloads</td>
 			</tr>
 		}

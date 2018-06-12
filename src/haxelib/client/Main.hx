@@ -782,7 +782,7 @@ class Main {
 		}
 		processHxml(path);
 
-		if (libsToInstall.empty())
+		if (Lambda.empty(libsToInstall))
 			return;
 
 		// Check the version numbers are all good
@@ -1300,10 +1300,15 @@ class Main {
 		var pdir = rep + Data.safe(prj);
 		if( !FileSystem.exists(pdir) )
 			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
+
+		var explicitVersion = version != null;
 		var version = if( version != null ) version else getCurrent(pdir);
 
 		var dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = if (dev != null) dev else pdir + "/" + Data.safe(version);
+		var vdir = pdir + "/" + Data.safe(version);
+
+		if( dev != null && (!explicitVersion || !FileSystem.exists(vdir)) )
+			vdir = dev;
 
 		if( !FileSystem.exists(vdir) )
 			throw "Library "+prj+" version "+version+" is not installed";

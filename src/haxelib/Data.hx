@@ -49,6 +49,7 @@ typedef ProjectInfos = {
 	var desc : String;
 	var website : String;
 	var owner : String;
+	var contributors : Array<{ name:String, fullname:String }>;
 	var license : String;
 	var curversion : String;
 	var downloads : Int;

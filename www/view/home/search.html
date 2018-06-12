@@ -1,18 +1,17 @@
 <h1><i class="fa fa-search"></i> @title</h1>
-
-
-<form action="/search/" method="GET" class="form-search">
-  <div class="control-group">
-    <div class="controls">
-        <span class="add-on"><i class="icon-envelope"></i></span>
-        <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
-        <input type="submit" class="btn btn-default" value="Search" />
-    </div>
-  </div>
-</form>
-
-  
 <p class="lead">@description</p>
+
+<center class="well">
+	<form action="/search/" method="GET" class="form-search">
+		<div class="control-group">
+		  <div class="controls">
+			  <span class="add-on"><i class="icon-envelope"></i></span>
+			  <input type="search" name="v" class="input-xxlarge search-query" style="width:75%" placeholder="Search Haxe libraries..." />
+			  <input type="submit" class="btn btn-default" value="Search" />
+		  </div>
+		</div>
+	</form>
+</center>
 
 @if (projects!=null && projects.length>0) {
 	<table class="table table-compact table-hover">
@@ -32,7 +31,7 @@
 						<br/><small>(By <a href="/u/@p.author/">@@@p.author</a>)</small>
 					</th>
 					<td>@p.description</td>
-					<td>@p.version</td>
+					<td>@p.version.name<br/><small title="@p.version.date">@formatDate(p.version.date)</small></td>
 					<td>@p.downloads</td>
 				</tr>
 			}
@@ -41,8 +40,7 @@
 
 }
 else if (projects!=null && projects.length==0) {
-	<p>No search results found.</p>
-<br/>
+	<p class="alert alert-warning">No search results found.</p>
 }
 
 <br/>
@@ -53,4 +51,7 @@ else if (projects!=null && projects.length==0) {
 	</a>
 </p>
 <br/>
-<br/>
+
+@if (projects!=null && projects.length==0) {
+<p style="height:200px;">&nbsp;</p>
+}

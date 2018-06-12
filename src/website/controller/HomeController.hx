@@ -31,20 +31,38 @@ class HomeController extends Controller {
 		ViewResult.globalValues.set( "documentationPages", DocumentationController.getDocumentationPages() );
 		ViewResult.globalValues.set( "description", "Haxe is an open source toolkit based on a modern, high level, strictly typed programming language." );
 		ViewResult.globalValues.set( "searchTerm", ctx.session.get('searchTerm') );
+		ViewResult.globalValues.set( "escape", Util.escape);
+		ViewResult.globalValues.set( "formatDate", Util.formatDate);
+		ViewResult.globalValues.set( "extension", Path.extension);
+		ViewResult.globalValues.set( "min", Math.min);
+		ViewResult.globalValues.set( "max", Math.max);
 	}
 
 	@:route("/")
 	public function homepage() {
-		var latestProjects = projectListApi.latest( 7 ).sure();
-		var users = userApi.getUserList().sure().splice(0, 10);
-		var tags = projectListApi.getTagList( 20 ).sure();
+		var allProjects =  projectListApi.all().sure();
+		
+		var latestProjects =  projectListApi.latest( 12 * 3 ).sure() ;
+		var popularProjects = prepareProjectList( projectListApi.all().sure() );
+		var users = userApi.getUserList().sure();
+		var tags = projectListApi.getTagList( 25 ).sure();
+		
+		var hasRecentProject = new Map<String, Bool>();
+		latestProjects = [for (p in latestProjects) {
+			if (p.p !=null && !hasRecentProject.exists(p.p.name)) {
+				hasRecentProject.set(p.p.name, true);
+				p;
+			}
+		}];
+		
 		return new ViewResult({
 			title: "Haxelib - the Haxe package manager",
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
 			pageUrl: context.request.uri,
-			latestProjects: latestProjects,
-			users: users,
-			escape: function(str:String) return StringTools.htmlEscape(str, true),
+			latestProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) latestProjects[i]],
+			popularProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) popularProjects[i]],
+			users: function(offset:Int, total:Int) return [for (i in offset...offset+total) users[i]],
+			
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
@@ -53,6 +71,19 @@ class HomeController extends Controller {
 
 	@:route("/p/*")
 	public var projectController:ProjectController;
+
+	@:route("/recent/")
+	public function recent() {
+		var latestProjects =  projectListApi.latest( 100 ).sure();
+		
+		latestProjects = [for (p in latestProjects) if (p.p != null ) p];
+		
+		return new ViewResult({
+			title: "Recent updates - the Haxe package manager",
+			description: "List of the most recent changes of Haxe libraries.",
+			projects: latestProjects,
+		});
+	}
 
 	@:route("/u/*")
 	public var userController:UserController;
@@ -107,10 +138,13 @@ class HomeController extends Controller {
 
 		return new ViewResult({
 			title: 'Haxelib Tags',
-			description: 'The 50 most popular tags for projects on Haxelib, sorted by the number of projects',
+			description: 'Projects of popular tags on Haxelib',
 			tags: tagList,
-			escape: function(str:String) return StringTools.htmlEscape(str, true),
 			tagCloud: tagCloud,
+			taggedProjects: function(tagName:String, offset:Int, total:Int) {
+				var projects = prepareProjectList( projectListApi.byTag( tagName ).sure() );
+				return [for (i in offset...offset + total) projects[i]];
+			}
 		});
 	}
 
@@ -171,13 +205,14 @@ class HomeController extends Controller {
 		return result;
 	}
 
-	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, author:String, description:String, version:String, downloads:Int }> {
+	static function prepareProjectList( list:Array<Project> ):Array<{ name:String, user:User, author:String, description:String, version:Version, downloads:Int }> {
 		return [for (p in list) if (p != null && p.ownerObj != null && p.versionObj != null) {
 			name: p.name,
+			user: p.ownerObj,
 			author: p.ownerObj.name,
 			description: p.description,
-			version: p.versionObj.toSemver(),
-			downloads: p.downloads
+			version: p.versionObj,
+			downloads: p.downloads,
 		}];
 	}
 
