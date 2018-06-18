@@ -103,8 +103,25 @@
 					<td><strong>Version</strong><br/>@version</a></td>
 					<td><strong>Published</strong><br/><span title="@versionDate">@formatDate(versionDate)</span></td>
 				</tr>
+				@if (dependencies.length > 0) {
+				<tr>
+					<td colspan="2">
+					<strong>Dependencies</strong>
+					<ul class="dependencies">
+					@for (dep in dependencies) { 
+						@if (dep.version != null) { 
+						<li><a href="/p/@dep.name/@dep.version/">@dep.name</a> <small>(@dep.version)</small> </li>
+						}
+						else { 
+						<li><a href="/p/@dep.name/">@dep.name</a></li>
+						}
+					}
+					</ul>
+					</td>
+				</tr>
+				}
+				<tr>
 					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
-					
 				</tr>
 				@if (info.tags != null && info.tags.length > 0) { 
 				<tr class="tags">

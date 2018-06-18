@@ -1,5 +1,7 @@
 package website.controller;
 
+import haxe.DynamicAccess;
+import haxe.Json;
 import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
@@ -235,6 +237,17 @@ class ProjectController extends Controller {
 			return null;
 		}
 		
+		// TODO: would be nice to have this data in database instead of from the zip
+		var haxeLibJson:Any = switch (projectApi.readContentFromZip(projectName, semver, "haxelib.json", false)) {
+			case Success(Some(haxelibJson)): Json.parse(haxelibJson); // it 
+			case _: null;
+		}
+		var dependencies:DynamicAccess<String> = haxeLibJson != null && Reflect.hasField(haxeLibJson, "dependencies") ? Reflect.field(haxeLibJson, "dependencies") : { };
+		var dependencies = [for (dep in dependencies.keys()) {
+			name: dep, 
+			version: if (dependencies.get(dep).length > 0) dependencies.get(dep) else null,
+		}];
+		
 		var semverCommas = semver.replace(".", ",");
 		
 		var changelog = getHTML([
@@ -281,6 +294,7 @@ class ProjectController extends Controller {
 			hasReadme: readme != null,
 			hasChangelog: changelog != null,
 			hasLicense: license != null,
+			dependencies: dependencies,
 		}, "version.html");
 	}
 
