@@ -238,9 +238,9 @@ Listen 2000
 					println("====================");
 				}
 			case "Mac":
-				runCommand("brew", ["install", "httpd", "mysql"]);
+				runCommand("brew", ["install", "httpd", "mysql@5.7"]);
 
-				runCommand("mysql.server", ["start"]);
+				runCommand("brew", ["services", "start", "mysql@5.7"]);
 
 				configDb();
 
@@ -308,7 +308,7 @@ Listen 2000
 		switch (systemName()) {
 			case "Mac":
 				runCommand("apachectl", ["stop"]);
-				runCommand("mysql.server", ["stop"]);
+				runCommand("brew", ["services", "stop", "mysql@5.7"]);
 			case _:
 				//pass
 		}
