@@ -264,6 +264,7 @@ class Main {
 			var s = new StringBuf();
 			do switch Sys.getChar(false) {
 				case 10, 13: break;
+				case 0: // ignore (windows bug)
 				case c: s.addChar(c);
 			}
 			while (true);
