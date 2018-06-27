@@ -2,10 +2,10 @@
 # Note that it doesn't contain a MySQL database, 
 # which need to be launched seperately. See test/docker-compose.yml on how to launch one.
 
-FROM ubuntu:trusty
+FROM ubuntu:bionic
 
 # apt-get dependencies of bower
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
 	&& add-apt-repository ppa:haxe/releases -y \
 	&& apt-get update && apt-get upgrade -y \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
