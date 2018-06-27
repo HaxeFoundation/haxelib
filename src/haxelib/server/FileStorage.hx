@@ -210,6 +210,7 @@ class S3FileStorage extends FileStorage {
 		assertRelative(file);
 		var s3Path = Path.join(['s3://${bucketName}', file]);
 		var localFile:AbsPath = Path.join([localPath, file]);
+		FileSystem.createDirectory(Path.directory(localFile));
 		if (!FileSystem.exists(localFile)) {
 			var request = transferClient.downloadFile(localFile, bucketName, file);
 			while (!request.isDone()) {
