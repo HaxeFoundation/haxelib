@@ -97,7 +97,11 @@ class ProjectApi extends UFApi {
 				if ( fileInfo!=null ) Success( fileInfo );
 				else Failure( HttpError.pageNotFound() );
 		}
-		catch ( e:Dynamic ) return Failure( Error.withData('Failed to get file information for $path in $projectName ($version)',e) );
+		catch ( e:Dynamic ) return Failure( Error.withData(
+			'Failed to get file information for $path in $projectName ($version)',
+			Std.string(e) + "\n" +
+			haxe.CallStack.toString(haxe.CallStack.exceptionStack())
+		) );
 	}
 
 	/**

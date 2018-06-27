@@ -235,6 +235,13 @@ a.anch {
 }
 
 /**
+	Error page
+**/
+.error-data {
+	white-space: pre;
+}
+
+/**
 	Billboard / head on homepage
 **/
 @media (max-width: 979px) {

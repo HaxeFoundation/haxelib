@@ -219,7 +219,7 @@ class S3FileStorage extends FileStorage {
 				case null:
 					//pass
 				case failure:
-					throw 'failed to download ${s3Path} to ${localPath}\n${failure}';
+					throw 'failed to download ${s3Path} to ${localFile}\n${failure}';
 			}
 		}
 		return f(localFile);
