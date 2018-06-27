@@ -215,13 +215,9 @@ class S3FileStorage extends FileStorage {
 			while (!request.isDone()) {
 				Sys.sleep(0.01);
 			}
-			switch (request.getFailure()) {
-				case null:
-					//pass
-				case failure:
-					throw 'failed to download ${s3Path} to ${localFile}\n${failure}';
+			if (!request.completedSuccessfully()) {
+				throw 'failed to download ${s3Path} to ${localFile}\n${request.getFailure()}';
 			}
-
 			if (!FileSystem.exists(localFile)) {
 				throw 'failed to download ${s3Path} to ${localFile}';
 			}
