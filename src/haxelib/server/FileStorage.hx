@@ -221,6 +221,10 @@ class S3FileStorage extends FileStorage {
 				case failure:
 					throw 'failed to download ${s3Path} to ${localFile}\n${failure}';
 			}
+
+			if (!FileSystem.exists(localFile)) {
+				throw 'failed to download ${s3Path} to ${localFile}';
+			}
 		}
 		return f(localFile);
 	}
