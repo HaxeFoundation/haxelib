@@ -140,11 +140,21 @@ class ProjectController extends Controller {
 					// make sure tags are rendered correctly
 					str = str.replace("<", "&lt;").replace(">", "&gt;");
 					
-					if (["xml","html","htm","mtt"].indexOf(ext)>-1) {
-						str = Util.syntaxHighlightHTML(str);
+					try {
+						str = switch (ext) {
+							case "xml","html","htm","mtt":
+								Util.syntaxHighlightHTML(str);
+							case "hx":
+								Highlighter.syntaxHighlightHaxe(str);
+							case "hxml":
+								Highlighter.syntaxHighlightHXML(str);
+							default:
+								str;
+						};
+					} catch(e:Dynamic) {
+						// don't throw error when there is highlighting issue
+						// just don't highlight it
 					}
-					else if (ext == "hx") str = Highlighter.syntaxHighlightHaxe(str);
-					else if (ext == "hxml") str = Highlighter.syntaxHighlightHXML(str);
 				}
 				
 				data["fileContent"] = str;
