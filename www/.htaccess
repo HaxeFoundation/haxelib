@@ -4,6 +4,15 @@ DirectoryIndex index.n index.php index.html
 
 RewriteEngine On
 
+# Redirect http to https
+RewriteBase /
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$
+RewriteCond %{REQUEST_URI} !^/index.n/
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !^/files/
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
+
 # /files are stored in S3
 
 RewriteBase /
