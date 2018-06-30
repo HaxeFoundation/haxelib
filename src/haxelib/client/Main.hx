@@ -458,6 +458,7 @@ class Main {
 						print("please download manually the file from https://lib.haxe.org/files/3.0/");
 						print("and run 'haxelib local <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
+						print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 						Sys.exit(1);
 					}
 					if( e == "Blocked" ) {
@@ -471,6 +472,7 @@ class Main {
 					if( settings.debug )
 						rethrow(e);
 					print("Error: " + Std.string(e));
+					print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 					Sys.exit(1);
 				}
 				return;
