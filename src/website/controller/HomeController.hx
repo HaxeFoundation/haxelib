@@ -20,7 +20,7 @@ class HomeController extends Controller {
 	@inject public function init( ctx:HttpContext ) {
 		// All MVC actions come through HomeController (our index controller) first, so this is a good place to set global template variables.
 		var r = ctx.request;
-		var url = 'http://'+r.hostName+r.uri;
+		var url = 'https://'+r.hostName+r.uri;
 		if ( r.queryString!="" ) {
 			url += '?'+r.queryString;
 		}

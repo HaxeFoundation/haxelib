@@ -46,7 +46,7 @@ class RSSController extends Controller {
 		// Set some variables we'll use.
 		Sys.setTimeLocale( "en_US.UTF8" );
 		var hostName = context.request.hostName;
-		var url = "http://"+hostName;
+		var url = "https://"+hostName;
 		var num = releases.length;
 
 		// Create the RSS document and headers.
@@ -56,7 +56,7 @@ class RSSController extends Controller {
 		rss.set( "xmlns:dc", "http://purl.org/dc/elements/1.1/" );
 		var channel = createChild( rss, "channel" );
 		var link = createChild( channel, "atom:link" );
-		link.set( "href", 'http://$hostName/rss/' );
+		link.set( "href", 'https://$hostName/rss/' );
 		link.set( "rel", "self" );
 		link.set( "type", "application/rss+xml" );
 		createChildWithContent( channel, "title", 'Latest Haxelib Releases ($hostName)' );

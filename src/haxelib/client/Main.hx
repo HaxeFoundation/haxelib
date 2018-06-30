@@ -140,6 +140,7 @@ class Main {
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
+		protocol : "https",
 		host : "lib.haxe.org",
 		port : 80,
 		dir : "",
@@ -251,7 +252,7 @@ class Main {
 	}
 
 	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
+		siteUrl = SERVER.protocol + "://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
 		var remotingUrl =  siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url;
 		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).resolve("api"));
 	}
@@ -377,9 +378,10 @@ class Main {
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
 					var path = args[argcur++];
-					var r = ~/^(http:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
+					var r = ~/^(https?:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
 					if( !r.match(path) )
 						throw "Invalid repository format '"+path+"'";
+					SERVER.protocol = r.matched(1);
 					SERVER.host = r.matched(2);
 					if( r.matched(3) != null )
 						SERVER.port = Std.parseInt(r.matched(3).substr(1));
@@ -453,7 +455,7 @@ class Main {
 						print("Host "+SERVER.host+" was not found");
 						print("Please ensure that your internet connection is on");
 						print("If you don't have an internet connection or if you are behing a proxy");
-						print("please download manually the file from http://lib.haxe.org/files/3.0/");
+						print("please download manually the file from https://lib.haxe.org/files/3.0/");
 						print("and run 'haxelib local <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
 						Sys.exit(1);
@@ -631,7 +633,7 @@ class Main {
 		var id = site.getSubmitId();
 
 		// directly send the file data over Http
-		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
+		var h = createHttpRequest(SERVER.protocol+"://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) throw e;
 		h.onData = print;
 
@@ -1575,7 +1577,7 @@ class Main {
 		};
 		Http.PROXY = proxy;
 		print("Testing proxy...");
-		try Http.requestUrl("http://www.google.com") catch( e : Dynamic ) {
+		try Http.requestUrl("https://lib.haxe.org") catch( e : Dynamic ) {
 			if(!ask("Proxy connection failed. Use it anyway")) {
 				return;
 			}
