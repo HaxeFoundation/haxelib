@@ -142,7 +142,7 @@ class Main {
 	static var SERVER = {
 		protocol : "https",
 		host : "lib.haxe.org",
-		port : 80,
+		port : 443,
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
@@ -378,13 +378,26 @@ class Main {
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
 					var path = args[argcur++];
-					var r = ~/^(https?:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
+					var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
 					if( !r.match(path) )
 						throw "Invalid repository format '"+path+"'";
-					SERVER.protocol = r.matched(1);
+					SERVER.protocol = switch (r.matched(1)) {
+						case null:
+							"https";
+						case protocol:
+							protocol;
+					}
 					SERVER.host = r.matched(2);
-					if( r.matched(3) != null )
-						SERVER.port = Std.parseInt(r.matched(3).substr(1));
+					SERVER.port = switch (r.matched(3)) {
+						case null:
+							switch (SERVER.protocol) {
+								case "https": 443;
+								case "http": 80;
+								case protocol: throw 'unknown default port for $protocol';
+							}
+						case portStr:
+							Std.parseInt(portStr);
+					}
 					SERVER.dir = r.matched(4);
 					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
 					initSite();
