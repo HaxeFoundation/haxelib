@@ -7,7 +7,7 @@ dump/
 deploy/
 haxelib_repo/
 repo_integration_tests/
-haxelib
+/haxelib
 run.c
 
 # run.n is in the repo
