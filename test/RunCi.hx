@@ -296,10 +296,6 @@ Listen 2000
 				throw "System not supported: " + name;
 		}
 
-		Sys.setCwd("www");
-		runCommand("bower", ["install"]);
-		Sys.setCwd("..");
-
 		Sys.putEnv("HAXELIB_SERVER", HAXELIB_SERVER);
 		Sys.putEnv("HAXELIB_SERVER_PORT", HAXELIB_SERVER_PORT);
 

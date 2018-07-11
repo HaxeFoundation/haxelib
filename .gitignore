@@ -22,9 +22,6 @@ run.c
 
 deploy_key
 
-# Bower
-www/bower_components
-
 .haxelib
 
 # Elastic Beanstalk Files

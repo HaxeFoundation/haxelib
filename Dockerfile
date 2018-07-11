@@ -4,7 +4,6 @@
 
 FROM ubuntu:bionic
 
-# apt-get dependencies of bower
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
 	&& add-apt-repository ppa:haxe/releases -y \
 	&& apt-get update && apt-get upgrade -y \
@@ -39,8 +38,6 @@ RUN { \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
 
-RUN npm -g install bower
-
 
 # haxelib
 ENV HAXELIB_PATH /src/.haxelib
@@ -49,10 +46,6 @@ WORKDIR /src
 COPY .haxelib /src/.haxelib
 RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
-
-COPY www/bower.json /src/www/
-WORKDIR /src/www
-RUN bower install --allow-root
 
 COPY www /src/www/
 COPY src/legacyhaxelib/.htaccess /src/www/legacy/
