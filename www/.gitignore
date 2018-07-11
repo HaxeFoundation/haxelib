@@ -1,0 +1,5 @@
+node_modules/
+js/*.min.js
+js/highlighter.js
+css/*.min.css
+fonts/

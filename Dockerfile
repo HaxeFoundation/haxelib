@@ -47,6 +47,10 @@ COPY .haxelib /src/.haxelib
 RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
 
+COPY www/package*.json /src/www/
+WORKDIR /src/www/
+RUN npm install --unsafe-perm
+
 COPY www /src/www/
 COPY src/legacyhaxelib/.htaccess /src/www/legacy/
 COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
