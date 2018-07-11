@@ -855,7 +855,8 @@ class Main {
 		}
 	}
 
-	function download(fileUrl:String, outPath:String):Void {
+	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
+	function download(fileUrl:String, outPath:String, maxRedirect = 20):Void {
 		var out = try File.append(outPath,true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
 		out.seek(0, SeekEnd);
 
@@ -902,7 +903,12 @@ class Main {
 
 		if (redirectedLocation != null) {
 			FileSystem.deleteFile(outPath);
-			download(redirectedLocation, outPath);
+
+			if (maxRedirect > 0) {
+				download(redirectedLocation, outPath, maxRedirect - 1);
+			} else {
+				throw "Too many redirects.";
+			}
 		}
 	}
 
