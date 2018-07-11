@@ -855,9 +855,60 @@ class Main {
 		}
 	}
 
+	function download(fileUrl:String, outPath:String):Void {
+		var out = try File.append(outPath,true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
+		out.seek(0, SeekEnd);
+
+		var h = createHttpRequest(fileUrl);
+
+		var currentSize = out.tell();
+		if (currentSize > 0)
+			h.addHeader("range", "bytes="+currentSize + "-");
+
+		var progress = if (settings != null && settings.quiet == false )
+			new ProgressOut(out, currentSize);
+		else
+			out;
+
+		var httpStatus = -1;
+		var redirectedLocation = null;
+		h.onStatus = function(status) {
+			httpStatus = status;
+			switch (httpStatus) {
+				case 301, 302, 307, 308:
+					switch (h.responseHeaders.get("Location")) {
+						case null:
+							throw 'Request to $fileUrl responded with $httpStatus, ${h.responseHeaders}';
+						case location:
+							redirectedLocation = location;
+					}
+				default:
+					// TODO?
+			}
+		};
+		h.onError = function(e) {
+			progress.close();
+
+			switch(httpStatus) {
+				case 416:
+					// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
+					// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
+				default:
+					FileSystem.deleteFile(outPath);
+					throw e;
+			}
+		};
+		h.customRequest(false, progress);
+
+		if (redirectedLocation != null) {
+			FileSystem.deleteFile(outPath);
+			download(redirectedLocation, outPath);
+		}
+	}
+
 	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
-		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
+		if( FileSystem.exists(Path.join([rep, Data.safe(project), Data.safe(version)])) ) {
 			print("You already have "+project+" version "+version+" installed");
 			setCurrent(rep,project,version,true);
 			return;
@@ -865,39 +916,23 @@ class Main {
 
 		// download to temporary file
 		var filename = Data.fileName(project,version);
-		var filepath = rep+filename;
-		var out = try File.append(filepath,true) catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
-		out.seek(0, SeekEnd);
+		var filepath = Path.join([rep, filename]);
 
-		var h = createHttpRequest(siteUrl+Data.REPOSITORY+"/"+filename);
-
-		var currentSize = out.tell();
-		if (currentSize > 0)
-			h.addHeader("range", "bytes="+currentSize + "-");
-
-		var progress = if (settings.quiet == false )
-			new ProgressOut(out, currentSize);
-		else
-			out;
-
-		var has416Status = false;
-		h.onStatus = function(status) {
-			// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
-			if (status == 416) has416Status = true;
-		};
-		h.onError = function(e) {
-			progress.close();
-
-			// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
-			if (!has416Status) {
-				FileSystem.deleteFile(filepath);
-				throw e;
-			}
-		};
 		print("Downloading "+filename+"...");
-		h.customRequest(false,progress);
 
-		doInstallFile(rep,filepath, setcurrent);
+		var maxRetry = 3;
+		var fileUrl = Path.join([siteUrl, Data.REPOSITORY, filename]);
+		for (i in 0...maxRetry) {
+			try {
+				download(fileUrl, filepath);
+				break;
+			} catch (e:Dynamic) {
+				print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
+				Sys.sleep(1);
+			}
+		}
+
+		doInstallFile(rep, filepath, setcurrent);
 		try {
 			site.postInstall(project, version);
 		} catch (e:Dynamic) {}
