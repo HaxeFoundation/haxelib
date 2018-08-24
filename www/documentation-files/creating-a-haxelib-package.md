@@ -14,7 +14,7 @@ Each Haxe library requires a `haxelib.json` file in which the following attribut
 * version: The version string of the library. This is detailed in [Versioning](#versioning).
 * classPath: The path string to the source files.
 * releasenote: The release notes of the current version.
-* contributors: An array of user names which identify contributors to the library that are allowed to upload to haxelib.
+* contributors: An array of user names which identify contributors to the library that are allowed to upload to haxelib. The first user will be defined as the owner, who is the only one that can change description, url, license, contributors, and ownership (by changing who come first in contributors).
 * dependencies: An object describing the dependencies of the library. This is detailed in [Dependencies](#dependencies).
 
 The following JSON is a simple example of a haxelib.json:

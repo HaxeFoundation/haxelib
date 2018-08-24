@@ -172,6 +172,10 @@ class Repo implements SiteApi {
 
 				// create project if needed
 				if( p == null ) {
+					if( devs[0].name != user ) {
+						throw 'A new project should be submitted by its owner, which is the first user in the contributors field (${devs[0].name})';
+					}
+
 					p = new Project();
 					p.name = infos.name;
 					p.description = infos.description;
@@ -207,6 +211,7 @@ class Repo implements SiteApi {
 				var otags = Tag.manager.search({ project : p.id });
 				var curtags = otags.map(function(t) return t.tag).join(":");
 
+				var ownerChanged = devs[0].id != p.ownerObj.id;
 				var devsChanged = (pdevs.length != devs.length);
 				if (!devsChanged) { // same length, check whether elements are the same
 					for (d in pdevs) {
@@ -219,12 +224,15 @@ class Repo implements SiteApi {
 				}
 
 				// update public infos
-				if( devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
+				if( ownerChanged || devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
 					if( u.id != p.ownerObj.id )
 						throw "Only project owner can modify project infos";
 					p.description = infos.description;
 					p.website = infos.url;
 					p.license = infos.license;
+					if( ownerChanged ) {
+						p.ownerObj = u;
+					}
 					p.update();
 					if( devsChanged ) {
 						for( d in pdevs )
