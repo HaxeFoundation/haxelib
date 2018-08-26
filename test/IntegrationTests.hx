@@ -7,6 +7,13 @@ import haxelib.*;
 using StringTools;
 using IntegrationTests;
 
+typedef UserRegistration = {
+	user:String,
+	email:String,
+	fullname:String,
+	pw:String
+}
+
 class IntegrationTests extends TestBase {
 	static var projectRoot:String = Sys.getCwd();
 	var haxelibBin:String = Path.join([projectRoot, "run.n"]);
@@ -35,18 +42,30 @@ class IntegrationTests extends TestBase {
 		originalRepo;
 	};
 	static public var repo(default, never) = "repo_integration_tests";
-	static public var bar(default, never) = {
+	static public var bar(default, never):UserRegistration = {
 		user: "Bar",
 		email: "bar@haxe.org",
 		fullname: "Bar",
 		pw: "barpassword",
 	};
-	static public var foo(default, never) = {
+	static public var foo(default, never):UserRegistration = {
 		user: "Foo",
 		email: "foo@haxe.org",
 		fullname: "Foo",
 		pw: "foopassword",
 	};
+	static public var deepAuthor(default, never):UserRegistration = {
+		user: "DeepAuthor",
+		email: "deep@haxe.org",
+		fullname: "Jonny Deep",
+		pw: "deep thought"
+	}
+	static public var anotherGuy(default, never):UserRegistration = {
+		user: "AnotherGuy",
+		email: "another@email.com",
+		fullname: "Another Guy",
+		pw: "some other pw"
+	}
 	public var clientVer(get, null):SemVer;
 	var clientVer_inited = false;
 	function get_clientVer() {
@@ -90,6 +109,10 @@ class IntegrationTests extends TestBase {
 			throw r;
 		}
 		assertEquals(0, r.code, pos);
+	}
+
+	function assertFail(r:{out:String, err:String, code:Int}, ?pos:haxe.PosInfos):Void {
+		assertTrue(r.code != 0, pos);
 	}
 
 	function assertNoError(f:Void->Void):Void {
@@ -177,6 +200,7 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestSet());
 		runner.add(new tests.integration.TestInfo());
 		runner.add(new tests.integration.TestUser());
+		runner.add(new tests.integration.TestOwner());
 		runner.add(new tests.integration.TestDev());
 		var success = runner.run();
 

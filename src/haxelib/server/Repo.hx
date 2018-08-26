@@ -231,7 +231,7 @@ class Repo implements SiteApi {
 					p.website = infos.url;
 					p.license = infos.license;
 					if( ownerChanged ) {
-						p.ownerObj = u;
+						p.ownerObj = devs[0];
 					}
 					p.update();
 					if( devsChanged ) {
