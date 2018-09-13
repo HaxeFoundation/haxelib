@@ -202,7 +202,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://www.apachelounge.com/download/VC15/binaries/httpd-2.4.33-Win32-VC15.zip", "bin/httpd.zip");
+				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.34-win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
@@ -238,9 +238,9 @@ Listen 2000
 					println("====================");
 				}
 			case "Mac":
-				runCommand("brew", ["install", "httpd", "mysql"]);
+				runCommand("brew", ["install", "httpd", "mysql@5.7"]);
 
-				runCommand("mysql.server", ["start"]);
+				runCommand("brew", ["services", "start", "mysql@5.7"]);
 
 				configDb();
 
@@ -297,7 +297,7 @@ Listen 2000
 		}
 
 		Sys.setCwd("www");
-		runCommand("bower", ["install"]);
+		runCommand("npm", ["install"]);
 		Sys.setCwd("..");
 
 		Sys.putEnv("HAXELIB_SERVER", HAXELIB_SERVER);
@@ -308,7 +308,7 @@ Listen 2000
 		switch (systemName()) {
 			case "Mac":
 				runCommand("apachectl", ["stop"]);
-				runCommand("mysql.server", ["stop"]);
+				runCommand("brew", ["services", "stop", "mysql@5.7"]);
 			case _:
 				//pass
 		}

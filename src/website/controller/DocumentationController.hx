@@ -29,7 +29,9 @@ class DocumentationController extends Controller {
 		pages.set( "/documentation/", "Getting Started" );
 		pages.set( "/documentation/using-haxelib/", "Using Haxelib" );
 		pages.set( "/documentation/creating-a-haxelib-package/", "Creating a Haxelib" );
-		// pages.set( "/documentation/faq/", "FAQ" );
+		pages.set( "/documentation/per-project-setup/", "Per project setup" );
+		pages.set( "/documentation/haxelibs-in-projects/", "Adding libraries to projects" );
+		pages.set( "/documentation/faq/", "FAQ" );
 		// pages.set( "/documentation/api/", "API" );
 		return pages;
 	}

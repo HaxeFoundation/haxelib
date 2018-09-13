@@ -140,8 +140,9 @@ class Main {
 	static var REPNAME = "lib";
 	static var REPODIR = ".haxelib";
 	static var SERVER = {
+		protocol : "https",
 		host : "lib.haxe.org",
-		port : 80,
+		port : 443,
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
@@ -251,7 +252,7 @@ class Main {
 	}
 
 	function initSite() {
-		siteUrl = "http://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
+		siteUrl = SERVER.protocol + "://" + SERVER.host + ":" + SERVER.port + "/" + SERVER.dir;
 		var remotingUrl =  siteUrl + "api/" + SERVER.apiVersion + "/" + SERVER.url;
 		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).resolve("api"));
 	}
@@ -264,6 +265,7 @@ class Main {
 			var s = new StringBuf();
 			do switch Sys.getChar(false) {
 				case 10, 13: break;
+				case 0: // ignore (windows bug)
 				case c: s.addChar(c);
 			}
 			while (true);
@@ -376,12 +378,26 @@ class Main {
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
 					var path = args[argcur++];
-					var r = ~/^(http:\/\/)?([^:\/]+)(:[0-9]+)?\/?(.*)$/;
+					var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
 					if( !r.match(path) )
 						throw "Invalid repository format '"+path+"'";
+					SERVER.protocol = switch (r.matched(1)) {
+						case null:
+							"https";
+						case protocol:
+							protocol;
+					}
 					SERVER.host = r.matched(2);
-					if( r.matched(3) != null )
-						SERVER.port = Std.parseInt(r.matched(3).substr(1));
+					SERVER.port = switch (r.matched(3)) {
+						case null:
+							switch (SERVER.protocol) {
+								case "https": 443;
+								case "http": 80;
+								case protocol: throw 'unknown default port for $protocol';
+							}
+						case portStr:
+							Std.parseInt(portStr);
+					}
 					SERVER.dir = r.matched(4);
 					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
 					initSite();
@@ -452,9 +468,10 @@ class Main {
 						print("Host "+SERVER.host+" was not found");
 						print("Please ensure that your internet connection is on");
 						print("If you don't have an internet connection or if you are behing a proxy");
-						print("please download manually the file from http://lib.haxe.org/files/3.0/");
+						print("please download manually the file from https://lib.haxe.org/files/3.0/");
 						print("and run 'haxelib local <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
+						print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 						Sys.exit(1);
 					}
 					if( e == "Blocked" ) {
@@ -468,6 +485,7 @@ class Main {
 					if( settings.debug )
 						rethrow(e);
 					print("Error: " + Std.string(e));
+					print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 					Sys.exit(1);
 				}
 				return;
@@ -630,7 +648,7 @@ class Main {
 		var id = site.getSubmitId();
 
 		// directly send the file data over Http
-		var h = createHttpRequest("http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
+		var h = createHttpRequest(SERVER.protocol+"://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) throw e;
 		h.onData = print;
 
@@ -837,9 +855,66 @@ class Main {
 		}
 	}
 
+	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
+	function download(fileUrl:String, outPath:String, maxRedirect = 20):Void {
+		var out = try File.append(outPath,true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
+		out.seek(0, SeekEnd);
+
+		var h = createHttpRequest(fileUrl);
+
+		var currentSize = out.tell();
+		if (currentSize > 0)
+			h.addHeader("range", "bytes="+currentSize + "-");
+
+		var progress = if (settings != null && settings.quiet == false )
+			new ProgressOut(out, currentSize);
+		else
+			out;
+
+		var httpStatus = -1;
+		var redirectedLocation = null;
+		h.onStatus = function(status) {
+			httpStatus = status;
+			switch (httpStatus) {
+				case 301, 302, 307, 308:
+					switch (h.responseHeaders.get("Location")) {
+						case null:
+							throw 'Request to $fileUrl responded with $httpStatus, ${h.responseHeaders}';
+						case location:
+							redirectedLocation = location;
+					}
+				default:
+					// TODO?
+			}
+		};
+		h.onError = function(e) {
+			progress.close();
+
+			switch(httpStatus) {
+				case 416:
+					// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
+					// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
+				default:
+					FileSystem.deleteFile(outPath);
+					throw e;
+			}
+		};
+		h.customRequest(false, progress);
+
+		if (redirectedLocation != null) {
+			FileSystem.deleteFile(outPath);
+
+			if (maxRedirect > 0) {
+				download(redirectedLocation, outPath, maxRedirect - 1);
+			} else {
+				throw "Too many redirects.";
+			}
+		}
+	}
+
 	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
-		if( FileSystem.exists(rep+Data.safe(project)+"/"+Data.safe(version)) ) {
+		if( FileSystem.exists(Path.join([rep, Data.safe(project), Data.safe(version)])) ) {
 			print("You already have "+project+" version "+version+" installed");
 			setCurrent(rep,project,version,true);
 			return;
@@ -847,39 +922,23 @@ class Main {
 
 		// download to temporary file
 		var filename = Data.fileName(project,version);
-		var filepath = rep+filename;
-		var out = try File.append(filepath,true) catch (e:Dynamic) throw 'Failed to write to $filepath: $e';
-		out.seek(0, SeekEnd);
+		var filepath = Path.join([rep, filename]);
 
-		var h = createHttpRequest(siteUrl+Data.REPOSITORY+"/"+filename);
-
-		var currentSize = out.tell();
-		if (currentSize > 0)
-			h.addHeader("range", "bytes="+currentSize + "-");
-
-		var progress = if (settings.quiet == false )
-			new ProgressOut(out, currentSize);
-		else
-			out;
-
-		var has416Status = false;
-		h.onStatus = function(status) {
-			// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
-			if (status == 416) has416Status = true;
-		};
-		h.onError = function(e) {
-			progress.close();
-
-			// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
-			if (!has416Status) {
-				FileSystem.deleteFile(filepath);
-				throw e;
-			}
-		};
 		print("Downloading "+filename+"...");
-		h.customRequest(false,progress);
 
-		doInstallFile(rep,filepath, setcurrent);
+		var maxRetry = 3;
+		var fileUrl = Path.join([siteUrl, Data.REPOSITORY, filename]);
+		for (i in 0...maxRetry) {
+			try {
+				download(fileUrl, filepath);
+				break;
+			} catch (e:Dynamic) {
+				print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
+				Sys.sleep(1);
+			}
+		}
+
+		doInstallFile(rep, filepath, setcurrent);
 		try {
 			site.postInstall(project, version);
 		} catch (e:Dynamic) {}
@@ -1574,7 +1633,7 @@ class Main {
 		};
 		Http.PROXY = proxy;
 		print("Testing proxy...");
-		try Http.requestUrl("http://www.google.com") catch( e : Dynamic ) {
+		try Http.requestUrl("https://lib.haxe.org") catch( e : Dynamic ) {
 			if(!ask("Proxy connection failed. Use it anyway")) {
 				return;
 			}

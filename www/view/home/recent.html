@@ -1,5 +1,5 @@
 <h1><i class="fa fa-paperclip"></i> Latest updates</h1>
-<p class="lead">List of recent changes per library</p>
+<p class="lead">@description</p>
 
 <center class="well">
 	<form action="/search/" method="GET" class="form-search">
@@ -31,7 +31,7 @@
 			<!--br/><small><a href="/u/@update.p.author/">@@@update.p.author</a></small-->
 		</th>
 		<td>@if (update.v.comments != null && update.v.comments.length > 0){<em>@escape(update.v.comments)</em>}</td>
-		<td>@update.v.name<br/><small title="@formatDate(update.v.date)">@update.v.date</small></td>
+		<td>@update.v.name<br/><small title="@formatDate(update.v.date)">@formatDate(update.v.date, true)</small></td>
 	</tr>
 
 	@{prevDate = curDate;}

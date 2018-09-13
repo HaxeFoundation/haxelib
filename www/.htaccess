@@ -4,6 +4,16 @@ DirectoryIndex index.n index.php index.html
 
 RewriteEngine On
 
+# Redirect http to https
+RewriteBase /
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$
+RewriteCond %{REQUEST_URI} !index\.n/?$
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !^/files/
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
+
 # /files are stored in S3
 
 RewriteBase /
@@ -16,7 +26,7 @@ RewriteRule "^files/(.*)$" "http://%{ENV:HAXELIB_S3BUCKET}.s3-%{ENV:AWS_DEFAULT_
 
 RewriteBase /
 RewriteCond %{HTTP:X-Haxe-Remoting}: 1
-RewriteRule ^index.n$ legacy/index.n [L]
+RewriteRule ^index\.n$ legacy/index.n [L]
 
 # Enable rewrite for the new site's pages, only if the file or dir doesn't exist
 

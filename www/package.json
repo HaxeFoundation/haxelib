@@ -1,0 +1,17 @@
+{
+  "name": "haxelib-server",
+  "description": "Haxelib server",
+  "scripts": {
+    "postinstall": "download https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js --out js && download https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css --out css && copyfiles -f node_modules/jquery/dist/jquery.min.js js"
+  },
+  "keywords": [],
+  "author": "Haxe Foundation",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "copyfiles": "^2.0.0",
+    "download-cli": "^1.1.1",
+    "jquery": "^1.12.4"
+  },
+  "dependencies": {}
+}

@@ -1,5 +1,7 @@
 package website.controller;
 
+import haxe.DynamicAccess;
+import haxe.Json;
 import haxelib.SemVer;
 import ufront.MVC;
 import website.api.ProjectApi;
@@ -51,7 +53,17 @@ class ProjectController extends Controller {
 			document.parseRefLinks(lines);
 			var blocks = document.parseLines(lines);
 			for (block in blocks) block.accept(imgSrcfixer); // fix relative image links
-			return Markdown.renderHtml(blocks);
+			
+			var html = Markdown.renderHtml(blocks);
+			
+			// prefix relative image urls in generated html (for plain <img>-tags)
+			var regexp  = ~/<img src=(["'])(?!(https?:\/)?\/)(.+?)\1/ig;
+			while(regexp.match(html)) {
+				var url = prefix + regexp.matched(3);
+				html = '<img src="${url}"${regexp.matchedRight()}';
+			}
+			
+			return html;
 		} catch (e:Dynamic) {
 			return '<pre>$e</pre>';
 		}
@@ -128,11 +140,21 @@ class ProjectController extends Controller {
 					// make sure tags are rendered correctly
 					str = str.replace("<", "&lt;").replace(">", "&gt;");
 					
-					if (["xml","html","htm","mtt"].indexOf(ext)>-1) {
-						str = Util.syntaxHighlightHTML(str);
+					try {
+						str = switch (ext) {
+							case "xml","html","htm","mtt":
+								Util.syntaxHighlightHTML(str);
+							case "hx":
+								Highlighter.syntaxHighlightHaxe(str);
+							case "hxml":
+								Highlighter.syntaxHighlightHXML(str);
+							default:
+								str;
+						};
+					} catch(e:Dynamic) {
+						// don't throw error when there is highlighting issue
+						// just don't highlight it
 					}
-					else if (ext == "hx") str = Highlighter.syntaxHighlightHaxe(str);
-					else if (ext == "hxml") str = Highlighter.syntaxHighlightHXML(str);
 				}
 				
 				data["fileContent"] = str;
@@ -225,6 +247,17 @@ class ProjectController extends Controller {
 			return null;
 		}
 		
+		// TODO: would be nice to have this data in database instead of from the zip
+		var haxeLibJson:Any = switch (projectApi.readContentFromZip(projectName, semver, "haxelib.json", false)) {
+			case Success(Some(haxelibJson)): Json.parse(haxelibJson); // it 
+			case _: null;
+		}
+		var dependencies:DynamicAccess<String> = haxeLibJson != null && Reflect.hasField(haxeLibJson, "dependencies") ? Reflect.field(haxeLibJson, "dependencies") : { };
+		var dependencies = [for (dep in dependencies.keys()) {
+			name: dep, 
+			version: if (dependencies.get(dep).length > 0) dependencies.get(dep) else null,
+		}];
+		
 		var semverCommas = semver.replace(".", ",");
 		
 		var changelog = getHTML([
@@ -271,6 +304,7 @@ class ProjectController extends Controller {
 			hasReadme: readme != null,
 			hasChangelog: changelog != null,
 			hasLicense: license != null,
+			dependencies: dependencies,
 		}, "version.html");
 	}
 
@@ -291,7 +325,7 @@ private class MarkdownImgRelativeSrcFixer implements NodeVisitor {
             if (!ABSOLUTE_URL_RE.match(url))
                 element.attributes["src"] = prefix + url;
         }
-        return false;
+        return element.children != null;
     }
 
     public function visitText(text:TextNode):Void {}

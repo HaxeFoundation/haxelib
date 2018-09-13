@@ -1,5 +1,7 @@
 # The new haxelib website (on the same 3.0 repo)
 
+server_website_highlighter.hxml
+--next
 server_website.hxml
 --next
 server_tasks.hxml

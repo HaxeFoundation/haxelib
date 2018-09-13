@@ -1,0 +1,7 @@
+# generate code highlighter
+-lib html-haxe-code-highlighter:0.1.2
+-js www/js/highlighter.js
+-main highlighter.Highlighter
+-D highlighter_standalone
+-D analyzer-optimize
+-dce full

@@ -1,7 +1,3 @@
-TODO: this needs editing and adding to the website
-
-
-
 ## Per-project setup
 
 Currently haxelib has two ways to have project local setups.
@@ -11,7 +7,7 @@ Currently haxelib has two ways to have project local setups.
 
 ### Using haxelib newrepo
 
-When using `haxelib newrepo` you can have a project-local haxelib repository. This feature is quite new and a little rough around the edges.
+When using `haxelib newrepo` you can have a project-local haxelib repository. 
 
 Caveats:
 
@@ -32,9 +28,10 @@ Advantages:
 - as pointed out above, this approach allows defining a *versionable* and *replicable* state.
 - you don't have to download libraries for each project, which does make a difference for heavy weights like openfl and hxcpp
 
-#### Sidestepping haxelib git issues
+#### Using haxelib with git versions
 
-Because you cannot specify git versions with `-lib` paremeters, we suggest using git submodules instead, as again they provide an adequate way of definining a *versionable* and *replicable* state.
+You can specify git versions with `-lib libname:git:https://github.com/user/repo#branch` branch can be a branch or a specific commit SHA. 
+As alternative, you might use git submodules instead, they also provide an adequate way of definining a *versionable* and *replicable* state.
 
 ### Combining both approaches
 

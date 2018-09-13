@@ -20,7 +20,7 @@ class HomeController extends Controller {
 	@inject public function init( ctx:HttpContext ) {
 		// All MVC actions come through HomeController (our index controller) first, so this is a good place to set global template variables.
 		var r = ctx.request;
-		var url = 'http://'+r.hostName+r.uri;
+		var url = 'https://'+r.hostName+r.uri;
 		if ( r.queryString!="" ) {
 			url += '?'+r.queryString;
 		}
@@ -80,7 +80,7 @@ class HomeController extends Controller {
 		
 		return new ViewResult({
 			title: "Recent updates - the Haxe package manager",
-			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
+			description: "List of the most recent changes of Haxe libraries.",
 			projects: latestProjects,
 		});
 	}

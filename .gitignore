@@ -7,7 +7,7 @@ dump/
 deploy/
 haxelib_repo/
 repo_integration_tests/
-haxelib
+/haxelib
 run.c
 
 # run.n is in the repo
@@ -21,9 +21,6 @@ run.c
 .idea
 
 deploy_key
-
-# Bower
-www/bower_components
 
 .haxelib
 

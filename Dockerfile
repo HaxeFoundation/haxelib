@@ -2,10 +2,9 @@
 # Note that it doesn't contain a MySQL database, 
 # which need to be launched seperately. See test/docker-compose.yml on how to launch one.
 
-FROM ubuntu:trusty
+FROM ubuntu:bionic
 
-# apt-get dependencies of bower
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python-software-properties software-properties-common \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
 	&& add-apt-repository ppa:haxe/releases -y \
 	&& apt-get update && apt-get upgrade -y \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -28,6 +27,8 @@ RUN rm -rf /var/www/html \
 RUN a2enmod rewrite
 RUN a2enmod proxy
 RUN a2enmod proxy_http
+RUN a2dismod mpm_event
+RUN a2enmod mpm_prefork
 RUN mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
 COPY apache2.conf /etc/apache2/apache2.conf
 RUN { \
@@ -36,8 +37,6 @@ RUN { \
 		echo 'AddHandler tora-handler .n'; \
 	} > /etc/apache2/mods-enabled/tora.conf \
 	&& apachectl stop
-
-RUN npm -g install bower
 
 
 # haxelib
@@ -48,9 +47,9 @@ COPY .haxelib /src/.haxelib
 RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
 
-COPY www/bower.json /src/www/
-WORKDIR /src/www
-RUN bower install --allow-root
+COPY www/package*.json /src/www/
+WORKDIR /src/www/
+RUN npm install --unsafe-perm
 
 COPY www /src/www/
 COPY src/legacyhaxelib/.htaccess /src/www/legacy/

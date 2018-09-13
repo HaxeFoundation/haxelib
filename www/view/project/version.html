@@ -103,9 +103,27 @@
 					<td><strong>Version</strong><br/>@version</a></td>
 					<td><strong>Published</strong><br/><span title="@versionDate">@formatDate(versionDate)</span></td>
 				</tr>
-					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
-					
+				@if (dependencies.length > 0) {
+				<tr>
+					<td colspan="2">
+					<strong>Dependencies</strong>
+					<ul class="dependencies">
+					@for (dep in dependencies) { 
+						@if (dep.version != null) { 
+						<li><a href="/p/@dep.name/@dep.version/">@dep.name</a> <small>(@dep.version)</small> </li>
+						}
+						else { 
+						<li><a href="/p/@dep.name/">@dep.name</a></li>
+						}
+					}
+					</ul>
+					</td>
 				</tr>
+				}
+				<tr>
+					<td colspan="2"><strong>License</strong><br/>@info.license</a></td>
+				</tr>
+				@if (info.tags != null && info.tags.length > 0) { 
 				<tr class="tags">
 					<td colspan="2">
 						<ul class="tags unstyled">
@@ -115,6 +133,7 @@
 						</ul>
 					</td>
 				</tr>
+				}
 				<tr id="github-info" style="display:none">
 					<td>
 						<p><strong>Repository</strong></p>
@@ -152,3 +171,11 @@ document.getElementById("github-user-website").innerHTML = '<span class="fa fa-g
 document.getElementById("github-user-image").innerHTML = '<a href="@info.website"><img src="https://github.com/'+'@githubUser'+'.png?size=512" width="100%" title="@githubUser on GitHub"/></a>';
 </script>
 }
+
+<script src="/js/highlighter.js"></script>
+
+<script>
+window.addEventListener("load", function() {
+	$(".site-content table").addClass("table");
+});
+</script>
