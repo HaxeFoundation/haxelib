@@ -154,7 +154,7 @@ class Main {
 
 	function initSite() {
 		siteUrl = "http://"+SERVER.host+":"+SERVER.port+"/"+SERVER.dir+'/';
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl+SERVER.url).api);
+		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(siteUrl+SERVER.url).resolve("api"));
 	}
 
 	function param( name, ?passwd ) {
@@ -952,7 +952,7 @@ class Main {
 		var code = p.exitCode();
 		return { code:code, out: code == 0 ? p.stdout.readAll().toString() : p.stderr.readAll().toString() };
 	}
-	
+
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");

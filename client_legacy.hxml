@@ -1,3 +1,4 @@
--cp src 
--neko bin/legacyhaxelib.n 
+-cp src
+-cp hx3compat/std
+-neko bin/legacyhaxelib.n
 -main legacyhaxelib.Main
