@@ -21,6 +21,7 @@
  */
 package haxelib.client;
 
+import haxelib.client.Util.*;
 import haxe.crypto.Md5;
 import haxe.*;
 import haxe.ds.*;
@@ -156,50 +157,6 @@ class Main {
 	var site : SiteProxy;
 	var isHaxelibRun : Bool;
 	var alreadyUpdatedVcsDependencies:Map<String,String> = new Map<String,String>();
-
-	macro static function rethrow(e) {
-		return if (haxe.macro.Context.defined("neko"))
-			macro neko.Lib.rethrow(e);
-		else
-			macro throw e;
-	}
-
-	macro static function getHaxelibVersion() {
-		var haxelibJson:Infos = Json.parse(File.getContent("haxelib.json"));
-		return macro $v{haxelibJson.version};
-	}
-
-	macro static function getHaxelibVersionLong() {
-		var version:String = VERSION;
-		var p;
-		try {
-			//check if the .git folder exist
-			//prevent getting the git info of a parent directory
-			if (!FileSystem.isDirectory(".git"))
-				throw "Not a git repo.";
-
-			//get commit sha
-			p = new sys.io.Process("git", ["rev-parse", "HEAD"]);
-			var sha = p.stdout.readAll().toString().trim();
-			p.close();
-
-			//check to see if there is changes, staged or not
-			p = new sys.io.Process("git", ["status", "--porcelain"]);
-			var changes = p.stdout.readAll().toString().trim();
-			p.close();
-
-			version += switch(changes) {
-				case "":
-					' ($sha)';
-				case _:
-					' ($sha - dirty)';
-			}
-			return macro $v{version};
-		} catch(e:Dynamic) {
-			if (p != null) p.close();
-			return macro $v{version};
-		}
-	}
 
 	function new() {
 		args = Sys.args();
