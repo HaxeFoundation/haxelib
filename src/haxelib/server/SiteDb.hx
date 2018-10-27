@@ -109,6 +109,14 @@ class Version extends Object {
 
 }
 
+@:id(pid)
+@:index(date)
+class Downloads extends Object {
+	public var pid : Int;
+	public var date : SDate;
+	public var num : Int;
+}
+
 @:id(user,project)
 class Developer extends Object {
 

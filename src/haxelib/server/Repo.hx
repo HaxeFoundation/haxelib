@@ -359,6 +359,17 @@ class Repo implements SiteApi {
 		v.update();
 		p.downloads++;
 		p.update();
+		
+		var d = Downloads.manager.select($pid == p.id);
+		if ( d == null ) {
+			d.pid = p.id;
+			d.num = 1;
+			d.date = Date.now();
+			d.insert();
+		} else {
+			d.num++;
+			d.update();
+		}
 	}
 
 	static function main() {
