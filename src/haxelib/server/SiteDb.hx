@@ -109,8 +109,7 @@ class Version extends Object {
 
 }
 
-@:id(pid)
-@:index(date)
+@:index(pid,date,unique)
 class Downloads extends Object {
 	public var pid : Int;
 	public var date : SDate;

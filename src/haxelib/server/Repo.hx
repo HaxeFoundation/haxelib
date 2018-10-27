@@ -360,7 +360,7 @@ class Repo implements SiteApi {
 		p.downloads++;
 		p.update();
 		
-		var d = Downloads.manager.select($pid == p.id);
+		var d = Downloads.manager.select({ $pid : p.id, date : Date.now() });
 		if ( d == null ) {
 			d.pid = p.id;
 			d.num = 1;
