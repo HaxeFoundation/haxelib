@@ -152,7 +152,8 @@ class SiteDb {
 			Project.manager,
 			Tag.manager,
 			Version.manager,
-			Developer.manager
+			Developer.manager,
+			Downloads.manager
 		];
 		for (m in managers)
 			if (!TableCreate.exists(m))
