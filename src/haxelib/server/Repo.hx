@@ -360,7 +360,7 @@ class Repo implements SiteApi {
 		p.downloads++;
 		p.update();
 		
-		Downloads.manager.cnx.request("INSERT INTO Downloads ( `pid`, `date`, `num`) VALUES (${p.id}, 1, CURDATE() ) ON DUPLICATE KEY UPDATE num = num +1 ");
+		Downloads.manager.cnx.request("INSERT INTO Downloads ( `pid`, `date`, `num`) VALUES (${p.id}, CURDATE(), 1 ) ON DUPLICATE KEY UPDATE num = num +1 ");
 	}
 
 	static function main() {
