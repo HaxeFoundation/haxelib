@@ -41,7 +41,6 @@ class TestDownloads extends IntegrationTests {
 			var rqOne = dbCnx.request('SELECT num FROM Downloads WHERE pid = ${pid} AND `date` = CURDATE();');
 			var num = rqOne.getIntResult(0);
 			assertTrue(num == 1);
-			assertSuccess(r);
 			var rmv = haxelib(["remove", "Bar"]).result();
 			var inst = haxelib(["install", "Bar"]).result();
 			var rqTwo = dbCnx.request('SELECT num FROM Downloads WHERE pid = ${pid} AND `date` = CURDATE();');
