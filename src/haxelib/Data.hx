@@ -55,6 +55,7 @@ typedef ProjectInfos = {
 	var downloads : Int;
 	var versions : Array<VersionInfos>;
 	var tags : List<String>;
+	var downloadsPerWeek : Array<{ week:String, count:Int }>;
 }
 
 abstract DependencyVersion(String) to String from SemVer {
