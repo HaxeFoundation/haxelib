@@ -39,13 +39,18 @@ class TestDownloads extends IntegrationTests {
 			var projectRequest = dbCnx.request("SELECT id FROM Project WHERE name = 'Bar';");
 			var pid = projectRequest.getIntResult(0);
 			var rqOne = dbCnx.request('SELECT num FROM Downloads WHERE pid = ${pid} AND `date` = CURDATE();');
-			var num = rqOne.getIntResult(0);
-			assertTrue(num == 1);
+			assertTrue(rqOne.length == 1);
+			for( row in rqOne ) 
+			{
+				assertTrue(row.num == 1);
+			}			
 			var rmv = haxelib(["remove", "Bar"]).result();
 			var inst = haxelib(["install", "Bar"]).result();
 			var rqTwo = dbCnx.request('SELECT num FROM Downloads WHERE pid = ${pid} AND `date` = CURDATE();');
-			num = rqTwo.getIntResult(0);
-			assertTrue(num == 2);
+			for( row in rqTwo ) 
+			{
+				assertTrue(row.num == 2);
+			}
 		}
 		
 		{
