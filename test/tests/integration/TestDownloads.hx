@@ -37,7 +37,12 @@ class TestDownloads extends IntegrationTests {
 			var db = dbConfig.database;
 			dbCnx.request('USE ${db};');
 			var projectRequest = dbCnx.request("SELECT id FROM Project WHERE name = 'Bar';");
-			var pid = projectRequest.getIntResult(0);
+			var pid = 0;
+			trace("Found "+projectRequest.length+" Bar projects");
+			for( row in projectRequest ) 
+			{
+				pid = row.id;
+			}
 			var rqOne = dbCnx.request('SELECT num FROM Downloads WHERE pid = ${pid} AND `date` = CURDATE();');
 			assertTrue(rqOne.length == 1);
 			for( row in rqOne ) 
