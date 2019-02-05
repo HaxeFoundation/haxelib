@@ -1359,8 +1359,10 @@ class Main {
 
 			try {
 				var f = File.getContent(d.dir + "extraParams.hxml");
-				var lines = ~/\r?\n/g.split(f).map(StringTools.trim).filter(function(line) return !line.startsWith("#"));
-				Sys.print(lines.join("\n"));
+				var lines = ~/\r?\n/g.split(f).map(StringTools.trim).filter(function(line) {
+					return line != "" && !line.startsWith("#");
+				});
+				Sys.println(lines.join("\n"));
 			} catch(_:Dynamic) {}
 
 			var dir = d.dir;
