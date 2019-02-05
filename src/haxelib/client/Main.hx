@@ -257,7 +257,7 @@ class Main {
 			else cats[i].push(c);
 		}
 
-		print('Haxe Library Manager $VERSION - (c)2006-2017 Haxe Foundation');
+		print('Haxe Library Manager $VERSION - (c)2006-2019 Haxe Foundation');
 		print("  Usage: haxelib [command] [options]");
 
 		for (cat in cats) {
@@ -1359,7 +1359,8 @@ class Main {
 
 			try {
 				var f = File.getContent(d.dir + "extraParams.hxml");
-				Sys.println(f.trim());
+				var lines = ~/\r?\n/g.split(f).map(StringTools.trim).filter(function(line) return !line.startsWith("#"));
+				Sys.print(lines.join("\n"));
 			} catch(_:Dynamic) {}
 
 			var dir = d.dir;
