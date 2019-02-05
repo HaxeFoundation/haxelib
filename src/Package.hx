@@ -68,7 +68,7 @@ class Package {
             v;
         }
         var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
-        if (!runVersion.startsWith(json.version + " ")) {
+        if (runVersion != json.version) {
             Sys.println('Error: Version in haxelib.json (${json.version}) does not match `neko run.n version` ($runVersion)');
             Sys.exit(1);
         }
