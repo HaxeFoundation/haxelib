@@ -607,7 +607,13 @@ class Main {
 		// directly send the file data over Http
 		var h = createHttpRequest(SERVER.protocol+"://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
 		h.onError = function(e) throw e;
-		h.onData = print;
+		h.onData = function(data:Any){
+			if ( Std.is(data,haxe.io.Bytes)){
+				print((data:haxe.io.Bytes).toString());
+				return;
+			}
+			print((data:String));
+		};
 
 		var inp = if ( settings.quiet == false )
 			new ProgressIn(new haxe.io.BytesInput(data),data.length);
