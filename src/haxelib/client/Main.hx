@@ -705,6 +705,12 @@ class Main {
 			var lines = hxml.split("\n");
 			for (l in lines) {
 				l = l.trim();
+
+				// ignore commented lines
+				if (l.startsWith('#')) {
+					continue;
+				}
+
 				for (target in targets.keys())
 					if (l.startsWith(target)) {
 						var lib = targets[target];
