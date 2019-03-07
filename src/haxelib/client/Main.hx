@@ -701,15 +701,10 @@ class Main {
 		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
 
 		function processHxml(path) {
-			var hxml = sys.io.File.getContent(path);
+			var hxml = normalizeHxml(sys.io.File.getContent(path));
 			var lines = hxml.split("\n");
 			for (l in lines) {
 				l = l.trim();
-
-				// ignore commented lines
-				if (l.startsWith('#')) {
-					continue;
-				}
 
 				for (target in targets.keys())
 					if (l.startsWith(target)) {
@@ -816,6 +811,13 @@ class Main {
 		} else {
 			print("No hxml files found in the current directory.");
 		}
+	}
+
+	// strip comments, trim whitespace from each line and remove empty lines
+	function normalizeHxml(hxmlContents: String) {
+		return ~/\r?\n/g.split(hxmlContents).map(StringTools.trim).filter(function(line) {
+			return line != "" && !line.startsWith("#");
+		}).join('\n');
 	}
 
 	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
@@ -1364,11 +1366,7 @@ class Main {
 				Sys.println('-L $ndir/');
 
 			try {
-				var f = File.getContent(d.dir + "extraParams.hxml");
-				var lines = ~/\r?\n/g.split(f).map(StringTools.trim).filter(function(line) {
-					return line != "" && !line.startsWith("#");
-				});
-				Sys.println(lines.join("\n"));
+				Sys.println(normalizeHxml(File.getContent(d.dir + "extraParams.hxml")));
 			} catch(_:Dynamic) {}
 
 			var dir = d.dir;
