@@ -1458,8 +1458,6 @@ class Main {
 
 		var libPath = proj + "/" + vcs.directory;
 
-		var jsonPath = libPath + "/haxelib.json";
-
 		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
 			print("You already have "+libName+" version "+vcs.directory+" installed.");
 
@@ -1510,6 +1508,7 @@ class Main {
 
 		this.alreadyUpdatedVcsDependencies.set(libName, branch);
 
+		var jsonPath = libPath + "/haxelib.json";
 		if(FileSystem.exists(jsonPath))
 			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
