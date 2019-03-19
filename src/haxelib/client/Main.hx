@@ -1472,39 +1472,30 @@ class Main {
 				deleteRec(libPath);
 				this.alreadyUpdatedVcsDependencies.set(libName, branch);
 			}
-			else
+			else if (!wasUpdated)
 			{
-				if (!wasUpdated)
-				{
-					print("Updating " + libName+" version " + vcs.directory + " ...");
-					this.alreadyUpdatedVcsDependencies.set(libName, branch);
-					updateByName(rep, libName);
-					setCurrent(rep, libName, vcs.directory, true);
-
-					if(FileSystem.exists(jsonPath))
-						doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
-				}
-				return;
+				print("Updating " + libName+" version " + vcs.directory + " ...");
+				updateByName(rep, libName);
 			}
-		}
+		} else {
+			print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
 
-		print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
-
-		try {
-			vcs.clone(libPath, url, branch, version);
-		} catch(error:VcsError) {
-			deleteRec(libPath);
-			var message = switch(error) {
-				case VcsUnavailable(vcs):
-					'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
-				case CantCloneRepo(vcs, repo, stderr):
-					'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
-				case CantCheckoutBranch(vcs, branch, stderr):
-					'Could not checkout branch, tag or path "$branch": ' + stderr;
-				case CantCheckoutVersion(vcs, version, stderr):
-					'Could not checkout tag "$version": ' + stderr;
-			};
-			throw message;
+			try {
+				vcs.clone(libPath, url, branch, version);
+			} catch(error:VcsError) {
+				deleteRec(libPath);
+				var message = switch(error) {
+					case VcsUnavailable(vcs):
+						'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
+					case CantCloneRepo(vcs, repo, stderr):
+						'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
+					case CantCheckoutBranch(vcs, branch, stderr):
+						'Could not checkout branch, tag or path "$branch": ' + stderr;
+					case CantCheckoutVersion(vcs, version, stderr):
+						'Could not checkout tag "$version": ' + stderr;
+				};
+				throw message;
+			}
 		}
 
 		// finish it!
