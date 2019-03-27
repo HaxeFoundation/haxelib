@@ -1125,7 +1125,12 @@ class Main {
 	}
 
 	function getDev( dir ) {
-		return File.getContent(dir + "/.dev").trim();
+		var path = File.getContent(dir + "/.dev").trim();
+		path = ~/%([A-Za-z0-9_]+)%/g.map(path,function(r) {
+			var env = Sys.getEnv(r.matched(1));
+			return env == null ? "" : env;
+		});
+		return path;
 	}
 
 	function list() {
