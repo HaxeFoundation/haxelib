@@ -712,9 +712,10 @@ class Main {
 							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
 					}
 
-				if (l.startsWith("-lib"))
+				var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
+				if (libraryFlagEReg.match(l))
 				{
-					var key = l.substr(5).trim();
+					var key = libraryFlagEReg.matchedRight().trim();
 					var parts = ~/:/.split(key);
 					var libName = parts[0];
 					var libVersion:String = null;
