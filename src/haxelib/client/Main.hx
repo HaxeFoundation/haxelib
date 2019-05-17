@@ -147,6 +147,7 @@ class Main {
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
+		noSsl : false
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
@@ -340,7 +341,7 @@ class Main {
 						throw "Invalid repository format '"+path+"'";
 					SERVER.protocol = switch (r.matched(1)) {
 						case null:
-							"https";
+							SERVER.noSsl ? "http" : "https";
 						case protocol:
 							protocol;
 					}
@@ -1589,7 +1590,7 @@ class Main {
 		};
 		Http.PROXY = proxy;
 		print("Testing proxy...");
-		try Http.requestUrl("https://lib.haxe.org") catch( e : Dynamic ) {
+		try Http.requestUrl(SERVER.protocol + "://lib.haxe.org") catch( e : Dynamic ) {
 			if(!ask("Proxy connection failed. Use it anyway")) {
 				return;
 			}
@@ -1645,6 +1646,13 @@ class Main {
 		Sys.println(str);
 
 	static function main() {
+		switch(Sys.getEnv("HAXELIB_NO_SSL")) {
+			case "1", "true":
+				SERVER.noSsl = true;
+				SERVER.protocol = "http";
+				true;
+			case _:
+		}
 		new Main().process();
 	}
 
