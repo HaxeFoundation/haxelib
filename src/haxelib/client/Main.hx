@@ -1650,7 +1650,6 @@ class Main {
 			case "1", "true":
 				SERVER.noSsl = true;
 				SERVER.protocol = "http";
-				true;
 			case _:
 		}
 		new Main().process();
