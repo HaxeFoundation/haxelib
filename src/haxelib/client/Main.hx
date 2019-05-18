@@ -314,6 +314,34 @@ class Main {
 					None;
 		}
 
+		var remoteIsSet = false;
+		function setupRemote(path:String) {
+			var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
+			if( !r.match(path) )
+				throw "Invalid repository format '"+path+"'";
+			SERVER.protocol = switch (r.matched(1)) {
+				case null:
+					SERVER.noSsl ? "http" : "https";
+				case protocol:
+					protocol;
+			}
+			SERVER.host = r.matched(2);
+			SERVER.port = switch (r.matched(3)) {
+				case null:
+					switch (SERVER.protocol) {
+						case "https": 443;
+						case "http": 80;
+						case protocol: throw 'unknown default port for $protocol';
+					}
+				case portStr:
+					Std.parseInt(portStr);
+			}
+			SERVER.dir = r.matched(4);
+			if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
+			initSite();
+			remoteIsSet = true;
+		}
+
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
@@ -335,30 +363,7 @@ class Main {
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
-					var path = args[argcur++];
-					var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
-					if( !r.match(path) )
-						throw "Invalid repository format '"+path+"'";
-					SERVER.protocol = switch (r.matched(1)) {
-						case null:
-							SERVER.noSsl ? "http" : "https";
-						case protocol:
-							protocol;
-					}
-					SERVER.host = r.matched(2);
-					SERVER.port = switch (r.matched(3)) {
-						case null:
-							switch (SERVER.protocol) {
-								case "https": 443;
-								case "http": 80;
-								case protocol: throw 'unknown default port for $protocol';
-							}
-						case portStr:
-							Std.parseInt(portStr);
-					}
-					SERVER.dir = r.matched(4);
-					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
-					initSite();
+					setupRemote(args[argcur++]);
 				case "--debug":
 					settings.debug = true;
 					settings.quiet = false;
@@ -376,6 +381,12 @@ class Main {
 					break;
 				default:
 					rest.push(a);
+			}
+		}
+		if(!remoteIsSet) {
+			switch(Sys.getEnv("HAXELIB_REMOTE")) {
+				case null:
+				case path: setupRemote(path);
 			}
 		}
 
