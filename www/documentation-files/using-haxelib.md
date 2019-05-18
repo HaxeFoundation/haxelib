@@ -1,6 +1,6 @@
 # Using Haxelib
 
-If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments. 
+If the `haxelib` command is executed without any arguments, it prints an exhaustive list of all available arguments.
 
 The following commands are available:
 
@@ -78,6 +78,17 @@ The following commands are available:
 </div>
 </div>
 
+Also, following environment variables affect haxelib behavior if set:
+
+<div class="row">
+<div class="span3">
+  <h4><a href="#environment_variables">Environment variables</a></h4>
+  <ul>
+    <li><a href="#HAXELIB_NO_SSL">HAXELIB_NO_SSL</a></li>
+    <li><a href="#HAXELIB_REMOTE">HAXELIB_REMOTE</a></li>
+  </ul>
+</div>
+</div>
 
 <a name="basic" class="anch"></a>
 
@@ -156,7 +167,7 @@ haxelib remove format
 
 Remove the specified version
 ```
-haxelib remove format 3.1.2 
+haxelib remove format 3.1.2
 ```
 
 <a name="list" class="anch"></a>
@@ -669,3 +680,18 @@ haxelib -R [host:port[/dir]]
 ```
 
 > Allow the usage of a custom Haxelib server instead of `lib.haxe.org`.
+
+<a name="environment_variables" class="anch"></a>
+
+# Environment Variables
+
+<a name="HAXELIB_NO_SSL" class="anch"></a>
+
+## HAXELIB_NO_SSL
+
+If `HAXELIB_NO_SSL` is set to `1` or `true`, then haxelib client will use http instead of https.
+
+## HAXELIB_REMOTE
+
+`HAXELIB_REMOTE` may contain a url to a custom Haxelib server instead of `https://lib.haxe.org/`.
+However, if <a href="#R">-R</a> command line argument is provided, then `HAXELIB_REMOTE` is ignored.
