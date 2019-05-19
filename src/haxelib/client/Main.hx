@@ -147,6 +147,7 @@ class Main {
 		dir : "",
 		url : "index.n",
 		apiVersion : "3.0",
+		noSsl : false
 	};
 	static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
@@ -313,6 +314,34 @@ class Main {
 					None;
 		}
 
+		var remoteIsSet = false;
+		function setupRemote(path:String) {
+			var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
+			if( !r.match(path) )
+				throw "Invalid repository format '"+path+"'";
+			SERVER.protocol = switch (r.matched(1)) {
+				case null:
+					SERVER.noSsl ? "http" : "https";
+				case protocol:
+					protocol;
+			}
+			SERVER.host = r.matched(2);
+			SERVER.port = switch (r.matched(3)) {
+				case null:
+					switch (SERVER.protocol) {
+						case "https": 443;
+						case "http": 80;
+						case protocol: throw 'unknown default port for $protocol';
+					}
+				case portStr:
+					Std.parseInt(portStr);
+			}
+			SERVER.dir = r.matched(4);
+			if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
+			initSite();
+			remoteIsSet = true;
+		}
+
 		while ( argcur < args.length) {
 			var a = args[argcur++];
 			switch( a ) {
@@ -334,30 +363,7 @@ class Main {
 				case "-notimeout":
 					haxe.remoting.HttpConnection.TIMEOUT = 0;
 				case "-R":
-					var path = args[argcur++];
-					var r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
-					if( !r.match(path) )
-						throw "Invalid repository format '"+path+"'";
-					SERVER.protocol = switch (r.matched(1)) {
-						case null:
-							"https";
-						case protocol:
-							protocol;
-					}
-					SERVER.host = r.matched(2);
-					SERVER.port = switch (r.matched(3)) {
-						case null:
-							switch (SERVER.protocol) {
-								case "https": 443;
-								case "http": 80;
-								case protocol: throw 'unknown default port for $protocol';
-							}
-						case portStr:
-							Std.parseInt(portStr);
-					}
-					SERVER.dir = r.matched(4);
-					if (SERVER.dir.length > 0 && !SERVER.dir.endsWith("/")) SERVER.dir += "/";
-					initSite();
+					setupRemote(args[argcur++]);
 				case "--debug":
 					settings.debug = true;
 					settings.quiet = false;
@@ -375,6 +381,12 @@ class Main {
 					break;
 				default:
 					rest.push(a);
+			}
+		}
+		if(!remoteIsSet) {
+			switch(Sys.getEnv("HAXELIB_REMOTE")) {
+				case null:
+				case path: setupRemote(path);
 			}
 		}
 
@@ -1589,7 +1601,7 @@ class Main {
 		};
 		Http.PROXY = proxy;
 		print("Testing proxy...");
-		try Http.requestUrl("https://lib.haxe.org") catch( e : Dynamic ) {
+		try Http.requestUrl(SERVER.protocol + "://lib.haxe.org") catch( e : Dynamic ) {
 			if(!ask("Proxy connection failed. Use it anyway")) {
 				return;
 			}
@@ -1645,6 +1657,12 @@ class Main {
 		Sys.println(str);
 
 	static function main() {
+		switch(Sys.getEnv("HAXELIB_NO_SSL")) {
+			case "1", "true":
+				SERVER.noSsl = true;
+				SERVER.protocol = "http";
+			case _:
+		}
 		new Main().process();
 	}
 
