@@ -71,10 +71,12 @@ class ProgressOut extends haxe.io.Output {
 	function report(n) {
 		cur += n;
 		curMB = cur / 1000000.0;
+		curMB = Math.round( curMB * Math.pow(10, 2) ) / Math.pow(10, 2); // 12.34 precision.
 		if( max == null )
 			Sys.print(curMB + " MB\r");
 		else {
 			maxMB = max / 1000000.0;
+			maxMB = Math.round( maxMB * Math.pow(10, 2) ) / Math.pow(10, 2); // 12.34 precision.
 			Sys.print((curMB + " / " + maxMB + " MB (" + Std.int((curMB*100.0)/maxMB) + "%)\r");
 		}
 	}
