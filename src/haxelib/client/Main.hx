@@ -75,7 +75,7 @@ class ProgressOut extends haxe.io.Output {
 			Sys.print(curMB + " MB\r");
 		else {
 			maxMB = max / 1000000.0;
-			Sys.print((curMB + "/" + maxMB + " (" + Std.int((curMB*100.0)/maxMB) + "%)\r");
+			Sys.print((curMB + " / " + maxMB + " MB (" + Std.int((curMB*100.0)/maxMB) + "%)\r");
 		}
 	}
 
