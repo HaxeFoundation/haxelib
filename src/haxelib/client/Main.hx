@@ -55,8 +55,10 @@ class ProgressOut extends haxe.io.Output {
 
 	var o : haxe.io.Output;
 	var cur : Int;
+	var curMB : Float;
 	var startSize : Int;
 	var max : Null<Int>;
+	var maxMB : Null<Float>;
 	var start : Float;
 
 	public function new(o, currentSize) {
@@ -68,10 +70,13 @@ class ProgressOut extends haxe.io.Output {
 
 	function report(n) {
 		cur += n;
+		curMB = cur / 1000000.0;
 		if( max == null )
-			Sys.print(cur+" bytes\r");
-		else
-			Sys.print(cur+"/"+max+" ("+Std.int((cur*100.0)/max)+"%)\r");
+			Sys.print(curMB + " MB\r");
+		else {
+			maxMB = max / 1000000.0;
+			Sys.print((curMB + "/" + maxMB + " (" + Std.int((curMB*100.0)/maxMB) + "%)\r");
+		}
 	}
 
 	public override function writeByte(c) {
