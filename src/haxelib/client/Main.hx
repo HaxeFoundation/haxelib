@@ -251,7 +251,10 @@ class Main {
 	}
 
 	function version() {
-		print(VERSION_LONG);
+		Sys.println('Haxelib\'s current version: ${VERSION_LONG}');
+
+		if (paramOpt())
+			Sys.println('! WARNING: \'version\' command is only for printing the haxelib\'s version.');
 	}
 
 	function usage() {
@@ -426,6 +429,9 @@ class Main {
 			Sys.exit(1);
 		}
 		if (cmd == "upgrade") cmd = "update"; // TODO: maybe we should have some alias system
+		if (commands.length != 0) {
+			Sys.println("Please ")
+		}
 		for( c in commands )
 			if( c.name == cmd ) {
 				switch (c.cat) {
