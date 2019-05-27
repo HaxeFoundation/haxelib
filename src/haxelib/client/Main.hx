@@ -244,7 +244,10 @@ class Main {
 	}
 
 	function version() {
-		print(VERSION_LONG);
+		Sys.println('Haxelib\'s version: ${VERSION_LONG}');
+
+		if ( paramOpt() != null )
+			Sys.println('! WARNING: "version" parameter only shows the version of the "haxelib"');
 	}
 
 	function usage() {
