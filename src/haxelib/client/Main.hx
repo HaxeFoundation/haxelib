@@ -55,8 +55,10 @@ class ProgressOut extends haxe.io.Output {
 
 	var o : haxe.io.Output;
 	var cur : Int;
+	var curReadable : Float;
 	var startSize : Int;
 	var max : Null<Int>;
+	var maxReadable : Null<Float>;
 	var start : Float;
 
 	public function new(o, currentSize) {
@@ -68,10 +70,20 @@ class ProgressOut extends haxe.io.Output {
 
 	function report(n) {
 		cur += n;
+		
+		var tag : String = ((max != null ? max : cur) / (1024*1024)) > 1 ? "MiB" : "KiB";
+
+		curReadable = tag == "MiB" ? cur / (1024*1024) : cur / 1024;
+		curReadable = Math.round( curReadable * 100 ) / 100; // 12.34 precision.
+
 		if( max == null )
-			Sys.print(cur+" bytes\r");
-		else
-			Sys.print(cur+"/"+max+" ("+Std.int((cur*100.0)/max)+"%)\r");
+			Sys.print('${curReadable} ${tag}\r');
+		else {
+			maxReadable = tag == "MiB" ? max / (1024*1024) : max / 1024;
+			maxReadable = Math.round( maxReadable * 100 ) / 100; // 12.34 precision.
+
+			Sys.print('${curReadable}${tag} / ${maxReadable}${tag} (${Std.int((cur*100.0)/max)}%)\r');
+		}
 	}
 
 	public override function writeByte(c) {
@@ -88,12 +100,18 @@ class ProgressOut extends haxe.io.Output {
 	public override function close() {
 		super.close();
 		o.close();
+
 		var time = Timer.stamp() - start;
 		var downloadedBytes = cur - startSize;
 		var speed = (downloadedBytes / time) / 1024;
 		time = Std.int(time * 10) / 10;
 		speed = Std.int(speed * 10) / 10;
-		Sys.print("Download complete : "+downloadedBytes+" bytes in "+time+"s ("+speed+"KB/s)\n");
+
+		var tag : String = (downloadedBytes / (1024*1024)) > 1 ? "MiB" : "KiB";
+		var readableBytes : Float = (tag == "MiB") ? downloadedBytes / (1024*1024) : downloadedBytes / 1024;
+		readableBytes = Math.round( readableBytes * 100 ) / 100; // 12.34 precision.
+
+		Sys.println('Download complete: ${readableBytes}${tag} in ${time}s (${speed}KiB/s)');
 	}
 
 	public override function prepare(m) {
