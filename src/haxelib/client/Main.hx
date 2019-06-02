@@ -280,6 +280,7 @@ class Main {
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
 		system : "run bundled haxelib version instead of latest update",
+		skipdeps : "do not install dependencies",
 	}
 
 	var settings: {
@@ -290,6 +291,7 @@ class Main {
 		never  : Bool,
 		global : Bool,
 		system : Bool,
+		skipdeps : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -302,6 +304,7 @@ class Main {
 			flat: false,
 			global: false,
 			system: false,
+			skipdeps: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -993,6 +996,8 @@ class Main {
 	}
 
 	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
+		if( settings.skipdeps ) return;
+
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = rep + Data.safe(d.name);
