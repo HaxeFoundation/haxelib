@@ -249,7 +249,11 @@ class Main {
 
 	function usage() {
 		var cats = [];
-		var maxLength = 0;
+		var maxLength = Lambda.fold(Reflect.fields(ABOUT_SETTINGS), function(opt, max) {
+			var len = opt.length + 2; // include -- in option name
+			return len > max ? len : max;
+		}, 0);
+
 		for( c in commands ) {
 			if (c.name.length > maxLength) maxLength = c.name.length;
 			if (c.cat.match(Deprecated(_))) continue;
@@ -280,7 +284,7 @@ class Main {
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
 		system : "run bundled haxelib version instead of latest update",
-		skipdeps : "do not install dependencies",
+		skipDependencies : "do not install dependencies",
 	}
 
 	var settings: {
@@ -291,7 +295,7 @@ class Main {
 		never  : Bool,
 		global : Bool,
 		system : Bool,
-		skipdeps : Bool,
+		skipDependencies : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -304,7 +308,7 @@ class Main {
 			flat: false,
 			global: false,
 			system: false,
-			skipdeps: false,
+			skipDependencies: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -373,6 +377,8 @@ class Main {
 				case "--quiet":
 					settings.debug = false;
 					settings.quiet = true;
+				case "--skip-dependencies":
+					settings.skipDependencies = true;
 				case parseSwitch(_) => Some(s) if (Reflect.hasField(settings, s)):
 					//if (!Reflect.hasField(settings, s)) {
 						//print('unknown switch $a');
@@ -996,7 +1002,7 @@ class Main {
 	}
 
 	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
-		if( settings.skipdeps ) return;
+		if( settings.skipDependencies ) return;
 
 		for( d in dependencies ) {
 			if( d.version == "" ) {
