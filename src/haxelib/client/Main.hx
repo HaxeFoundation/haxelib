@@ -250,7 +250,8 @@ class Main {
 	function usage() {
 		var cats = [];
 		var maxLength = Lambda.fold(Reflect.fields(ABOUT_SETTINGS), function(opt, max) {
-			var len = opt.length + 2; // include -- in option name
+			var fullOption = '--' + ~/([A-Z])/g.replace(opt, "-$1").toLowerCase();
+			var len = fullOption.length;
 			return len > max ? len : max;
 		}, 0);
 
@@ -273,8 +274,10 @@ class Main {
 		}
 
 		print("  Available switches");
-		for (f in Reflect.fields(ABOUT_SETTINGS))
-			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
+		for (f in Reflect.fields(ABOUT_SETTINGS)) {
+			var option = ~/([A-Z])/g.replace(f, "-$1").toLowerCase().rpad(' ', maxLength-2);
+			print('    --' + option + ": " + Reflect.field(ABOUT_SETTINGS, f));
+		}
 	}
 	static var ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
