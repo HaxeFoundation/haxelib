@@ -283,7 +283,7 @@ class Git extends Vcs {
 		//TODO: use settings.quiet
 		switch(command(executable, vcsArgs)) {
 			case ret if(ret.code != 0):
-				throw VcsError.CantCloneRepo(this, url, ret.out*);
+				throw VcsError.CantCloneRepo(this, url, ret.out);
 			default:
 		}
 
@@ -377,7 +377,7 @@ class Mercurial extends Vcs {
 
 		switch(command(executable, vcsArgs)) {
 			case ret if(ret.code != 0):
-				throw VcsError.CantCloneRepo(this, url, ret.out*);
+				throw VcsError.CantCloneRepo(this, url, ret.out);
 			default:
 		}
 	}
