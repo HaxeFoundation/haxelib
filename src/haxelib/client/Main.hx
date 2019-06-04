@@ -244,7 +244,13 @@ class Main {
 	}
 
 	function version() {
-		print(VERSION_LONG);
+		var params = paramOpt();
+		if ( params == null )
+			print(VERSION_LONG);
+		else {
+			Sys.stderr().writeString('no parameters expected, got: ${params}\n');
+			Sys.exit(1);
+		}
 	}
 
 	function usage() {
