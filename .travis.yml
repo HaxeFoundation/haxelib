@@ -53,7 +53,7 @@ matrix:
     - os: osx
       haxe: development
     - os: osx
-      haxe: 3.4.4
+      haxe: 3.4.7
     - os: osx
       haxe: 3.2.1
     - os: osx
