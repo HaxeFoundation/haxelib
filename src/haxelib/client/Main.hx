@@ -1064,8 +1064,8 @@ class Main {
 		}
 	}
 
-	static public function getConfigFile():String {
-		var home = null;
+	static public function getHomePath():String{
+		var home:String = null;
 		if (IS_WINDOWS) {
 			home = Sys.getEnv("USERPROFILE");
 			if (home == null) {
@@ -1081,7 +1081,11 @@ class Main {
 			if (home == null)
 				throw "Could not determine home path. Please ensure that HOME environment variable is set.";
 		}
-		return Path.addTrailingSlash(home) + ".haxelib";
+		return home;
+	}
+
+	static public function getConfigFile():String {		
+		return Path.addTrailingSlash( getHomePath() ) + ".haxelib";
 	}
 
 	function getGlobalRepositoryPath(create = false):String {
@@ -1161,8 +1165,20 @@ class Main {
 		}
 
 		var line = param("Path");
-		if (line != "")
+		if (line != "") {
+			var splitLine = line.split("/"); 
+			if(splitLine[0] == "~") {
+				var home = getHomePath();
+
+				for(i in 1...splitLine.length) {
+					home += "/" + splitLine[i];
+				}
+				line = home;
+			}
+
 			rep = line;
+		}
+					
 
 		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
 
