@@ -249,7 +249,12 @@ class Main {
 
 	function usage() {
 		var cats = [];
-		var maxLength = 0;
+		var maxLength = Lambda.fold(Reflect.fields(ABOUT_SETTINGS), function(opt, max) {
+			var fullOption = '--' + ~/([A-Z])/g.replace(opt, "-$1").toLowerCase();
+			var len = fullOption.length;
+			return len > max ? len : max;
+		}, 0);
+
 		for( c in commands ) {
 			if (c.name.length > maxLength) maxLength = c.name.length;
 			if (c.cat.match(Deprecated(_))) continue;
@@ -269,8 +274,10 @@ class Main {
 		}
 
 		print("  Available switches");
-		for (f in Reflect.fields(ABOUT_SETTINGS))
-			print('    --' + f.rpad(' ', maxLength-2) + ": " + Reflect.field(ABOUT_SETTINGS, f));
+		for (f in Reflect.fields(ABOUT_SETTINGS)) {
+			var option = ~/([A-Z])/g.replace(f, "-$1").toLowerCase().rpad(' ', maxLength-2);
+			print('    --' + option + ": " + Reflect.field(ABOUT_SETTINGS, f));
+		}
 	}
 	static var ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
@@ -280,6 +287,7 @@ class Main {
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
 		system : "run bundled haxelib version instead of latest update",
+		skipDependencies : "do not install dependencies",
 	}
 
 	var settings: {
@@ -290,6 +298,7 @@ class Main {
 		never  : Bool,
 		global : Bool,
 		system : Bool,
+		skipDependencies : Bool,
 	};
 	function process() {
 		argcur = 0;
@@ -302,6 +311,7 @@ class Main {
 			flat: false,
 			global: false,
 			system: false,
+			skipDependencies: false,
 		};
 
 		function parseSwitch(s:String) {
@@ -370,6 +380,8 @@ class Main {
 				case "--quiet":
 					settings.debug = false;
 					settings.quiet = true;
+				case "--skip-dependencies":
+					settings.skipDependencies = true;
 				case parseSwitch(_) => Some(s) if (Reflect.hasField(settings, s)):
 					//if (!Reflect.hasField(settings, s)) {
 						//print('unknown switch $a');
@@ -993,6 +1005,8 @@ class Main {
 	}
 
 	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
+		if( settings.skipDependencies ) return;
+
 		for( d in dependencies ) {
 			if( d.version == "" ) {
 				var pdir = rep + Data.safe(d.name);
