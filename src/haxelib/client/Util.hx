@@ -9,13 +9,18 @@ class Util {
 			macro neko.Lib.rethrow(e);
 		else
 			macro throw e;
-	}    
+	}
 
     #if macro
-    static var VERSION = haxe.Json.parse(sys.io.File.getContent("haxelib.json")).version;
+    static var VERSION:String = null;
     #end
-    
-    macro static public function getHaxelibVersion() return macro $v{VERSION};
+
+    macro static public function getHaxelibVersion() {
+		if(VERSION == null) {
+			VERSION = haxe.Json.parse(sys.io.File.getContent("haxelib.json")).version;
+		}
+		return macro $v{VERSION};
+	}
 	macro static public function getHaxelibVersionLong() {
 		var version:String = VERSION;
 		var p;
@@ -46,5 +51,5 @@ class Util {
 			if (p != null) p.close();
 			return macro $v{version};
 		}
-	}    
+	}
 }
