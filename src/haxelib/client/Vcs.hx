@@ -281,8 +281,11 @@ class Git extends Vcs {
 
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
-		if (command(executable, vcsArgs).code != 0)
-			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+		switch(command(executable, vcsArgs)) {
+			case ret if(ret.code != 0):
+				throw VcsError.CantCloneRepo(this, url, ret.out*);
+			default:
+		}
 
 
 		Sys.setCwd(libPath);
@@ -372,7 +375,10 @@ class Mercurial extends Vcs {
 			vcsArgs.push(version);
 		}
 
-		if (command(executable, vcsArgs).code != 0)
-			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+		switch(command(executable, vcsArgs)) {
+			case ret if(ret.code != 0):
+				throw VcsError.CantCloneRepo(this, url, ret.out*);
+			default:
+		}
 	}
 }
