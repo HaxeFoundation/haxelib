@@ -78,6 +78,10 @@ install:
 
 script:
   - python --version
+  - if [ `haxe -version 2>&1` = "3.1.3" ]; then
+      haxelib remove hscript
+      haxelib install hscript 2.2.0
+    fi;
   # run our CI script
   - haxe ci.hxml
 

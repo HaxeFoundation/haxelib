@@ -3,7 +3,6 @@
 -lib ufront
 -lib ufront-mail:1.1.0
 -lib ufront-ufadmin
--lib hscript:2.2.0
 -lib erazor:1.0.1
 -lib markdown:1.0.0
 -lib cleversort
