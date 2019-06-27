@@ -16,7 +16,7 @@ Caveats:
 
 ### Using haxelib install all
 
-Haxe allows you to define specific versions of the libraries you want to use with `-lib <libname>:<version>`. If you make sure to use this in all your hxmls, then `haxelib install all --always` (the `--always` avoiding you being prompted for confirmation) will be able to ensure the libraries your project needs are available in the necessary versions. If in fact you run this in a checkout hook, your get to track your dependencies in your git repo (some other VCSs should allow for a similar setup), allowing you to have a well defined and replicable setup for any state (commit/branch/etc.).
+Haxe allows you to define specific versions of the libraries you want to use with `--library <libname>:<version>`. If you make sure to use this in all your hxmls, then `haxelib install all --always` (the `--always` avoiding you being prompted for confirmation) will be able to ensure the libraries your project needs are available in the necessary versions. If in fact you run this in a checkout hook, your get to track your dependencies in your git repo (some other VCSs should allow for a similar setup), allowing you to have a well defined and replicable setup for any state (commit/branch/etc.).
 
 Disadvantages:
 
@@ -30,7 +30,7 @@ Advantages:
 
 #### Using haxelib with git versions
 
-You can specify git versions with `-lib libname:git:https://github.com/user/repo#branch` branch can be a branch or a specific commit SHA. 
+You can specify git versions with `--library libname:git:https://github.com/user/repo#branch` branch can be a branch or a specific commit SHA. 
 As alternative, you might use git submodules instead, they also provide an adequate way of definining a *versionable* and *replicable* state.
 
 ### Combining both approaches
