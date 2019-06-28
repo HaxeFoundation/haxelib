@@ -6,7 +6,7 @@ A basic Haxe library is a collection of `.hx` files. That is, libraries are dist
 
 ### Using with Haxe
 
-Any installed Haxe library can be made available to the compiler through the `-lib <library-name>` argument. This is very similiar to the `-cp <path>` argument, but expects a library name instead of a directory path. These commands are explained thoroughly in [Compiler Usage](http://haxe.org/manual/compiler-usage.html).
+Any installed Haxe library can be made available to the compiler through the `--library <library-name>` (or `-L <library-name>`) argument. This is very similiar to the `--class-path <path>` argument, but expects a library name instead of a directory path. These commands are explained thoroughly in [Compiler Usage](http://haxe.org/manual/compiler-usage.html).
 
 For our exemplary usage we chose a very simple Haxe library called "random". It provides a set of static convenience methods to achieve various random effects, such as picking a random element from an array.
 
@@ -19,6 +19,6 @@ class Main {
 }
 ```
 
-Compiling this without any `-lib` argument causes an error message along the lines of `Unknown identifier : Random`. This shows that installed Haxe libraries are not available to the compiler by default unless they are explicitly added. A working command line for above program is `haxe -lib random -main Main --interp`.
+Compiling this without any `--library` argument causes an error message along the lines of `Unknown identifier : Random`. This shows that installed Haxe libraries are not available to the compiler by default unless they are explicitly added. A working command line for above program is `haxe --library random --main Main --interp`.
 
 If the compiler emits an error `Error: Library random is not installed : run 'haxelib install random'` the library has to be installed via the `haxelib` command first. As the error message suggests, this is achieved through `haxelib install random`. We will learn more about the `haxelib` command in [Using Haxelib](/documentation/using-haxelib/).

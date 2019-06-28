@@ -1,17 +1,17 @@
 # Adding libraries to Haxe projects
 
-When the haxelib is installed, it is ready to be used it code. This is a matter of adding `-lib libraryname` to the [compiler arguments](https://haxe.org/manual/compiler-usage.html).
+When the haxelib is installed, it is ready to be used it code. This is a matter of adding `--library libraryname` (or `-L libraryname`) to the [compiler arguments](https://haxe.org/manual/compiler-usage.html).
 
 ```
-haxe -main Main -lib libraryname -js bin/main.js
+haxe --main Main --library libraryname --js bin/main.js
 ```
 
 The same parameters you pass to the compiler can be stored in a [hxml file](https://haxe.org/manual/compiler-usage-hxml.html):
 
 ```
--main Main
--lib libraryname
--js bin/main.js
+--main Main
+--library libraryname
+--js bin/main.js
 ```
 <hr/>
 
