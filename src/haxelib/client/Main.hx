@@ -70,7 +70,7 @@ class ProgressOut extends haxe.io.Output {
 
 	function report(n) {
 		cur += n;
-		
+
 		var tag : String = ((max != null ? max : cur) / 1000000) > 1 ? "MB" : "KB";
 
 		curReadable = tag == "MB" ? cur / 1000000 : cur / 1000;
@@ -1084,7 +1084,7 @@ class Main {
 		return home;
 	}
 
-	static public function getConfigFile():String {		
+	static public function getConfigFile():String {
 		return Path.addTrailingSlash( getHomePath() ) + ".haxelib";
 	}
 
@@ -1166,7 +1166,7 @@ class Main {
 
 		var line = param("Path");
 		if (line != "") {
-			var splitLine = line.split("/"); 
+			var splitLine = line.split("/");
 			if(splitLine[0] == "~") {
 				var home = getHomePath();
 
@@ -1178,7 +1178,7 @@ class Main {
 
 			rep = line;
 		}
-					
+
 
 		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
 
@@ -1195,8 +1195,8 @@ class Main {
 		print(getRepository());
 	}
 
-	function getCurrent( dir ) {
-		return (FileSystem.exists(dir+"/.dev")) ? "dev" : File.getContent(dir + "/.current").trim();
+	function getCurrent( proj, dir ) {
+		return try { getDev(dir); return "dev"; } catch( e : Dynamic ) try File.getContent(dir + "/.current").trim() catch( e : Dynamic ) throw "Library "+proj+" is not installed : run 'haxelib install "+proj+"'";
 	}
 
 	function getDev( dir ) {
@@ -1205,6 +1205,9 @@ class Main {
 			var env = Sys.getEnv(r.matched(1));
 			return env == null ? "" : env;
 		});
+		var filters = try Sys.getEnv("HAXELIB_DEV_FILTER").split(";") catch( e : Dynamic ) null;
+		if( filters != null && !filters.exists((flt) -> StringTools.startsWith(path.toLowerCase().split("\\").join("/"),flt.toLowerCase().split("\\").join("/"))) )
+			throw "This .dev is filtered";
 		return path;
 	}
 
@@ -1219,7 +1222,7 @@ class Main {
 			if( p.charAt(0) == "." )
 				continue;
 
-			var current = try getCurrent(rep + p) catch(e:Dynamic) continue;
+			var current = try getCurrent("", rep + p) catch(e:Dynamic) continue;
 			var dev = try getDev(rep + p) catch( e : Dynamic ) null;
 
 			var semvers = [];
@@ -1394,11 +1397,8 @@ class Main {
 
 	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }>, ?returnDependencies : Bool = true ) {
 		var pdir = rep + Data.safe(prj);
-		if( !FileSystem.exists(pdir) )
-			throw "Library "+prj+" is not installed : run 'haxelib install "+prj+"'";
-
 		var explicitVersion = version != null;
-		var version = if( version != null ) version else getCurrent(pdir);
+		var version = if( version != null ) version else getCurrent(prj, pdir);
 
 		var dev = try getDev(pdir) catch (_:Dynamic) null;
 		var vdir = pdir + "/" + Data.safe(version);
@@ -1597,7 +1597,7 @@ class Main {
 			throw "Library "+project+" is not installed";
 		pdir += "/";
 		if (version == null)
-			version = getCurrent(pdir);
+			version = getCurrent(project, pdir);
 		var dev = try getDev(pdir) catch ( e : Dynamic ) null;
 		var vdir = dev != null ? dev : pdir + Data.safe(version);
 
