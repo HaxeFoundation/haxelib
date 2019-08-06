@@ -471,7 +471,7 @@ Listen 2000
 			compileClient();
 			testClient();
 		#end
-		#if (haxe_ver >= 3.4)
+		#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
 			compileServer();
 			testServer();
 		#end
@@ -481,7 +481,7 @@ Listen 2000
 			case "Windows", "Linux":
 				integrationTests();
 			case "Mac":
-				#if (haxe_ver >= 3.4)
+				#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
 					integrationTests();
 				#end
 			case _:
