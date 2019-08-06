@@ -1206,7 +1206,7 @@ class Main {
 			return env == null ? "" : env;
 		});
 		var filters = try Sys.getEnv("HAXELIB_DEV_FILTER").split(";") catch( e : Dynamic ) null;
-		if( filters != null && !filters.exists((flt) -> StringTools.startsWith(path.toLowerCase().split("\\").join("/"),flt.toLowerCase().split("\\").join("/"))) )
+		if( filters != null && !filters.exists(function(flt) return StringTools.startsWith(path.toLowerCase().split("\\").join("/"),flt.toLowerCase().split("\\").join("/"))) )
 			throw "This .dev is filtered";
 		return path;
 	}
