@@ -464,16 +464,15 @@ Listen 2000
 		compileLegacyClient();
 		compileLegacyServer();
 
-		// the server can only be compiled with haxe 3.2+
+		// the server can only be compiled with haxe 3.4+
 		// haxe 3.1.3 bundles haxelib client 3.1.0-rc.4, which is not upgradable to later haxelib
 		// so there is no need to test the client either
 		#if (haxe_ver >= 3.2)
 			compileClient();
 			testClient();
-			compileServer();
 		#end
-		// buddy is only compatiable with haxe 3.4+
 		#if (haxe_ver >= 3.4)
+			compileServer();
 			testServer();
 		#end
 
@@ -482,7 +481,7 @@ Listen 2000
 			case "Windows", "Linux":
 				integrationTests();
 			case "Mac":
-				#if (haxe_ver >= 3.2)
+				#if (haxe_ver >= 3.4)
 					integrationTests();
 				#end
 			case _:
