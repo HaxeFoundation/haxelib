@@ -68,10 +68,15 @@ class Package {
             v;
         }
         var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
-        if (runVersion != json.version) {
+
+        // Version output examples:
+        //  - 3.4.0
+        //  - 3.4.0 (6b9c8851036fb012c0e188bc27da07999b663b4f - dirty)
+        if (!runVersion.startsWith(json.version)) {
             Sys.println('Error: Version in haxelib.json (${json.version}) does not match `neko run.n version` ($runVersion)');
             Sys.exit(1);
         }
+
         if (runVersion.indexOf("dirty") >= 0) {
             Sys.println('Error: run.n was compiled with dirty source');
             Sys.exit(1);
