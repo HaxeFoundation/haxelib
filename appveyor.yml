@@ -9,9 +9,8 @@ install:
   - cinst nssm -y
   - cinst curl -y
   - RefreshEnv
-  - haxelib setup %HOME%/haxelib_repo
-  - haxelib install all --always
-  - haxelib install tora
+  - neko run.n setup .haxelib
+  - haxe libs.hxml
   - haxelib list
 
 build: off
