@@ -913,7 +913,11 @@ class Main {
 					throw e;
 			}
 		};
-		h.customRequest(false, progress);
+		
+		var sock = new sys.ssl.Socket();
+		sock.setTimeout(10);
+
+		h.customRequest(false, progress, sock);
 
 		if (redirectedLocation != null) {
 			FileSystem.deleteFile(outPath);
