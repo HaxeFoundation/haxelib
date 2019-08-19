@@ -49,67 +49,6 @@ private enum CommandCategory {
 }
 
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
-
-	 public function searchWithRetry(word : String ) : List<{ id : Int, name : String }> {
-		return callFunctionWithRetry(search, [word]);
-	}
-
-	 public function infosWithRetry(project : String ) : ProjectInfos {
-		return callFunctionWithRetry(infos, [project]);
-	}
-
-	 public function getLatestVersionWithRetry(project : String ) : SemVer {
-		return callFunctionWithRetry(getLatestVersion, [project]);
-	}
-
-	 public function userWithRetry(name : String ) : UserInfos {
-		return callFunctionWithRetry(user, [name]);
-	}
-
-	 public function registerWithRetry(name : String, pass : String, mail : String, fullname : String  ) {
-		return callFunctionWithRetry(register, [name, pass, mail, fullname]);
-	}
-
-	 public function isNewUserWithRetry(name : String) : Bool {
-		return callFunctionWithRetry(isNewUser, [name]);
-	}
-
-	 public function checkDeveloperWithRetry(prj : String, user : String ) {
-		return callFunctionWithRetry(checkDeveloper, [prj, user]);
-	}
-
-	 public function checkPasswordWithRetry(user : String, pass : String ) : Bool {
-		return callFunctionWithRetry(checkPassword, [user, pass]);
-	}
-
-	 public function getSubmitIdWithRetry() : String {
-		return callFunctionWithRetry(getSubmitId, []);
-	}
-
-	 public function processSubmitWithRetry(id : String, user : String, pass : String ) : String {
-		return callFunctionWithRetry(processSubmit, [id, user]);
-	}
-
-	 public function postInstallWithRetry(project : String, version : String ) {
-		return callFunctionWithRetry(postInstall, [project, version]);
-	}
-
-	function callFunctionWithRetry(func:Dynamic, params:Array<Dynamic>) : Dynamic {
-		var shouldRetry = true;
-		var result:Dynamic = null;
-
-		while(shouldRetry)
-		{
-			try {
-				result = Reflect.callMethod(null, func, params);
-				shouldRetry = false;
-			} catch(e:Dynamic) {
-				shouldRetry = true;
-			}
-		}
-
-		return result;
-	}
 }
 
 class ProgressOut extends haxe.io.Output {
@@ -282,8 +221,19 @@ class Main {
 		initSite();
 	}
 
+	function retry<R>(func:() -> R, numTries:Int = 1) {
+		while (numTries-- > 0) {
+			try {
+				return func();
+			} catch(e:Dynamic) {
+				print('Failed with error: $e');
+			}
+		}
+		throw 'Failed after multiple tries';
+	}
+
 	function checkUpdate() {
-		var latest = try site.getLatestVersionWithRetry(HAXELIB_LIBNAME) catch (_:Dynamic) null;
+		var latest = try retry(site.getLatestVersion.bind(HAXELIB_LIBNAME), 3) catch (_:Dynamic) null;
 		if (latest != null && latest > VERSION)
 			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
@@ -573,7 +523,7 @@ class Main {
 
  	function search() {
 		var word = param("Search word");
-		var l = site.searchWithRetry(word);
+		var l = retry(site.search.bind(word), 3);
 		for( s in l )
 			print(s.name);
 		print(l.length+" libraries found");
@@ -581,7 +531,7 @@ class Main {
 
 	function info() {
 		var prj = param("Library name");
-		var inf = site.infosWithRetry(prj);
+		var inf = retry(site.infos.bind(prj), 3);
 		print("Name: "+inf.name);
 		print("Tags: "+inf.tags.join(", "));
 		print("Desc: "+inf.desc);
@@ -598,7 +548,7 @@ class Main {
 
 	function user() {
 		var uname = param("User name");
-		var inf = site.userWithRetry(uname);
+		var inf = retry(site.user.bind(uname), 3);
 		print("Id: "+inf.name);
 		print("Name: "+inf.fullname);
 		print("Mail: "+inf.email);
@@ -622,7 +572,7 @@ class Main {
 		if( pass != pass2 )
 			throw "Password does not match";
 		pass = Md5.encode(pass);
-		site.registerWithRetry(name,pass,email,fullname);
+		retry(site.register.bind(name,pass,email,fullname), 3);
 		return pass;
 	}
 
@@ -678,18 +628,18 @@ class Main {
 			} while ( infos.contributors.indexOf(user) == -1 );
 
 		var password;
-		if( site.isNewUserWithRetry(user) ) {
+		if( retry(site.isNewUser.bind(user), 3) ) {
 			print("This is your first submission as '"+user+"'");
 			print("Please enter the following information for registration");
 			password = doRegister(user);
 		} else {
 			password = readPassword(user);
 		}
-		site.checkDeveloperWithRetry(infos.name,user);
+		retry(site.checkDeveloper.bind(infos.name,user), 3);
 
 		// check dependencies validity
 		for( d in infos.dependencies ) {
-			var infos = site.infosWithRetry(d.name);
+			var infos = retry(site.infos.bind(d.name), 3);
 			if( d.version == "" )
 				continue;
 			var found = false;
@@ -704,14 +654,14 @@ class Main {
 
 		// check if this version already exists
 
-		var sinfos = try site.infosWithRetry(infos.name) catch( _ : Dynamic ) null;
+		var sinfos = try retry(site.infos.bind(infos.name), 3) catch( _ : Dynamic ) null;
 		if( sinfos != null )
 			for( v in sinfos.versions )
 				if( v.name == infos.version && !ask("You're about to overwrite existing version '"+v.name+"', please confirm") )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
-		var id = site.getSubmitIdWithRetry();
+		var id = retry(site.getSubmitId.bind(), 3);
 
 		// directly send the file data over Http
 		var h = createHttpRequest(SERVER.protocol+"://"+SERVER.host+":"+SERVER.port+"/"+SERVER.url);
@@ -732,14 +682,14 @@ class Main {
 		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
 			haxe.remoting.HttpConnection.TIMEOUT = 1000;
 		// ask the server to register the sent file
-		var msg = site.processSubmitWithRetry(id,user,password);
+		var msg = retry(site.processSubmit.bind(id,user,password), 3);
 		print(msg);
 	}
 
 	function readPassword(user:String, prompt = "Password"):String {
 		var password = Md5.encode(param(prompt,true));
 		var attempts = 5;
-		while (!site.checkPasswordWithRetry(user, password)) {
+		while (!retry(site.checkPassword.bind(user, password), 3)) {
 			print('Invalid password for $user');
 			if (--attempts == 0)
 				throw 'Failed to input correct password';
@@ -779,7 +729,7 @@ class Main {
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
-		var inf = site.infosWithRetry(prj);
+		var inf = retry(site.infos.bind(prj), 3);
 		var reqversion = paramOpt();
 		var version = getVersion(inf, reqversion);
 		doInstall(rep,inf.name,version,version == inf.getLatest());
@@ -881,7 +831,7 @@ class Main {
 				// Do not check git repository infos
 				continue;
 			}
-			var inf = site.infosWithRetry(l.name);
+			var inf = retry(site.infos.bind(l.name), 3);
 			l.version = getVersion(inf, l.version);
 		}
 
@@ -1015,7 +965,7 @@ class Main {
 
 		doInstallFile(rep, filepath, setcurrent);
 		try {
-			site.postInstallWithRetry(project, version);
+			retry(site.postInstall.bind(project, version), 3);
 		} catch (e:Dynamic) {}
 	}
 
@@ -1111,7 +1061,7 @@ class Main {
 			}
 
 			if( d.version == "" && d.type == DependencyType.Haxelib )
-				d.version = site.getLatestVersionWithRetry(d.name);
+				d.version = retry(site.getLatestVersion.bind(d.name), 3);
 			print("Installing dependency "+d.name+" "+d.version);
 
 			switch d.type {
@@ -1388,7 +1338,7 @@ class Main {
 			state.updated = success;
 			Sys.setCwd(oldCwd);
 		} else {
-			var latest = try site.getLatestVersionWithRetry(p) catch( e : Dynamic ) { Sys.println(e); return; };
+			var latest = try retry(site.getLatestVersion.bind(p), 3) catch( e : Dynamic ) { Sys.println(e); return; };
 
 			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
 				if( state.prompt ) {
