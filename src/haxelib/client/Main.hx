@@ -221,7 +221,7 @@ class Main {
 		initSite();
 	}
 
-	function retry<R>(func:() -> R, numTries:Int = 1) {
+	function retry<R>(func:Void -> R, numTries:Int = 1) {
 		while (numTries-- > 0) {
 			try {
 				return func();
