@@ -222,14 +222,26 @@ class Main {
 	}
 
 	function retry<R>(func:Void -> R, numTries:Int = 3) {
+		var hasRetried = false;
+
 		while (numTries-- > 0) {
 			try {
-				return func();
-			} catch(e:Dynamic) {
-				print('Failed with error: $e');
+				var result = func();
+
+				if (hasRetried) print("retry sucessful");
+
+				return result;
+			} catch (e:Dynamic) {
+				if ( e == "Blocked") {
+					print("Failed. Triggering retry due to HTTP timeout");
+					hasRetried = true;
+				}
+				else {
+					throw 'Failed with error: $e';
+				}
 			}
 		}
-		throw 'Failed after multiple tries';
+		throw 'Failed due to HTTP timeout after multiple retries';
 	}
 
 	function checkUpdate() {
