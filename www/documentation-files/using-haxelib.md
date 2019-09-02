@@ -363,7 +363,7 @@ haxelib help
 ```
 haxelib submit [project.zip]
 haxelib submit detox.zip
-haxelib sumbit
+haxelib submit
 ```
 
 > Submits a zip package to Haxelib so other users can install it.
