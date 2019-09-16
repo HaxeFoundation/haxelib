@@ -1160,10 +1160,28 @@ class Main {
 	}
 
 	function getRepository():String {
-		if (!settings.global && FileSystem.exists(REPODIR) && FileSystem.isDirectory(REPODIR))
-			return Path.addTrailingSlash(FileSystem.fullPath(REPODIR));
+		if (!settings.global)
+			return switch getLocalRepository() {
+				case null: getGlobalRepository();
+				case repo: Path.addTrailingSlash(FileSystem.fullPath(repo));
+			}
 		else
 			return getGlobalRepository();
+	}
+
+	function getLocalRepository():Null<String> {
+		function lookup(path:Path):Null<String> {
+			var repo = path.toString() + '/' + REPODIR;
+			trace(repo);
+			if(FileSystem.exists(repo) && FileSystem.isDirectory(repo)) {
+				return repo;
+			} else {
+				var dir = path.dir;
+				return dir == null ? null : lookup(new Path(dir));
+			}
+		}
+
+		return lookup(new Path(Path.removeTrailingSlashes(Sys.getCwd())));
 	}
 
 	function getGlobalRepository():String {

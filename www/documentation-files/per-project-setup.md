@@ -7,12 +7,11 @@ Currently haxelib has two ways to have project local setups.
 
 ### Using haxelib newrepo
 
-When using `haxelib newrepo` you can have a project-local haxelib repository. 
+When using `haxelib newrepo` you can have a project-local haxelib repository.
 
 Caveats:
 
 - libraries get downloaded for each project
-- if you mistakenly run a haxelib command in a subdirectory of your project, it will be executed on the global repo ([to be fixed](https://github.com/HaxeFoundation/haxelib/issues/292))
 
 ### Using haxelib install all
 
@@ -30,7 +29,7 @@ Advantages:
 
 #### Using haxelib with git versions
 
-You can specify git versions with `--library libname:git:https://github.com/user/repo#branch` branch can be a branch or a specific commit SHA. 
+You can specify git versions with `--library libname:git:https://github.com/user/repo#branch` branch can be a branch or a specific commit SHA.
 As alternative, you might use git submodules instead, they also provide an adequate way of definining a *versionable* and *replicable* state.
 
 ### Combining both approaches
