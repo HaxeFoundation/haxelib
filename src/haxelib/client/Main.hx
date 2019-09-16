@@ -1170,17 +1170,16 @@ class Main {
 	}
 
 	function getLocalRepository():Null<String> {
-		function lookup(path:Path):Null<String> {
-			var repo = Path.addTrailingSlash(path.toString()) + REPODIR;
+		var dir = Path.removeTrailingSlashes(Sys.getCwd());
+		while (dir != null) {
+			var repo = Path.addTrailingSlash(dir) + REPODIR;
 			if(FileSystem.exists(repo) && FileSystem.isDirectory(repo)) {
 				return repo;
 			} else {
-				var dir = path.dir;
-				return dir == null ? null : lookup(new Path(dir));
+				dir = new Path(dir).dir;
 			}
 		}
-
-		return lookup(new Path(Path.removeTrailingSlashes(Sys.getCwd())));
+		return null;
 	}
 
 	function getGlobalRepository():String {
