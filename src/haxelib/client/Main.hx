@@ -1566,33 +1566,7 @@ class Main {
 
 		var libPath = proj + "/" + vcs.directory;
 
-		var willClone = false;
-		var willUpdate = false;
-
-		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
-			print("You already have "+libName+" version "+vcs.directory+" installed.");
-
-			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
-			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
-
-			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
-				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
-			{
-				deleteRec(libPath);
-				willClone = true;
-			}
-			else if (!wasUpdated)
-			{
-				willUpdate = true;
-			}
-		} else {
-			willClone = true;
-		}
-
-		if (willUpdate) {
-			print("Updating " + libName+" version " + vcs.directory + " ...");
-			updateByName(rep, libName);
-		} else if (willClone) {
+		function doVcsClone() {
 			print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
 			try {
 				vcs.clone(libPath, url, branch, version);
@@ -1610,6 +1584,27 @@ class Main {
 				};
 				throw message;
 			}
+		}
+
+		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
+			print("You already have "+libName+" version "+vcs.directory+" installed.");
+
+			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
+			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
+
+			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
+				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
+			{
+				deleteRec(libPath);
+				doVcsClone();
+			}
+			else if (!wasUpdated)
+			{
+				print("Updating " + libName+" version " + vcs.directory + " ...");
+				updateByName(rep, libName);
+			}
+		} else {
+			doVcsClone();
 		}
 
 		// finish it!
