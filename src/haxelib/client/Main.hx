@@ -1171,8 +1171,7 @@ class Main {
 
 	function getLocalRepository():Null<String> {
 		function lookup(path:Path):Null<String> {
-			var repo = path.toString() + '/' + REPODIR;
-			trace(repo);
+			var repo = Path.addTrailingSlash(path.toString()) + REPODIR;
 			if(FileSystem.exists(repo) && FileSystem.isDirectory(repo)) {
 				return repo;
 			} else {
