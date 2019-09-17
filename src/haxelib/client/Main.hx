@@ -48,6 +48,16 @@ private enum CommandCategory {
 	Deprecated(msg:String);
 }
 
+private typedef LibInstallationInfo = {
+	name:String,
+	version:String,
+	type:String,
+	url:String,
+	branch:String,
+	subDir:String,
+	devPath:String
+}
+
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
@@ -769,7 +779,7 @@ class Main {
 			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
-		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
+		var libsToInstall = new Map<String, LibInstallationInfo>();
 
 		function processHxml(path) {
 			var hxml = normalizeHxml(sys.io.File.getContent(path));
@@ -781,7 +791,15 @@ class Main {
 					if (l.startsWith(target)) {
 						var lib = targets[target];
 						if (!libsToInstall.exists(lib))
-							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
+							libsToInstall[lib] = {
+								name: lib,
+								version: null,
+								type:"haxelib",
+								url: null,
+								branch: null,
+								subDir: null,
+								devPath: null
+							}
 					}
 
 				var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
@@ -793,6 +811,7 @@ class Main {
 					var libVersion:String = null;
 					var branch:String = null;
 					var url:String = null;
+					var devPath:String = null;
 					var subDir:String = null;
 					var type:String;
 
@@ -805,6 +824,11 @@ class Main {
 							var urlParts = parts[1].substr(4).split("#");
 							url = urlParts[0];
 							branch = urlParts.length > 1 ? urlParts[1] : null;
+						}
+						else if ( parts[1].startsWith("dev:") )
+						{
+							type = "dev";
+							devPath = parts[1].substr(4);
 						}
 						else
 						{
@@ -819,7 +843,15 @@ class Main {
 
 					switch libsToInstall[key] {
 						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
+							libsToInstall.set(key, {
+								name:libName,
+								version:libVersion,
+								type: type,
+								url: url,
+								subDir: subDir,
+								devPath: devPath,
+								branch: branch
+							});
 						default:
 					}
 				}
@@ -838,7 +870,7 @@ class Main {
 		print("Loading info about the required libraries");
 		for (l in libsToInstall)
 		{
-			if ( l.type == "git" )
+			if ( l.type == "git" || l.type == "dev" )
 			{
 				// Do not check git repository infos
 				continue;
@@ -859,6 +891,8 @@ class Main {
 			for (l in libsToInstall) {
 				if ( l.type == "haxelib" )
 					doInstall(rep, l.name, l.version, true);
+				else if ( l.type == "dev" )
+					useDev(rep, l.name, l.devPath);
 				else if ( l.type == "git" )
 					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
 				else if ( l.type == "hg" )
@@ -1501,10 +1535,7 @@ class Main {
 		}
 	}
 
-	function dev() {
-		var rep = getRepository();
-		var project = param("Library");
-		var dir = paramOpt();
+	function useDev(rep:String, project:String, dir:String) {
 		var proj = rep + Data.safe(project);
 		if( !FileSystem.exists(proj) ) {
 			FileSystem.createDirectory(proj);
@@ -1531,10 +1562,15 @@ class Main {
 					print('Could not write to $devfile');
 				}
 			}
-
 		}
 	}
 
+	function dev() {
+		var rep = getRepository();
+		var project = param("Library");
+		var dir = paramOpt();
+		useDev(rep, project, dir);
+	}
 
 	function removeExistingDevLib(proj:String):Void {
 		//TODO: ask if existing repo have changes.
