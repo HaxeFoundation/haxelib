@@ -48,6 +48,12 @@ private enum CommandCategory {
 	Deprecated(msg:String);
 }
 
+private enum LibType {
+	Haxelib(version:String);
+	Git(url:String, branch:String, subDir:String);
+	Dev(path:String);
+}
+
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
@@ -769,7 +775,7 @@ class Main {
 			'-cpp ' => 'hxcpp',
 			'-cs ' => 'hxcs',
 		];
-		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
+		var libsToInstall = new Map<String, {name:String, type:LibType}>();
 
 		function processHxml(path) {
 			var hxml = normalizeHxml(sys.io.File.getContent(path));
@@ -781,7 +787,10 @@ class Main {
 					if (l.startsWith(target)) {
 						var lib = targets[target];
 						if (!libsToInstall.exists(lib))
-							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
+							libsToInstall[lib] = {
+								name: lib,
+								type: Haxelib(null)
+							}
 					}
 
 				var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
@@ -790,36 +799,31 @@ class Main {
 					var key = libraryFlagEReg.matchedRight().trim();
 					var parts = ~/:/.split(key);
 					var libName = parts[0];
-					var libVersion:String = null;
-					var branch:String = null;
-					var url:String = null;
-					var subDir:String = null;
-					var type:String;
+					var type:LibType;
 
 					if ( parts.length > 1 )
 					{
-						if ( parts[1].startsWith("git:") )
-						{
+						switch (parts[1].substring(0, 4)) {
+							case "git:":
+								var urlParts = parts[1].substr(4).split("#");
+								var branch = urlParts.length > 1 ? urlParts[1] : null;
+								type = Git(urlParts[0], branch, null);
 
-							type = "git";
-							var urlParts = parts[1].substr(4).split("#");
-							url = urlParts[0];
-							branch = urlParts.length > 1 ? urlParts[1] : null;
-						}
-						else
-						{
-							type = "haxelib";
-							libVersion = parts[1];
+							case "dev:":
+								type = Dev(parts[1].substr(4));
+
+							default:
+								type = Haxelib(parts[1]);
 						}
 					}
 					else
 					{
-						type = "haxelib";
+						type = Haxelib(null);
 					}
 
 					switch libsToInstall[key] {
-						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
+						case null, { type: Haxelib(null) } :
+							libsToInstall.set(key, {name:libName, type: type});
 						default:
 					}
 				}
@@ -838,31 +842,40 @@ class Main {
 		print("Loading info about the required libraries");
 		for (l in libsToInstall)
 		{
-			if ( l.type == "git" )
-			{
-				// Do not check git repository infos
-				continue;
+			switch (l.type) {
+				case Git(_), Dev(_):
+					// Do not check git repository / dev folder infos
+
+				case Haxelib(version):
+					var inf = retry(site.infos.bind(l.name));
+					l.type = Haxelib(getVersion(inf, version));
 			}
-			var inf = retry(site.infos.bind(l.name));
-			l.version = getVersion(inf, l.version);
 		}
 
 		// Print a list with all the info
 		print("Haxelib is going to install these libraries:");
 		for (l in libsToInstall) {
-			var vString = (l.version == null) ? "" : " - " + l.version;
-			print("  " + l.name + vString);
+			print("  " + l.name + switch (l.type) {
+				case Git(_): " (git)";
+				case Dev(_): " (dev)";
+				case Haxelib(version) if (version == null): "";
+				case Haxelib(version): " - " + version;
+			});
 		}
 
 		// Install if they confirm
 		if (ask("Continue?")) {
 			for (l in libsToInstall) {
-				if ( l.type == "haxelib" )
-					doInstall(rep, l.name, l.version, true);
-				else if ( l.type == "git" )
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
-				else if ( l.type == "hg" )
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
+				switch (l.type) {
+					case Haxelib(version):
+						doInstall(rep, l.name, version, true);
+
+					case Dev(path):
+						useDev(rep, l.name, path);
+
+					case Git(url, branch, subDir):
+						useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, url, branch, subDir, null));
+				}
 			}
 		}
 	}
@@ -1501,10 +1514,7 @@ class Main {
 		}
 	}
 
-	function dev() {
-		var rep = getRepository();
-		var project = param("Library");
-		var dir = paramOpt();
+	function useDev(rep:String, project:String, dir:String) {
 		var proj = rep + Data.safe(project);
 		if( !FileSystem.exists(proj) ) {
 			FileSystem.createDirectory(proj);
@@ -1531,10 +1541,15 @@ class Main {
 					print('Could not write to $devfile');
 				}
 			}
-
 		}
 	}
 
+	function dev() {
+		var rep = getRepository();
+		var project = param("Library");
+		var dir = paramOpt();
+		useDev(rep, project, dir);
+	}
 
 	function removeExistingDevLib(proj:String):Void {
 		//TODO: ask if existing repo have changes.
