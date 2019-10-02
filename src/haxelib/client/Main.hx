@@ -513,7 +513,6 @@ class Main {
 					if( settings.debug )
 						rethrow(e);
 					print("Error: " + Std.string(e));
-					print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 					Sys.exit(1);
 				}
 				return;
@@ -1760,7 +1759,16 @@ class Main {
 				SERVER.protocol = "http";
 			case _:
 		}
-		new Main().process();
+		try {
+			new Main().process();
+		} catch(e:Dynamic) {
+			for(arg in Sys.args()) {
+				if(arg == '--debug') {
+					Util.rethrow(e);
+				}
+			}
+			Sys.stderr().writeString(Std.string(e) + '\n');
+		}
 	}
 
 
