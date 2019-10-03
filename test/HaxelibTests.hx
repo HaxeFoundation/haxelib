@@ -1,3 +1,4 @@
+import haxe.io.Path;
 import haxelib.client.Vcs.VcsID;
 import haxe.unit.TestRunner;
 import sys.*;
@@ -29,6 +30,19 @@ class HaxelibTests {
 		return exitCode == 0;
 	}
 
+	static public function deleteDirectory(dir:String) {
+		if (!FileSystem.exists(dir)) return;
+		var exitCode = switch (Sys.systemName()) {
+			case "Windows":
+				Sys.command("rmdir", ["/S", "/Q", StringTools.replace(FileSystem.fullPath(dir), "/", "\\")]);
+			case _:
+				Sys.command("rm", ["-rf", dir]);
+		}
+		if (exitCode != 0) {
+			throw 'unable to delete $dir';
+		}
+	}
+
 	static function main():Void {
 		var r = new TestRunner();
 
@@ -41,12 +55,14 @@ class HaxelibTests {
 
 		if (isCI || cmdSucceed("hg", ["version"])) {
 			// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
+			TestHg.init();
 			r.add(new TestHg());
 		} else {
 			Sys.println("hg not found.");
 		}
 		if (isCI || cmdSucceed("git", ["version"])) {
 			// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
+			TestGit.init();
 			r.add(new TestGit());
 		} else {
 			Sys.println("git not found.");
