@@ -84,6 +84,7 @@ class RunCi {
 
 	static function testClient():Void {
 		runCommand("haxe", ["client_tests.hxml"]);
+		runCommand("neko", ["bin/test.n"]);
 	}
 
 	static function testServer():Void {
@@ -273,7 +274,7 @@ Listen 2000
 
 				writeApacheConf("haxelib.conf");
 				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf-enabled/haxelib.conf"]);
-				
+
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
 
