@@ -1169,6 +1169,7 @@ class Main {
 	}
 
 	function getLocalRepository():Null<String> {
+		return null;
 		var dir = Path.removeTrailingSlashes(Sys.getCwd());
 		while (dir != null) {
 			var repo = Path.addTrailingSlash(dir) + REPODIR;
