@@ -1173,8 +1173,6 @@ class Main {
 		while (dir != null) {
 			var repo = Path.addTrailingSlash(dir) + REPODIR;
 			if(FileSystem.exists(repo) && FileSystem.isDirectory(repo)) {
-				Sys.println(repo);
-				Sys.stderr().writeString('$repo\n');
 				return repo;
 			} else {
 				dir = new Path(dir).dir;
