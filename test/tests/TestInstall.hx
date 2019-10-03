@@ -59,8 +59,8 @@ class TestInstall extends TestBase
 
 	public function testInstallHaxelibParameter():Void
 	{
-		trace('----------------- testInstallHaxelibDependencyWithTag');
-		var r = runHaxelib(["install", "haxelib.json"]);
+		trace('----------------- testInstallHaxelibParameter');
+		var r = runHaxelib(["install", "haxelib.json"], true);
 		assertTrue(r.exitCode == 0);
 
 		checkLibrary(getLibraryName());
@@ -69,7 +69,7 @@ class TestInstall extends TestBase
 	public function testInstallHaxelibDependencyWithTag():Void
 	{
 		trace('----------------- testInstallHaxelibDependencyWithTag');
-		var r = runHaxelib(["install", "tag_haxelib.json"]);
+		var r = runHaxelib(["install", "tag_haxelib.json"], true);
 		assertTrue(r.exitCode == 0);
 
 		var lib = getLibraryName();

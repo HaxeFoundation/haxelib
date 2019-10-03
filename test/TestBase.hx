@@ -5,7 +5,10 @@ import haxe.unit.*;
 
 class TestBase extends TestCase {
 	static var haxelibPath = FileSystem.fullPath("run.n");
-	public function runHaxelib(args:Array<String>) {
+	public function runHaxelib(args:Array<String>, echo = false) {
+		if(echo) {
+			Sys.command('neko', [haxelibPath].concat(args));
+		}
 		var p = new Process("neko", [haxelibPath].concat(args));
 		var stdout = p.stdout.readAll().toString();
 		var stderr = p.stderr.readAll().toString();
