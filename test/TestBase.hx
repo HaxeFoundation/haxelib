@@ -28,8 +28,10 @@ class TestBase extends TestCase {
 				eofCount++;
 			}
 		}
-		// var stdout = p.stdout.readAll().toString();
-		// var stderr = p.stderr.readAll().toString();
+		if (printProgress) {
+			Sys.stdout().flush();
+			Sys.stderr().flush();
+		}
 		var exitCode = p.exitCode();
 		p.close();
 		return {

@@ -10,7 +10,7 @@ import haxelib.Data;
 class TestInstall extends TestBase
 {
 
-	static inline var REPO = ".haxelib";
+	static inline var REPO = "haxelib-repo";
 	static inline var PROJECT_FOLDER = "UseGitDep";
 	static inline var REPO_ROOT = "test/libraries";
 	static var CWD:String = null;
@@ -59,7 +59,7 @@ class TestInstall extends TestBase
 
 	public function testInstallHaxelibParameter():Void
 	{
-		var r = runHaxelib(["install", "haxelib.json"]);
+		var r = runHaxelib(["install", "haxelib.json", "--global"]);
 		assertTrue(r.exitCode == 0);
 
 		checkLibrary(getLibraryName());
@@ -67,7 +67,7 @@ class TestInstall extends TestBase
 
 	public function testInstallHaxelibDependencyWithTag():Void
 	{
-		var r = runHaxelib(["install", "tag_haxelib.json"]);
+		var r = runHaxelib(["install", "tag_haxelib.json", "--global"]);
 		assertTrue(r.exitCode == 0);
 
 		var lib = getLibraryName();
