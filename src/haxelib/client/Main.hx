@@ -1169,9 +1169,9 @@ class Main {
 	}
 
 	function getLocalRepository():Null<String> {
-		return null;
 		var dir = Path.removeTrailingSlashes(Sys.getCwd());
 		while (dir != null) {
+			trace(dir);
 			var repo = Path.addTrailingSlash(dir) + REPODIR;
 			if(FileSystem.exists(repo) && FileSystem.isDirectory(repo)) {
 				return repo;
