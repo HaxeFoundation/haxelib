@@ -203,7 +203,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.34-win32-VC15.zip", "bin/httpd.zip");
+				download("https://www.apachelounge.com/download/VS16/binaries/httpd-2.4.41-win32-VS16.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
@@ -348,7 +348,7 @@ Listen 2000
 				break;
 			}
 
-			if (Timer.stamp() - t > 240) {
+			if (Timer.stamp() - t > 9 * 60) {
 				throw "server is not reachable...";
 			}
 
