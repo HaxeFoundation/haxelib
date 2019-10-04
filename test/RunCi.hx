@@ -158,8 +158,12 @@ Listen 2000
 <Directory "$DocumentRoot">
     Options Indexes FollowSymLinks
     AllowOverride All
+' + (switch (systemName()) {
+	case "Windows": '';
+	case _: '
     Order allow,deny
-    Allow from all
+    Allow from all';
+}) + '
     Require all granted
 </Directory>
 ';
