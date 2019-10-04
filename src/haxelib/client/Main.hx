@@ -453,8 +453,13 @@ class Main {
 			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
-				doRun(rep, HAXELIB_LIBNAME, null);
-				return;
+				try {
+					doRun(rep, HAXELIB_LIBNAME, null);
+					return;
+				} catch(e:Dynamic) {
+					Sys.println('Warning: failed to run updated haxelib: $e');
+					Sys.println('Warning: resorting to system haxelib...');
+				}
 			}
 		}
 
