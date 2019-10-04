@@ -3,4 +3,3 @@
 -lib hx3compat
 -main IntegrationTests
 -neko bin/integration_tests.n
--cmd neko bin/integration_tests.n

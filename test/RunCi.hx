@@ -371,8 +371,10 @@ Listen 2000
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 				case _:
 					runCommand("haxe", ["integration_tests.hxml"]);
+					runCommand("neko", ["bin/integration_tests.n"]);
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 			}
+			runCommand("neko", ["bin/integration_tests.n"]);
 		}
 		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
 			runWithLocalServer(test);
