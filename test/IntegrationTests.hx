@@ -91,7 +91,7 @@ class IntegrationTests extends TestBase {
 
 	function haxelib(args:Array<String>, ?input:String):Process {
 		var p = #if system_haxelib
-			new Process("haxelib", ["--global", "-R", serverUrl].concat(args));
+			new Process("haxelib", ["-R", serverUrl].concat(args));
 		#else
 			new Process("neko", [haxelibBin, "--global", "-R", serverUrl].concat(args));
 		#end
