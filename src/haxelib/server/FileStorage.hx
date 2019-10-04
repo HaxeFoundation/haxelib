@@ -97,17 +97,13 @@ class FileStorage {
 		throw "should be implemented by subclass";
 
 	function assertAbsolute(path:String):Void {
-		#if (haxe_ver >= 3.2) // Path.isAbsolute is added in haxe 3.2
 		if (!Path.isAbsolute(path))
 			throw '$path is not absolute.';
-		#end
 	}
 
 	function assertRelative(path:String):Void {
-		#if (haxe_ver >= 3.2) // Path.isAbsolute is added in haxe 3.2
 		if (Path.isAbsolute(path))
 			throw '$path is not relative.';
-		#end
 	}
 }
 

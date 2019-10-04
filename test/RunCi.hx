@@ -371,8 +371,6 @@ Listen 2000
 			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
 				case null, "development":
 					runCommand("haxe", ["integration_tests.hxml"]);
-				case "3.1.3":
-					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 				case _:
 					runCommand("haxe", ["integration_tests.hxml"]);
 					runCommand("neko", ["bin/integration_tests.n"]);
@@ -471,14 +469,9 @@ Listen 2000
 		compileLegacyClient();
 		compileLegacyServer();
 
-		// the server can only be compiled with haxe 3.4+
-		// haxe 3.1.3 bundles haxelib client 3.1.0-rc.4, which is not upgradable to later haxelib
-		// so there is no need to test the client either
-		#if (haxe_ver >= 3.2)
-			compileClient();
-			testClient();
-		#end
-		#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
+		compileClient();
+		testClient();
+		#if (haxe_ver < 4)
 			compileServer();
 			testServer();
 		#end
@@ -488,7 +481,7 @@ Listen 2000
 			case "Windows", "Linux":
 				integrationTests();
 			case "Mac":
-				#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
+				#if (haxe_ver < 4)
 					integrationTests();
 				#end
 			case _:

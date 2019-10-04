@@ -46,7 +46,7 @@ class ConvertXml {
 		json.url = project.get("url");
 		for (node in project) {
 			switch (node.nodeType) {
-				case #if (haxe_ver >= 3.2) Element #else Xml.Element #end:
+				case Element:
 					switch (node.nodeName) {
 						case "tag":
 							json.tags.push(node.get("v"));

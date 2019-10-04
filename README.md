@@ -13,7 +13,7 @@ For more documentation, please refer to http://lib.haxe.org/documentation/
 
 ### Running the haxelib server for development
 
-The server has to be compiled with Haxe 3.2.1+. It can be run in Apache using mod_neko / mod_tora.
+The server has to be compiled with Haxe 3.4.7+. It can be run in Apache using mod_neko / mod_tora.
 
 Currently using [Docker](https://www.docker.com/) is the simpliest way to build and run the server. It doesn't require setting up Apache or MySQL since everything is included in the container. We would recommend to use the [Docker Platform](https://www.docker.com/products/docker) instead of the Docker Toolbox.
 
