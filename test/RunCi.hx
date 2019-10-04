@@ -348,7 +348,7 @@ Listen 2000
 				break;
 			}
 
-			if (Timer.stamp() - t > 120) {
+			if (Timer.stamp() - t > 240) {
 				throw "server is not reachable...";
 			}
 
