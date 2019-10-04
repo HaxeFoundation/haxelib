@@ -1363,6 +1363,8 @@ class Main {
 			var success = vcs.update(p);
 
 			state.updated = success;
+			if(success)
+				print(p + " was updated");
 			Sys.setCwd(oldCwd);
 		} else {
 			var latest = try retry(site.getLatestVersion.bind(p)) catch( e : Dynamic ) { Sys.println(e); return; };
