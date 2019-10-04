@@ -181,7 +181,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		HaxelibTests.runCommand("haxelib", ["--global", "setup", path]);
+		HaxelibTests.runCommand("haxelib", ["setup", path]);
 	}
 
 	static function main():Void {
