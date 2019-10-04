@@ -33,7 +33,7 @@ class IntegrationTests extends TestBase {
 	function get_serverUrl() return serverUrl != null ? serverUrl : serverUrl = 'http://${server}:${serverPort}/';
 
 	static var originalRepo(default, never) = {
-		var p = new Process("haxelib", ["config"]);
+		var p = new Process("haxelib", ["--global", "config"]);
 		var originalRepo = Path.normalize(p.stdout.readLine());
 		p.close();
 		if (repo == originalRepo) {
@@ -93,7 +93,7 @@ class IntegrationTests extends TestBase {
 		var p = #if system_haxelib
 			new Process("haxelib", ["-R", serverUrl].concat(args));
 		#else
-			new Process("neko", [haxelibBin, "-R", serverUrl].concat(args));
+			new Process("neko", [haxelibBin, "--global", "-R", serverUrl].concat(args));
 		#end
 
 		if (input != null) {
@@ -181,10 +181,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		var p = new Process("haxelib", ["setup", path]);
-		if (p.exitCode() != 0)
-			throw "unable to set haxelib repo to " + path;
-		p.close();
+		HaxelibTests.runCommand("haxelib", ["setup", path]);
 	}
 
 	static function main():Void {

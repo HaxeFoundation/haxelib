@@ -84,6 +84,7 @@ class RunCi {
 
 	static function testClient():Void {
 		runCommand("haxe", ["client_tests.hxml"]);
+		runCommand("neko", ["bin/test.n"]);
 	}
 
 	static function testServer():Void {
@@ -157,8 +158,12 @@ Listen 2000
 <Directory "$DocumentRoot">
     Options Indexes FollowSymLinks
     AllowOverride All
+' + (switch (systemName()) {
+	case "Windows": '';
+	case _: '
     Order allow,deny
-    Allow from all
+    Allow from all';
+}) + '
     Require all granted
 </Directory>
 ';
@@ -202,7 +207,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.34-win32-VC15.zip", "bin/httpd.zip");
+				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.41-win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
@@ -273,7 +278,7 @@ Listen 2000
 
 				writeApacheConf("haxelib.conf");
 				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf-enabled/haxelib.conf"]);
-				
+
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
 
@@ -347,7 +352,7 @@ Listen 2000
 				break;
 			}
 
-			if (Timer.stamp() - t > 120) {
+			if (Timer.stamp() - t > 9 * 60) {
 				throw "server is not reachable...";
 			}
 
@@ -370,8 +375,10 @@ Listen 2000
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 				case _:
 					runCommand("haxe", ["integration_tests.hxml"]);
+					runCommand("neko", ["bin/integration_tests.n"]);
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 			}
+			runCommand("neko", ["bin/integration_tests.n"]);
 		}
 		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
 			runWithLocalServer(test);
