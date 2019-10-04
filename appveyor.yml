@@ -9,7 +9,7 @@ install:
   - cinst nssm -y
   - cinst curl -y
   - RefreshEnv
-  - neko run.n setup haxelib_global
+  - neko run.n setup .haxelib
   - haxe libs.hxml
   - haxelib list
 

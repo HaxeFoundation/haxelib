@@ -56,7 +56,7 @@ install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       brew update;
     fi
-  - neko run.n setup haxelib_global
+  - neko run.n setup .haxelib
   - haxe libs.hxml
   # copy aws.ndll to the right place
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
