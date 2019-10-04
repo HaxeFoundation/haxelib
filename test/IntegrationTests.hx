@@ -181,10 +181,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		var p = new Process("haxelib", ["--global", "setup", path]);
-		if (p.exitCode() != 0)
-			throw "unable to set haxelib repo to " + path;
-		p.close();
+		HaxelibTests.runCommand("haxelib", ["--global", "setup", path]);
 	}
 
 	static function main():Void {
