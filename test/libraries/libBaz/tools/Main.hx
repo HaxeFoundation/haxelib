@@ -2,6 +2,6 @@ package tools;
 
 class Main {
 	static function main() {
-		Sys.print('Foo tools.Main script');
+		Sys.print('Baz tools.Main script');
 	}
 }

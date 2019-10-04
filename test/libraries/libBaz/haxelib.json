@@ -1,13 +1,11 @@
 {
-	"name": "Foo",
+	"name": "Baz",
 	"url" : "http://example.org",
 	"license": "GPL",
-	"tags": ["foo", "test"],
+	"tags": ["baz", "test"],
 	"description": "This project is an example of an haxelib project",
 	"version": "0.1.0-alpha.0",
 	"releasenote": "Initial release, everything is working correctly",
-	"dependencies": {
-		"Bar": ""
-	},
-	"contributors": ["Foo"]
+	"contributors": ["Baz"],
+	"main": "tools.Main"
 }
