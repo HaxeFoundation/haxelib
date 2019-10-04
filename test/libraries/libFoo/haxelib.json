@@ -9,5 +9,6 @@
 	"dependencies": {
 		"Bar": ""
 	},
-	"contributors": ["Foo"]
+	"contributors": ["Foo"],
+	"main": "tools.Main"
 }
