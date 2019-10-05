@@ -17,6 +17,7 @@ class TestRun extends IntegrationTests {
 		assertSuccess(r);
 		var r = haxelib(["list"]).result();
 		Sys.println(r.out + '\n' + r.err);
+		Sys.command('ls', [Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]);
 		var r = haxelib(["run", "Baz"]).result();
 		assertSuccess(r);
 		assertEquals('Baz tools.Main script', r.out);
@@ -28,6 +29,7 @@ class TestRun extends IntegrationTests {
 		assertSuccess(r);
 		var r = haxelib(["list"]).result();
 		Sys.println(r.out + '\n' + r.err);
+		Sys.command('ls', [Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]);
 		var r = haxelib(["run", "Bar"]).result();
 		assertSuccess(r);
 		assertEquals('Bar Run.hx script', r.out);
