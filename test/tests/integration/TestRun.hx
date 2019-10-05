@@ -6,6 +6,7 @@ using IntegrationTests;
 class TestRun extends IntegrationTests {
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
+		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
 		var r = haxelib(["run", "Baz"]).result();
 		assertSuccess(r);
@@ -14,6 +15,7 @@ class TestRun extends IntegrationTests {
 
 	function testMain_noValueButRunHxExists():Void {
 		var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
+		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
 		var r = haxelib(["run", "Bar"]).result();
 		assertSuccess(r);
@@ -22,6 +24,7 @@ class TestRun extends IntegrationTests {
 
 	function testRunN_preferredOverRunHx():Void {
 		var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
+		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
 		var r = haxelib(["run", "Bar2"]).result();
 		assertSuccess(r);
