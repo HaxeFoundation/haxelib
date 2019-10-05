@@ -36,6 +36,8 @@ class TestRun extends IntegrationTests {
 	function testRunN_preferredOverRunHx():Void {
 		var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
 		assertSuccess(r);
+		var r = haxelib(["list"]).result();
+		Sys.println(r.out + '\n' + r.err);
 		var r = haxelib(["run", "Bar2"]).result();
 		assertSuccess(r);
 		assertEquals('Bar2 run.n script', r.out);
