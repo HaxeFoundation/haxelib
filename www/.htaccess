@@ -18,7 +18,7 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
 
 # for recent versions of haxelib client, which send UA, use https, and support redirection
 RewriteBase /
-RewriteCond %{HTTPS} =on
+RewriteCond %{HTTPS} =on [OR]
 RewriteCond %{HTTP:X-Forwarded-Proto} =https
 RewriteCond %{ENV:HAXELIB_S3BUCKET} !^$
 RewriteCond %{ENV:AWS_DEFAULT_REGION} !^$
