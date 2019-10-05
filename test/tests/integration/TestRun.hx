@@ -4,10 +4,19 @@ import haxe.io.Path;
 using IntegrationTests;
 
 class TestRun extends IntegrationTests {
+	override public function setup() {
+		super.setup();
+		haxelib(["remove", "Bar"]).result();
+		haxelib(["remove", "Baz"]).result();
+		haxelib(["remove", "Bar2"]).result();
+	}
+
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
 		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
+		var r = haxelib(["list"]).result();
+		Sys.println(r.out + '\n' + r.err);
 		var r = haxelib(["run", "Baz"]).result();
 		assertSuccess(r);
 		assertEquals('Baz tools.Main script', r.out);
@@ -17,6 +26,8 @@ class TestRun extends IntegrationTests {
 		var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
 		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
+		var r = haxelib(["list"]).result();
+		Sys.println(r.out + '\n' + r.err);
 		var r = haxelib(["run", "Bar"]).result();
 		assertSuccess(r);
 		assertEquals('Bar Run.hx script', r.out);
@@ -24,7 +35,6 @@ class TestRun extends IntegrationTests {
 
 	function testRunN_preferredOverRunHx():Void {
 		var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
-		Sys.println(r.out + '\n' + r.err);
 		assertSuccess(r);
 		var r = haxelib(["run", "Bar2"]).result();
 		assertSuccess(r);
