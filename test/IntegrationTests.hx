@@ -92,14 +92,11 @@ class IntegrationTests extends TestBase {
 	function haxelib(args:Array<String>, ?input:String):Process {
 		var p = {#if system_haxelib
 			#if (haxe_ver >= 3.2)
-			trace('Run haxelib: ' + ["--global", "-R", serverUrl].concat(args).join(' '));
 			new Process("haxelib", ["--global", "-R", serverUrl].concat(args));
 			#else
-			trace('Run haxelib: ' + ["-R", serverUrl].concat(args).join(' '));
 			new Process("haxelib", ["-R", serverUrl].concat(args));
 			#end
 		#else
-			trace('Run haxelib: ' + [haxelibBin, "--global", "-R", serverUrl].concat(args).join(' '));
 			new Process("neko", [haxelibBin, "--global", "-R", serverUrl].concat(args));
 		#end}
 
