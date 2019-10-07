@@ -1678,6 +1678,9 @@ class Main {
 		var deps = dependencies.toArray();
 		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
 		var args = [];
+		if(settings.global) {
+			args.push('--global');
+		}
 		for (d in deps) {
 			args.push('-lib');
 			args.push(d.name + if (d.version == '') '' else ':${d.version}');

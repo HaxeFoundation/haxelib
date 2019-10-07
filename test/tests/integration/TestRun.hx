@@ -8,34 +8,25 @@ class TestRun extends IntegrationTests {
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
 		assertSuccess(r);
-		var r = haxelib(["list"]).result();
-		assertSuccess(r);
-		Sys.println(r.out + r.err);
-		var r = haxelib(["path", "Baz"]).result();
-		assertSuccess(r);
-		Sys.println(r.out + r.err);
 		var r = haxelib(["run", "Baz"]).result();
-		var r2 = haxelib(["path", "Baz"]).result();
-		Sys.println(r2.out + r.err);
-		assertSuccess(r2);
 		assertSuccess(r);
 		assertEquals('Baz tools.Main script', r.out);
 	}
 
-	// function testMain_noValueButRunHxExists():Void {
-	// 	var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
-	// 	assertSuccess(r);
-	// 	var r = haxelib(["run", "Bar"]).result();
-	// 	assertSuccess(r);
-	// 	assertEquals('Bar Run.hx script', r.out);
-	// }
+	function testMain_noValueButRunHxExists():Void {
+		var r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
+		assertSuccess(r);
+		var r = haxelib(["run", "Bar"]).result();
+		assertSuccess(r);
+		assertEquals('Bar Run.hx script', r.out);
+	}
 
-	// function testRunN_preferredOverRunHx():Void {
-	// 	var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
-	// 	assertSuccess(r);
-	// 	var r = haxelib(["run", "Bar2"]).result();
-	// 	assertSuccess(r);
-	// 	assertEquals('Bar2 run.n script', r.out);
-	// }
+	function testRunN_preferredOverRunHx():Void {
+		var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
+		assertSuccess(r);
+		var r = haxelib(["run", "Bar2"]).result();
+		assertSuccess(r);
+		assertEquals('Bar2 run.n script', r.out);
+	}
 
 }
