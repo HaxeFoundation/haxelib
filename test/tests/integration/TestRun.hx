@@ -8,8 +8,9 @@ class TestRun extends IntegrationTests {
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
 		assertSuccess(r);
-		var r = haxelib(["list", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
+		var r = haxelib(["list"]).result();
 		assertSuccess(r);
+		Sys.println(r.out + r.err);
 		var r = haxelib(["run", "Baz"]).result();
 		assertSuccess(r);
 		assertEquals('Baz tools.Main script', r.out);
