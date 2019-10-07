@@ -1636,6 +1636,19 @@ class Main {
 		doRun(rep, temp[0], temp[1]);
 	}
 
+	function haxeVersion():SemVer {
+		if(__haxeVersion == null) {
+			var p = new Process('haxe', ['--version']);
+			if(p.exitCode() != 0) {
+				throw 'Cannot get haxe version: ${p.stderr.readAll().toString()}';
+			}
+			var str = p.stdout.readAll().toString();
+			__haxeVersion = SemVer.ofString(str.split('+')[0]);
+		}
+		return __haxeVersion;
+	}
+	static var __haxeVersion:SemVer;
+
 	function doRun( rep:String, project:String, version:String ) {
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
@@ -1678,8 +1691,9 @@ class Main {
 		var deps = dependencies.toArray();
 		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
 		var args = [];
-		if(settings.global) {
-			args.push('--global');
+		// TODO: change comparison to '4.0.0' upon Haxe 4.0 release
+		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0-rc.5')) >= 0) {
+			args.push('--haxelib-global');
 		}
 		for (d in deps) {
 			args.push('-lib');

@@ -4,7 +4,7 @@ import haxe.io.Path;
 using IntegrationTests;
 
 class TestRun extends IntegrationTests {
-
+#if (haxe_ver >= 4.0)
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
 		assertSuccess(r);
@@ -28,5 +28,5 @@ class TestRun extends IntegrationTests {
 		assertSuccess(r);
 		assertEquals('Bar2 run.n script', r.out);
 	}
-
+#end
 }
