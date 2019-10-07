@@ -11,6 +11,9 @@ class TestRun extends IntegrationTests {
 		var r = haxelib(["list"]).result();
 		assertSuccess(r);
 		Sys.println(r.out + r.err);
+		var r = haxelib(["path", "Baz"]).result();
+		assertSuccess(r);
+		Sys.println(r.out + r.err);
 		var r = haxelib(["run", "Baz"]).result();
 		assertSuccess(r);
 		assertEquals('Baz tools.Main script', r.out);
