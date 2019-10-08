@@ -1573,26 +1573,8 @@ class Main {
 
 		var libPath = proj + "/" + vcs.directory;
 
-		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
-			print("You already have "+libName+" version "+vcs.directory+" installed.");
-
-			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
-			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
-
-			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
-				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
-			{
-				deleteRec(libPath);
-				this.alreadyUpdatedVcsDependencies.set(libName, branch);
-			}
-			else if (!wasUpdated)
-			{
-				print("Updating " + libName+" version " + vcs.directory + " ...");
-				updateByName(rep, libName);
-			}
-		} else {
+		function doVcsClone() {
 			print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
-
 			try {
 				vcs.clone(libPath, url, branch, version);
 			} catch(error:VcsError) {
@@ -1609,6 +1591,27 @@ class Main {
 				};
 				throw message;
 			}
+		}
+
+		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
+			print("You already have "+libName+" version "+vcs.directory+" installed.");
+
+			var wasUpdated = this.alreadyUpdatedVcsDependencies.exists(libName);
+			var currentBranch = if (wasUpdated) this.alreadyUpdatedVcsDependencies.get(libName) else null;
+
+			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
+				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
+			{
+				deleteRec(libPath);
+				doVcsClone();
+			}
+			else if (!wasUpdated)
+			{
+				print("Updating " + libName+" version " + vcs.directory + " ...");
+				updateByName(rep, libName);
+			}
+		} else {
+			doVcsClone();
 		}
 
 		// finish it!

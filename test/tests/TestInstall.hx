@@ -77,6 +77,15 @@ class TestInstall extends TestBase
 		assertFalse(FileSystem.exists(Path.join([lib, "git", "README.md"])));
 	}
 
+	public function testReinstallHxml() {
+		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		assertEquals(0, r.exitCode);
+		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		assertEquals(0, r.exitCode);
+		var r = runHaxelib(["path", "hx.signal"]);
+		assertEquals(0, r.exitCode);
+	}
+
 	function getLibraryName():String
 	{
 		var haxelibFile = File.read("haxelib.json", false);
