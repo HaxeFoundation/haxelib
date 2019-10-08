@@ -1082,7 +1082,8 @@ class Main {
 
 			switch d.type {
 				case Haxelib:
-					doInstall(rep, d.name, d.version, false);
+					var info = retry(site.infos.bind(d.name));
+					doInstall(rep, info.name, d.version, false);
 				case Git:
 					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
 				case Mercurial:
@@ -1379,7 +1380,8 @@ class Main {
 					if (!ask("Update "+p+" to "+latest))
 						return;
 				}
-				doInstall(state.rep, p, latest,true);
+				var info = retry(site.infos.bind(p));
+				doInstall(state.rep, info.name, latest,true);
 				state.updated = true;
 			} else
 				setCurrent(state.rep, p, latest, true);
@@ -1428,8 +1430,10 @@ class Main {
 		var vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
 			print("Library "+prj+" version "+version+" is not installed");
-			if(ask("Would you like to install it?"))
-				doInstall(rep, prj, version, true);
+			if(ask("Would you like to install it?")) {
+				var info = retry(site.infos.bind(prj));
+				doInstall(rep, info.name, version, true);
+			}
 			return;
 		}
 		if( File.getContent(pdir + "/.current").trim() == version )
