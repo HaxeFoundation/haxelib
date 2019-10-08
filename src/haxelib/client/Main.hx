@@ -453,8 +453,13 @@ class Main {
 			var rep = try getGlobalRepository() catch (_:Dynamic) null;
 			if (rep != null && FileSystem.exists(rep + HAXELIB_LIBNAME)) {
 				argcur = 0; // send all arguments
-				doRun(rep, HAXELIB_LIBNAME, null);
-				return;
+				try {
+					doRun(rep, HAXELIB_LIBNAME, null);
+					return;
+				} catch(e:Dynamic) {
+					Sys.println('Warning: failed to run updated haxelib: $e');
+					Sys.println('Warning: resorting to system haxelib...');
+				}
 			}
 		}
 
@@ -1363,6 +1368,8 @@ class Main {
 			var success = vcs.update(p);
 
 			state.updated = success;
+			if(success)
+				print(p + " was updated");
 			Sys.setCwd(oldCwd);
 		} else {
 			var latest = try retry(site.getLatestVersion.bind(p)) catch( e : Dynamic ) { Sys.println(e); return; };
@@ -1632,6 +1639,19 @@ class Main {
 		doRun(rep, temp[0], temp[1]);
 	}
 
+	function haxeVersion():SemVer {
+		if(__haxeVersion == null) {
+			var p = new Process('haxe', ['--version']);
+			if(p.exitCode() != 0) {
+				throw 'Cannot get haxe version: ${p.stderr.readAll().toString()}';
+			}
+			var str = p.stdout.readAll().toString();
+			__haxeVersion = SemVer.ofString(str.split('+')[0]);
+		}
+		return __haxeVersion;
+	}
+	static var __haxeVersion:SemVer;
+
 	function doRun( rep:String, project:String, version:String ) {
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
@@ -1652,24 +1672,15 @@ class Main {
 		Sys.setCwd(vdir);
 
 		var callArgs =
-			if (infos.main == null) {
-				if( !FileSystem.exists('$vdir/run.n') )
-					throw 'Library $project version $version does not have a run script';
+			if (infos.main != null) {
+				runScriptArgs(project, infos.main, infos.dependencies);
+			} else if(FileSystem.exists('$vdir/run.n')) {
 				["neko", vdir + "/run.n"];
+			} else if(FileSystem.exists('$vdir/Run.hx')) {
+				runScriptArgs(project, 'Run', infos.dependencies);
 			} else {
-				var deps = infos.dependencies.toArray();
-				deps.push( { name: project, version: DependencyVersion.DEFAULT } );
-				var args = [];
-				for (d in deps) {
-					args.push('-lib');
-					args.push(d.name + if (d.version == '') '' else ':${d.version}');
-				}
-				args.unshift('haxe');
-				args.push('--run');
-				args.push(infos.main);
-				args;
+				throw 'Library $project version $version does not have a run script';
 			}
-
 		for (i in argcur...args.length)
 			callArgs.push(args[i]);
 
@@ -1677,6 +1688,24 @@ class Main {
 		Sys.putEnv("HAXELIB_RUN_NAME", project);
 		var cmd = callArgs.shift();
  		Sys.exit(Sys.command(cmd, callArgs));
+	}
+
+	function runScriptArgs(project:String, main:String, dependencies:Dependencies):Array<String> {
+		var deps = dependencies.toArray();
+		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
+		var args = [];
+		// TODO: change comparison to '4.0.0' upon Haxe 4.0 release
+		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0-rc.5')) >= 0) {
+			args.push('--haxelib-global');
+		}
+		for (d in deps) {
+			args.push('-lib');
+			args.push(d.name + if (d.version == '') '' else ':${d.version}');
+		}
+		args.unshift('haxe');
+		args.push('--run');
+		args.push(main);
+		return args;
 	}
 
 	function proxy() {

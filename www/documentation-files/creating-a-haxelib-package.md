@@ -15,7 +15,8 @@ Each Haxe library requires a `haxelib.json` file in which the following attribut
 * classPath: The path string to the source files.
 * releasenote: The release notes of the current version.
 * contributors: An array of user names which identify contributors to the library that are allowed to upload to haxelib. The first user will be defined as the owner, who is the only one that can change description, url, license, contributors, and ownership (by changing who come first in contributors).
-* dependencies: An object describing the dependencies of the library. This is detailed in [Dependencies](#dependencies).
+* dependencies (optional): An object describing the dependencies of the library. This is detailed in [Dependencies](#dependencies).
+* main (optional): A class to run on `haxelib run libraryname` command. Relative to library root. E.g. to run `tools/Main.hx` the value should be `tools.Main`. Default value since Haxe 4: `Run`
 
 The following JSON is a simple example of a haxelib.json:
 
@@ -33,7 +34,8 @@ The following JSON is a simple example of a haxelib.json:
   "dependencies": {
     "tink_macro": "",
     "nme": "3.5.5"
-  }
+  },
+  "main": "tools.Main"
 }
 ```
 
