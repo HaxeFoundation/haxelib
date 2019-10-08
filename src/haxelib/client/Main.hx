@@ -1465,7 +1465,7 @@ class Main {
 				throw "Library "+prj+" has two versions included : "+version+" and "+p.version;
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		var inf = Data.readData(json,false);
+		var inf = Data.readData(json,true);
 		l.add({ project : prj, version : version, dir : Path.addTrailingSlash(vdir), info: inf });
 		if( returnDependencies ) {
 			for( d in inf.dependencies )
@@ -1479,7 +1479,11 @@ class Main {
 		var list = new List();
 		while( argcur < args.length ) {
 			var a = args[argcur++].split(":");
-			checkRec(rep, a[0], a[1], list);
+			try {
+				checkRec(rep, a[0], a[1], list);
+			} catch(e:Dynamic) {
+				throw 'Cannot process $a: $e';
+			}
 		}
 		for( d in list ) {
 			var ndir = d.dir + "ndll";
