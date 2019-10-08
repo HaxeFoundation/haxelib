@@ -90,11 +90,15 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
-		var p = #if system_haxelib
+		var p = {#if system_haxelib
+			#if (haxe_ver >= 3.2)
+			new Process("haxelib", ["--global", "-R", serverUrl].concat(args));
+			#else
 			new Process("haxelib", ["-R", serverUrl].concat(args));
+			#end
 		#else
 			new Process("neko", [haxelibBin, "--global", "-R", serverUrl].concat(args));
-		#end
+		#end}
 
 		if (input != null) {
 			p.stdin.writeString(input);
@@ -199,6 +203,7 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestUser());
 		runner.add(new tests.integration.TestOwner());
 		runner.add(new tests.integration.TestDev());
+		runner.add(new tests.integration.TestRun());
 		var success = runner.run();
 
 		if (!success) {
