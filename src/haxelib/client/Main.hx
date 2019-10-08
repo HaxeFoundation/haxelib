@@ -1379,7 +1379,8 @@ class Main {
 					if (!ask("Update "+p+" to "+latest))
 						return;
 				}
-				doInstall(state.rep, p, latest,true);
+				var info = retry(site.infos.bind(p));
+				doInstall(state.rep, info.name, latest,true);
 				state.updated = true;
 			} else
 				setCurrent(state.rep, p, latest, true);
