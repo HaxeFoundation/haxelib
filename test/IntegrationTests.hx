@@ -76,7 +76,7 @@ class IntegrationTests extends TestBase {
 				var r = haxelib(["version"]).result();
 				if (r.code == 0)
 					SemVer.ofString(switch(r.out.trim()) {
-						case _.split(" ") => [v] | [v, _]: v;
+						case _.split(" ") => parts: parts[0];
 						case v: v;
 					});
 				else if (r.out.indexOf("3.1.0-rc.4") >= 0)
