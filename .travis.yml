@@ -70,7 +70,8 @@ install:
 
 script:
   # run our CI script
-  - haxe ci.hxml || cat ~/tora.log
+  - haxe ci.hxml || echo "[BUILD FAILED]"
+  - cat ~/tora.log
 
 deploy:
   skip_cleanup: true
