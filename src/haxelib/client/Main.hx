@@ -1674,7 +1674,7 @@ class Main {
 
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
-
+trace('$vdir/run.n');
 		var callArgs =
 			if (infos.main != null) {
 				runScriptArgs(project, infos.main, infos.dependencies);
