@@ -6,7 +6,7 @@ import haxe.unit.*;
 class TestBase extends TestCase {
 	static var haxelibPath = FileSystem.fullPath("run.n");
 	public function runHaxelib(args:Array<String>, printProgress = false) {
-		var p = new Process("neko", [haxelibPath].concat(args).concat(["--global"]));
+		var p = new Process("neko", [haxelibPath].concat(args));
 		var stdout = '';
 		var stderr = '';
 		var eofCount = 0;

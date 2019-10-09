@@ -33,7 +33,7 @@ class IntegrationTests extends TestBase {
 	function get_serverUrl() return serverUrl != null ? serverUrl : serverUrl = 'http://${server}:${serverPort}/';
 
 	static var originalRepo(default, never) = {
-		var p = new Process("haxelib", ["--global", "config"]);
+		var p = new Process("haxelib", ["config"]);
 		var originalRepo = Path.normalize(p.stdout.readLine());
 		p.close();
 		if (repo == originalRepo) {
@@ -90,15 +90,11 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
-		var p = {#if system_haxelib
-			#if (haxe_ver >= 3.2)
-			new Process("haxelib", ["--global", "-R", serverUrl].concat(args));
-			#else
+		var p = #if system_haxelib
 			new Process("haxelib", ["-R", serverUrl].concat(args));
-			#end
 		#else
-			new Process("neko", [haxelibBin, "--global", "-R", serverUrl].concat(args));
-		#end}
+			new Process("neko", [haxelibBin, "-R", serverUrl].concat(args));
+		#end
 
 		if (input != null) {
 			p.stdin.writeString(input);
