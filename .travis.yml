@@ -58,6 +58,9 @@ install:
     fi
   - neko run.n setup haxelib_global
   - haxe libs.hxml
+  - ls -la haxelib_global/tora
+  - ls -la haxelib_global/tora/1,8,1
+  - ls -la haxelib_global/tora/1,8,1/release
   # copy aws.ndll to the right place
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Mac64/aws.ndll ${NEKOPATH}/aws.ndll;
