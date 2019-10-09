@@ -1,3 +1,4 @@
+import haxe.unit.TestRunner;
 import sys.*;
 import sys.io.*;
 import haxe.io.*;
@@ -45,7 +46,7 @@ class Prepare {
 		for (item in FileSystem.readDirectory(libsPath)) {
 			var path = Path.join([libsPath, item]);
 			if (FileSystem.isDirectory(path)) {
-				trace('Preparing $item');
+				TestRunner.print('Preparing $item');
 				zipDir(path, 'test/libraries/${item}.zip');
 			}
 		}
