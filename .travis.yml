@@ -68,6 +68,8 @@ install:
       sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Linux64/aws.ndll ${NEKOPATH}/aws.ndll;
     fi;
   - haxelib list
+  - haxelib version
+  - haxelib path tora
   - haxelib run tora > ~/tora.log 2>&1 &
 
 script:
