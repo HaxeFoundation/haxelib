@@ -4,6 +4,7 @@ import haxe.io.Path;
 using IntegrationTests;
 
 class TestRun extends IntegrationTests {
+#if (haxe_ver >= 4.0)
 	function testMain():Void {
 		var r = haxelib(["dev", "Baz", Path.join([IntegrationTests.projectRoot, "test/libraries/libBaz"])]).result();
 		assertSuccess(r);
@@ -19,7 +20,7 @@ class TestRun extends IntegrationTests {
 		assertSuccess(r);
 		assertEquals('Bar Run.hx script', r.out);
 	}
-
+#end
 	function testRunN_preferredOverRunHx():Void {
 		var r = haxelib(["dev", "Bar2", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2"])]).result();
 		assertSuccess(r);
