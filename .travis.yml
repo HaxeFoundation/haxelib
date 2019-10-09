@@ -70,7 +70,7 @@ install:
   - haxelib list
   - haxelib version
   - haxelib path tora
-  - haxelib run tora > ~/tora.log 2>&1 &
+  - neko run.n run tora > ~/tora.log 2>&1 &
 
 script:
   # run our CI script
