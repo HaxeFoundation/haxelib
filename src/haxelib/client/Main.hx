@@ -1225,7 +1225,7 @@ class Main {
 
 
 		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
-
+trace('Rep path: ' + rep);
 		if (isSamePath(rep, configFile))
 			throw "Can't use "+rep+" because it is reserved for config file";
 
@@ -1674,7 +1674,8 @@ class Main {
 
 		args.push(Sys.getCwd());
 		Sys.setCwd(vdir);
-
+trace('Cwd: ' + Sys.getCwd());
+trace('Vdir: ' + vdir);
 		var callArgs =
 			if (infos.main != null) {
 				runScriptArgs(project, infos.main, infos.dependencies);
