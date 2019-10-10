@@ -56,21 +56,22 @@ install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       brew update;
     fi
-  - neko run.n setup .haxelib
+  - neko run.n setup haxelib_global
   - haxe libs.hxml
   # copy aws.ndll to the right place
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Mac64/aws.ndll ${NEKOPATH}/aws.ndll;
+      sudo cp $(neko run.n config)/aws-sdk-neko/*/ndll/Mac64/aws.ndll ${NEKOPATH}/aws.ndll;
     fi;
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-      sudo cp $(haxelib config)/aws-sdk-neko/*/ndll/Linux64/aws.ndll ${NEKOPATH}/aws.ndll;
+      sudo cp $(neko run.n config)/aws-sdk-neko/*/ndll/Linux64/aws.ndll ${NEKOPATH}/aws.ndll;
     fi;
-  - haxelib list
-  - haxelib run tora > /dev/null 2>&1 &
+  - neko run.n list
+  - neko run.n version
+  - neko run.n run tora > ~/tora.log 2>&1 &
 
 script:
   # run our CI script
-  - haxe ci.hxml
+  - haxe ci.hxml || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
 
 deploy:
   skip_cleanup: true

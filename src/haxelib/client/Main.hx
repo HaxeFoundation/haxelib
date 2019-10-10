@@ -1224,7 +1224,7 @@ class Main {
 		}
 
 
-		rep = try FileSystem.fullPath(rep) catch (_:Dynamic) rep;
+		rep = try absolutePath(rep) catch (e:Dynamic) rep;
 
 		if (isSamePath(rep, configFile))
 			throw "Can't use "+rep+" because it is reserved for config file";
@@ -1465,7 +1465,7 @@ class Main {
 				throw "Library "+prj+" has two versions included : "+version+" and "+p.version;
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		var inf = Data.readData(json, json != null);
+		var inf = Data.readData(json, false);
 		l.add({ project : prj, version : version, dir : Path.addTrailingSlash(vdir), info: inf });
 		if( returnDependencies ) {
 			for( d in inf.dependencies )
@@ -1766,7 +1766,7 @@ class Main {
 	}
 
 	function newRepo() {
-		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
+		var path = absolutePath(REPODIR);
 		var created = FsUtils.safeDir(path, true);
 		if (created)
 			print('Local repository created ($path)');
@@ -1775,7 +1775,7 @@ class Main {
 	}
 
 	function deleteRepo() {
-		var path = #if (haxe_ver >= 3.2) FileSystem.absolutePath(REPODIR) #else REPODIR #end;
+		var path = absolutePath(REPODIR);
 		var deleted = FsUtils.deleteRec(path);
 		if (deleted)
 			print('Local repository deleted ($path)');
@@ -1807,6 +1807,13 @@ class Main {
 		}
 	}
 
+	// haxe 3.1.3 doesn't have FileSystem.absolutePath()
+	static function absolutePath(path:String) {
+		if (StringTools.startsWith(path, '/') || path.charAt(1) == ':' || StringTools.startsWith(path, '\\\\')) {
+			return path;
+		}
+		return haxe.io.Path.join([Sys.getCwd(), path]);
+	}
 
 	// deprecated commands
 	function local() {
