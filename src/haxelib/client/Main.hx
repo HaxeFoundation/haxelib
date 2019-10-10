@@ -1224,7 +1224,7 @@ class Main {
 		}
 
 
-		rep = try FileSystem.absolutePath(rep) catch (_:Dynamic) rep;
+		rep = try FileSystem.absolutePath(rep) catch (e:Dynamic) { trace(e); rep; }
 trace('Rep path: ' + rep);
 		if (isSamePath(rep, configFile))
 			throw "Can't use "+rep+" because it is reserved for config file";
