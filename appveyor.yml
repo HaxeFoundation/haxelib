@@ -9,9 +9,9 @@ install:
   - cinst nssm -y
   - cinst curl -y
   - RefreshEnv
-  - neko run.n setup .haxelib
+  - neko run.n setup haxelib_global
   - haxe libs.hxml
-  - haxelib list
+  - neko run.n list
 
 build: off
 

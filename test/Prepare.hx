@@ -45,6 +45,7 @@ class Prepare {
 		for (item in FileSystem.readDirectory(libsPath)) {
 			var path = Path.join([libsPath, item]);
 			if (FileSystem.isDirectory(path)) {
+				trace('Preparing $item');
 				zipDir(path, 'test/libraries/${item}.zip');
 			}
 		}
