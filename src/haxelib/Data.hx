@@ -63,7 +63,7 @@ abstract DependencyVersion(String) to String from SemVer {
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == '' || this == 'git' || (this != null && this.startsWith('git:')))
+			if (this == null || this == '' || this == 'git' || this.startsWith('git:'))
 				{ validate: function () return None }
 			else
 				@:privateAccess new SemVer(this);
