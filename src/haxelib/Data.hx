@@ -62,19 +62,12 @@ abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
 
-	@:to function toValidatable():Validatable {
-		var v:Validatable = try {
-			if (this == '' || this == 'git' || (this != null && this.startsWith('git:')))
+	@:to function toValidatable():Validatable
+		return
+			if (this == '' || this == 'git' || (Std.is(this, String) && this.startsWith('git:')))
 				{ validate: function () return None }
 			else
 				@:privateAccess new SemVer(this);
-		} catch(e:Dynamic) {
-			trace(this);
-			trace(CallStack.toString(CallStack.exceptionStack()));
-			throw e;
-		}
-		return v;
-	}
 
 	static public function isValid(s:String)
 		return new DependencyVersion(s).toValidatable().validate() == None;
