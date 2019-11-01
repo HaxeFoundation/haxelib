@@ -108,7 +108,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 				result.push ({
 					name: f,
 					type: (DependencyType.Git : DependencyType),
-					version: (DependencyVersion.GIT : DependencyVersion),
+					version: (DependencyVersion.DEFAULT : DependencyVersion),
 					url: (url : String),
 					subDir: (null : String),
 					branch: (branch : String),
