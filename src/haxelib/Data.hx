@@ -21,6 +21,7 @@
  */
 package haxelib;
 
+import haxe.CallStack;
 import haxe.ds.Option;
 import haxe.ds.*;
 import haxe.zip.Reader;
@@ -63,27 +64,30 @@ abstract DependencyVersion(String) to String from SemVer {
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == '') { validate: function () return None }
-			else @:privateAccess new SemVer(this);
+			if (this == '' || this == 'git' || (Std.is(this, String) && this.startsWith('git:')))
+				{ validate: function () return None }
+			else
+				@:privateAccess new SemVer(this);
 
 	static public function isValid(s:String)
 		return new DependencyVersion(s).toValidatable().validate() == None;
 
 	static public var DEFAULT(default, null) = new DependencyVersion('');
+	static public var GIT(default, null) = new DependencyVersion('git');
 }
 
 abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion> {
 	@:to public function toArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
-		
+
 		var result:Array<Dependency> = new Array<Dependency>();
-		
+
 		for (f in fields) {
 			var value:String = Reflect.field(this, f);
 
-			var isGit = value != null && (value + "").startsWith("git:"); 
-			
+			var isGit = value != null && (value + "").startsWith("git:");
+
 			if ( !isGit )
 			{
 				result.push ({
@@ -101,7 +105,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 				var urlParts = value.split("#");
 				var url = urlParts[0];
 				var branch = urlParts.length > 1 ? urlParts[1] : null;
-				
+
 				result.push ({
 					name: f,
 					type: (DependencyType.Git : DependencyType),
@@ -111,10 +115,10 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 					branch: (branch : String),
 				});
 			}
-			
-			
+
+
 		}
-		
+
 		return result;
 	}
 	public inline function iterator()

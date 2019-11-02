@@ -2,6 +2,8 @@ package tests.integration;
 
 import haxe.io.Path;
 using IntegrationTests;
+using StringTools;
+using Lambda;
 
 class TestPath extends IntegrationTests {
 #if !system_haxelib
