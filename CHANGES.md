@@ -1,3 +1,6 @@
+## 4.0.1 (2019-11-02)
+ - Fixed git dependencies support in haxelib.json ([#476](https://github.com/HaxeFoundation/haxelib/issues/476))
+
 ## 4.0.0 (2019-10-10)
 
  - Added `haxelib libpath` command ([#407](https://github.com/HaxeFoundation/haxelib/issues/407))

@@ -5,7 +5,7 @@
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
-	"version": "4.0.0",
-	"releasenote": " * Added `haxelib libpath` command (#407)\n * Allow forcing proxy configuration if proxy test failed (#411)\n * Use version specified by `-lib library:1.2.3` even if currently active one is `dev`\n * Strip comments from extraParams.hxml for `haxelib path` (#439)\n * Automatically retry failing downloads 3 times\n * Allow environment variables in dev paths using `%VAR_NAME%` syntax. E.g.: `/path/to/%MY_ENV_VAR%/lib`\n * Handle HAXELIB_NO_SSL environment variable to disable https on requests to haxelib server (#448)\n * Added `--skip-dependencies` option (#343)\n * Look for `.haxelib` local repo recursively up along the directories tree (#292)",
+	"version": "4.0.1",
+	"releasenote": " * Fixed git dependencies support in haxelib.json (#476)",
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"]
 }
