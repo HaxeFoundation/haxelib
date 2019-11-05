@@ -334,7 +334,7 @@ class Data {
 		var doc:Infos =
 			try Json.parse(jsondata)
 			catch ( e : Dynamic )
-				if (check >= CheckSyntax)
+				if (check >= CheckLevel.CheckSyntax)
 					throw 'JSON parse error: $e';
 				else {
 					name : ProjectName.DEFAULT,
@@ -346,7 +346,7 @@ class Data {
 					contributors: [],
 				}
 
-		if (check >= CheckData)
+		if (check >= CheckLevel.CheckData)
 			Validator.validate(doc);
 		else {
 			if (!doc.version.valid)
