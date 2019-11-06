@@ -1465,7 +1465,7 @@ class Main {
 				throw "Library "+prj+" has two versions included : "+version+" and "+p.version;
 			}
 		var json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		var inf = Data.readData(json, json != null);
+		var inf = Data.readData(json, json != null ? CheckSyntax : NoCheck);
 		l.add({ project : prj, version : version, dir : Path.addTrailingSlash(vdir), info: inf });
 		if( returnDependencies ) {
 			for( d in inf.dependencies )
