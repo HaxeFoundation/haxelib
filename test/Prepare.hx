@@ -5,6 +5,7 @@ using StringTools;
 
 class Prepare {
 	static function zipDir(dir:String, outPath:String):Void {
+		trace(dir);
 		var entries = new List<haxe.zip.Entry>();
 
 		function add(path:String, target:String) {
