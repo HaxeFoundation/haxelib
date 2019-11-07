@@ -1,11 +1,9 @@
 import sys.*;
 import sys.io.*;
 import haxe.io.*;
-using StringTools;
 
 class Prepare {
 	static function zipDir(dir:String, outPath:String):Void {
-		trace(dir);
 		var entries = new List<haxe.zip.Entry>();
 
 		function add(path:String, target:String) {
@@ -26,7 +24,6 @@ class Prepare {
 					data: bytes,
 					crc32: haxe.crypto.Crc32.make(bytes),
 				}
-				trace(haxe.Json.stringify(entry));
 				haxe.zip.Tools.compress(entry, 9);
 				entries.add(entry);
 			}
@@ -40,6 +37,7 @@ class Prepare {
 	}
 
 	static function main():Void {
+		var system = Sys.systemName();
 		/*
 			(re)package the dummy libraries
 		*/
@@ -47,9 +45,12 @@ class Prepare {
 		for (item in FileSystem.readDirectory(libsPath)) {
 			var path = Path.join([libsPath, item]);
 			if (FileSystem.isDirectory(path)) {
-				//Without this trace CI zipping may fail. And idk why.
-				// trace('Preparing $item');
-				zipDir(path, 'test/libraries/${item}.zip');
+				switch system {
+					case 'Windows':
+						zipDir(path, 'test/libraries/${item}.zip');
+					case _:
+						Sys.command('zip', ['test/libraries/${item}.zip', path]);
+				}
 			}
 		}
 	}
