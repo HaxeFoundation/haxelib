@@ -4,6 +4,7 @@ services:
   - mysql
 
 install:
+  - git submodule update --init --recursive
   - ps: Set-Service wuauserv -StartupType Manual
   - cinst haxe -y
   - cinst nssm -y
