@@ -465,6 +465,11 @@ Listen 2000
 
 	static function main():Void {
 		// Note that package.zip output is also used by client tests, so it has to be run before that.
+		switch Sys.systemName() {
+			case 'Windows':
+				runCommand("dir", ["hx3compat/"]);
+			case _:
+		}
 		runCommand("haxe", ["package.hxml"]);
 		runCommand("haxe", ["prepare_tests.hxml"]);
 

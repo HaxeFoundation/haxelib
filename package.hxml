@@ -1,3 +1,3 @@
 -cp src
--cp hx3compat/std
+-lib hx3compat
 --run Package
