@@ -38,6 +38,7 @@ class Prepare {
 
 	static function main():Void {
 		var system = Sys.systemName();
+		var cwd = Sys.getCwd();
 		/*
 			(re)package the dummy libraries
 		*/
@@ -49,7 +50,12 @@ class Prepare {
 					case 'Windows':
 						zipDir(path, 'test/libraries/${item}.zip');
 					case _:
-						Sys.command('zip', ['test/libraries/${item}.zip', path]);
+						Sys.setCwd(path);
+						var exitCode = Sys.command('zip', ['-r', '../${item}.zip', '.']);
+						Sys.setCwd(cwd);
+						if(exitCode != 0) {
+							Sys.stderr().writeString('Failed to zip $item\n');
+						}
 				}
 			}
 		}
