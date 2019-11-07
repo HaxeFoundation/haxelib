@@ -26,6 +26,7 @@ class Prepare {
 					data: bytes,
 					crc32: haxe.crypto.Crc32.make(bytes),
 				}
+				trace(haxe.Json.stringify(entry));
 				haxe.zip.Tools.compress(entry, 9);
 				entries.add(entry);
 			}
