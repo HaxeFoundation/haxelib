@@ -58,6 +58,22 @@ typedef ProjectInfos = {
 	var tags : List<String>;
 }
 
+@:enum abstract CheckLevel(Int) {
+	var NoCheck = 0;
+	var CheckSyntax = 1;
+	var CheckData = 2;
+
+	@:from static inline function fromBool(check:Bool):CheckLevel {
+		return check ? CheckData : NoCheck;
+	}
+
+	@:op(A > B) function gt(b:CheckLevel):Bool;
+	@:op(A >= B) function gte(b:CheckLevel):Bool;
+	@:op(A == B) function eq(b:CheckLevel):Bool;
+	@:op(A <= B) function lte(b:CheckLevel):Bool;
+	@:op(A < B) function lt(b:CheckLevel):Bool;
+}
+
 abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
@@ -298,7 +314,7 @@ class Data {
 		}
 
 
-	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos
+	public static function readInfos( zip : List<Entry>, check : CheckLevel ) : Infos
 		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
 	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
@@ -314,11 +330,11 @@ class Data {
 		}
 	}
 
-	public static function readData( jsondata: String, check : Bool ) : Infos {
+	public static function readData( jsondata: String, check : CheckLevel ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
 			catch ( e : Dynamic )
-				if (check)
+				if (check >= CheckLevel.CheckSyntax)
 					throw 'JSON parse error: $e';
 				else {
 					name : ProjectName.DEFAULT,
@@ -330,7 +346,7 @@ class Data {
 					contributors: [],
 				}
 
-		if (check)
+		if (check >= CheckLevel.CheckData)
 			Validator.validate(doc);
 		else {
 			if (!doc.version.valid)

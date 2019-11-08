@@ -15,7 +15,16 @@ class Package {
 
     static function main() {
         checkVersion();
+        switch Sys.systemName() {
+            case 'Windows':
+                zipWindows();
+            case _:
+                var exitCode = Sys.command('zip', ['-r', outPath, 'src/haxelib', 'haxelib.json', 'run.n', 'README.md']);
+                Sys.exit(exitCode);
+        }
+    }
 
+    static function zipWindows() {
         var entries = new List<Entry>();
 
         function add(path:String, ?target:String) {

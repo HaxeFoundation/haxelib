@@ -198,6 +198,7 @@ Listen 2000
 				return;
 			} catch (e:Dynamic) {
 				trace(e);
+				trace(CallStack.toString(CallStack.exceptionStack()));
 				Sys.sleep(5.0);
 			}
 			throw "cannot config database";

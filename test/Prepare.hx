@@ -1,7 +1,6 @@
 import sys.*;
 import sys.io.*;
 import haxe.io.*;
-using StringTools;
 
 class Prepare {
 	static function zipDir(dir:String, outPath:String):Void {
@@ -38,6 +37,8 @@ class Prepare {
 	}
 
 	static function main():Void {
+		var system = Sys.systemName();
+		var cwd = Sys.getCwd();
 		/*
 			(re)package the dummy libraries
 		*/
@@ -45,8 +46,17 @@ class Prepare {
 		for (item in FileSystem.readDirectory(libsPath)) {
 			var path = Path.join([libsPath, item]);
 			if (FileSystem.isDirectory(path)) {
-				trace('Preparing $item');
-				zipDir(path, 'test/libraries/${item}.zip');
+				switch system {
+					case 'Windows':
+						zipDir(path, 'test/libraries/${item}.zip');
+					case _:
+						Sys.setCwd(path);
+						var exitCode = Sys.command('zip', ['-r', '../${item}.zip', '.']);
+						Sys.setCwd(cwd);
+						if(exitCode != 0) {
+							Sys.stderr().writeString('Failed to zip $item\n');
+						}
+				}
 			}
 		}
 	}
