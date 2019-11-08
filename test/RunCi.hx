@@ -167,6 +167,11 @@ Listen 2000
     Require all granted
 </Directory>
 ';
+			switch Sys.systemName() {
+				case 'Windows':
+					confContent += 'ServerName localhost\n';
+				case _:
+			}
 			var confOut = if (exists(confPath))
 				append(confPath);
 			else
