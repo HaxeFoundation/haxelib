@@ -120,7 +120,7 @@ class RunCi {
 		function writeApacheConf(confPath:String):Void {
 			var hasModNeko = switch (systemName()) {
 				case "Windows":
-					false
+					false;
 				case _:
 					var p = new sys.io.Process("apachectl", ["-M"]);
 					var out = p.stdout.readAll().toString();
