@@ -167,11 +167,6 @@ Listen 2000
     Require all granted
 </Directory>
 ';
-			switch Sys.systemName() {
-				case 'Windows':
-					confContent += 'ServerName localhost\n';
-				case _:
-			}
 			var confOut = if (exists(confPath))
 				append(confPath);
 			else
@@ -213,7 +208,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.41-win64-VC15.zip", "bin/httpd.zip");
+				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.41-win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
