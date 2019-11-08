@@ -121,8 +121,8 @@ class RunCi {
 			var hasModNeko = switch (systemName()) {
 				case "Windows":
 					download("https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win.zip", "bin/neko.zip");
-					runCommand("7z", ["x", "bin\\neko.zip", "-obin\\neko"]);
-					ndllPath = Path.join([Sys.getCwd(), "bin\\neko"]);
+					runCommand("7z", ["x", "bin\\neko.zip", "-obin\\"]);
+					ndllPath = Path.join([Sys.getCwd(), "bin\\neko-2.3.0-win"]);
 					true;
 				case _:
 					var p = new sys.io.Process("apachectl", ["-M"]);
