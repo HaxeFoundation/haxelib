@@ -120,7 +120,10 @@ class RunCi {
 		function writeApacheConf(confPath:String):Void {
 			var hasModNeko = switch (systemName()) {
 				case "Windows":
-					false;
+					download("https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win.zip", "bin/neko.zip");
+					runCommand("7z", ["x", "bin\\neko.zip", "-obin\\neko"]);
+					ndllPath = Path.join([Sys.getCwd(), "bin\\neko"]);
+					true;
 				case _:
 					var p = new sys.io.Process("apachectl", ["-M"]);
 					var out = p.stdout.readAll().toString();
