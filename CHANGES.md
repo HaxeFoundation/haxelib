@@ -1,3 +1,6 @@
+## 4.0.2 (2019-11-11)
+ - Fixed too strict requirements to haxelib.json data for private libs ([#484](https://github.com/HaxeFoundation/haxelib/issues/484))
+
 ## 4.0.1 (2019-11-02)
  - Fixed git dependencies support in haxelib.json ([#476](https://github.com/HaxeFoundation/haxelib/issues/476))
 
