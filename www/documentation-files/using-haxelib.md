@@ -368,7 +368,7 @@ haxelib submit
 
 > Submits a zip package to Haxelib so other users can install it.
 >
-> Alternatively you can run `haxelib submit` without argument to have Haxelib zip and submit the current directory (excluding names starting with a dot).
+> Alternatively you can run `haxelib submit <DIRECTORY>` to have Haxelib zip and submit a directory (excluding names starting with a dot). An example would be using `haxelib submit .` to zip and submit the local directory.
 >
 > If the user name is unknown, you'll be first asked to register an account.
 > If more the project has more than one developer, it will ask you which user you wish to submit as.
