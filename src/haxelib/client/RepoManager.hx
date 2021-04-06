@@ -11,8 +11,11 @@ using haxe.io.Path;
 class RepoException extends haxe.Exception {}
 
 enum InvalidConfigurationType {
+	/** There is no configuration set **/
 	NoneSet;
+	/** The configured folder does not exist **/
 	NotFound(path:String);
+	/** The configuration points to a file instead of a directory **/
 	IsFile(path:String);
 }
 
@@ -30,6 +33,7 @@ class InvalidConfiguration extends RepoException {
 
 }
 
+/** Manager for the location of the haxelib database. **/
 class RepoManager {
 	static final REPO_DIR = "lib";
 	static final LOCAL_REPO_DIR = ".haxelib";
@@ -39,6 +43,12 @@ class RepoManager {
 
 	static final VARIABLE_NAME = "HAXELIB_PATH";
 
+	/**
+		Returns the path to the repository local to `dir` if one exists,
+		otherwise returns global repository path.
+
+		If `dir` is omitted, the current working directory is used instead.
+	**/
 	public static function getPath(?dir:String):String {
 		final dir = getDirectory(dir);
 
@@ -49,6 +59,12 @@ class RepoManager {
 		return getValidGlobalPath();
 	}
 
+	/**
+		Searches for the path to local repository, starting in `dir`
+		and then going up until root directory is reached.
+
+		Returns the directory path if it is found, otherwise returns null.
+	**/
 	static function getLocalPath(dir:String):Null<String> {
 		if (dir == "")
 			return null;
@@ -58,6 +74,13 @@ class RepoManager {
 		return getLocalPath(dir.directory());
 	}
 
+	/**
+		Returns the global repository path, but throws an exception
+		if it does not exist or if it is not a directory.
+
+		The `HAXELIB_PATH` environment variable takes precedence over
+		the configured global repository path.
+	**/
 	public static function getGlobalPath():String {
 		return getValidGlobalPath();
 	}
@@ -84,6 +107,11 @@ class RepoManager {
 		return rep;
 	}
 
+	/**
+		Sets `path` as the global haxelib repository in the user's haxelib config file.
+
+		If `path` does not exist already, it is created.
+	 **/
 	public static function setGlobalPath(path:String):Void {
 		path = FileSystem.absolutePath(path);
 		final configFile = getConfigFilePath();
@@ -95,11 +123,20 @@ class RepoManager {
 		File.saveContent(configFile, path);
 	}
 
+	/**
+		Deletes the user's current haxelib setup,
+		resetting their global repository path.
+	**/
 	public static function unsetGlobalPath():Void {
 		final configFile = getConfigFilePath();
 		FileSystem.deleteFile(configFile);
 	}
 
+	/**
+		Returns the previous global repository path if a valid one had been
+		set up, otherwise returns the default path for the current operating
+		system.
+	**/
 	public static function suggestGlobalPath() {
 		final configured = readConfiguredGlobalPath();
 		if (configured != null)
@@ -108,6 +145,16 @@ class RepoManager {
 		return getDefaultGlobalPath();
 	}
 
+	/**
+		Returns the global Haxelib repository path, without validating
+		that it exists. If it is not configured anywhere, returns `null`.
+
+		First checks `HAXELIB_PATH` environment variable,
+		then checks the content of user config file.
+
+		On Unix-like systems also checks `/etc/.haxelib` for system wide
+		configuration.
+	 **/
 	static function readConfiguredGlobalPath():Null<String> {
 		// first check the env var
 		final environmentVar = Sys.getEnv(VARIABLE_NAME);
@@ -133,6 +180,13 @@ class RepoManager {
 		return null;
 	}
 
+	/**
+		Creates a new local repository in the directory `dir` if one doesn't already exist.
+
+		If `dir` is ommited, the current working directory is used.
+
+		Throws RepoException if repository already exists.
+	**/
 	public static function createLocal(?dir:String) {
 		if (! (dir == null || FileSystem.exists(dir)))
 			FsUtils.safeDir(dir);
@@ -143,6 +197,13 @@ class RepoManager {
 			throw new RepoException('Local repository already exists ($path)');
 	}
 
+	/**
+		Deletes the local repository in the directory `dir`, if it exists.
+
+		If `dir` is ommited, the current working directory is used.
+
+		Throws RepoException if no repository is found.
+	**/
 	public static function deleteLocal(?dir:String) {
 		final dir = getDirectory(dir);
 		final path = FileSystem.absolutePath(Path.join([dir, LOCAL_REPO_DIR]));
@@ -155,6 +216,7 @@ class RepoManager {
 		return Path.join([getHomePath(), CONFIG_FILE]);
 	}
 
+	/** Returns the default path for the global directory. **/
 	static function getDefaultGlobalPath():String {
 		if (IS_WINDOWS)
 			return getWindowsDefaultGlobalPath();
@@ -167,6 +229,13 @@ class RepoManager {
 		else '/usr/lib/haxe/$REPO_DIR/'; // for other unixes
 	}
 
+	/**
+		The Windows haxe installer will setup `%HAXEPATH%`.
+		We will default haxelib repo to `%HAXEPATH%/lib.`
+
+		When there is no `%HAXEPATH%`, we will use a `/haxelib`
+		directory next to the config file, ".haxelib".
+	**/
 	static function getWindowsDefaultGlobalPath():String {
 		final haxepath = Sys.getEnv("HAXEPATH");
 		if (haxepath != null)
