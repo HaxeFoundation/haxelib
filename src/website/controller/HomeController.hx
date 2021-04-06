@@ -4,7 +4,8 @@ import ufront.MVC;
 import ufront.ufadmin.controller.*;
 import website.api.*;
 import website.model.SiteDb;
-import haxelib.*;
+import haxelib.Data;
+import haxelib.SemVer;
 import haxelib.server.*;
 import haxe.io.*;
 using StringTools;
@@ -42,12 +43,12 @@ class HomeController extends Controller {
 	@:route("/")
 	public function homepage() {
 		var allProjects =  projectListApi.all().sure();
-		
-		var latestProjects =  projectListApi.latest( 12 * 2 ).sure() ;
+
+		var latestProjects = projectListApi.latest( 12 * 2 ).sure();
 		var popularProjects = prepareProjectList( projectListApi.all(6).sure() );
 		var users = userApi.getUserList().sure();
 		var tags = projectListApi.getTagList( 25 ).sure();
-		
+
 		var hasRecentProject = new Map<String, Bool>();
 		latestProjects = [for (p in latestProjects) {
 			if (p.p !=null && !hasRecentProject.exists(p.p.name)) {
@@ -55,7 +56,7 @@ class HomeController extends Controller {
 				p;
 			}
 		}];
-		
+
 		return new ViewResult({
 			title: "Haxelib - the Haxe package manager",
 			description: "Haxelib is a tool that enables sharing libraries and code in the Haxe ecosystem.",
@@ -63,7 +64,7 @@ class HomeController extends Controller {
 			latestProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) latestProjects[i]],
 			popularProjects: function(offset:Int, total:Int) return [for (i in offset...offset+total) popularProjects[i]],
 			users: function(offset:Int, total:Int) return [for (i in offset...offset+total) users[i]],
-			
+
 			tags: tags,
 			exampleCode: CompileTime.readFile( "website/homepage-example.txt" ),
 			useWrapper: false,
@@ -76,9 +77,9 @@ class HomeController extends Controller {
 	@:route("/recent/")
 	public function recent() {
 		var latestProjects =  projectListApi.latest( 100 ).sure();
-		
+
 		latestProjects = [for (p in latestProjects) if (p.p != null ) p];
-		
+
 		return new ViewResult({
 			title: "Recent updates - the Haxe package manager",
 			description: "List of the most recent changes of Haxe libraries.",

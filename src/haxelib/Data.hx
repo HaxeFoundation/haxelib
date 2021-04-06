@@ -80,7 +80,7 @@ abstract DependencyVersion(String) to String from SemVer {
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == '' || this == 'git' || (Std.is(this, String) && this.startsWith('git:')))
+			if (this == '' || this == 'git' || (#if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(this, String) && this.startsWith('git:')))
 				{ validate: function () return None }
 			else
 				@:privateAccess new SemVer(this);
@@ -206,7 +206,7 @@ abstract ProjectName(String) to String {
 		function add(m, r)
 			a.push( { msg: m, check: r } );
 
-		add("%VALUE is not a String", 
+		add("%VALUE is not a String",
 			#if (haxe_ver < 4.1)
 				Std.is.bind(_, String)
 			#else
