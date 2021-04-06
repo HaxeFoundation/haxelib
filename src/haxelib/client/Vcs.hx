@@ -46,8 +46,8 @@ interface IVcs {
 
 
 @:enum abstract VcsID(String) to String {
-	var Hg = "hg";
-	var Git = "git";
+	final Hg = "hg";
+	final Git = "git";
 }
 
 enum VcsError {
@@ -59,9 +59,9 @@ enum VcsError {
 
 
 typedef Settings = {
-	@:optional var flat:Bool;
-	@:optional var debug:Bool;
-	@:optional var quiet:Bool;
+	@:optional final flat:Bool;
+	@:optional final debug:Bool;
+	@:optional final quiet:Bool;
 }
 
 
@@ -100,11 +100,7 @@ class Vcs implements IVcs {
 		this.settings = {
 			flat: settings.flat != null ? settings.flat : false,
 			debug: settings.debug != null ? settings.debug : false,
-			quiet: settings.quiet != null ? settings.quiet : false
-		}
-
-		if (settings.debug) {
-			this.settings.quiet = false;
+			quiet: settings.quiet != null && !settings.debug ? settings.quiet : false
 		}
 	}
 
@@ -116,7 +112,7 @@ class Vcs implements IVcs {
 
 	static function set(id:VcsID, vcs:Vcs, settings:Settings, ?rewrite:Bool):Void {
 		initialize(settings);
-		var existing = reg.get(id) != null;
+		final existing = reg.get(id) != null;
 		if (!existing || rewrite)
 			reg.set(id, vcs);
 	}
@@ -144,7 +140,7 @@ class Vcs implements IVcs {
     	code: Int,
     	out: String
     } {
-        var p = try {
+        final p = try {
         	new sys.io.Process(cmd, args);
         } catch(e:Dynamic) {
         	return {
@@ -152,14 +148,14 @@ class Vcs implements IVcs {
         		out: Std.string(e)
         	}
         }
-        var out = p.stdout.readAll().toString();
-        var err = p.stderr.readAll().toString();
+        final out = p.stdout.readAll().toString();
+        final err = p.stderr.readAll().toString();
         if (settings.debug && out != "")
         	Sys.println(out);
         if (settings.debug && err != "")
         	Sys.stderr().writeString(err);
-        var code = p.exitCode();
-        var ret = {
+        final code = p.exitCode();
+        final ret = {
             code: code,
             out: code == 0 ? out : err
         };
@@ -220,10 +216,10 @@ class Git extends Vcs {
 			return;
 
 		// if we have already msys git/cmd in our PATH
-		var match = ~/(.*)git([\\|\/])cmd$/;
+		final match = ~/(.*)git([\\|\/])cmd$/;
 		for (path in Sys.getEnv("PATH").split(";")) {
 			if (match.match(path.toLowerCase())) {
-				var newPath = match.matched(1) + executable + match.matched(2) + "bin";
+				final newPath = match.matched(1) + executable + match.matched(2) + "bin";
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + newPath);
 			}
 		}
@@ -256,14 +252,18 @@ class Git extends Vcs {
 			}
 		}
 
-		var code = command(executable, ["pull"]).code;
+		final code = command(executable, ["pull"]).code;
 		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
 		if (code != 0) {
 			// get parent-branch:
-			var branch = command(executable, ["show-branch"]).out;
-			var regx = ~/\[([^]]*)\]/;
-			if (regx.match(branch))
-				branch = regx.matched(1);
+			final branch = {
+				final raw = command(executable, ["show-branch"]).out;
+				final regx = ~/\[([^]]*)\]/;
+				if (regx.match(raw))
+					regx.matched(1);
+				else
+					raw;
+			}
 
 			sure(command(executable, ["checkout", branch, "--force"]));
 			sure(command(executable, ["pull"]));
@@ -272,9 +272,9 @@ class Git extends Vcs {
 	}
 
 	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
-		var oldCwd = Sys.getCwd();
+		final oldCwd = Sys.getCwd();
 
-		var vcsArgs = ["clone", url, libPath];
+		final vcsArgs = ["clone", url, libPath];
 
 		if (settings == null || !settings.flat)
 			vcsArgs.push('--recursive');
@@ -288,11 +288,11 @@ class Git extends Vcs {
 		Sys.setCwd(libPath);
 
 		if (version != null && version != "") {
-			var ret = command(executable, ["checkout", "tags/" + version]);
+			final ret = command(executable, ["checkout", "tags/" + version]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 		} else if (branch != null) {
-			var ret = command(executable, ["checkout", branch]);
+			final ret = command(executable, ["checkout", branch]);
 			if (ret.code != 0)
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
 		}
@@ -315,10 +315,10 @@ class Mercurial extends Vcs {
 			return;
 
 		// if we have already msys git/cmd in our PATH
-		var match = ~/(.*)hg([\\|\/])cmd$/;
+		final match = ~/(.*)hg([\\|\/])cmd$/;
 		for(path in Sys.getEnv("PATH").split(";")) {
 			if(match.match(path.toLowerCase())) {
-				var newPath = match.matched(1) + executable + match.matched(2) + "bin";
+				final newPath = match.matched(1) + executable + match.matched(2) + "bin";
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + newPath);
 			}
 		}
@@ -328,8 +328,8 @@ class Mercurial extends Vcs {
 	override public function update(libName:String):Bool {
 		command(executable, ["pull"]);
 		var summary = command(executable, ["summary"]).out;
-		var diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos", "--no-ext-diff"]);
-		var status = command(executable, ["status"]);
+		final diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos", "--no-ext-diff"]);
+		final status = command(executable, ["status"]);
 
 		// get new pulled changesets:
 		// (and search num of sets)
@@ -360,7 +360,7 @@ class Mercurial extends Vcs {
 	}
 
 	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
-		var vcsArgs = ["clone", url, libPath];
+		final vcsArgs = ["clone", url, libPath];
 
 		if (branch != null) {
 			vcsArgs.push("--branch");

@@ -26,7 +26,7 @@ import haxe.Json;
 class ConvertXml {
 	public static function convert(inXml:String) {
 		// Set up the default JSON structure
-		var json = {
+		final json = {
 			"name": "",
 			"url" : "",
 			"license": "",
@@ -39,8 +39,8 @@ class ConvertXml {
 		};
 
 		// Parse the XML and set the JSON
-		var xml = Xml.parse(inXml);
-		var project = xml.firstChild();
+		final xml = Xml.parse(inXml);
+		final project = xml.firstChild();
 		json.name = project.get("name");
 		json.license = project.get("license");
 		json.url = project.get("url");
@@ -58,9 +58,14 @@ class ConvertXml {
 						case "description":
 							json.description = node.firstChild().toString();
 						case "depends":
-							var name = node.get("name");
-							var version = node.get("version");
-							if (version == null) version = "";
+							final name = node.get("name");
+							final version = {
+								final version = node.get("version");
+								if (version == null)
+									"";
+								else
+									version;
+							}
 							Reflect.setField(json.dependencies, name, version);
 						default:
 					}
@@ -72,7 +77,7 @@ class ConvertXml {
 	}
 
 	public static function prettyPrint(json:Dynamic, indent="") {
-		var sb = new StringBuf();
+		final sb = new StringBuf();
 		sb.add("{\n");
 
 		var firstRun = true;
@@ -82,7 +87,7 @@ class ConvertXml {
 
 			var value = switch (f) {
 				case "dependencies":
-					var d = Reflect.field(json, f);
+					final d = Reflect.field(json, f);
 					prettyPrint(d, indent + "  ");
 				default:
 					Json.stringify(Reflect.field(json, f));
