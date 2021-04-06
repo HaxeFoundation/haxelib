@@ -8,6 +8,10 @@ import haxelib.client.FsUtils.*;
 using StringTools;
 using haxe.io.Path;
 
+#if (haxe_ver < 4.1)
+#error "RepoManager requires Haxe 4.1 or newer"
+#end
+
 class RepoException extends haxe.Exception {}
 
 enum InvalidConfigurationType {
