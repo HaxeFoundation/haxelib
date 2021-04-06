@@ -7,5 +7,8 @@
 	"classPath": "src",
 	"version": "4.0.2",
 	"releasenote": " * Fixed too strict requirements to haxelib.json data for private libs (#484)",
-	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"]
+	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"],
+	"dependencies":{
+		"hx3compat":"git:https://github.com/haxefoundation/hx3compat.git#f1f18201e5c0479cb5adf5f6028788b37f37b730"
+	}
 }
