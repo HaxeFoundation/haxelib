@@ -160,4 +160,13 @@ class FsUtils {
 		return home;
 	}
 
+	/** Returns absolute path, replacing `~` with homepath **/
+	public static function getFullPath(path:String):String {
+		final splitPath = path.split("/");
+		if (splitPath.length != 0 && splitPath.shift() == "~") {
+			return getHomePath() + "/" + splitPath.join("/");
+		}
+
+		return FileSystem.absolutePath(path);
+	}
 }
