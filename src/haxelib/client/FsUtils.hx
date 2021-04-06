@@ -28,8 +28,7 @@ using StringTools;
 /** Class containing useful FileSystem utility functions. **/
 @:noDoc
 class FsUtils {
-    static var IS_WINDOWS = (Sys.systemName() == "Windows");
-
+	public static final IS_WINDOWS = (Sys.systemName() == "Windows");
     /**
         Recursively follow symlink
 
@@ -140,4 +139,25 @@ class FsUtils {
         try FileSystem.fullPath(path) catch (error:String) if (error == "std@file_full_path") errors++;
         return errors == 2;
     }
+
+	public static function getHomePath():String {
+		var home:String = null;
+		if (IS_WINDOWS) {
+			home = Sys.getEnv("USERPROFILE");
+			if (home == null) {
+				final drive = Sys.getEnv("HOMEDRIVE");
+				final path = Sys.getEnv("HOMEPATH");
+				if (drive != null && path != null)
+					home = drive + path;
+			}
+			if (home == null)
+				throw "Could not determine home path. Please ensure that USERPROFILE or HOMEDRIVE+HOMEPATH environment variables are set.";
+		} else {
+			home = Sys.getEnv("HOME");
+			if (home == null)
+				throw "Could not determine home path. Please ensure that HOME environment variable is set.";
+		}
+		return home;
+	}
+
 }
