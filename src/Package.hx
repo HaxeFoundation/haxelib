@@ -11,7 +11,7 @@ import haxelib.Data.Infos;
 using StringTools;
 
 class Package {
-    static var outPath = "package.zip";
+    static final outPath = "package.zip";
 
     static function main() {
         checkVersion();
@@ -19,13 +19,13 @@ class Package {
             case 'Windows':
                 zipWindows();
             case _:
-                var exitCode = Sys.command('zip', ['-r', outPath, 'src/haxelib', 'haxelib.json', 'run.n', 'README.md']);
+                final exitCode = Sys.command('zip', ['-r', outPath, 'src/haxelib', 'haxelib.json', 'run.n', 'README.md']);
                 Sys.exit(exitCode);
         }
     }
 
     static function zipWindows() {
-        var entries = new List<Entry>();
+        final entries = new List<Entry>();
 
         function add(path:String, ?target:String) {
             if (!FileSystem.exists(path))
@@ -39,8 +39,8 @@ class Package {
                     add(path + "/" + item, target + "/" + item);
             } else {
                 Sys.println("Adding " + target);
-                var bytes = File.getBytes(path);
-                var entry:Entry = {
+                final bytes = File.getBytes(path);
+                final entry:Entry = {
                     fileName: target,
                     fileSize: bytes.length,
                     fileTime: FileSystem.stat(path).mtime,
@@ -63,20 +63,20 @@ class Package {
         add("README.md");
 
         Sys.println("Saving to " + outPath);
-        var out = File.write(outPath, true);
-        var writer = new Writer(out);
+        final out = File.write(outPath, true);
+        final writer = new Writer(out);
         writer.write(entries);
         out.close();
     }
 
     static function checkVersion() {
-        var runVersion = {
-            var p = new sys.io.Process("neko", ["run.n", "version"]);
-            var v = p.stdout.readAll().toString().trim();
+        final runVersion = {
+            final p = new sys.io.Process("neko", ["run.n", "version"]);
+            final v = p.stdout.readAll().toString().trim();
             p.close();
             v;
         }
-        var json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
+        final json:Infos = haxe.Json.parse(sys.io.File.getContent("haxelib.json"));
 
         // Version output examples:
         //  - 3.4.0
