@@ -21,21 +21,23 @@
  */
 package haxelib.client;
 
-import haxelib.client.Util.*;
+import haxe.Http;
+import haxe.Timer;
 import haxe.crypto.Md5;
-import haxe.*;
-import haxe.ds.*;
+import haxe.ds.Option;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Path;
 import haxe.zip.*;
-import sys.io.File;
+
 import sys.FileSystem;
-import sys.io.*;
-import haxe.ds.Option;
-import haxelib.client.Cli.ask;
-import haxelib.client.FsUtils.*;
+import sys.io.File;
+import sys.io.Process;
+
 import haxelib.client.Vcs;
+import haxelib.client.Util.*;
+import haxelib.client.FsUtils.*;
+import haxelib.client.Cli.ask;
 
 using StringTools;
 using Lambda;
