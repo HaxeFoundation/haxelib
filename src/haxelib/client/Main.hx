@@ -349,7 +349,7 @@ class Main {
 	static final ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
 		debug  : "run in debug mode, imply not --quiet",
-		quiet  : "print less messages, imply not --debug",
+		quiet  : "print fewer messages, imply not --debug",
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
