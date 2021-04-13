@@ -40,15 +40,26 @@ interface IVcs {
 		If `branch` is specified, the repository is checked out to that branch.
 
 		`version` can also be specified for tags in git or revisions in mercurial.
+
+		`debugLog` will be used to log executable output.
 	**/
-	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
+	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
 
 	/**
 		Updates repository in CWD or CWD/`Vcs.directory` to HEAD.
 		For git CWD must be in the format "...haxelib-repo/lib/git".
+
+		By default, uncommitted changes prevent updating.
+		If `confirm` is passed in, the changes may occur
+		if `confirm` returns true.
+
+		`debugLog` will be used to log executable output.
+
+		`summaryLog` may be used to log summaries of changes.
+
 		Returns `true` if update successful.
 	**/
-	function update(libName:String):Bool;
+	function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?summaryLog:(msg:String)->Void):Bool;
 }
 
 /** Abstract enum representing the types of Vcs systems that are supported. **/
@@ -76,11 +87,13 @@ enum VcsError {
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
 	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
 	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
+	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 }
 
 /** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
-class Vcs implements IVcs {
-	static var flat = false;
+abstract class Vcs implements IVcs {
+	/** If set to true, recursive cloning is disabled **/
+	public static var flat = false;
 
 	public final name:String;
 	public final directory:String;
@@ -94,11 +107,6 @@ class Vcs implements IVcs {
 		this.name = name;
 		this.directory = directory;
 		this.executable = executable;
-	}
-
-	@:allow(haxelib.client.Main.new)
-	static function setFlat(flat:Bool) {
-		Vcs.flat = flat;
 	}
 
 	static var reg:Map<VcsID, Vcs>;
@@ -134,48 +142,12 @@ class Vcs implements IVcs {
 		return null;
 	}
 
-	function sure(commandResult:{code:Int, out:String}):Void {
-		switch (commandResult) {
-			case {code: 0}: //pass
-			case {code: code, out:out}:
-				Cli.printOptionalError(out);
-				Sys.exit(code);
-		}
-	}
-
-    function command(cmd:String, args:Array<String>):{
-    	code: Int,
-    	out: String
-    } {
-        final p = try {
-        	new sys.io.Process(cmd, args);
-        } catch(e:Dynamic) {
-        	return {
-        		code: -1,
-        		out: Std.string(e)
-        	}
-        }
-        final out = p.stdout.readAll().toString();
-        final err = p.stderr.readAll().toString();
-        if (out != "")
-			Cli.printDebug(out);
-        if (err != "")
-			Cli.printDebugError(err);
-        final code = p.exitCode();
-        final ret = {
-            code: code,
-            out: code == 0 ? out : err
-        };
-        p.close();
-        return ret;
-    }
-
 	function searchExecutable():Void {
 		executableSearched = true;
 	}
 
 	function checkExecutable():Bool {
-		available = (executable != null) && try command(executable, []).code == 0 catch(_:Dynamic) false;
+		available = (executable != null) && try run([]).code == 0 catch(_:Dynamic) false;
 		availabilityChecked = true;
 
 		if (!available && !executableSearched)
@@ -190,13 +162,62 @@ class Vcs implements IVcs {
 		return available;
 	}
 
-	public function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void {
-		throw "This method must be overridden.";
+	final function runStrict(args:Array<String>):{
+		code:Int,
+		out:String,
+		err:String
+	}{
+		final proc = command(executable, args);
+		switch (proc) {
+			case {code: 0}: // pass
+			case {code: code, out: out, err: err}:
+				throw CommandFailed(this, code, out, err);
+		}
+		return proc;
 	}
 
-	public function update(libName:String):Bool {
-		throw "This method must be overridden.";
+	final function run(args:Array<String>, ?debugLog:(msg:String)->Void): {
+		code:Int,
+		out:String,
+		err:String
+	} {
+		final proc = command(executable, args);
+
+		inline function print(msg)
+			if (debugLog != null && msg != "")
+				debugLog(msg);
+
+		print(proc.out);
+		print(proc.err);
+
+		return proc;
 	}
+
+	static function command(cmd:String, args:Array<String>) {
+		final p = try {
+			new sys.io.Process(cmd, args);
+		} catch (e:Dynamic) {
+			return {
+				code: -1,
+				out: "",
+				err: Std.string(e)
+			}
+		}
+		final out = p.stdout.readAll().toString();
+		final err = p.stderr.readAll().toString();
+		final code = p.exitCode();
+		final ret = {
+			code: code,
+			out: out,
+			err: err
+		};
+		p.close();
+		return ret;
+	}
+
+	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
+
+	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
 }
 
 /** Class wrapping `git` operations. **/
@@ -209,7 +230,7 @@ class Git extends Vcs {
 
 	override function checkExecutable():Bool {
 		// with `help` cmd because without any cmd `git` can return exit-code = 1.
-		available = (executable != null) && try command(executable, ["help"]).code == 0 catch(_:Dynamic) false;
+		available = (executable != null) && try run(["help"]).code == 0 catch(_:Dynamic) false;
 		availabilityChecked = true;
 
 		if (!available && !executableSearched)
@@ -246,26 +267,22 @@ class Git extends Vcs {
 		}
 	}
 
-	override public function update(libName:String):Bool {
+	public function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?_):Bool {
 		if (
-			command(executable, ["diff", "--exit-code", "--no-ext-diff"]).code != 0
-			||
-			command(executable, ["diff", "--cached", "--exit-code", "--no-ext-diff"]).code != 0
+			run(["diff", "--exit-code", "--no-ext-diff"], debugLog).code != 0
+			|| run(["diff", "--cached", "--exit-code", "--no-ext-diff"], debugLog).code != 0
 		) {
-			if (Cli.ask('Reset changes to $libName $name repo so we can pull latest version')) {
-				sure(command(executable, ["reset", "--hard"]));
-			} else {
-				Cli.printOptional('$name repo left untouched');
+			if (confirm == null || !confirm())
 				return false;
-			}
+			runStrict(["reset", "--hard"]);
 		}
 
-		final code = command(executable, ["pull"]).code;
+		final code = run(["pull"], debugLog).code;
 		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
 		if (code != 0) {
 			// get parent-branch:
 			final branch = {
-				final raw = command(executable, ["show-branch"]).out;
+				final raw = run(["show-branch"], debugLog).out;
 				final regx = ~/\[([^]]*)\]/;
 				if (regx.match(raw))
 					regx.matched(1);
@@ -273,13 +290,13 @@ class Git extends Vcs {
 					raw;
 			}
 
-			sure(command(executable, ["checkout", branch, "--force"]));
-			sure(command(executable, ["pull"]));
+			runStrict(["checkout", branch, "--force"]);
+			runStrict(["pull"]);
 		}
 		return true;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
+	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final oldCwd = Sys.getCwd();
 
 		final vcsArgs = ["clone", url, libPath];
@@ -287,21 +304,23 @@ class Git extends Vcs {
 		if (!Vcs.flat)
 			vcsArgs.push('--recursive');
 
-		//TODO: move to Vcs.run(vcsArgs)
-		//TODO: use settings.quiet
-		if (command(executable, vcsArgs).code != 0)
+		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 
 		Sys.setCwd(libPath);
 
 		if (version != null && version != "") {
-			final ret = command(executable, ["checkout", "tags/" + version]);
-			if (ret.code != 0)
+			final ret = run(["checkout", "tags/" + version], debugLog);
+			if (ret.code != 0) {
+				Sys.setCwd(oldCwd);
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
+			}
 		} else if (branch != null) {
-			final ret = command(executable, ["checkout", branch]);
-			if (ret.code != 0)
+			final ret = run(["checkout", branch], debugLog);
+			if (ret.code != 0){
+				Sys.setCwd(oldCwd);
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
+			}
 		}
 
 		// return prev. cwd:
@@ -334,11 +353,13 @@ class Mercurial extends Vcs {
 		checkExecutable();
 	}
 
-	override public function update(libName:String):Bool {
-		command(executable, ["pull"]);
-		var summary = command(executable, ["summary"]).out;
-		final diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
-		final status = command(executable, ["status"]);
+	public function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?summaryLog:(msg:String)->Void):Bool {
+		inline function log(msg:String) if(summaryLog != null) summaryLog(msg);
+
+		run(["pull"], debugLog);
+		var summary = run(["summary"], debugLog).out;
+		final diff = run(["diff", "-U", "2", "--git", "--subrepos"], debugLog);
+		final status = run(["status"], debugLog);
 
 		// get new pulled changesets:
 		// (and search num of sets)
@@ -348,25 +369,23 @@ class Mercurial extends Vcs {
 		var changed = ~/(\d)/.match(summary);
 		if (changed)
 			// print new pulled changesets:
-			Cli.printOptional(summary);
-
+			log(summary);
 
 		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
-			Cli.printOptional(diff.out);
-			if (Cli.ask('Reset changes to $libName $name repo so we can update to latest version')) {
-				sure(command(executable, ["update", "--clean"]));
+			log(diff.out);
+			if (confirm != null && confirm()) {
+				runStrict(["update", "--clean"]);
 			} else {
 				changed = false;
-				Cli.printOptional('$name repo left untouched');
 			}
 		} else if (changed) {
-			sure(command(executable, ["update"]));
+			runStrict(["update"]);
 		}
 
 		return changed;
 	}
 
-	override public function clone(libPath:String, url:String, ?branch:String, ?version:String):Void {
+	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final vcsArgs = ["clone", url, libPath];
 
 		if (branch != null) {
@@ -379,7 +398,7 @@ class Mercurial extends Vcs {
 			vcsArgs.push(version);
 		}
 
-		if (command(executable, vcsArgs).code != 0)
+		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
 	}
 }

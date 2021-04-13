@@ -21,79 +21,7 @@
  */
 package haxelib.client;
 
-import haxe.Timer;
-import haxe.io.Output;
 import haxe.io.Input;
-
-import sys.io.FileOutput;
-
-private class ProgressOut extends Output {
-	final o:Output;
-	final startSize:Int;
-	final start:Float;
-
-	var cur:Int;
-	var curReadable:Float;
-	var max:Null<Int>;
-	var maxReadable:Null<Float>;
-
-	public function new(o, currentSize) {
-		this.o = o;
-		startSize = currentSize;
-		cur = currentSize;
-		start = Timer.stamp();
-	}
-
-	function report(n) {
-		cur += n;
-
-		final tag:String = ((max != null ? max : cur) / 1000000) > 1 ? "MB" : "KB";
-
-		curReadable = tag == "MB" ? cur / 1000000 : cur / 1000;
-		curReadable = Math.round(curReadable * 100) / 100; // 12.34 precision.
-
-		if (max == null)
-			Sys.print('${curReadable} ${tag}\r');
-		else {
-			maxReadable = tag == "MB" ? max / 1000000 : max / 1000;
-			maxReadable = Math.round(maxReadable * 100) / 100; // 12.34 precision.
-
-			Cli.printString('${curReadable}${tag} / ${maxReadable}${tag} (${Std.int((cur * 100.0) / max)}%)\r');
-		}
-	}
-
-	public override function writeByte(c) {
-		o.writeByte(c);
-		report(1);
-	}
-
-	public override function writeBytes(s, p, l) {
-		final r = o.writeBytes(s, p, l);
-		report(r);
-		return r;
-	}
-
-	public override function close() {
-		super.close();
-		o.close();
-
-		var time = Timer.stamp() - start;
-		final downloadedBytes = cur - startSize;
-		var speed = (downloadedBytes / time) / 1000;
-		time = Std.int(time * 10) / 10;
-		speed = Std.int(speed * 10) / 10;
-
-		final tag:String = (downloadedBytes / 1000000) > 1 ? "MB" : "KB";
-		var readableBytes:Float = (tag == "MB") ? downloadedBytes / 1000000 : downloadedBytes / 1000;
-		readableBytes = Math.round(readableBytes * 100) / 100; // 12.34 precision.
-
-		Cli.print('Download complete: ${readableBytes}${tag} in ${time}s (${speed}KB/s)');
-	}
-
-	public override function prepare(m) {
-		max = m + startSize;
-	}
-}
 
 private class ProgressIn extends Input {
 	final i:Input;
@@ -137,9 +65,30 @@ enum abstract DefaultAnswer(Null<Bool>) to Null<Bool> {
 	final None = null;
 }
 
+private enum abstract Unit(String) to String {
+	final MB = "MB";
+	final KB = "KB";
+
+	public static function convertFromBytes(value:Int, unit:Unit):Float{
+		final by = switch unit {
+			case MB: 1000000;
+			case KB: 1000;
+			default: 1;
+		}
+		// 12.34 precision.
+		return Math.round((value/by) * 100) / 100;
+	}
+
+	public static function getUnitFor(value:Int):Unit {
+		if ((value / 1000000) > 1)
+			return MB;
+		return KB;
+	}
+}
+
 class Cli {
 	public static var defaultAnswer(null, default):DefaultAnswer = None;
-	public static var mode(null, default):OutputMode = None;
+	public static var mode:OutputMode = None;
 
 	public static function ask(question:String):Bool {
 		if (defaultAnswer != None)
@@ -176,12 +125,6 @@ class Cli {
 		return s.toString();
 	}
 
-	public static function createDownloadOutput(out:FileOutput, currentSize:Int):haxe.io.Output {
-		if (mode == Quiet)
-			return out;
-		return new ProgressOut(out, currentSize);
-	}
-
 	public static function createUploadInput(data:haxe.io.Bytes):haxe.io.Input {
 		final dataBytes = new haxe.io.BytesInput(data);
 		if (mode == Quiet)
@@ -189,11 +132,40 @@ class Cli {
 		return new ProgressIn(dataBytes, data.length);
 	}
 
-	public static function printInstallStatus(current:Int, total:Int) {
-		if (mode != Debug)
-			return;
-		final percent = Std.int((current / total) * 100);
-		Sys.print('${current + 1}/$total ($percent%)\r');
+	public static function printInstallStatus(_, current:Int, total:Int) {
+		Sys.stdout().writeString("\033[2K\r");
+		if (current != total) {
+			final percent = Std.int((current / total) * 100);
+			Sys.print('${current + 1}/$total ($percent%)');
+		}
+	}
+
+	public static function printDownloadStatus(_:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) {
+		Sys.stdout().writeString("\033[2K\r");
+		// clear line and return to beginning
+		if (finished) {
+			final rawSpeed = (downloaded / time) / 1000;
+			final speed = Std.int(rawSpeed * 10) / 10;
+			final time = Std.int(time * 10) / 10;
+			final unit = Unit.getUnitFor(downloaded);
+
+			final readableBytes = Unit.convertFromBytes(downloaded, unit);
+
+			Sys.println('Download complete: ${readableBytes}${unit} in ${time}s (${speed}KB/s)');
+		} else if (max == null) {
+			final unit = Unit.getUnitFor(cur);
+			final curReadable = Unit.convertFromBytes(cur, unit);
+
+			Sys.print('${curReadable} $unit');
+		} else {
+			final unit = Unit.getUnitFor(max);
+			final curReadable = Unit.convertFromBytes(cur, unit);
+
+			final maxReadable = Unit.convertFromBytes(max, unit);
+			final percentage = Std.int((cur * 100.0) / max);
+
+			Sys.print('${curReadable} $unit / ${maxReadable} $unit ($percentage%)');
+		}
 	}
 
 	public static function getInput(prompt:String): String {
