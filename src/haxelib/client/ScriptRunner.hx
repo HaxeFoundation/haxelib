@@ -141,7 +141,7 @@ class ScriptRunner {
 			args.push('--haxelib-global');
 
 		// add the project itself first
-		addLib(if (version != VersionOrDev.Dev) '$name:$version' else '$name');
+		addLib(if (version != Dev.Dev) '$name:$version' else '$name');
 
 		for (d in dependencies)
 			addLib(d);

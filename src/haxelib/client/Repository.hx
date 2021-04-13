@@ -20,7 +20,7 @@ class Repository {
 		Returns the path to the repository.
 		Throws an exception if it has been deleted.
 	**/
-	var path(get, null):String;
+	public var path(get, null):String;
 
 	function get_path() {
 		if (!FileSystem.exists(path))
@@ -116,6 +116,28 @@ class Repository {
 		return FileSystem.exists(getProjectRootPath(name));
 	}
 
+	/** Returns whether `version` of project `name` is installed **/
+	public function isVersionInstalled(name:ProjectName, version:Version):Bool {
+		return FileSystem.exists(getProjectVersionPath(name, version));
+	}
+
+	/**
+		Set current version of project `name` to `version`.
+
+		Throws an error if `name` or `version` of `name` is not installed.
+	 **/
+	public function setCurrentVersion(name:ProjectName, version:Version):Void {
+		if (!FileSystem.exists(getProjectRootPath(name)))
+			throw 'Library $name is not installed';
+
+		if (!FileSystem.exists(getProjectVersionPath(name, version)))
+			throw 'Library $name version $version is not installed';
+
+		final currentFilePath = getCurrentFilePath(name);
+
+		File.saveContent(currentFilePath, version);
+	}
+
 	/**
 		Returns the current version of project `name`.
 	**/
@@ -131,6 +153,21 @@ class Repository {
 	}
 
 	/**
+		Returns whether project `name` has a valid current version set.
+	**/
+	public function isCurrentVersionSet(name:ProjectName):Bool {
+		if (!FileSystem.exists(getProjectRootPath(name)))
+			return false;
+
+		final content = try
+			getCurrentFileContent(name)
+		catch(_:CurrentVersionException)
+			return false;
+
+		return Version.isValid(content);
+	}
+
+	/**
 		Returns the path for `version` of project `name`,
 		throwing an error if the project or version is not installed.
 	**/
@@ -143,6 +180,22 @@ class Repository {
 			throw 'Library $name version $version is not installed';
 
 		return path;
+	}
+
+	/**
+		Returns the root path project `name`,
+		without confirming that it is installed.
+	**/
+	public function getProjectPath(name:ProjectName):String {
+		return getProjectRootPath(name);
+	}
+
+	/**
+		Returns the path for `version` of project `name`,
+		without confirming that the project or version are installed.
+	**/
+	public function getVersionPath(name:ProjectName, version:Version):String {
+		return getProjectVersionPath(name, version);
 	}
 
 	inline function getCurrentFilePath(name:ProjectName):String {
@@ -185,6 +238,19 @@ class Repository {
 	// https://github.com/HaxeFoundation/haxe/wiki/Haxe-haxec-haxelib-plan#legacy-haxelib-features
 
 	static final DEV = ".dev";
+	/**
+		Sets the dev path for project `name` to `path`.
+	**/
+	public function setDevPath(name:ProjectName, path:String) {
+		final root = getProjectRootPath(name);
+
+		if (!FileSystem.exists(root))
+			FileSystem.createDirectory(root);
+
+		final devFile = Path.join([root, DEV]);
+
+		File.saveContent(devFile, path);
+	}
 
 	/**
 		Returns the development path for `name`.

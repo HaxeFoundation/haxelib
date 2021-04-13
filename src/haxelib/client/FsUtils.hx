@@ -21,8 +21,11 @@
  */
 package haxelib.client;
 
-import haxe.io.Path;
 import sys.FileSystem;
+import haxe.io.Path;
+import haxe.zip.Reader;
+import haxe.zip.Entry;
+
 using StringTools;
 
 /** Class containing useful FileSystem utility functions. **/
@@ -160,6 +163,20 @@ class FsUtils {
 		return home;
 	}
 
+	/** Unzips the file at `filePath`, but if an error is thrown, it will safely close the file before rethrowing. **/
+	public static function unzip(filePath:String):List<Entry> {
+		final file = sys.io.File.read(filePath, true);
+		try {
+			final zip = Reader.readZip(file);
+			file.close();
+			return zip;
+		} catch (e:Dynamic) {
+			file.close();
+			Util.rethrow(e);
+		}
+		throw '';
+	}
+
 	/** Returns absolute path, replacing `~` with homepath **/
 	public static function getFullPath(path:String):String {
 		final splitPath = path.split("/");
@@ -168,5 +185,5 @@ class FsUtils {
 		}
 
 		return FileSystem.absolutePath(path);
-	}
+    }
 }

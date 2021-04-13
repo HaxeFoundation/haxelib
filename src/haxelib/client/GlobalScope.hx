@@ -44,6 +44,35 @@ class GlobalScope extends Scope {
 		ScriptRunner.run(libraryRunData, resolveCompiler(), callData);
 	}
 
+	public function getVersion(library:ProjectName):Version {
+		return repository.getCurrentVersion(library);
+	}
+
+	public function setVersion(library:ProjectName, version:SemVer):Void {
+		repository.setCurrentVersion(library, version);
+	}
+
+	public function setVcsVersion(library:ProjectName, vcsVersion:Vcs.VcsID, ?data:VcsData):Void {
+		if (data == null) data = {url: "unknown"};
+
+		if (data.subDir != null) {
+			final devDir = repository.getValidVersionPath(library, vcsVersion) + data.subDir;
+			repository.setDevPath(library, devDir);
+		} else {
+			repository.setCurrentVersion(library, vcsVersion);
+		}
+	}
+
+	public function isLibraryInstalled(library:ProjectName):Bool {
+		return repository.isCurrentVersionSet(library);
+	}
+
+	public function isOverridden(library:ProjectName):Bool {
+		if (!repository.isInstalled(library))
+			return false;
+		return repository.getDevPath(library) != null;
+	}
+
 	public function getPath(library:ProjectName, ?version:Version):String {
 		if (version != null)
 			return repository.getValidVersionPath(library, version);
@@ -54,6 +83,10 @@ class GlobalScope extends Scope {
 
 		final current = repository.getCurrentVersion(library);
 		return repository.getValidVersionPath(library, current);
+	}
+
+	public function getLibraryNames():Array<ProjectName> {
+		return repository.getLibraryNames();
 	}
 
 	public function getArrayOfLibraryInfo(?filter:String):Array<InstallationInfo> {
@@ -189,7 +222,7 @@ class GlobalScope extends Scope {
 
 		final devPath = repository.getDevPath(library);
 		if (devPath != null)
-			return {path: devPath, version: VersionOrDev.Dev};
+			return {path: devPath, version: Dev.Dev};
 
 		final current = repository.getCurrentVersion(library);
 		final path = repository.getValidVersionPath(library, current);

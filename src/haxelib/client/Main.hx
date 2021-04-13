@@ -32,10 +32,8 @@ import sys.io.File;
 
 import haxelib.client.Vcs;
 import haxelib.client.Args;
-import haxelib.client.Hxml;
 import haxelib.client.LibraryData;
-import haxelib.client.Util.*;
-import haxelib.client.FsUtils.*;
+import haxelib.client.Util.rethrow;
 
 using StringTools;
 using Lambda;
@@ -53,16 +51,13 @@ class CommandInfo {
 class Main {
 	static final HAXELIB_LIBNAME:ProjectName = ProjectName.ofString("haxelib");
 
-	static final VERSION_LONG:String = getHaxelibVersionLong();
-	static final VERSION:SemVer = SemVer.ofString(getHaxelibVersion());
+	static final VERSION_LONG:String = Util.getHaxelibVersionLong();
+	static final VERSION:SemVer = SemVer.ofString(Util.getHaxelibVersion());
 
 	final command:Command;
 	final mainArgs:Array<String>;
 	final argsIterator:ArrayIterator<String>;
-	final settings : {
-		global : Bool,
-		skipDependencies : Bool,
-	};
+	final useGlobalRepo:Bool;
 
 	final alreadyUpdatedVcsDependencies = new Map<String,String>();
 
@@ -78,8 +73,9 @@ class Main {
 		else if (args.flags.contains(Debug))
 			Cli.mode = Debug;
 
-		Vcs.setFlat(args.flags.contains(Flat));
-
+		if (args.flags.contains(SkipDependencies))
+			Installer.skipDependencies = true;
+		Vcs.flat = args.flags.contains(Flat);
 
 		// connection setup
 		if (args.flags.contains(NoTimeout))
@@ -102,10 +98,7 @@ class Main {
 		mainArgs = args.mainArgs;
 		argsIterator = mainArgs.iterator();
 
-		settings = {
-			global : args.flags.contains(Global),
-			skipDependencies : args.flags.contains(SkipDependencies)
-		};
+		useGlobalRepo = args.flags.contains(Global);
 	}
 
 	static function updateCwd(directories:Null<Array<String>>) {
@@ -265,6 +258,10 @@ class Main {
 					Cli.printError('Error: ${e.message}. Please remove it and run `haxelib setup` again.');
 			}
 			Sys.exit(1);
+		} catch (e:Installer.VcsCommandFailed) {
+			Cli.printDebug(e.stdout);
+			Cli.printDebugError(e.stderr);
+			Sys.exit(e.code);
 		} catch(e:haxe.Exception) {
 			final errorMessage = giveErrorString(e.toString());
 			if (errorMessage != null)
@@ -469,333 +466,107 @@ class Main {
 		return password;
 	}
 
-	function install() {
-		final rep = getRepositoryPath();
+	static function confirmHxmlInstall(libs:Array<{name:ProjectName, version:Version}>):Bool {
+		// Print a list with all the info
+		Cli.print("Haxelib is going to install these libraries:");
+		for (library in libs)
+			Cli.print('  ${library.name} - ${library.version}');
 
-		final prj = getArgument("Library name or hxml file");
+		return Cli.ask("Continue");
+	}
+
+	function setupAndGetInstaller(?scope:Scope) {
+		if (scope == null) scope = getScope();
+		final installer = new Installer(scope);
+		installer.log = function(msg, priority = Default){
+			switch priority {
+				case Default: Cli.print(msg);
+				case Debug: Cli.printDebug(msg);
+				case Optional: Cli.printOptional(msg);
+			}
+		}
+		installer.confirm = Cli.ask;
+		if (Cli.mode == Debug)
+			installer.installationProgress = Cli.printInstallStatus;
+		if (Cli.mode != Quiet)
+			installer.downloadProgress = Cli.printDownloadStatus;
+
+		return installer;
+	}
+
+	function install() {
+		final toInstall = getArgument("Library name or hxml file");
+		final scope = getScope();
+		final installer = setupAndGetInstaller(scope);
 
 		// No library given, install libraries listed in *.hxml in given directory
-		if( prj == "all") {
-			installFromAllHxml(rep);
+		if (toInstall == "all") {
+			installFromAllHxml(installer);
 			return;
 		}
 
-		if( sys.FileSystem.exists(prj) && !sys.FileSystem.isDirectory(prj) ) {
-			switch(prj){
+		if (sys.FileSystem.exists(toInstall) && !sys.FileSystem.isDirectory(toInstall)) {
+			switch (toInstall) {
 				case hxml if (hxml.endsWith(".hxml")):
 					// *.hxml provided, install all libraries/versions in this hxml file
-					installFromHxml(rep, prj);
-					return;
+					return installer.installFromHxml(hxml, confirmHxmlInstall);
 				case zip if (zip.endsWith(".zip")):
 					// *.zip provided, install zip as haxe library
-					doInstallFile(rep, prj, true, true);
-					return;
-				case jsonPath if(jsonPath.endsWith("haxelib.json")):
-					installFromHaxelibJson(rep, jsonPath);
-					return;
+					return installer.installLocal(zip);
+				case jsonPath if (jsonPath.endsWith("haxelib.json")):
+					return installer.installFromHaxelibJson(jsonPath);
 			}
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
-		final inf = Connection.getInfo(ProjectName.ofString(prj));
-		final reqversion = argsIterator.next();
-		final version = getVersion(inf, reqversion);
-		doInstall(rep, inf.name, version, version == inf.getLatest());
-	}
+		final library = ProjectName.ofString(toInstall);
 
-	function getVersion( inf:ProjectInfos, ?reqversion:String ) {
-		if( inf.versions.length == 0 )
-			throw 'The library ${inf.name} has not yet released a version';
-		final version = if( reqversion != null ) reqversion else inf.getLatest();
-		var found = false;
-		for( v in inf.versions )
-			if( v.name == version ) {
-				found = true;
-				break;
-			}
-		if( !found )
-			throw 'No such version $version for library ${inf.name}';
-
-		return version;
-	}
-
-	function installFromHxml( rep:String, path:String ) {
-		final targets  = [
-			~/^(-{1,2})java / => 'hxjava',
-			~/^(-{1,2})cpp / => 'hxcpp',
-			~/^(-{1,2})cs / => 'hxcs',
-		];
-		final libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
-		final autoLibsToInstall = [];
-
-		function processHxml(path) {
-			final hxml = normalizeHxml(sys.io.File.getContent(path));
-			final lines = hxml.split("\n");
-			for (l in lines) {
-				l = l.trim();
-
-				for (target in targets.keys())
-					if (target.match(l))
-						autoLibsToInstall.push(targets[target]);
-
-				final libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
-				if (libraryFlagEReg.match(l))
-				{
-					final key = libraryFlagEReg.matchedRight().trim();
-					final parts = ~/:/.split(key);
-					final libName = parts[0];
-
-					var libVersion:String = null;
-					var branch:String = null;
-					var url:String = null;
-					var subDir:String = null;
-					var type:String;
-
-					if ( parts.length > 1 )
-					{
-						if ( parts[1].startsWith("git:") )
-						{
-
-							type = "git";
-							final urlParts = parts[1].substr(4).split("#");
-							url = urlParts[0];
-							branch = urlParts.length > 1 ? urlParts[1] : null;
-						}
-						else
-						{
-							type = "haxelib";
-							libVersion = parts[1];
-						}
-					}
-					else
-					{
-						type = "haxelib";
-					}
-
-					switch libsToInstall[key] {
-						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
-						default:
-					}
-				}
-
-				if (l.endsWith(".hxml"))
-					processHxml(l);
-			}
+		final versionGiven = argsIterator.next();
+		final version = switch versionGiven {
+			case null: Connection.getLatestVersion(library);
+			case v: SemVer.ofString(v);
 		}
-		processHxml(path);
-
-		for(name in autoLibsToInstall) {
-			if(!Lambda.exists(libsToInstall, lib -> lib.name == name))
-				libsToInstall[name] = { name: name, version: null, type:"haxelib", url: null, branch: null, subDir: null }
-		}
-
-		if (Lambda.empty(libsToInstall))
-			return;
-
-		// Check the version numbers are all good
-		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
-		Cli.print("Loading info about the required libraries");
-		for (l in libsToInstall)
-		{
-			if (l.type == "git")
-			{
-				// Do not check git repository infos
-				continue;
-			}
-			final inf = Connection.getInfo(ProjectName.ofString(l.name));
-			l.version = getVersion(inf, l.version);
-		}
-
-		// Print a list with all the info
-		Cli.print("Haxelib is going to install these libraries:");
-		for (l in libsToInstall) {
-			final vString = (l.version == null) ? "" : " - " + l.version;
-			Cli.print("  " + l.name + vString);
-		}
-
-		// Install if they confirm
-		if (Cli.ask("Continue?")) {
-			for (l in libsToInstall) {
-				if ( l.type == "haxelib" )
-					doInstall(rep, l.name, l.version, true);
-				else if ( l.type == "git" )
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
-				else if ( l.type == "hg" )
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, l.name, l.url, l.branch, l.subDir, l.version));
-			}
-		}
-	}
-
-	function installFromHaxelibJson( rep:String, path:String ) {
-		doInstallDependencies(rep, Data.readData(File.getContent(path), false).dependencies);
-	}
-
-	function installFromAllHxml(rep:String) {
-		final cwd = Sys.getCwd();
-		final hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
-		if (hxmlFiles.length > 0) {
-			for (file in hxmlFiles) {
-				Cli.print('Installing all libraries from $file:');
-				installFromHxml(rep, cwd + file);
-			}
-		} else {
-			Cli.print("No hxml files found in the current directory.");
-		}
-	}
-
-	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
-		if (FileSystem.exists(haxe.io.Path.join([rep, Data.safe(project), Data.safe(version)])) ) {
-			Cli.print('You already have $project version $version installed');
-			setCurrent(rep,project,version,true);
+		if (scope.isLibraryInstalled(library) && scope.getVersion(library) == version)
+			return Cli.print('$library version $version is already installed and set as current.');
+
+		if (getRepository().isVersionInstalled(library, version)) {
+			Cli.print('You already have $library version $version installed');
+			if (scope.getVersion(library) != version && Cli.ask('Set $library to version $version'))
+				scope.setVersion(library, version);
 			return;
 		}
 
-		// download to temporary file
-		final filename = Data.fileName(project,version);
-		final filepath = haxe.io.Path.join([rep, filename]);
-
-		Cli.print('Downloading $filename...');
-
-		final maxRetry = 3;
-		final fileUrl = haxe.io.Path.join([Connection.siteUrl, Data.REPOSITORY, filename]);
-		for (i in 0...maxRetry) {
-			try {
-				Connection.download(fileUrl, filepath);
-				break;
-			} catch (e:Dynamic) {
-				Cli.print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
-				Sys.sleep(1);
-			}
-		}
-
-		doInstallFile(rep, filepath, setcurrent);
-		try {
-			Connection.postInstall(ProjectName.ofString(project), SemVer.ofString(version));
-		} catch (e:Dynamic) {}
+		if (versionGiven == null)
+			return installer.installLatestFromHaxelib(library);
+		installer.installFromHaxelib(library, version);
 	}
 
-	function doInstallFile(rep,filepath,setcurrent,nodelete = false) {
-		// read zip content
-		final f = File.read(filepath,true);
-		final zip = try {
-			Reader.readZip(f);
-		} catch (e:Dynamic) {
-			f.close();
-			// file is corrupted, remove it
-			if (!nodelete)
-				FileSystem.deleteFile(filepath);
-			rethrow(e);
+	function installFromAllHxml(installer:Installer) {
+		final cwd = Sys.getCwd();
+		final hxmlFiles = FileSystem.readDirectory(cwd).filter(function(f) return f.endsWith(".hxml"));
+		if (hxmlFiles.length == 0) {
+			Cli.print("No hxml files found in the current directory.");
+			return;
 		}
-		f.close();
-		final infos = Data.readInfos(zip,false);
-		Cli.print('Installing ${infos.name}...');
-		// create directories
-		var pdir = rep + Data.safe(infos.name);
-		safeDir(pdir);
-		pdir += "/";
-		var target = pdir + Data.safe(infos.version);
-		safeDir(target);
-		target += "/";
-
-		// locate haxelib.json base path
-		final basepath = Data.locateBasePath(zip);
-
-		// unzip content
-		final entries = [for (entry in zip) if (entry.fileName.startsWith(basepath)) entry];
-		final total = entries.length;
-		for (i in 0...total) {
-			final zipfile = entries[i];
-			final n = {
-				final tmp = zipfile.fileName;
-				// remove basepath
-				tmp.substr(basepath.length, tmp.length - basepath.length);
-			}
-			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
-				throw "Invalid filename : "+n;
-
-			Cli.printInstallStatus(i, total);
-
-			final dirs = ~/[\/\\]/g.split(n);
-			var path = "";
-			final file = dirs.pop();
-			for( d in dirs ) {
-				path += d;
-				safeDir(target+path);
-				path += "/";
-			}
-			if( file == "" ) {
-				if( path != "") Cli.printDebug('  Created $path');
-				continue; // was just a directory
-			}
-			path += file;
-			Cli.printDebug('  Install $path');
-			final data = Reader.unzip(zipfile);
-			File.saveBytes(target+path,data);
-		}
-
-		// set current version
-		if( setcurrent || !FileSystem.exists(pdir+".current") ) {
-			File.saveContent(pdir + ".current", infos.version);
-			Cli.print('  Current version is now ${infos.version}');
-		}
-
-		// end
-		if( !nodelete )
-			FileSystem.deleteFile(filepath);
-		Cli.print("Done");
-
-		// process dependencies
-		doInstallDependencies(rep, infos.dependencies);
-
-		return infos;
-	}
-
-	function doInstallDependencies( rep:String, dependencies:Array<Dependency> ) {
-		if( settings.skipDependencies ) return;
-
-		for( d in dependencies ) {
-			if( d.version == "" ) {
-				final pdir = rep + Data.safe(d.name);
-				final dev = try getDev(pdir) catch (_:Dynamic) null;
-
-				if (dev != null) { // no version specified and dev set, no need to install dependency
-					continue;
-				}
-			}
-			final name = ProjectName.ofString(d.name);
-
-			if (d.version == "" && d.type == DependencyType.Haxelib)
-				d.version = Connection.getLatestVersion(name);
-			Cli.print('Installing dependency ${d.name} ${d.version}');
-
-			switch d.type {
-				case Haxelib:
-					final info = Connection.getInfo(name);
-					doInstall(rep, info.name, d.version, false);
-				case Git:
-					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
-				case Mercurial:
-					useVcs(VcsID.Hg, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
-			}
-		}
+		for (file in hxmlFiles)
+			installer.installFromHxml(file, confirmHxmlInstall);
 	}
 
 	function getScope():Scope {
-		if (settings.global)
+		if (useGlobalRepo)
 			return Scope.getScopeForRepository(Repository.getGlobal());
 		return Scope.getScope();
 	}
 
 	function getRepository():Repository {
-		if (settings.global)
+		if (useGlobalRepo)
 			return Repository.getGlobal();
 		return Repository.get();
 	}
 
 	function getRepositoryPath():String {
-		if (settings.global)
+		if (useGlobalRepo)
 			return RepoManager.getGlobalPath();
 		return RepoManager.getPath();
 	}
@@ -861,85 +632,20 @@ class Main {
 	}
 
 	function update() {
-		final rep = getRepositoryPath();
+		final input = argsIterator.next();
+		final scope = getScope();
+		final installer = setupAndGetInstaller(scope);
+		if (input == null)
+			return installer.updateAll();
 
-		var prj = argsIterator.next();
-		if (prj != null) {
-			prj = projectNameToDir(rep, prj); // get project name in proper case
-			if (!updateByName(rep, prj))
-				Cli.print('$prj is up to date');
+		final library = ProjectName.ofString(input);
+
+		if (!scope.isLibraryInstalled(library)) {
+			Cli.print('Library $library is not installed.');
+			Sys.exit(1);
 			return;
 		}
-
-		final state = { rep : rep, prompt : true, updated : false };
-		for( p in FileSystem.readDirectory(state.rep) ) {
-			if( p.charAt(0) == "." || !FileSystem.isDirectory(state.rep+"/"+p) )
-				continue;
-			final p = Data.unsafe(p);
-			Cli.print('Checking $p');
-			try {
-				doUpdate(p, state);
-			} catch (e:VcsError) {
-				if (!e.match(VcsUnavailable(_)))
-					rethrow(e);
-			}
-		}
-		if( state.updated )
-			Cli.print("Done");
-		else
-			Cli.print("All libraries are up-to-date");
-	}
-
-	function projectNameToDir( rep:String, project:String ) {
-		final p = project.toLowerCase();
-		final l = FileSystem.readDirectory(rep).filter(function (dir) return dir.toLowerCase() == p);
-
-		switch (l) {
-			case []: return project;
-			case [dir]: return Data.unsafe(dir);
-			case _: throw 'Several name case for library $project';
-		}
-	}
-
-	function updateByName(rep:String, prj:String) {
-		final state = { rep : rep, prompt : false, updated : false };
-		doUpdate(prj,state);
-		return state.updated;
-	}
-
-	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
-		final pdir = state.rep + Data.safe(p);
-
-		final vcs = Vcs.getVcsForDevLib(pdir);
-		if(vcs != null) {
-			if(!vcs.available)
-				throw VcsError.VcsUnavailable(vcs);
-
-			final oldCwd = Sys.getCwd();
-			Sys.setCwd(pdir + "/" + vcs.directory);
-			final success = vcs.update(p);
-
-			state.updated = success;
-			if(success)
-				Cli.print('$p was updated');
-			Sys.setCwd(oldCwd);
-		} else {
-			final p = ProjectName.ofString(p);
-			final latest =
-				try Connection.getLatestVersion(p)
-				catch (e:Dynamic) { Cli.print(e); return; };
-
-			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
-				if( state.prompt ) {
-					if (!Cli.ask('Update $p to $latest'))
-						return;
-				}
-				final info = Connection.getInfo(p);
-				doInstall(state.rep, info.name, latest,true);
-				state.updated = true;
-			} else
-				setCurrent(state.rep, p, latest, true);
-		}
+		installer.update(library);
 	}
 
 	function remove() {
@@ -954,7 +660,7 @@ class Main {
 			if (prj == HAXELIB_LIBNAME && (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME))
 				throw 'Removing "$HAXELIB_LIBNAME" requires the --system flag';
 
-			deleteRec(pdir);
+			FsUtils.deleteRec(pdir);
 			Cli.print('Library $prj removed');
 			return;
 		}
@@ -966,31 +672,65 @@ class Main {
 		final cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
 			throw 'Cannot remove current version of library $prj';
-		deleteRec(vdir);
+		FsUtils.deleteRec(vdir);
 		Cli.print('Library $prj version $version removed');
 	}
 
-	function set() {
-		setCurrent(getRepositoryPath(), getArgument("Library"), getArgument("Version"), false);
+	function setVersion(library:ProjectName, version:SemVer):Void {
+		final repository = getRepository();
+		final scope = Scope.getScopeForRepository(repository);
+
+		if (scope.isLibraryInstalled(library) && scope.getVersion(library) == version)
+			return Cli.print('Library $library is already set to $version');
+
+		if (!repository.isVersionInstalled(library, version)) {
+			Cli.print('Library $library version $version is not installed');
+			if (!Cli.ask('Would you like to install it'))
+				return;
+			final installer = setupAndGetInstaller(scope);
+			installer.installFromHaxelib(library, version, true);
+		} else {
+			scope.setVersion(library, version);
+			Cli.print('Library $library current version is now $version');
+		}
 	}
 
-	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
-		final pdir = rep + Data.safe(prj);
-		final vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) ){
-			Cli.print('Library $prj version $version is not installed');
-			if(Cli.ask("Would you like to install it?")) {
-				final info = Connection.getInfo(ProjectName.ofString(prj));
-				doInstall(rep, info.name, version, true);
-			}
+	function setVcsVersion(library:ProjectName, version:VcsID):Void {
+		final repository = getRepository();
+		final scope = Scope.getScopeForRepository(repository);
+
+		if (scope.isLibraryInstalled(library) && scope.getVersion(library) == version)
+			return Cli.print('Library $library is already set to $version');
+
+		if (!repository.isVersionInstalled(library, version)) {
+			Cli.print('Library $library version $version is not installed');
+			Sys.exit(1);
 			return;
 		}
-		if( File.getContent(pdir + "/.current").trim() == version )
-			return;
-		if( doAsk && !Cli.ask('Set $prj to version $version') )
-			return;
-		File.saveContent(pdir+"/.current",version);
-		Cli.print('Library $prj current version is now $version');
+
+		// in a local scope, we dont have enough information to set it and keep it reproducible
+		if (scope.isLocal)
+			throw 'Unable to set to $version. Please run a full install command such as:\n'
+				+ '`haxelib $version $library <url>`';
+
+		scope.setVcsVersion(library, version, {url:null, ref:null, branch:null, tag:null, subDir:null});
+
+		Cli.print('Library $library current version is now $version');
+	}
+
+	function set() {
+		final library = ProjectName.ofString(getArgument("Library"));
+		final version = LibraryData.Version.ofString(getArgument("Version"));
+
+		final semVer = try SemVer.ofString(version) catch(_) null;
+
+		if (semVer != null)
+			return setVersion(library, semVer);
+
+		final vcsId = try VcsID.ofString(version) catch(_) null;
+
+		if (vcsId != null)
+			return setVcsVersion(library, vcsId);
 	}
 
 	function extractLibArgs():Array<{library:ProjectName, version:Null<Version>}> {
@@ -1065,100 +805,30 @@ class Main {
 		}
 	}
 
-	function removeExistingDevLib(proj:String):Void {
-		// TODO: ask if existing repo have changes.
-
-		// find existing repo:
-		var vcs = Vcs.getVcsForDevLib(proj);
-		// remove existing repos:
-		while(vcs != null) {
-			deleteRec(proj + "/" + vcs.directory);
-			vcs = Vcs.getVcsForDevLib(proj);
-		}
-	}
-
-	inline function useVcs(id:VcsID, fn:Vcs->Void):Void {
+	function vcs(id:VcsID) {
 		// Prepare check vcs.available:
 		final vcs = Vcs.get(id);
-		if(vcs == null || !vcs.available)
+		if (vcs == null || !vcs.available)
 			throw 'Could not use $id, please make sure it is installed and available in your PATH.';
-		return fn(vcs);
-	}
 
-	function vcs(id:VcsID) {
-		final rep = getRepositoryPath();
-		useVcs(id, function(vcs)
-			doVcsInstall(
-				rep, vcs, getArgument("Library name"),
-				getArgument(vcs.name + " path"), argsIterator.next(),
-				argsIterator.next(), argsIterator.next()
-			)
-		);
-	}
+		// get args
+		final library = ProjectName.ofString(getArgument("Library name"));
+		final url = getArgument(vcs.name + " path");
+		final ref = argsIterator.next();
 
-	function doVcsInstall(rep:String, vcs:Vcs, libName:String, url:String, branch:String, subDir:String, version:String) {
+		final isRefHash = ref == null || LibraryData.isCommitHash(ref);
+		final hash = isRefHash ? ref : null;
+		final branch = isRefHash ? null : ref;
 
-		final proj = rep + Data.safe(libName);
+		final installer = setupAndGetInstaller();
 
-		var libPath = proj + "/" + vcs.directory;
-
-		function doVcsClone() {
-			Cli.print('Installing $libName from $url' + ( branch != null ? " branch: " + branch : "" ));
-			try {
-				vcs.clone(libPath, url, branch, version);
-			} catch(error:VcsError) {
-				deleteRec(libPath);
-				final message = switch(error) {
-					case VcsUnavailable(vcs):
-						'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
-					case CantCloneRepo(vcs, repo, stderr):
-						'Could not clone ${vcs.name} repository' + (stderr != null ? ":\n" + stderr : ".");
-					case CantCheckoutBranch(vcs, branch, stderr):
-						'Could not checkout branch, tag or path "$branch": ' + stderr;
-					case CantCheckoutVersion(vcs, version, stderr):
-						'Could not checkout tag "$version": ' + stderr;
-				};
-				throw message;
-			}
-		}
-
-		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
-			Cli.print('You already have $libName version ${vcs.directory} installed.');
-
-			final wasUpdated = alreadyUpdatedVcsDependencies.exists(libName);
-			final currentBranch = if (wasUpdated) alreadyUpdatedVcsDependencies.get(libName) else null;
-			final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
-
-			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
-				&& Cli.ask('Overwrite branch: "$currentBranchStr" with "$branch"'))
-			{
-				deleteRec(libPath);
-				doVcsClone();
-			}
-			else if (!wasUpdated)
-			{
-				Cli.print('Updating $libName version ${vcs.directory} ...');
-				updateByName(rep, libName);
-			}
-		} else {
-			doVcsClone();
-		}
-
-		// finish it!
-		if (subDir != null) {
-			libPath += "/" + subDir;
-			File.saveContent(proj + "/.dev", libPath);
-			Cli.print('Development directory set to $libPath');
-		} else {
-			File.saveContent(proj + "/.current", vcs.directory);
-			Cli.print('Library $libName current version is now ${vcs.directory}');
-		}
-
-		this.alreadyUpdatedVcsDependencies.set(libName, branch);
-
-		final jsonPath = libPath + "/haxelib.json";
-		if(FileSystem.exists(jsonPath))
-			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
+		installer.installVcsLibrary(library, id, {
+			url: url,
+			ref: hash,
+			branch: branch,
+			subDir: argsIterator.next(),
+			tag: argsIterator.next()
+		});
 	}
 
 	final libraryAndVersion = ~/^(.+?)(?::(.*))?$/;
@@ -1174,7 +844,7 @@ class Main {
 		try {
 			scope.runScript(project, {
 				args: [for (arg in argsIterator) arg],
-				useGlobalRepo: settings.global
+				useGlobalRepo: useGlobalRepo
 			}, version);
 		} catch (e:ScriptRunner.ScriptError) {
 			Sys.exit(e.code);
@@ -1305,10 +975,13 @@ class Main {
 
 	// deprecated commands
 	function local() {
-		doInstallFile(getRepositoryPath(), getArgument("Package"), true, true);
+		final installer = setupAndGetInstaller();
+		installer.installLocal(getArgument("Package"));
 	}
 
 	function updateSelf() {
-		updateByName(RepoManager.getGlobalPath(), HAXELIB_LIBNAME);
+		final scope = Scope.getScopeForRepository(Repository.getGlobal());
+		final installer = setupAndGetInstaller(scope);
+		installer.update(HAXELIB_LIBNAME);
 	}
 }

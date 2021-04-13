@@ -54,7 +54,7 @@ function getScopeForRepository(repository:Repository, ?dir:String):Scope {
 **/
 abstract class Scope {
 	public final isLocal:Bool;
-	final repository:Repository;
+	public final repository:Repository;
 	final overrides:LockFormat;
 
 	function new(isLocal:Bool, repository:Repository) {
@@ -75,6 +75,32 @@ abstract class Scope {
 		exception is thrown containing the error code.
 	**/
 	public abstract function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void;
+
+	/** Returns the current version of `library`, ignoring overrides and dev directories. **/
+	public abstract function getVersion(library:ProjectName):Version;
+
+	/**
+		Set `library` to `version`.
+
+		Requires that the library is already installed.
+	  **/
+	public abstract function setVersion(library:ProjectName, version:SemVer):Void;
+	/**
+		Set `library` to `vcsVersion`, with `data`.
+
+		If `data` is omitted or incomplete then the required data is obtained manually.
+
+		Requires that the library is already installed.
+	**/
+	public abstract function setVcsVersion(library:ProjectName, vcsVersion:Vcs.VcsID, ?data:VcsData):Void;
+
+	/** Returns whether `library` is currently installed in this scope (ignoring overrides). **/
+	public abstract function isLibraryInstalled(library:ProjectName):Bool;
+
+	/** Returns whether `library` version is currently overridden. **/
+	public abstract function isOverridden(library:ProjectName):Bool;
+
+	public abstract function getLibraryNames():Array<ProjectName>;
 
 	public abstract function getArrayOfLibraryInfo(?filter:String):Array<InstallationInfo>;
 

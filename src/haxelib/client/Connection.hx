@@ -1,6 +1,8 @@
 package haxelib.client;
 
 import haxe.Http;
+import haxe.Timer;
+import haxe.io.Output;
 import haxe.remoting.HttpConnection;
 import sys.FileSystem;
 import sys.io.File;
@@ -94,6 +96,59 @@ private class ConnectionData {
 	}
 }
 
+typedef DownloadProgress = (finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void;
+
+private class ProgressOut extends Output {
+	final o:Output;
+	final startSize:Int;
+	final start:Float;
+	final _progress:Null<DownloadProgress>;
+
+	var cur:Int;
+	var max:Null<Int>;
+
+	public function new(o, currentSize, ?_progress) {
+		start = Timer.stamp();
+		this.o = o;
+		startSize = currentSize;
+		cur = currentSize;
+		this._progress = _progress;
+	}
+
+	inline function progress(finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float):Void {
+		if (_progress != null)
+			_progress(finished, cur, max, downloaded, time);
+	}
+
+	function report(n) {
+		cur += n;
+
+		progress(false, cur, max, cur - startSize, Timer.stamp() - start);
+	}
+
+	public override function writeByte(c) {
+		o.writeByte(c);
+		report(1);
+	}
+
+	public override function writeBytes(s, p, l) {
+		final r = o.writeBytes(s, p, l);
+		report(r);
+		return r;
+	}
+
+	public override function close() {
+		super.close();
+		o.close();
+
+		progress(true, cur, max, cur - startSize, Timer.stamp() - start);
+	}
+
+	public override function prepare(m) {
+		max = m + startSize;
+	}
+}
+
 /** Wraps interactions with the server so that they are attempted three times **/
 class Connection {
 	/** The number of times a server interaction will be attempted. Defaults to 3. **/
@@ -127,11 +182,6 @@ class Connection {
 	/** Function to which connection information will be logged. **/
 	public static dynamic function log(msg:String) {}
 
-	public static var siteUrl(get, null):String;
-	static function get_siteUrl():String {
-		return data.siteUrl;
-	}
-
 	/** Returns the name of the host**/
 	public static function getHost():String {
 		return data.server.host;
@@ -145,7 +195,7 @@ class Connection {
 	}
 
 	#if js
-	public static function download(fileUrl:String, outPath:String):Void {
+	public static function download(fileUrl:String, outPath:String, ?_):Void {
 		node_fetch.Fetch.call(fileUrl, {
 			headers: {
 				"User-Agent": 'haxelib ${Util.getHaxelibVersionLong()}',
@@ -156,8 +206,27 @@ class Connection {
 			.sync();
 	}
 	#else
+	public static function download(filename:String, outPath:String, downloadProgress:DownloadProgress = null) {
+		final maxRetry = 3;
+		final fileUrl = haxe.io.Path.join([data.siteUrl, Data.REPOSITORY, filename]);
+		var lastError = new haxe.Exception("");
+
+		for (i in 0...maxRetry) {
+			try {
+				downloadFromUrl(fileUrl, outPath, downloadProgress);
+				return;
+			} catch (e:Dynamic) {
+				log('Failed to download ${fileUrl}. (${i + 1}/${maxRetry})\n${e}');
+				lastError = e;
+				Sys.sleep(1);
+			}
+		}
+		FileSystem.deleteFile(outPath);
+		throw lastError;
+	}
+
 	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
-	public static function download(fileUrl:String, outPath:String, maxRedirect = 20):Void {
+	static function downloadFromUrl(fileUrl:String, outPath:String, downloadProgress:Null<DownloadProgress>, maxRedirect = 20):Void {
 		final out = try File.append(outPath, true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
 		out.seek(0, SeekEnd);
 
@@ -167,7 +236,8 @@ class Connection {
 		if (currentSize > 0)
 			h.addHeader("range", 'bytes=$currentSize-');
 
-		final progress = Cli.createDownloadOutput(out, currentSize);
+		final progress = if (downloadProgress == null) out
+			else new ProgressOut(out, currentSize, downloadProgress);
 
 		var httpStatus = -1;
 		var redirectedLocation = null;
@@ -207,7 +277,7 @@ class Connection {
 		if (maxRedirect == 0)
 			throw "Too many redirects.";
 
-		download(redirectedLocation, outPath, maxRedirect - 1);
+		downloadFromUrl(redirectedLocation, outPath, downloadProgress, maxRedirect - 1);
 	}
 	#end
 

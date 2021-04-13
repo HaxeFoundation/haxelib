@@ -179,6 +179,10 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 		}
 	}
 	#end
+
+	public inline function getNames():Array<ProjectName>
+		return [for(name in Reflect.fields(this)) ProjectName.ofString(name) ];
+
 }
 
 /** The type of a dependency version. **/
