@@ -71,6 +71,7 @@ class HaxelibTests {
 
 		r.add(new TestInstall());
 		r.add(new TestRepoManager());
+		r.add(new TestArgs());
 
 		final success = r.run();
 		Sys.exit(success ? 0 : 1);
