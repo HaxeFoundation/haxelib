@@ -363,13 +363,7 @@ class Main {
 	}
 
 	function version() {
-		final params = argsIterator.next();
-		if ( params == null )
-			print(VERSION_LONG);
-		else {
-			Sys.stderr().writeString('no parameters expected, got: ${params}\n');
-			Sys.exit(1);
-		}
+		print(VERSION_LONG);
 	}
 
 	static function usage() {
@@ -459,6 +453,18 @@ class Main {
 				'Warning: Command `$command` is deprecated and will be removed in future.\n'+
 				'Use `${commandInfo.useInstead}` instead.'
 			);
+
+		if(commandInfo.maxArgs != null && mainArgs.length > commandInfo.maxArgs) {
+			switch(commandInfo.maxArgs){
+				case 0:
+					final givenVerb = if (mainArgs.length == 1) "was" else "were";
+					throw 'No arguments expected, but ${mainArgs.length} $givenVerb given.';
+				case 1:
+					throw 'A maximum of 1 argument expected, but ${mainArgs.length} were given.';
+				case n:
+					throw 'A maximum of $n arguments expected, but ${mainArgs.length} were given.';
+			}
+		}
 
 		try {
 			if (commandInfo.net) {
