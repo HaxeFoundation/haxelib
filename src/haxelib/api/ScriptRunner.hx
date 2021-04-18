@@ -1,10 +1,10 @@
-package haxelib.client;
+package haxelib.api;
 
 import sys.FileSystem;
 
 import haxelib.Data.ProjectName;
 import haxelib.Data.DependencyVersion;
-import haxelib.client.LibraryData;
+import haxelib.api.LibraryData;
 
 @:structInit
 class CallData {

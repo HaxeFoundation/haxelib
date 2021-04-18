@@ -1,11 +1,11 @@
-package haxelib.client;
+package haxelib.api;
 
 import sys.FileSystem;
 import sys.io.File;
 
 import haxelib.Data;
-import haxelib.client.RepoManager;
-import haxelib.client.LibraryData;
+import haxelib.api.RepoManager;
+import haxelib.api.LibraryData;
 
 using Lambda;
 using StringTools;

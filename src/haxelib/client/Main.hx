@@ -27,10 +27,12 @@ import haxe.iterators.ArrayIterator;
 import sys.FileSystem;
 import sys.io.File;
 
-import haxelib.client.Vcs;
+import haxelib.api.*;
+import haxelib.api.Vcs;
+import haxelib.api.LibraryData;
+
 import haxelib.client.Args;
-import haxelib.client.LibraryData;
-import haxelib.client.Util.rethrow;
+import haxelib.Util.rethrow;
 
 using StringTools;
 using Lambda;
@@ -48,8 +50,8 @@ class CommandInfo {
 class Main {
 	static final HAXELIB_LIBNAME:ProjectName = ProjectName.ofString("haxelib");
 
-	static final VERSION_LONG:String = Util.getHaxelibVersionLong();
-	static final VERSION:SemVer = SemVer.ofString(Util.getHaxelibVersion());
+	static final VERSION_LONG:String = haxelib.Util.getHaxelibVersionLong();
+	static final VERSION:SemVer = SemVer.ofString(haxelib.Util.getHaxelibVersion());
 
 	final command:Command;
 	final mainArgs:Array<String>;
@@ -262,7 +264,7 @@ class Main {
 		} catch(e:haxe.Exception) {
 			final errorMessage = giveErrorString(e.toString());
 			if (errorMessage != null)
-				throw errorMessage;
+				throw new haxe.Exception(errorMessage);
 			rethrow(e);
 		}
 	}
@@ -640,7 +642,7 @@ class Main {
 					version: {
 						final versionStr = libraryAndVersion.matched(2);
 						if (versionStr != null)
-							haxelib.client.Version.ofString(versionStr.split(":")[0])
+							haxelib.api.Version.ofString(versionStr.split(":")[0])
 						else
 							null;
 					}
@@ -725,7 +727,7 @@ class Main {
 
 		final project = ProjectName.ofString(libraryAndVersion.matched(1));
 		final versionStr = libraryAndVersion.matched(2);
-		final version = if (versionStr != null) haxelib.client.Version.ofString(versionStr) else null;
+		final version = if (versionStr != null) haxelib.api.Version.ofString(versionStr) else null;
 
 		try {
 			scope.runScript(project, {
@@ -785,8 +787,8 @@ class Main {
 		}
 
 		final xmlString = File.getContent(xmlFile);
-		final json = haxelib.client.ConvertXml.convert(xmlString);
-		final jsonString = haxelib.client.ConvertXml.prettyPrint(json);
+		final json = haxelib.api.ConvertXml.convert(xmlString);
+		final jsonString = haxelib.api.ConvertXml.prettyPrint(json);
 
 		File.saveContent(jsonFile, jsonString);
 		Cli.print('Saved to $jsonFile');

@@ -1,4 +1,4 @@
-package haxelib.client;
+package haxelib.api;
 
 import haxe.Http;
 import haxe.Timer;
@@ -16,7 +16,7 @@ using StringTools;
 
 #if js
 import haxe.io.Bytes;
-using haxelib.client.Connection.PromiseSynchronizer;
+using haxelib.api.Connection.PromiseSynchronizer;
 
 @:jsRequire("promise-synchronizer")
 private extern class PromiseSynchronizer {

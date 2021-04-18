@@ -1,4 +1,4 @@
-package haxelib.client;
+package haxelib.api;
 
 import sys.io.File;
 import haxe.ds.GenericStack;
@@ -7,10 +7,10 @@ import haxe.io.Path;
 
 import haxelib.Data;
 
-import haxelib.client.LibraryData;
-import haxelib.client.ScriptRunner;
-import haxelib.client.Scope;
-import haxelib.client.Hxml;
+import haxelib.api.LibraryData;
+import haxelib.api.ScriptRunner;
+import haxelib.api.Scope;
+import haxelib.api.Hxml;
 
 using StringTools;
 
