@@ -3,5 +3,13 @@
         ["client_tests.hxml"],
         ["client.hxml"],
         ["server_each.hxml", "-neko", "repo.n"]
-    ]
+    ],
+	"haxeTestExplorer.testCommand":[
+		"${haxe}",
+		"client_tests.hxml",
+		"--library",
+		"test-adapter",
+		"--cmd",
+		"neko bin/test.n"
+	]
 }

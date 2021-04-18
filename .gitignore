@@ -46,3 +46,6 @@ CTestTestfile.cmake
 *.sln
 Win32
 haxelib.dir
+
+# unit testing
+.unittest

@@ -8,6 +8,21 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"type": "shell",
+			"command": "neko",
+			"label": "Haxelib client unit tests",
+			"args" :["bin/test.n"],
+			"dependsOrder": "sequence",
+			"dependsOn":[
+				"haxe: client.hxml",
+				"haxe: client_tests.hxml"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
 		}
 	]
 }

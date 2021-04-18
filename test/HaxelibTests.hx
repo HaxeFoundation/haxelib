@@ -70,6 +70,8 @@ class HaxelibTests {
 		r.add(new TestVcsNotFound());
 
 		r.add(new TestInstall());
+		r.add(new TestArgs());
+		r.add(new TestRepoManager());
 
 		var success = r.run();
 		Sys.exit(success ? 0 : 1);
