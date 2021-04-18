@@ -1,4 +1,4 @@
-package haxelib.client;
+package haxelib.api;
 
 using StringTools;
 

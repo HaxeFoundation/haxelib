@@ -19,10 +19,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-package haxelib.client;
+package haxelib.api;
 
 import sys.FileSystem;
-using haxelib.client.Vcs;
+using haxelib.api.Vcs;
 
 interface IVcs {
 	/** The name of the vcs system. **/
@@ -237,7 +237,7 @@ abstract class Vcs implements IVcs {
 /** Class wrapping `git` operations. **/
 class Git extends Vcs {
 
-	@:allow(haxelib.client.Vcs.get)
+	@:allow(haxelib.api.Vcs.get)
 	function new(executable:String, directory:String, name:String) {
 		super(executable, directory, name);
 	}
@@ -352,7 +352,7 @@ class Git extends Vcs {
 /** Class wrapping `hg` operations. **/
 class Mercurial extends Vcs {
 
-	@:allow(haxelib.client.Vcs.get)
+	@:allow(haxelib.api.Vcs.get)
 	function new(executable:String, directory:String, name:String) {
 		super(executable, directory, name);
 	}

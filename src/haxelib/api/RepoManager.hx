@@ -1,9 +1,9 @@
-package haxelib.client;
+package haxelib.api;
 
 import sys.FileSystem;
 import sys.io.File;
 
-import haxelib.client.FsUtils.*;
+import haxelib.api.FsUtils.*;
 
 using StringTools;
 using haxe.io.Path;

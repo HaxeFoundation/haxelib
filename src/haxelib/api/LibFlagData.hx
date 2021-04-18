@@ -1,12 +1,12 @@
-package haxelib.client;
+package haxelib.api;
 
 import sys.io.File;
 
 import haxelib.Data;
 
-import haxelib.client.Hxml;
-import haxelib.client.Vcs.VcsID;
-import haxelib.client.LibraryData.VcsData;
+import haxelib.api.Hxml;
+import haxelib.api.Vcs.VcsID;
+import haxelib.api.LibraryData.VcsData;
 
 using StringTools;
 

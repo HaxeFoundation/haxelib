@@ -1,9 +1,9 @@
-package haxelib.client;
+package haxelib.api;
 
 import haxe.DynamicAccess;
 
 import haxelib.Data.ProjectName;
-import haxelib.client.Vcs.VcsID;
+import haxelib.api.Vcs.VcsID;
 
 class LibraryDataException extends haxe.Exception {}
 

@@ -1,9 +1,9 @@
-package haxelib.client;
+package haxelib.api;
 
 import haxelib.Data;
 
-import haxelib.client.LibraryData;
-import haxelib.client.ScriptRunner;
+import haxelib.api.LibraryData;
+import haxelib.api.ScriptRunner;
 
 using StringTools;
 
