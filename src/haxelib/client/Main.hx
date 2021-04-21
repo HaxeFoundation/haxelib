@@ -37,7 +37,7 @@ import haxelib.client.Vcs;
 import haxelib.client.Util.*;
 import haxelib.client.FsUtils.*;
 import haxelib.client.Args;
-import haxelib.client.Cli.ask;
+import haxelib.client.Cli;
 
 using StringTools;
 using Lambda;
@@ -275,7 +275,7 @@ class Main {
 	static function getFromRemote(remote:String, noSsl:Bool):ServerInfo {
 		final r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
 		if (!r.match(remote))
-			throw "Invalid repository format '" + remote + "'";
+			throw 'Invalid repository format \'$remote\'';
 
 		final protocol = if (r.matched(1) != null) r.matched(1) else !noSsl ? "https" : "http";
 		final defaultPorts = [
@@ -314,12 +314,12 @@ class Main {
 			try {
 				final result = func();
 
-				if (hasRetried) print("retry sucessful");
+				if (hasRetried) Cli.print("retry sucessful");
 
 				return result;
 			} catch (e:Dynamic) {
 				if ( e == "Blocked") {
-					print("Failed. Triggering retry due to HTTP timeout");
+					Cli.print("Failed. Triggering retry due to HTTP timeout");
 					hasRetried = true;
 				}
 				else {
@@ -333,37 +333,25 @@ class Main {
 	function checkUpdate() {
 		final latest = try retry(site.getLatestVersion.bind(HAXELIB_LIBNAME)) catch (_:Dynamic) null;
 		if (latest != null && latest > VERSION)
-			print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
+			Cli.print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
 
 	function getArgument(prompt:String){
 		final given = argsIterator.next();
 		if (given != null)
 			return given;
-		Sys.print('$prompt : ');
-		return Sys.stdin().readLine();
+		return Cli.getInput(prompt);
 	}
 
 	function getSecretArgument(prompt:String) {
 		final given = argsIterator.next();
 		if (given != null)
 			return given;
-		Sys.print('$prompt : ');
-		final s = new StringBuf();
-		do
-			switch Sys.getChar(false) {
-				case 10, 13:
-					break;
-				case 0: // ignore (windows bug)
-				case c:
-					s.addChar(c);
-		} while (true);
-		Sys.println("");
-		return s.toString();
+		return Cli.getSecretInput(prompt);
 	}
 
 	function version() {
-		print(VERSION_LONG);
+		Cli.print(VERSION_LONG);
 	}
 
 	static function usage() {
@@ -385,18 +373,20 @@ class Main {
 			else cats[i].push(c);
 		}
 
-		print('Haxe Library Manager $VERSION - (c)2006-2019 Haxe Foundation');
-		print("  Usage: haxelib [command] [options]");
+		Cli.print('Haxe Library Manager $VERSION - (c)2006-2019 Haxe Foundation');
+		Cli.print("  Usage: haxelib [command] [options]");
 
 		for (cat in cats) {
-			print("  " + cat[0].cat.getName());
-			for (c in cat) {
-				print("    " + c.name.rpad(" ", maxLength) + ": " +c.doc);
+			Cli.print("  " + cat[0].cat.getName());
+			for (cmd in cat) {
+				final paddedCmd = cmd.name.rpad(" ", maxLength);
+				Cli.print('    $paddedCmd: ${cmd.doc}');
 			}
 		}
-		print("  Available switches");
+		Cli.print("  Available switches");
 		for (option in switches) {
-			print('    --' + option.name.rpad(' ', maxLength-2) + ': ' + option.description);
+			final paddedOption = "--" + option.name.rpad(' ', maxLength - 2);
+			Cli.print('    $paddedOption: ${option.description}');
 		}
 	}
 
@@ -477,11 +467,11 @@ class Main {
 		} catch (e:RepoManager.InvalidConfiguration) {
 			switch e.type {
 				case NoneSet:
-					print('Error: This is the first time you are running haxelib. Please run `haxelib setup` first.');
+					Cli.writeError('This is the first time you are running haxelib. Please run `haxelib setup` first.');
 				case NotFound(_):
-					print('Error: ${e.message}. Please run `haxelib setup` again.');
+					Cli.writeError('${e.message}. Please run `haxelib setup` again.');
 				case IsFile(_):
-					print('Error: ${e.message}. Please remove it and run `haxelib setup` again.');
+					Cli.writeError('${e.message}. Please remove it and run `haxelib setup` again.');
 			}
 			Sys.exit(1);
 		} catch(e:haxe.Exception) {
@@ -495,7 +485,7 @@ class Main {
 	function giveErrorString(e:String):Null<String> {
 		return switch (e) {
 			case "std@host_resolve":
-				"Host " + server.host + " was not found\n" +
+				'Host ${server.host} was not found\n' +
 				"Please ensure that your internet connection is on\n" +
 				"If you don't have an internet connection or if you are behind a proxy\n" +
 				"please download manually the file from https://lib.haxe.org/files/3.0/\n" +
@@ -527,38 +517,38 @@ class Main {
 		final word = getArgument("Search word");
 		final l = retry(site.search.bind(word));
 		for( s in l )
-			print(s.name);
-		print(l.length+" libraries found");
+			Cli.print(s.name);
+		Cli.print('${l.length} libraries found');
 	}
 
 	function info() {
 		final prj = getArgument("Library name");
 		final inf = retry(site.infos.bind(prj));
-		print("Name: "+inf.name);
-		print("Tags: "+inf.tags.join(", "));
-		print("Desc: "+inf.desc);
-		print("Website: "+inf.website);
-		print("License: "+inf.license);
-		print("Owner: "+inf.owner);
-		print("Version: "+inf.getLatest());
-		print("Releases: ");
+		Cli.print('Name: ${inf.name}');
+		Cli.print('Tags: ${inf.tags.join(", ")}');
+		Cli.print('Desc: ${inf.desc}');
+		Cli.print('Website: ${inf.website}');
+		Cli.print('License: ${inf.license}');
+		Cli.print('Owner: ${inf.owner}');
+		Cli.print('Version: ${inf.getLatest()}');
+		Cli.print('Releases: ');
 		if( inf.versions.length == 0 )
-			print("  (no version released yet)");
+			Cli.print("  (no version released yet)");
 		for( v in inf.versions )
-			print("   "+v.date+" "+v.name+" : "+v.comments);
+			Cli.print('   ${v.date} ${v.name} : ${v.comments}');
 	}
 
 	function user() {
 		final uname = getArgument("User name");
 		final inf = retry(site.user.bind(uname));
-		print("Id: "+inf.name);
-		print("Name: "+inf.fullname);
-		print("Mail: "+inf.email);
-		print("Libraries: ");
+		Cli.print('Id: ${inf.name}');
+		Cli.print('Name: ${inf.fullname}');
+		Cli.print('Mail: ${inf.email}');
+		Cli.print('Libraries: ');
 		if( inf.projects.length == 0 )
-			print("  (no libraries)");
+			Cli.print("  (no libraries)");
 		for( p in inf.projects )
-			print("  "+p);
+			Cli.print("  "+p);
 	}
 
 	function register() {
@@ -625,13 +615,13 @@ class Main {
 
 		if (infos.contributors.length > 1)
 			do {
-				print("Which of these users are you: " + infos.contributors);
+				Cli.print('Which of these users are you: ${infos.contributors}');
 				user = getArgument("User");
 			} while ( infos.contributors.indexOf(user) == -1 );
 
 		final password = if( retry(site.isNewUser.bind(user)) ) {
-			print("This is your first submission as '"+user+"'");
-			print("Please enter the following information for registration");
+			Cli.print('This is your first submission as \'$user\'');
+			Cli.print("Please enter the following information for registration");
 			doRegister(user);
 		} else {
 			readPassword(user);
@@ -659,7 +649,7 @@ class Main {
 		final sinfos = try retry(site.infos.bind(infos.name)) catch( _ : Dynamic ) null;
 		if( sinfos != null )
 			for( v in sinfos.versions )
-				if( v.name == infos.version && !ask("You're about to overwrite existing version '"+v.name+"', please confirm") )
+				if( v.name == infos.version && !Cli.ask('You\'re about to overwrite existing version \'${v.name}\', please confirm') )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
@@ -668,7 +658,7 @@ class Main {
 		// directly send the file data over Http
 		final h = createHttpRequest(server.protocol+"://"+server.host+":"+server.port+"/"+server.url);
 		h.onError = function(e) throw e;
-		h.onData = print;
+		h.onData = Cli.print;
 
 		final inp = if ( settings.quiet == false )
 			new ProgressIn(new haxe.io.BytesInput(data),data.length);
@@ -676,16 +666,16 @@ class Main {
 			new haxe.io.BytesInput(data);
 
 		h.fileTransfer("file", id, inp, data.length);
-		print("Sending data.... ");
+		Cli.print("Sending data.... ");
 		h.request(true);
 
 		// processing might take some time, make sure we wait
-		print("Processing file.... ");
+		Cli.print("Processing file.... ");
 		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
 			haxe.remoting.HttpConnection.TIMEOUT = 1000;
 		// ask the server to register the sent file
 		final msg = retry(site.processSubmit.bind(id,user,password));
-		print(msg);
+		Cli.print(msg);
 	}
 	#end
 
@@ -693,7 +683,7 @@ class Main {
 		var password = Md5.encode(getSecretArgument(prompt));
 		var attempts = 5;
 		while (!retry(site.checkPassword.bind(user, password))) {
-			print('Invalid password for $user');
+			Cli.print('Invalid password for $user');
 			if (--attempts == 0)
 				throw 'Failed to input correct password';
 			password = Md5.encode(getSecretArgument('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})'));
@@ -737,8 +727,8 @@ class Main {
 
 	function getVersion( inf:ProjectInfos, ?reqversion:String ) {
 		if( inf.versions.length == 0 )
-			throw "The library "+inf.name+" has not yet released a version";
-		final version = if ( reqversion != null ) reqversion else inf.getLatest();
+			throw 'The library ${inf.name} has not yet released a version';
+		final version = if( reqversion != null ) reqversion else inf.getLatest();
 		var found = false;
 		for( v in inf.versions )
 			if( v.name == version ) {
@@ -746,7 +736,7 @@ class Main {
 				break;
 			}
 		if( !found )
-			throw "No such version "+version+" for library "+inf.name;
+			throw 'No such version $version for library ${inf.name}';
 
 		return version;
 	}
@@ -827,7 +817,7 @@ class Main {
 
 		// Check the version numbers are all good
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
-		print("Loading info about the required libraries");
+		Cli.print("Loading info about the required libraries");
 		for (l in libsToInstall)
 		{
 			if ( l.type == "git" )
@@ -840,14 +830,14 @@ class Main {
 		}
 
 		// Print a list with all the info
-		print("Haxelib is going to install these libraries:");
+		Cli.print("Haxelib is going to install these libraries:");
 		for (l in libsToInstall) {
 			final vString = (l.version == null) ? "" : " - " + l.version;
-			print("  " + l.name + vString);
+			Cli.print("  " + l.name + vString);
 		}
 
 		// Install if they confirm
-		if (ask("Continue?")) {
+		if (Cli.ask("Continue?")) {
 			for (l in libsToInstall) {
 				if ( l.type == "haxelib" )
 					doInstall(rep, l.name, l.version, true);
@@ -868,11 +858,11 @@ class Main {
 		final hxmlFiles = sys.FileSystem.readDirectory(cwd).filter(function (f) return f.endsWith(".hxml"));
 		if (hxmlFiles.length > 0) {
 			for (file in hxmlFiles) {
-				print('Installing all libraries from $file:');
+				Cli.print('Installing all libraries from $file:');
 				installFromHxml(rep, cwd + file);
 			}
 		} else {
-			print("No hxml files found in the current directory.");
+			Cli.print("No hxml files found in the current directory.");
 		}
 	}
 
@@ -956,7 +946,7 @@ class Main {
 	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
 		if (FileSystem.exists(haxe.io.Path.join([rep, Data.safe(project), Data.safe(version)])) ) {
-			print("You already have "+project+" version "+version+" installed");
+			Cli.print('You already have $project version $version installed');
 			setCurrent(rep,project,version,true);
 			return;
 		}
@@ -965,7 +955,7 @@ class Main {
 		final filename = Data.fileName(project,version);
 		final filepath = haxe.io.Path.join([rep, filename]);
 
-		print("Downloading "+filename+"...");
+		Cli.print('Downloading $filename...');
 
 		final maxRetry = 3;
 		final fileUrl = haxe.io.Path.join([siteUrl, Data.REPOSITORY, filename]);
@@ -974,7 +964,7 @@ class Main {
 				download(fileUrl, filepath);
 				break;
 			} catch (e:Dynamic) {
-				print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
+				Cli.print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
 				Sys.sleep(1);
 			}
 		}
@@ -999,7 +989,7 @@ class Main {
 		}
 		f.close();
 		final infos = Data.readInfos(zip,false);
-		print('Installing ${infos.name}...');
+		Cli.print('Installing ${infos.name}...');
 		// create directories
 		var pdir = rep + Data.safe(infos.name);
 		safeDir(pdir);
@@ -1038,12 +1028,12 @@ class Main {
 				path += "/";
 			}
 			if( file == "" ) {
-				if( path != "" && settings.debug ) print("  Created "+path);
+				if( path != "" && settings.debug ) Cli.print('  Created $path');
 				continue; // was just a directory
 			}
 			path += file;
 			if (settings.debug)
-				print("  Install "+path);
+				Cli.print('  Install $path');
 			final data = Reader.unzip(zipfile);
 			File.saveBytes(target+path,data);
 		}
@@ -1051,13 +1041,13 @@ class Main {
 		// set current version
 		if( setcurrent || !FileSystem.exists(pdir+".current") ) {
 			File.saveContent(pdir + ".current", infos.version);
-			print("  Current version is now "+infos.version);
+			Cli.print('  Current version is now ${infos.version}');
 		}
 
 		// end
 		if( !nodelete )
 			FileSystem.deleteFile(filepath);
-		print("Done");
+		Cli.print("Done");
 
 		// process dependencies
 		doInstallDependencies(rep, infos.dependencies);
@@ -1080,7 +1070,7 @@ class Main {
 
 			if( d.version == "" && d.type == DependencyType.Haxelib )
 				d.version = retry(site.getLatestVersion.bind(d.name));
-			print("Installing dependency "+d.name+" "+d.version);
+			Cli.print('Installing dependency ${d.name} ${d.version}');
 
 			switch d.type {
 				case Haxelib:
@@ -1113,11 +1103,11 @@ class Main {
 
 		RepoManager.setGlobalPath(path);
 
-		print("haxelib repository is now " + path);
+		Cli.print('haxelib repository is now $path');
 	}
 
 	function config() {
-		print(getRepository());
+		Cli.print(getRepository());
 	}
 
 	static function getCurrent( proj, dir ) {
@@ -1190,7 +1180,7 @@ class Main {
 		}
 		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
 		for (p in all) {
-			print(p);
+			Cli.print(p);
 		}
 	}
 
@@ -1201,7 +1191,7 @@ class Main {
 		if (prj != null) {
 			prj = projectNameToDir(rep, prj); // get project name in proper case
 			if (!updateByName(rep, prj))
-				print(prj + " is up to date");
+				Cli.print('$prj is up to date');
 			return;
 		}
 
@@ -1209,8 +1199,8 @@ class Main {
 		for( p in FileSystem.readDirectory(state.rep) ) {
 			if( p.charAt(0) == "." || !FileSystem.isDirectory(state.rep+"/"+p) )
 				continue;
-			var p = Data.unsafe(p);
-			print("Checking " + p);
+			final p = Data.unsafe(p);
+			Cli.print('Checking $p');
 			try {
 				doUpdate(p, state);
 			} catch (e:VcsError) {
@@ -1219,9 +1209,9 @@ class Main {
 			}
 		}
 		if( state.updated )
-			print("Done");
+			Cli.print("Done");
 		else
-			print("All libraries are up-to-date");
+			Cli.print("All libraries are up-to-date");
 	}
 
 	function projectNameToDir( rep:String, project:String ) {
@@ -1231,7 +1221,7 @@ class Main {
 		switch (l) {
 			case []: return project;
 			case [dir]: return Data.unsafe(dir);
-			case _: throw "Several name case for library " + project;
+			case _: throw 'Several name case for library $project';
 		}
 	}
 
@@ -1259,14 +1249,14 @@ class Main {
 
 			state.updated = success;
 			if(success)
-				print(p + " was updated");
+				Cli.print('$p was updated');
 			Sys.setCwd(oldCwd);
 		} else {
 			final latest = try retry(site.getLatestVersion.bind(p)) catch( e : Dynamic ) { Sys.println(e); return; };
 
 			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
 				if( state.prompt ) {
-					if (!ask("Update "+p+" to "+latest))
+					if (!Cli.ask('Update $p to $latest'))
 						return;
 				}
 				final info = retry(site.infos.bind(p));
@@ -1284,25 +1274,25 @@ class Main {
 		final pdir = rep + Data.safe(prj);
 		if( version == null ) {
 			if( !FileSystem.exists(pdir) )
-				throw "Library "+prj+" is not installed";
+				throw 'Library $prj is not installed';
 
 			if (prj == HAXELIB_LIBNAME && (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME))
 				throw 'Removing "$HAXELIB_LIBNAME" requires the --system flag';
 
 			deleteRec(pdir);
-			print("Library "+prj+" removed");
+			Cli.print('Library $prj removed');
 			return;
 		}
 
 		final vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) )
-			throw "Library "+prj+" does not have version "+version+" installed";
+			throw 'Library $prj does not have version $version installed';
 
 		final cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
-			throw "Can't remove current version of library "+prj;
+			throw 'Cannot remove current version of library $prj';
 		deleteRec(vdir);
-		print("Library "+prj+" version "+version+" removed");
+		Cli.print('Library $prj version $version removed');
 	}
 
 	function set() {
@@ -1313,8 +1303,8 @@ class Main {
 		final pdir = rep + Data.safe(prj);
 		final vdir = pdir + "/" + Data.safe(version);
 		if( !FileSystem.exists(vdir) ){
-			print("Library "+prj+" version "+version+" is not installed");
-			if(ask("Would you like to install it?")) {
+			Cli.print('Library $prj version $version is not installed');
+			if(Cli.ask("Would you like to install it?")) {
 				final info = retry(site.infos.bind(prj));
 				doInstall(rep, info.name, version, true);
 			}
@@ -1322,10 +1312,10 @@ class Main {
 		}
 		if( File.getContent(pdir + "/.current").trim() == version )
 			return;
-		if( doAsk && !ask("Set "+prj+" to version "+version) )
+		if( doAsk && !Cli.ask('Set $prj to version $version') )
 			return;
 		File.saveContent(pdir+"/.current",version);
-		print("Library "+prj+" current version is now "+version);
+		Cli.print('Library $prj current version is now $version');
 	}
 
 	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }>, ?returnDependencies : Bool = true ) {
@@ -1340,13 +1330,13 @@ class Main {
 			vdir = dev;
 
 		if( !FileSystem.exists(vdir) )
-			throw "Library "+prj+" version "+version+" is not installed";
+			throw 'Library $prj version $version is not installed';
 
 		for( p in l )
 			if( p.project == prj ) {
 				if( p.version == version )
 					return;
-				throw "Library "+prj+" has two versions included : "+version+" and "+p.version;
+				throw 'Library $prj has two versions included : $version and ${p.version}';
 			}
 		final json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
 		final inf = Data.readData(json, json != null ? CheckSyntax : NoCheck);
@@ -1411,22 +1401,22 @@ class Main {
 		if( dir == null ) {
 			if( FileSystem.exists(devfile) )
 				FileSystem.deleteFile(devfile);
-			print("Development directory disabled");
+			Cli.print("Development directory disabled");
 		}
 		else {
 			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
 				dir = dir.substr(0,-1);
 			}
 			if (!FileSystem.exists(dir)) {
-				print('Directory $dir does not exist');
+				Cli.print('Directory $dir does not exist');
 			} else {
 				dir = FileSystem.fullPath(dir);
 				try {
 					File.saveContent(devfile, dir);
-					print("Development directory set to "+dir);
+					Cli.print('Development directory set to $dir');
 				}
 				catch (e:Dynamic) {
-					print('Could not write to $devfile');
+					Cli.print('Could not write to $devfile');
 				}
 			}
 
@@ -1484,7 +1474,7 @@ class Main {
 		var libPath = proj + "/" + vcs.directory;
 
 		function doVcsClone() {
-			print("Installing " +libName + " from " +url + ( branch != null ? " branch: " + branch : "" ));
+			Cli.print('Installing $libName from $url' + ( branch != null ? " branch: " + branch : "" ));
 			try {
 				vcs.clone(libPath, url, branch, version);
 			} catch(error:VcsError) {
@@ -1504,20 +1494,21 @@ class Main {
 		}
 
 		if ( FileSystem.exists(proj + "/" + Data.safe(vcs.directory)) ) {
-			print("You already have "+libName+" version "+vcs.directory+" installed.");
+			Cli.print('You already have $libName version ${vcs.directory} installed.');
 
 			final wasUpdated = alreadyUpdatedVcsDependencies.exists(libName);
 			final currentBranch = if (wasUpdated) alreadyUpdatedVcsDependencies.get(libName) else null;
+			final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
 
 			if (branch != null && (!wasUpdated || (wasUpdated && currentBranch != branch))
-				&& ask("Overwrite branch: " + (currentBranch == null?"<unspecified>":"\"" + currentBranch + "\"") + " with \"" + branch + "\""))
+				&& Cli.ask('Overwrite branch: "$currentBranchStr" with "$branch"'))
 			{
 				deleteRec(libPath);
 				doVcsClone();
 			}
 			else if (!wasUpdated)
 			{
-				print("Updating " + libName+" version " + vcs.directory + " ...");
+				Cli.print('Updating $libName version ${vcs.directory} ...');
 				updateByName(rep, libName);
 			}
 		} else {
@@ -1528,10 +1519,10 @@ class Main {
 		if (subDir != null) {
 			libPath += "/" + subDir;
 			File.saveContent(proj + "/.dev", libPath);
-			print("Development directory set to "+libPath);
+			Cli.print('Development directory set to $libPath');
 		} else {
 			File.saveContent(proj + "/.current", vcs.directory);
-			print("Library "+libName+" current version is now "+vcs.directory);
+			Cli.print('Library $libName current version is now ${vcs.directory}');
 		}
 
 		this.alreadyUpdatedVcsDependencies.set(libName, branch);
@@ -1624,9 +1615,9 @@ class Main {
 		if( host == "" ) {
 			if( FileSystem.exists(rep + "/.proxy") ) {
 				FileSystem.deleteFile(rep + "/.proxy");
-				print("Proxy disabled");
+				Cli.print("Proxy disabled");
 			} else
-				print("No proxy specified");
+				Cli.print("No proxy specified");
 			return;
 		}
 		final port = Std.parseInt(getArgument("Proxy port"));
@@ -1638,14 +1629,14 @@ class Main {
 			auth : authName == "" ? null : { user : authName, pass : authPass },
 		};
 		Http.PROXY = proxy;
-		print("Testing proxy...");
+		Cli.print("Testing proxy...");
 		try Http.requestUrl(server.protocol + "://lib.haxe.org") catch( e : Dynamic ) {
-			if(!ask("Proxy connection failed. Use it anyway")) {
+			if(!Cli.ask("Proxy connection failed. Use it anyway")) {
 				return;
 			}
 		}
 		File.saveContent(rep + "/.proxy", haxe.Serializer.run(proxy));
-		print("Proxy setup done");
+		Cli.print("Proxy setup done");
 	}
 
 	function loadProxy() {
@@ -1660,7 +1651,7 @@ class Main {
 		final jsonFile = cwd + "haxelib.json";
 
 		if (!FileSystem.exists(xmlFile)) {
-			print('No `haxelib.xml` file was found in the current directory.');
+			Cli.print('No `haxelib.xml` file was found in the current directory.');
 			return;
 		}
 
@@ -1669,25 +1660,22 @@ class Main {
 		final jsonString = haxelib.client.ConvertXml.prettyPrint(json);
 
 		File.saveContent(jsonFile, jsonString);
-		print('Saved to $jsonFile');
+		Cli.print('Saved to $jsonFile');
 	}
 
 	function newRepo() {
 		RepoManager.createLocal();
 		final path = RepoManager.getPath();
-		print('Local repository created ($path)');
+		Cli.print('Local repository created ($path)');
 	}
 
 	function deleteRepo() {
 		final path = RepoManager.getPath();
 		RepoManager.deleteLocal();
-		print('Local repository deleted ($path)');
+		Cli.print('Local repository deleted ($path)');
 	}
 
 	// ----------------------------------
-
-	public static inline function print(str)
-		Sys.println(str);
 
 	static function main() {
 		final args = Sys.args();
@@ -1704,8 +1692,8 @@ class Main {
 				doRun(repoPath, HAXELIB_LIBNAME, args, priorityFlags.contains(Global));
 				return;
 			} catch (e:haxe.Exception) {
-				Sys.println('Warning: failed to run updated haxelib: $e');
-				Sys.println('Warning: resorting to system haxelib...');
+				Cli.print('Warning: failed to run updated haxelib: $e');
+				Cli.print('Warning: resorting to system haxelib...');
 			}
 		}
 
@@ -1713,11 +1701,12 @@ class Main {
 			try {
 				Args.extractAll(args);
 			} catch (e:SwitchError) {
-				Sys.stderr().writeString('${e.message}\n');
+				Cli.writeError(e.message);
+				Cli.print("Run 'haxelib help' for detailed help.");
 				Sys.exit(1);
 				return;
 			} catch (e:InvalidCommand) {
-				Sys.stderr().writeString('${e.message}\n');
+				Cli.writeError(e.message);
 				usage();
 				Sys.exit(1);
 				return;
@@ -1729,7 +1718,7 @@ class Main {
 		} catch (e:haxe.Exception) {
 			if (priorityFlags.contains(Debug))
 				rethrow(e);
-			Sys.stderr().writeString('Error: ${e.message}\n');
+			Cli.writeError('Error: ${e.message}');
 			Sys.exit(1);
 			return;
 		};
