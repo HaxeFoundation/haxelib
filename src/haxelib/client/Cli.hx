@@ -43,4 +43,31 @@ class Cli {
 		}
 		return false;
 	}
+
+	public static function getSecretInput(prompt:String):String {
+		Sys.print('$prompt : ');
+		final s = new StringBuf();
+		do
+			switch Sys.getChar(false) {
+				case 10, 13:
+					break;
+				case 0: // ignore (windows bug)
+				case c:
+					s.addChar(c);
+			} while (true);
+		Sys.println("");
+		return s.toString();
+	}
+
+	public static function getInput(prompt:String): String {
+		Sys.print('$prompt : ');
+		return Sys.stdin().readLine();
+	}
+
+	public static inline function print(str:String)
+		Sys.println(str);
+
+	public static inline function writeError(message:String)
+		Sys.stderr().writeString('${message}\n');
+
 }
