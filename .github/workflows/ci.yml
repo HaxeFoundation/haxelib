@@ -14,15 +14,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Install Haxe
-        run: |
-          set -ex
-          sudo add-apt-repository ppa:haxe/haxe3.4 -y
-          sudo apt-get update
-          sudo apt-get upgrade -y
-          sudo apt-get install -y neko haxe
-      - run: neko run.n setup haxelib_global
-      - run: haxe libs.hxml
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Login to DockerHub
