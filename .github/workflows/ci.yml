@@ -47,3 +47,42 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push image
         run: docker push haxe/lib.haxe.org:${{ github.sha }}
+  test:
+    needs: push
+    runs-on: ubuntu-18.04
+    services:
+      web:
+        image: haxe/lib.haxe.org:${{ github.sha }}
+        ports:
+          - "2000:80"
+        env:
+          HAXELIB_DB_HOST: dbHost
+          HAXELIB_DB_PORT: 3306
+          HAXELIB_DB_USER: dbUser
+          HAXELIB_DB_PASS: dbPass
+          HAXELIB_DB_NAME: haxelib
+      dbHost:
+        image: mariadb
+        ports:
+          - "3306:3306"
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: haxelib
+          MYSQL_USER: dbUser
+          MYSQL_PASSWORD: dbPass
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install Haxe
+        run: |
+          set -ex
+          sudo add-apt-repository ppa:haxe/haxe3.4 -y
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install -y neko haxe
+      - run: neko run.n setup haxelib_global
+      - run: haxe libs.hxml
+      - run: neko run.n run tora > ~/tora.log 2>&1 &
+      - run: haxe ci.hxml
+      - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
