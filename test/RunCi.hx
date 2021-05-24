@@ -385,6 +385,13 @@ Listen 2000
 			runWithDockerServer(test);
 		} else {
 			if (Sys.getEnv("GITHUB_ACTIONS") == "true") {
+				var dbConfigPath = Path.join(["www", "dbconfig.json"]);
+				saveContent(dbConfigPath, Json.stringify({
+					user: Sys.getEnv("HAXELIB_DB_USER"),
+					pass: Sys.getEnv("HAXELIB_DB_PASS"),
+					host: Sys.getEnv("HAXELIB_DB_HOST"),
+					database: Sys.getEnv("HAXELIB_DB_NAME"),
+				}));
 				test();
 			} else {
 				runWithLocalServer(test);
