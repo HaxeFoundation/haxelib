@@ -5,7 +5,7 @@
 FROM ubuntu:bionic
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
-	&& add-apt-repository ppa:haxe/releases -y \
+	&& add-apt-repository ppa:haxe/haxe3.4 -y \
 	&& apt-get update && apt-get upgrade -y \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		apache2 \
@@ -14,7 +14,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software
 		curl \
 		git \
 		libcurl4-gnutls-dev \
-	&& curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+	&& curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		nodejs \
 	&& rm -r /var/lib/apt/lists/*
