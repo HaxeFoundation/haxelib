@@ -1,4 +1,4 @@
 -cp test
 -main RunCi
 -neko bin/ci.n
--cmd neko bin/ci.n
+#-cmd neko bin/ci.n

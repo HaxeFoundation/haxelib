@@ -18,3 +18,4 @@ build: off
 
 test_script:
   - haxe ci.hxml
+  - neko bin/ci.n
