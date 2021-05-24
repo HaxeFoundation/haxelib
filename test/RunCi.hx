@@ -381,10 +381,14 @@ Listen 2000
 			}
 			runCommand("neko", ["bin/integration_tests.n"]);
 		}
-		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
-			runWithLocalServer(test);
-		} else {
+		if (Sys.getEnv("USE_DOCKER") != null) {
 			runWithDockerServer(test);
+		} else {
+			if (Sys.getEnv("GITHUB_ACTIONS") == "true") {
+				test();
+			} else {
+				runWithLocalServer(test);
+			}
 		}
 	}
 
