@@ -147,7 +147,7 @@ class IntegrationTests extends TestBase {
 		dbCnx = sys.db.Mysql.connect({
 			user: dbConfig.user,
 			pass: dbConfig.pass,
-			host: server,
+			host: dbConfig.host,
 			port: dbConfig.port,
 			database: dbConfig.database,
 		});

@@ -9,6 +9,8 @@ RewriteBase /
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$
+RewriteCond %{HTTP_HOST} !^haxelib(:[0-9]+)?$
+RewriteCond %{HTTP_HOST} !^[0-9]+.[0-9]+.[0-9]+.[0-9]+(:[0-9]+)?$
 RewriteCond %{REQUEST_URI} !index\.n/?$
 RewriteCond %{REQUEST_URI} !^/api/
 RewriteCond %{REQUEST_URI} !^/files/
