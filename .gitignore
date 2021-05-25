@@ -23,6 +23,7 @@ run.c
 deploy_key
 
 .haxelib
+haxelib_global
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
