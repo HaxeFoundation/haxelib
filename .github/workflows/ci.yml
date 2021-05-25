@@ -49,7 +49,8 @@ jobs:
         run: docker push haxe/lib.haxe.org:${{ github.sha }}
   test:
     needs: push
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container: haxe/haxelib_devcontainer_workspace:20210525054946
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}
@@ -62,10 +63,11 @@ jobs:
           HAXELIB_DB_PASS: dbPass
           HAXELIB_DB_NAME: haxelib
       dbHost:
-        image: mariadb
+        image: mariadb:10.5
         ports:
           - "3306:3306"
         env:
+          TZ: UTC
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: haxelib
           MYSQL_USER: dbUser
