@@ -33,6 +33,8 @@ RUN apt-get update \
         direnv \
         tzdata \
     && echo 'eval "$(direnv hook bash)"' >> /etc/bash.bashrc \
+    && add-apt-repository ppa:git-core/ppa \
+    && apt-get install -y git \
     && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     && apt-get install -y nodejs=14.* \
     && add-apt-repository ppa:haxe/haxe3.4 \

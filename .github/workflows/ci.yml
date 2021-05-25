@@ -50,7 +50,7 @@ jobs:
   test:
     needs: push
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210525054946
+    container: haxe/haxelib_devcontainer_workspace:20210525164035
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}
