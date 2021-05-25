@@ -71,9 +71,9 @@ jobs:
           MYSQL_USER: dbUser
           MYSQL_PASSWORD: dbPass
     env:
-      HAXELIB_SERVER: haxelib
+      HAXELIB_SERVER: localhost
       HAXELIB_SERVER_PORT: 80
-      HAXELIB_DB_HOST: dbHost
+      HAXELIB_DB_HOST: localhost
       HAXELIB_DB_PORT: 3306
       HAXELIB_DB_USER: dbUser
       HAXELIB_DB_PASS: dbPass
