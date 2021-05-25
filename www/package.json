@@ -11,7 +11,7 @@
   "devDependencies": {
     "copyfiles": "^2.0.0",
     "download-cli": "^1.1.1",
-    "jquery": "^1.12.4"
+    "jquery": "^3.5.0"
   },
   "dependencies": {}
 }
