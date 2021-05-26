@@ -9,4 +9,4 @@ cp -r "$DIR"/../*.hxml "$DIR"/../run.n "$DIR/workspace/"
 docker build --pull -t "$TAG" "$DIR"
 
 yq eval ".services.workspace.image = \"$TAG\"" "$DIR/docker-compose.yml" -i
-yq eval ".jobs.test.container = \"$TAG\"" "$DIR/../.github/workflows/updateMeta.yml" -i
+yq eval ".jobs.test.container = \"$TAG\"" "$DIR/../.github/workflows/ci.yml" -i

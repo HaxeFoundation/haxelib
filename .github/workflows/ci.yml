@@ -1,12 +1,10 @@
 name: CI
-
 on:
   push:
     branches:
       - development
       - master
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,7 +39,7 @@ jobs:
       - name: Load image
         run: docker load --input /tmp/haxelib-server-image.tar
       - name: Login to DockerHub
-        uses: docker/login-action@v1 
+        uses: docker/login-action@v1
         with:
           username: haxeci
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -50,9 +48,7 @@ jobs:
   test:
     needs: push
     runs-on: ubuntu-latest
-    container:
-      image: haxe/haxelib_devcontainer_workspace:20210525164035
-      options: --user 1000
+    container: haxe/haxelib_devcontainer_workspace:20210526150817
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}

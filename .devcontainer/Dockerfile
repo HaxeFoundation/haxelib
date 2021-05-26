@@ -56,6 +56,8 @@ RUN haxelib setup /workspace/haxelib_global
 RUN haxe libs.hxml
 VOLUME /workspace/haxelib_global
 
+USER root
+
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=
 
