@@ -99,6 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210529093453
     steps:
+      - uses: actions/checkout@v2
       - run: yq eval '.Image.Name = "haxe/lib.haxe.org:${{ github.sha }}"' "Dockerrun.aws.json" -i
       - run: zip -r eb.zip Dockerrun.aws.json .ebextensions
       - run: eb deploy --process "${GITHUB_REF##*/}-lib-haxe-org"
