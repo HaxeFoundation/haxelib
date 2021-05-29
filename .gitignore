@@ -10,6 +10,8 @@ repo_integration_tests/
 /haxelib
 run.c
 
+.envrc
+
 # run.n is in the repo
 !/run.n
 

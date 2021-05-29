@@ -499,7 +499,5 @@ Listen 2000
 			case _:
 				throw "Unknown system";
 		}
-
-		deploy();
 	}
 }

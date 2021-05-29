@@ -48,7 +48,7 @@ jobs:
   test:
     needs: push
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210526150817
+    container: haxe/haxelib_devcontainer_workspace:20210529093453
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}
@@ -94,3 +94,15 @@ jobs:
       - run: neko run.n run tora > ~/tora.log 2>&1 &
       - run: haxe ci.hxml
       - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    container: haxe/haxelib_devcontainer_workspace:20210529093453
+    steps:
+      - run: yq eval '.Image.Name = "haxe/lib.haxe.org:${{ github.sha }}"' "Dockerrun.aws.json" -i
+      - run: zip -r eb.zip Dockerrun.aws.json .ebextensions
+      - run: eb deploy --process "${GITHUB_REF##*/}-lib-haxe-org"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}

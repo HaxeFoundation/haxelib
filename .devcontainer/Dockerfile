@@ -32,6 +32,7 @@ RUN apt-get update \
         software-properties-common \
         direnv \
         tzdata \
+        python3-pip \
     && echo 'eval "$(direnv hook bash)"' >> /etc/bash.bashrc \
     && add-apt-repository ppa:git-core/ppa \
     && apt-get install -y git \
@@ -55,6 +56,11 @@ RUN mkdir -p /workspace/haxelib_global
 RUN haxelib setup /workspace/haxelib_global
 RUN haxe libs.hxml
 VOLUME /workspace/haxelib_global
+
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
+ENV LC_ALL=en_US.UTF-8
+RUN python3 -m pip install --upgrade pip setuptools wheel
+RUN pip3 install awsebcli==3.19.4 --upgrade
 
 USER root
 

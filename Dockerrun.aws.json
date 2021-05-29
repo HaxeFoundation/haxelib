@@ -1,0 +1,22 @@
+{
+    "AWSEBDockerrunVersion": "1",
+    "Image": {
+        "Name": "haxe/lib.haxe.org:${commit_sha}",
+        "Update": "true"
+    },
+    "Ports": [
+        {
+            "ContainerPort": "80"
+        }
+    ],
+    "Volumes": [
+        {
+            "HostDirectory": "/media/docker_files",
+            "ContainerDirectory": "/var/www/html/files"
+        },
+        {
+            "HostDirectory": "/media/docker_tmp",
+            "ContainerDirectory": "/var/www/html/tmp"
+        }
+    ]
+}
