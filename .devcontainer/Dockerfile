@@ -49,6 +49,11 @@ RUN apt-get update \
 # Install yq
 RUN wget https://github.com/mikefarah/yq/releases/download/v4.7.0/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
 
+# Install eb cli
+ENV LC_ALL=en_US.UTF-8
+RUN python3 -m pip install --ignore-installed --upgrade pip setuptools wheel PyYAML
+RUN pip3 install awsebcli==3.19.4 --upgrade
+
 USER $USER_UID
 WORKDIR /workspace
 COPY workspace/libs.hxml workspace/run.n /workspace/
@@ -56,12 +61,6 @@ RUN mkdir -p /workspace/haxelib_global
 RUN haxelib setup /workspace/haxelib_global
 RUN haxe libs.hxml
 VOLUME /workspace/haxelib_global
-
-ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
-ENV LC_ALL=en_US.UTF-8
-RUN python3 -m pip install --upgrade pip setuptools wheel
-RUN pip3 install awsebcli==3.19.4 --upgrade
-
 USER root
 
 # Switch back to dialog for any ad-hoc use of apt-get
