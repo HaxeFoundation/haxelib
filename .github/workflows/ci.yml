@@ -48,7 +48,7 @@ jobs:
   test:
     needs: push
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210529191114
+    container: haxe/haxelib_devcontainer_workspace:20210614094507
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}
@@ -97,7 +97,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210529191114
+    container: haxe/haxelib_devcontainer_workspace:20210614094507
     steps:
       - uses: actions/checkout@v2
       - run: yq eval '.Image.Name = "haxe/lib.haxe.org:${{ github.sha }}"' "Dockerrun.aws.json" -i

@@ -1,7 +1,7 @@
 version: '3'
 services:
   workspace:
-    image: haxe/haxelib_devcontainer_workspace:20210529191114
+    image: haxe/haxelib_devcontainer_workspace:20210614094507
     init: true
     volumes:
       - /var/run/docker.sock:/var/run/docker-host.sock

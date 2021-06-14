@@ -22,7 +22,7 @@
 	"extensions": [
 		"ms-azuretools.vscode-docker",
 		"nadako.vshaxe",
-		"rubymaniac.vscode-direnv"
+		"hashicorp.terraform",
 	],
 	"remoteUser": "vscode"
 }
