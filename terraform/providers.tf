@@ -10,7 +10,7 @@ terraform {
       version = "~> 2.21"
     }
     github = {
-      source = "integrations/github"
+      source  = "integrations/github"
       version = "~> 4.11"
     }
   }
@@ -29,3 +29,5 @@ provider "aws" {
   # AWS_ACCESS_KEY_ID
   # AWS_SECRET_ACCESS_KEY
 }
+
+data "aws_canonical_user_id" "current" {}
