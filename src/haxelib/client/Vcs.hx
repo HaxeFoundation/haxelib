@@ -56,6 +56,15 @@ interface IVcs {
 @:enum abstract VcsID(String) to String {
 	final Hg = "hg";
 	final Git = "git";
+
+	public static function ofString(s:String):VcsID {
+		if (s == Git)
+			return Git;
+		else if (s == Hg)
+			return Hg;
+		else
+			throw 'Invalid VscID $s';
+	}
 }
 
 /** Enum representing errors that can be thrown during a vcs operation. **/
@@ -118,6 +127,13 @@ class Vcs implements IVcs {
 	public static function get(id:VcsID, settings:Settings):Null<Vcs> {
 		initialize(settings);
 		return reg.get(id);
+	}
+
+	public static function getDirectoryFor(id:VcsID):String {
+		return switch (get(id, {})) {
+			case null: throw 'Unable to get directory for $id';
+			case vcs: vcs.directory;
+		}
 	}
 
 	static function set(id:VcsID, vcs:Vcs, settings:Settings, ?rewrite:Bool):Void {
