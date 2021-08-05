@@ -162,8 +162,23 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 
 		return result;
 	}
+
 	public inline function iterator()
 		return toArray().iterator();
+
+	#if (haxe_ver >= 4.0)
+	public inline function keyValueIterator():KeyValueIterator<ProjectName, DependencyVersion> {
+		final fields = Reflect.fields(this);
+		var index = 0;
+		return {
+			next: function() {
+				final name = fields[index++];
+				return {key: ProjectName.ofString(name), value: Reflect.field(this, name)};
+			},
+			hasNext: function() return index < fields.length
+		}
+	}
+	#end
 }
 
 /** The type of a dependency version. **/

@@ -31,13 +31,13 @@ import haxe.iterators.ArrayIterator;
 
 import sys.FileSystem;
 import sys.io.File;
-import sys.io.Process;
 
 import haxelib.client.Vcs;
 import haxelib.client.Util.*;
 import haxelib.client.FsUtils.*;
 import haxelib.client.Args;
 import haxelib.client.Cli;
+import haxelib.client.LibraryData.Version;
 
 using StringTools;
 using Lambda;
@@ -180,7 +180,7 @@ class ProgressIn extends haxe.io.Input {
 }
 
 class Main {
-	static final HAXELIB_LIBNAME = "haxelib";
+	static final HAXELIB_LIBNAME:ProjectName = ProjectName.ofString("haxelib");
 
 	static final VERSION:SemVer = SemVer.ofString(getHaxelibVersion());
 	static final VERSION_LONG:String = getHaxelibVersionLong();
@@ -224,8 +224,8 @@ class Main {
 		argsIterator = mainArgs.iterator();
 
 		settings = {
-			debug: args.flags.contains(Debug),
-			quiet:args.flags.contains(Quiet),
+			debug : args.flags.contains(Debug),
+			quiet : args.flags.contains(Quiet),
 			flat : args.flags.contains(Flat),
 			global : args.flags.contains(Global),
 			skipDependencies : args.flags.contains(SkipDependencies)
@@ -692,7 +692,7 @@ class Main {
 	}
 
 	function install() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 
 		final prj = getArgument("Library name or hxml file");
 
@@ -1084,7 +1084,19 @@ class Main {
 		}
 	}
 
-	function getRepository():String {
+	function getScope():Scope {
+		if (settings.global)
+			return Scope.getScopeForRepository(Repository.getGlobal());
+		return Scope.getScope();
+	}
+
+	function getRepository():Repository {
+		if (settings.global)
+			return Repository.getGlobal();
+		return Repository.get();
+	}
+
+	function getRepositoryPath():String {
 		if (settings.global)
 			return RepoManager.getGlobalPath();
 		return RepoManager.getPath();
@@ -1107,7 +1119,7 @@ class Main {
 	}
 
 	function config() {
-		Cli.print(getRepository());
+		Cli.print(getRepositoryPath());
 	}
 
 	static function getCurrent( proj, dir ) {
@@ -1127,7 +1139,7 @@ class Main {
 	}
 
 	function list() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		final folders = {
 			final folders = FileSystem.readDirectory(rep);
 			final filter = argsIterator.next();
@@ -1185,7 +1197,7 @@ class Main {
 	}
 
 	function update() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 
 		var prj = argsIterator.next();
 		if (prj != null) {
@@ -1268,7 +1280,7 @@ class Main {
 	}
 
 	function remove() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		final prj = getArgument("Library");
 		final version = argsIterator.next();
 		final pdir = rep + Data.safe(prj);
@@ -1296,7 +1308,7 @@ class Main {
 	}
 
 	function set() {
-		setCurrent(getRepository(), getArgument("Library"), getArgument("Version"), false);
+		setCurrent(getRepositoryPath(), getArgument("Library"), getArgument("Version"), false);
 	}
 
 	function setCurrent( rep : String, prj : String, version : String, doAsk : Bool ) {
@@ -1349,7 +1361,7 @@ class Main {
 	}
 
 	function path() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		final list = new List();
 		for(arg in argsIterator){
 			final libInfo = arg.split(":");
@@ -1380,7 +1392,7 @@ class Main {
 	}
 
 	function libpath( ) {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		for(arg in argsIterator ) {
 			final libInfo = arg.split(":");
 			final results = new List();
@@ -1390,7 +1402,7 @@ class Main {
 	}
 
 	function dev() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		final project = getArgument("Library");
 		var dir = argsIterator.next();
 		final proj = rep + Data.safe(project);
@@ -1457,7 +1469,7 @@ class Main {
 	}
 
 	function vcs(id:VcsID) {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		useVcs(id, function(vcs)
 			doVcsInstall(
 				rep, vcs, getArgument("Library name"),
@@ -1532,85 +1544,29 @@ class Main {
 			doInstallDependencies(rep, Data.readData(File.getContent(jsonPath), false).dependencies);
 	}
 
-
+	final libraryAndVersion = ~/^(.+?)(?::(.*))?$/;
 	function run() {
-		final rep = getRepository();
-		final project = getArgument("Library");
-		final libInfo = project.split(":");
-		doRun(rep, libInfo[0], [for (arg in argsIterator) arg], libInfo[1], settings.global);
-	}
+		final scope = getScope();
 
-	static var haxeVersion(get, null):SemVer;
-	static function get_haxeVersion():SemVer {
-		if(haxeVersion == null) {
-			final p = new Process('haxe', ['--version']);
-			if(p.exitCode() != 0) {
-				throw 'Cannot get haxe version: ${p.stderr.readAll().toString()}';
-			}
-			final str = p.stdout.readAll().toString();
-			haxeVersion = SemVer.ofString(str.split('+')[0]);
+		libraryAndVersion.match(getArgument("Library[:version]"));
+
+		final project = ProjectName.ofString(libraryAndVersion.matched(1));
+		final versionStr = libraryAndVersion.matched(2);
+		final version = if (versionStr != null) haxelib.client.Version.ofString(versionStr) else null;
+
+		try {
+			scope.runScript(project, {
+				args: [for (arg in argsIterator) arg],
+				useGlobalRepo: settings.global
+			}, version);
+		} catch (e:ScriptRunner.ScriptError) {
+			Sys.exit(e.code);
 		}
-		return haxeVersion;
-	}
-
-	static function doRun( rep:String, project:String, args:Array<String>, ?version:String, global = false ) {
-		var pdir = rep + Data.safe(project);
-		if( !FileSystem.exists(pdir) )
-			throw "Library "+project+" is not installed";
-		pdir += "/";
-		if (version == null)
-			version = getCurrent(project, pdir);
-		final dev = try getDev(pdir) catch ( e : Dynamic ) null;
-		final vdir = dev != null ? dev : pdir + Data.safe(version);
-
-		final infos =
-			try
-				Data.readData(File.getContent(vdir + '/haxelib.json'), false)
-			catch (e:Dynamic)
-				throw 'Error parsing haxelib.json for $project@$version: $e';
-
-		final scriptArgs =
-			if (infos.main != null) {
-				runScriptArgs(project, infos.main, infos.dependencies, global);
-			} else if(FileSystem.exists('$vdir/run.n')) {
-				["neko", vdir + "/run.n"];
-			} else if(FileSystem.exists('$vdir/Run.hx')) {
-				runScriptArgs(project, 'Run', infos.dependencies, global);
-			} else {
-				throw 'Library $project version $version does not have a run script';
-			}
-
-		final cmd = scriptArgs.shift();
-		final callArgs = scriptArgs.concat(args);
-
-		callArgs.push(Sys.getCwd());
-		Sys.setCwd(vdir);
-
-		Sys.putEnv("HAXELIB_RUN", "1");
-		Sys.putEnv("HAXELIB_RUN_NAME", project);
- 		Sys.exit(Sys.command(cmd, callArgs));
-	}
-
-	static function runScriptArgs(project:String, main:String, dependencies:Dependencies, global:Bool):Array<String> {
-		final deps = dependencies.toArray();
-		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
-		final args = [];
-		if(global && SemVer.compare(haxeVersion, SemVer.ofString('4.0.0')) >= 0) {
-			args.push('--haxelib-global');
-		}
-		for (d in deps) {
-			args.push('-lib');
-			args.push(d.name + if (d.version == '') '' else ':${d.version}');
-		}
-		args.unshift('haxe');
-		args.push('--run');
-		args.push(main);
-		return args;
 	}
 
 	#if neko
 	function proxy() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		final host = getArgument("Proxy host");
 		if( host == "" ) {
 			if( FileSystem.exists(rep + "/.proxy") ) {
@@ -1640,7 +1596,7 @@ class Main {
 	}
 
 	function loadProxy() {
-		final rep = getRepository();
+		final rep = getRepositoryPath();
 		try Http.PROXY = haxe.Unserializer.run(File.getContent(rep + "/.proxy")) catch( e : Dynamic ) { };
 	}
 	#end
@@ -1685,15 +1641,21 @@ class Main {
 
 		final priorityFlags = Args.extractPriorityFlags(args);
 
-		final repoPath = try RepoManager.getGlobalPath() catch (_:Dynamic) null;
+		final repository = try Repository.getGlobal() catch (_:Dynamic) null;
 		// if haxelib hasn't already been run, --system is not specified, and the updated version is installed,
-		if (!isHaxelibRun && !priorityFlags.contains(System) && repoPath != null && FileSystem.exists(repoPath + HAXELIB_LIBNAME) ){
+		if (repository != null && !isHaxelibRun && !priorityFlags.contains(System) && repository.isInstalled(HAXELIB_LIBNAME) ){
 			try {
-				doRun(repoPath, HAXELIB_LIBNAME, args, priorityFlags.contains(Global));
+				final scope = Scope.getScopeForRepository(repository);
+				scope.runScript(HAXELIB_LIBNAME, {
+					args: args,
+					useGlobalRepo: priorityFlags.contains(Global)
+				});
 				return;
+			} catch (e:ScriptRunner.ScriptError) {
+				Sys.exit(e.code);
 			} catch (e:haxe.Exception) {
-				Cli.print('Warning: failed to run updated haxelib: $e');
-				Cli.print('Warning: resorting to system haxelib...');
+				Cli.print('Warning: Failed to run updated haxelib: $e');
+				Cli.print('Warning: Resorting to system haxelib...');
 			}
 		}
 
@@ -1728,7 +1690,7 @@ class Main {
 
 	// deprecated commands
 	function local() {
-		doInstallFile(getRepository(), getArgument("Package"), true, true);
+		doInstallFile(getRepositoryPath(), getArgument("Package"), true, true);
 	}
 
 	function updateSelf() {
