@@ -68,6 +68,12 @@ abstract class Scope {
 	**/
 	public abstract function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void;
 
+	public abstract function getPath(library:ProjectName, ?version:Version):String;
+
+	public abstract function getArgsAsHxml(library:ProjectName, ?version:Version):String;
+
+	public abstract function getArgsAsHxmlForLibraries(libraries:Array<{library:ProjectName, version:Null<Version>}>):String;
+
 	abstract function resolveCompiler():LibraryData;
 
 	// TODO: placeholders until https://github.com/HaxeFoundation/haxe/wiki/Haxe-haxec-haxelib-plan

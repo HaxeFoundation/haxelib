@@ -1,12 +1,16 @@
 package haxelib.client;
 
 import sys.io.File;
+import haxe.ds.GenericStack;
+import haxe.ds.Option;
+import haxe.io.Path;
 
 import haxelib.Data;
 
 import haxelib.client.LibraryData;
 import haxelib.client.ScriptRunner;
 import haxelib.client.Scope;
+import haxelib.client.Hxml;
 
 using StringTools;
 
@@ -19,9 +23,10 @@ class GlobalScope extends Scope {
 		callData = callData != null ? callData : {};
 		final resolved = resolveVersionAndPath(library, version);
 
-		final info = try Data.readData(File.getContent(resolved.path + 'haxelib.json'), false) catch (e:Dynamic) {
-			throw 'Failed when trying to parse haxelib.json for $library@${resolved.version}: $e';
-		};
+		final info =
+			try Data.readData(File.getContent(resolved.path + Data.JSON), false)
+			catch (e:Dynamic)
+				throw 'Failed when trying to parse haxelib.json for $library@${resolved.version}: $e';
 
 		// add dependency versions if given
 		final dependencies:Dependencies =
@@ -37,6 +42,103 @@ class GlobalScope extends Scope {
 		}
 
 		ScriptRunner.run(libraryRunData, resolveCompiler(), callData);
+	}
+
+	public function getPath(library:ProjectName, ?version:Version):String {
+		if (version != null)
+			return repository.getValidVersionPath(library, version);
+
+		final devPath = repository.getDevPath(library);
+		if (devPath != null)
+			return devPath;
+
+		final current = repository.getCurrentVersion(library);
+		return repository.getValidVersionPath(library, current);
+	}
+
+	public function getArgsAsHxml(library:ProjectName, ?version:Version):String {
+		final stack = new GenericStack();
+		stack.add({library: library, version: version});
+
+		return getArgsAsHxmlWithDependencies(stack);
+	}
+
+	public function getArgsAsHxmlForLibraries(libraries:Array<{library:ProjectName, version:Null<Version>}>):String {
+		final stack = new GenericStack<{library:ProjectName, version:Null<Version>}>();
+
+		for (i in 1...libraries.length + 1)
+			stack.add(libraries[libraries.length - i]);
+
+		return getArgsAsHxmlWithDependencies(stack);
+	}
+
+	function getArgsAsHxmlWithDependencies(stack:GenericStack<{library:ProjectName, version:Null<Version>}>){
+		var argsString = "";
+		function addLine(s:String)
+			argsString += '$s\n';
+
+		// the original set of inputs
+		final topLevelLibs = [for (lib in stack) lib];
+
+		final includedLibraries:Map<ProjectName, VersionOrDev> = [];
+
+		while (!stack.isEmpty()) {
+			final cur = stack.pop();
+			final library = cur.library;
+			final version = cur.version;
+
+			// check for duplicates
+			if (includedLibraries.exists(library)) {
+				final otherVersion = includedLibraries[library];
+				// if the current library is part of the original set of inputs, and if the versions don't match
+				if (topLevelLibs.contains(cur) && version != null && version != otherVersion)
+					throw 'Cannot process `$library:$version`:'
+						+ 'Library $library has two versions included : $otherVersion and $version';
+				continue;
+			}
+
+			final resolved = resolveVersionAndPath(library, version);
+			includedLibraries[library] = resolved.version;
+
+			// neko libraries
+			final ndllDir = resolved.path + "ndll/";
+			if (sys.FileSystem.exists(ndllDir))
+				addLine('-L $ndllDir');
+
+			// extra parameters
+			try {
+				addLine(normalizeHxml(File.getContent(resolved.path + "extraParams.hxml")));
+			} catch (_:Dynamic) {}
+
+			final info = {
+				final jsonContent = try File.getContent(resolved.path + Data.JSON) catch (_) null;
+				Data.readData(jsonContent, jsonContent != null ? CheckSyntax : NoCheck);
+			}
+
+			// path and version compiler define
+			addLine(
+				if (info.classPath != "")
+					Path.addTrailingSlash(Path.join([resolved.path, info.classPath]))
+				else
+					resolved.path
+			);
+			addLine('-D $library=${info.version}');
+
+			// add dependencies to stack
+			final dependencies = info.dependencies.toArray();
+
+			while (dependencies.length > 0) {
+				final dependency = dependencies.pop();
+				stack.add({
+					library: ProjectName.ofString(dependency.name),
+					version: // TODO: maybe check the git/hg commit hash here if it's given?
+						if (dependency.version == DependencyVersion.DEFAULT) null
+						else Version.ofString(dependency.version)
+				});
+			}
+		}
+
+		return argsString.trim();
 	}
 
 	static var haxeVersion(get, null):SemVer;
