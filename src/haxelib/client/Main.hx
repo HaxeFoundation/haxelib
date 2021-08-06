@@ -37,11 +37,11 @@ import haxelib.client.Util.*;
 import haxelib.client.FsUtils.*;
 import haxelib.client.Args;
 import haxelib.client.Cli;
-import haxelib.client.LibraryData.Version;
+import haxelib.client.Hxml;
+import haxelib.client.LibraryData;
 
 using StringTools;
 using Lambda;
-using haxe.io.Path;
 using haxelib.Data;
 
 #if js
@@ -866,13 +866,6 @@ class Main {
 		}
 	}
 
-	// strip comments, trim whitespace from each line and remove empty lines
-	function normalizeHxml(hxmlContents: String) {
-		return ~/\r?\n/g.split(hxmlContents).map(StringTools.trim).filter(function(line) {
-			return line != "" && !line.startsWith("#");
-		}).join('\n');
-	}
-
 	#if js
 	function download(fileUrl:String, outPath:String):Void {
 		node_fetch.Fetch.call(fileUrl, {
@@ -1330,75 +1323,42 @@ class Main {
 		Cli.print('Library $prj current version is now $version');
 	}
 
-	function checkRec( rep : String, prj : String, version : String, l : List<{ project : String, version : String, dir : String, info : Infos }>, ?returnDependencies : Bool = true ) {
-		final pdir = rep + Data.safe(prj);
-		final explicitVersion = version != null;
-		final version = if( version != null ) version else getCurrent(prj, pdir);
+	function extractLibArgs():Array<{library:ProjectName, version:Null<Version>}> {
+		return [
+			for (arg in argsIterator) {
+				libraryAndVersion.match(arg);
 
-		final dev = try getDev(pdir) catch (_:Dynamic) null;
-		var vdir = pdir + "/" + Data.safe(version);
-
-		if( dev != null && (!explicitVersion || !FileSystem.exists(vdir)) )
-			vdir = dev;
-
-		if( !FileSystem.exists(vdir) )
-			throw 'Library $prj version $version is not installed';
-
-		for( p in l )
-			if( p.project == prj ) {
-				if( p.version == version )
-					return;
-				throw 'Library $prj has two versions included : $version and ${p.version}';
+				{
+					library: ProjectName.ofString(libraryAndVersion.matched(1)),
+					version: {
+						final versionStr = libraryAndVersion.matched(2);
+						if (versionStr != null)
+							haxelib.client.Version.ofString(versionStr.split(":")[0])
+						else
+							null;
+					}
+				}
 			}
-		final json = try File.getContent(vdir+"/"+Data.JSON) catch( e : Dynamic ) null;
-		final inf = Data.readData(json, json != null ? CheckSyntax : NoCheck);
-		l.add({project: prj, version: version, dir: vdir.addTrailingSlash(), info: inf});
-		if( returnDependencies ) {
-			for( d in inf.dependencies )
-				if( !Lambda.exists(l, function(e) return e.project == d.name) )
-					checkRec(rep,d.name,if( d.version == "" ) null else d.version,l);
-		}
+		];
 	}
 
 	function path() {
-		final rep = getRepositoryPath();
-		final list = new List();
-		for(arg in argsIterator){
-			final libInfo = arg.split(":");
-			try {
-				checkRec(rep, libInfo[0], libInfo[1], list);
-			} catch(e:Dynamic) {
-				throw 'Cannot process $libInfo: $e';
-			}
-		}
-		for( d in list ) {
-			final ndir = d.dir + "ndll";
-			if (FileSystem.exists(ndir))
-				Sys.println('-L $ndir/');
+		final scope = getScope();
 
-			try {
-				Sys.println(normalizeHxml(File.getContent(d.dir + "extraParams.hxml")));
-			} catch(_:Dynamic) {}
+		final libraries = extractLibArgs();
+		if (libraries.length == 0)
+			return;
 
-			var dir = d.dir;
-			if (d.info.classPath != "") {
-				final cp = d.info.classPath;
-				dir = (d.dir + cp).addTrailingSlash();
-			}
-			Sys.println(dir);
-
-			Sys.println("-D " + d.project + "="+d.info.version);
-		}
+		Cli.print(scope.getArgsAsHxmlForLibraries(libraries));
 	}
 
-	function libpath( ) {
-		final rep = getRepositoryPath();
-		for(arg in argsIterator ) {
-			final libInfo = arg.split(":");
-			final results = new List();
-			checkRec(rep, libInfo[0], libInfo[1], results, false);
-			if( !results.isEmpty() ) Sys.println(results.first().dir);
-		}
+	function libpath() {
+		final scope = getScope();
+
+		final libraries = extractLibArgs();
+
+		for (library in libraries)
+			Cli.print(scope.getPath(library.library, library.version));
 	}
 
 	function dev() {
