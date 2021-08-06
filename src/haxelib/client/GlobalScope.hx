@@ -56,6 +56,25 @@ class GlobalScope extends Scope {
 		return repository.getValidVersionPath(library, current);
 	}
 
+	public function getArrayOfLibraryInfo(?filter:String):Array<InstallationInfo> {
+		final names = repository.getLibraryNames(filter);
+
+		final projects = new Array<InstallationInfo>();
+
+		for (name in names) {
+			final info = repository.getProjectInstallationInfo(name);
+
+			projects.push({
+				name: name,
+				current: try repository.getCurrentVersion(name) catch(e) null,
+				devPath: info.devPath,
+				versions: info.versions
+			});
+		}
+
+		return projects;
+	}
+
 	public function getArgsAsHxml(library:ProjectName, ?version:Version):String {
 		final stack = new GenericStack();
 		stack.add({library: library, version: version});

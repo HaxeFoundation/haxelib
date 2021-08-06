@@ -1132,60 +1132,26 @@ class Main {
 	}
 
 	function list() {
-		final rep = getRepositoryPath();
-		final folders = {
-			final folders = FileSystem.readDirectory(rep);
-			final filter = argsIterator.next();
-			if ( filter != null )
-				folders.filter( function (f) return f.toLowerCase().indexOf(filter.toLowerCase()) > -1 );
-			else
-				folders;
-		}
-		final all = [];
-		for( p in folders ) {
-			if( p.charAt(0) == "." )
-				continue;
+		final scope = getScope();
 
-			final current = try getCurrent("", rep + p) catch(e:Dynamic) continue;
-			final dev = try getDev(rep + p) catch( e : Dynamic ) null;
+		final libraryInfo = scope.getArrayOfLibraryInfo(argsIterator.next());
 
-			final semvers = [];
-			final others = [];
-			for( v in FileSystem.readDirectory(rep+p) ) {
-				if( v.charAt(0) == "." )
-					continue;
-				v = Data.unsafe(v);
-				final semver = try SemVer.ofString(v) catch (_:Dynamic) null;
-				if (semver != null)
-					semvers.push(semver);
-				else
-					others.push(v);
-			}
+		// sort projects alphabetically
+		libraryInfo.sort(function(a, b) return Reflect.compare((a.name:String).toLowerCase(), (b.name:String).toLowerCase()));
 
-			if (semvers.length > 0)
-				semvers.sort(SemVer.compare);
+		for (library in libraryInfo) {
+			var line = '${library.name}:';
+			for (version in library.versions)
+				line +=
+					if (library.devPath == null && version == library.current)
+						' [$version]'
+					else
+						' $version';
 
-			final versions = [];
-			for (v in semvers)
-				versions.push((v : String));
-			for (v in others)
-				versions.push(v);
+			if (library.devPath != null)
+				line += ' [dev:${library.devPath}]';
 
-			if (dev == null) {
-				for (i in 0...versions.length) {
-					final v = versions[i];
-					if (v == current)
-						versions[i] = '[$v]';
-				}
-			} else {
-				versions.push("[dev:"+dev+"]");
-			}
-
-			all.push(Data.unsafe(p) + ": "+versions.join(" "));
-		}
-		all.sort(function(s1, s2) return Reflect.compare(s1.toLowerCase(), s2.toLowerCase()));
-		for (p in all) {
-			Cli.print(p);
+			Cli.print(line);
 		}
 	}
 

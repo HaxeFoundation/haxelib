@@ -48,6 +48,69 @@ class Repository {
 		return new Repository(RepoManager.getGlobalPath());
 	}
 
+	/**
+		Returns an array of installed project names.
+
+		If `filter` is given, ignores projects that do not
+		contain it as a substring.
+	**/
+	public function getLibraryNames(filter:String = null):Array<ProjectName> {
+		if (filter != null)
+			filter = filter.toLowerCase();
+
+		inline function isFilteredOut(name:String) {
+			if (filter == null)
+				return false;
+			return !name.toLowerCase().contains(filter);
+		}
+
+		final projects = [];
+		var libraryName:ProjectName;
+
+		for (dir in FileSystem.readDirectory(path)) {
+			// hidden or not a folder
+			if (dir.startsWith(".") || !FileSystem.isDirectory(Path.join([path, dir])))
+				continue;
+
+			libraryName = try ProjectName.ofString(Data.unsafe(dir)) catch (_:haxe.Exception) continue;
+
+			if (!isFilteredOut(libraryName))
+				projects.push(libraryName);
+		}
+		return projects;
+	}
+
+	/** Returns information on currently installed versions for project `name` **/
+	public function getProjectInstallationInfo(name:ProjectName):{versions: Array<Version>, devPath:String} {
+		final semVers:Array<SemVer> = [];
+		final others:Array<Vcs.VcsID> = [];
+		final root = getProjectRootPath(name);
+
+		for (sub in FileSystem.readDirectory(root)) {
+			// ignore .dev and .current files
+			if (sub.startsWith("."))
+				continue;
+
+			final version = Data.unsafe(sub);
+			try {
+				final semVer = SemVer.ofString(version);
+				semVers.push(semVer);
+			} catch(e:haxe.Exception) {
+				if (Vcs.VcsID.isVcs(version))
+					others.push(Vcs.VcsID.ofString(version));
+			}
+		}
+		if (semVers.length != 0)
+			semVers.sort(SemVer.compare);
+
+		final versions = (semVers:Array<Version>).concat(others);
+
+		return {
+			versions: versions,
+			devPath: getDevPath(name)
+		};
+	}
+
 	/** Returns whether project `name` is installed **/
 	public function isInstalled(name:ProjectName):Bool {
 		return FileSystem.exists(getProjectRootPath(name));
