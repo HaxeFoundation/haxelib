@@ -4,7 +4,15 @@ import haxelib.Data;
 
 import haxelib.client.LibraryData;
 import haxelib.client.ScriptRunner;
+
 using StringTools;
+
+typedef InstallationInfo = {
+	final name:ProjectName;
+	final versions:Array<String>;
+	final current:String;
+	final devPath:Null<String>;
+}
 
 /** Returns scope for directory `dir`. If `dir` is omitted, uses the current
 	working directory.
@@ -67,6 +75,8 @@ abstract class Scope {
 		exception is thrown containing the error code.
 	**/
 	public abstract function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void;
+
+	public abstract function getArrayOfLibraryInfo(?filter:String):Array<InstallationInfo>;
 
 	public abstract function getPath(library:ProjectName, ?version:Version):String;
 

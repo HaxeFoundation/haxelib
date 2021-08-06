@@ -57,6 +57,10 @@ interface IVcs {
 	final Hg = "hg";
 	final Git = "git";
 
+	public static function isVcs(s:String) {
+		return s == Hg || s == Git;
+	}
+
 	public static function ofString(s:String):VcsID {
 		if (s == Git)
 			return Git;
