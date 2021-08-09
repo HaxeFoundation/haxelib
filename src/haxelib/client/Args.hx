@@ -199,8 +199,9 @@ class Args {
 					if (repeatedOptions[rOption] == null)
 						repeatedOptions[rOption] = [];
 					repeatedOptions[rOption].push(requireNext());
-				// case invalid if(invalid != null):
-				// 	throw new ParsingFail('unknown switch $arg');
+
+				case _:
+					throw new SwitchError('Unknown switch $arg');
 			}
 		}
 
