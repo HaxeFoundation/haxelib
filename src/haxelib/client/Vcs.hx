@@ -141,7 +141,7 @@ class Vcs implements IVcs {
 		switch (commandResult) {
 			case {code: 0}: //pass
 			case {code: code, out:out}:
-				if (!settings.debug)
+				if (!settings.quiet)
 					Sys.stderr().writeString(out);
 				Sys.exit(code);
 		}
