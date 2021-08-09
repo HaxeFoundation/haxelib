@@ -23,7 +23,6 @@ package haxelib.client;
 
 import haxe.Http;
 import haxe.crypto.Md5;
-import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.zip.*;
 import haxe.iterators.ArrayIterator;
@@ -32,37 +31,15 @@ import sys.FileSystem;
 import sys.io.File;
 
 import haxelib.client.Vcs;
-import haxelib.client.Util.*;
-import haxelib.client.FsUtils.*;
 import haxelib.client.Args;
-import haxelib.client.Cli;
 import haxelib.client.Hxml;
 import haxelib.client.LibraryData;
+import haxelib.client.Util.*;
+import haxelib.client.FsUtils.*;
 
 using StringTools;
 using Lambda;
 using haxelib.Data;
-
-#if js
-using haxelib.client.Main.PromiseSynchronizer;
-
-@:jsRequire("promise-synchronizer")
-private extern class PromiseSynchronizer {
-	@:selfCall
-	static public function sync<T>(p:js.lib.Promise<T>):T;
-}
-#end
-
-@:structInit
-class ServerInfo {
-	public final protocol:String;
-	public final host:String;
-	public final port:Int;
-	public final dir:String;
-	public final url:String;
-	public final apiVersion:String;
-	public final noSsl:Bool;
-}
 
 @:structInit
 class CommandInfo {
@@ -73,14 +50,11 @@ class CommandInfo {
 	public final useInstead:Null<String>;
 }
 
-class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
-}
-
 class Main {
 	static final HAXELIB_LIBNAME:ProjectName = ProjectName.ofString("haxelib");
 
-	static final VERSION:SemVer = SemVer.ofString(getHaxelibVersion());
 	static final VERSION_LONG:String = getHaxelibVersionLong();
+	static final VERSION:SemVer = SemVer.ofString(getHaxelibVersion());
 
 	final command:Command;
 	final mainArgs:Array<String>;
@@ -89,10 +63,6 @@ class Main {
 		global : Bool,
 		skipDependencies : Bool,
 	};
-
-	final server : ServerInfo;
-	final siteUrl : String;
-	final site : SiteProxy;
 
 	final alreadyUpdatedVcsDependencies = new Map<String,String>();
 
@@ -110,13 +80,23 @@ class Main {
 
 		Vcs.setFlat(args.flags.contains(Flat));
 
+
+		// connection setup
+		if (args.flags.contains(NoTimeout))
+			Connection.hasTimeout = false;
+
+		final noSsl = Sys.getEnv("HAXELIB_NO_SSL");
+		if (noSsl == "1" || noSsl == "true") Connection.useSsl = false;
+
+		final remote = switch args.options.get(Remote) {
+			case null: Sys.getEnv("HAXELIB_REMOTE");
+			case remote: remote;
+		}
+		if (remote != null) Connection.remote = remote;
+		Connection.log = Cli.print;
+
+		// misc
 		updateCwd(args.repeatedOptions.get(Cwd));
-
-		server = getServerInfo(args.flags.contains(NoTimeout), args.options.get(Remote));
-		siteUrl = '${server.protocol}://${server.host}:${server.port}/${server.dir}';
-
-		final remotingUrl = '${siteUrl}api/${server.apiVersion}/${server.url}';
-		site = new SiteProxy(haxe.remoting.HttpConnection.urlConnect(remotingUrl).resolve("api"));
 
 		command = args.command;
 		mainArgs = args.mainArgs;
@@ -142,92 +122,8 @@ class Main {
 		}
 	}
 
-	static function getServerInfo(noTimeout:Bool, remote:Null<String>):ServerInfo {
-		if (noTimeout)
-			haxe.remoting.HttpConnection.TIMEOUT = 0;
-
-		final noSsl = {
-			final envVar = Sys.getEnv("HAXELIB_NO_SSL");
-			(envVar == "1" || envVar == "true");
-		}
-
-		if (remote == null)
-			remote = Sys.getEnv("HAXELIB_REMOTE");
-
-		if (remote != null)
-			return getFromRemote(remote, noSsl);
-
-		return {
-			protocol: !noSsl ? "https" : "http",
-			host: "lib.haxe.org",
-			port: 443,
-			dir: "",
-			url: "index.n",
-			apiVersion: "3.0",
-			noSsl: noSsl
-		};
-	}
-
-	static function getFromRemote(remote:String, noSsl:Bool):ServerInfo {
-		final r = ~/^(?:(https?):\/\/)?([^:\/]+)(?::([0-9]+))?\/?(.*)$/;
-		if (!r.match(remote))
-			throw 'Invalid repository format \'$remote\'';
-
-		final protocol = if (r.matched(1) != null) r.matched(1) else !noSsl ? "https" : "http";
-		final defaultPorts = [
-			"https" => 443,
-			"http" => 80
-		];
-
-		final port = switch (r.matched(3)) {
-			case null if (defaultPorts.exists(protocol)): defaultPorts[protocol];
-			case null: throw 'unknown default port for $protocol';
-			case portStr:
-				Std.parseInt(portStr);
-		}
-		final dir = {
-			final dir = r.matched(4);
-			if (dir.length > 0 && !dir.endsWith("/"))
-				dir + "/";
-			dir;
-		}
-
-		return {
-			protocol: protocol,
-			host: r.matched(2),
-			port: port,
-			dir: dir,
-			url: "index.n",
-			apiVersion: "3.0",
-			noSsl: noSsl
-		};
-	}
-
-	function retry<R>(func:Void -> R, numTries:Int = 3) {
-		var hasRetried = false;
-
-		while (numTries-- > 0) {
-			try {
-				final result = func();
-
-				if (hasRetried) Cli.print("retry sucessful");
-
-				return result;
-			} catch (e:Dynamic) {
-				if ( e == "Blocked") {
-					Cli.print("Failed. Triggering retry due to HTTP timeout");
-					hasRetried = true;
-				}
-				else {
-					throw 'Failed with error: $e';
-				}
-			}
-		}
-		throw 'Failed due to HTTP timeout after multiple retries';
-	}
-
 	function checkUpdate() {
-		final latest = try retry(site.getLatestVersion.bind(HAXELIB_LIBNAME)) catch (_:Dynamic) null;
+		final latest = try Connection.getLatestVersion(HAXELIB_LIBNAME) catch (_:Dynamic) null;
 		if (latest != null && latest > VERSION)
 			Cli.print('\nA new version ($latest) of haxelib is available.\nDo `haxelib --global update $HAXELIB_LIBNAME` to get the latest version.\n');
 	}
@@ -377,16 +273,16 @@ class Main {
 		}
 	}
 
-	function giveErrorString(e:String):Null<String> {
+	static function giveErrorString(e:String):Null<String> {
 		return switch (e) {
 			case "std@host_resolve":
-				'Host ${server.host} was not found\n' +
-				"Please ensure that your internet connection is on\n" +
-				"If you don't have an internet connection or if you are behind a proxy\n" +
-				"please download manually the file from https://lib.haxe.org/files/3.0/\n" +
-				"and run 'haxelib install <file>' to install the Library.\n" +
-				"You can also setup the proxy with 'haxelib proxy'.\n" +
-				haxe.CallStack.toString(haxe.CallStack.exceptionStack());
+				'Host ${Connection.getHost()} was not found\n'
+				+ "Please ensure that your internet connection is on\n"
+				+ "If you don't have an internet connection or if you are behind a proxy\n"
+				+ "please manually download the file from https://lib.haxe.org/files/3.0/\n"
+				+ "and run 'haxelib install <file>' to install the Library.\n"
+				+ "You can also setup the proxy with 'haxelib proxy'.\n"
+				+ haxe.CallStack.toString(haxe.CallStack.exceptionStack());
 			case "Blocked":
 				"Http connection timeout. Try running 'haxelib --notimeout <command>' to disable timeout";
 			case "std@get_cwd":
@@ -396,29 +292,19 @@ class Main {
 		}
 	}
 
-	#if !js
-	inline function createHttpRequest(url:String):Http {
-		final req = new Http(url);
-		req.addHeader("User-Agent", 'haxelib $VERSION_LONG');
-		if (haxe.remoting.HttpConnection.TIMEOUT == 0)
-			req.cnxTimeout = 0;
-		return req;
-	}
-	#end
-
 	// ---- COMMANDS --------------------
 
  	function search() {
 		final word = getArgument("Search word");
-		final l = retry(site.search.bind(word));
+		final l = Connection.search(word);
 		for( s in l )
 			Cli.print(s.name);
 		Cli.print('${l.length} libraries found');
 	}
 
 	function info() {
-		final prj = getArgument("Library name");
-		final inf = retry(site.infos.bind(prj));
+		final prj = ProjectName.ofString(getArgument("Library name"));
+		final inf = Connection.getInfo(prj);
 		Cli.print('Name: ${inf.name}');
 		Cli.print('Tags: ${inf.tags.join(", ")}');
 		Cli.print('Desc: ${inf.desc}');
@@ -435,7 +321,7 @@ class Main {
 
 	function user() {
 		final uname = getArgument("User name");
-		final inf = retry(site.user.bind(uname));
+		final inf = Connection.getUserData(uname);
 		Cli.print('Id: ${inf.name}');
 		Cli.print('Name: ${inf.fullname}');
 		Cli.print('Mail: ${inf.email}');
@@ -458,7 +344,7 @@ class Main {
 		if( pass != pass2 )
 			throw "Password does not match";
 		final encodedPassword = Md5.encode(pass);
-		retry(site.register.bind(name, encodedPassword, email, fullname));
+		Connection.register(name, encodedPassword, email, fullname);
 		return encodedPassword;
 	}
 
@@ -514,7 +400,7 @@ class Main {
 				user = getArgument("User");
 			} while ( infos.contributors.indexOf(user) == -1 );
 
-		final password = if( retry(site.isNewUser.bind(user)) ) {
+		final password = if( Connection.isNewUser(user) ) {
 			Cli.print('This is your first submission as \'$user\'');
 			Cli.print("Please enter the following information for registration");
 			doRegister(user);
@@ -522,11 +408,11 @@ class Main {
 			readPassword(user);
 		}
 
-		retry(site.checkDeveloper.bind(infos.name,user));
+		Connection.checkDeveloper(infos.name,user);
 
 		// check dependencies validity
 		for( d in infos.dependencies ) {
-			final infos = retry(site.infos.bind(d.name));
+			final infos = Connection.getInfo(ProjectName.ofString(d.name));
 			if( d.version == "" )
 				continue;
 			var found = false;
@@ -541,17 +427,17 @@ class Main {
 
 		// check if this version already exists
 
-		final sinfos = try retry(site.infos.bind(infos.name)) catch( _ : Dynamic ) null;
-		if( sinfos != null )
-			for( v in sinfos.versions )
-				if( v.name == infos.version && !Cli.ask('You\'re about to overwrite existing version \'${v.name}\', please confirm') )
+		final versions = try Connection.getVersions(infos.name) catch( _ : Dynamic ) null;
+		if( versions != null )
+			for( v in versions )
+				if( v == infos.version && !Cli.ask('You\'re about to overwrite existing version \'${v}\', please confirm') )
 					throw "Aborted";
 
 		// query a submit id that will identify the file
-		final id = retry(site.getSubmitId.bind());
+		final id = Connection.getSubmitId();
 
 		// directly send the file data over Http
-		final h = createHttpRequest(server.protocol+"://"+server.host+":"+server.port+"/"+server.url);
+		final h = Connection.createRequest();
 		h.onError = function(e) throw e;
 		h.onData = Cli.print;
 
@@ -566,7 +452,7 @@ class Main {
 		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
 			haxe.remoting.HttpConnection.TIMEOUT = 1000;
 		// ask the server to register the sent file
-		final msg = retry(site.processSubmit.bind(id,user,password));
+		final msg = Connection.processSubmit(id,user,password);
 		Cli.print(msg);
 	}
 	#end
@@ -574,7 +460,7 @@ class Main {
 	function readPassword(user:String, prompt = "Password"):String {
 		var password = Md5.encode(getSecretArgument(prompt));
 		var attempts = 5;
-		while (!retry(site.checkPassword.bind(user, password))) {
+		while (!Connection.checkPassword(user, password)) {
 			Cli.print('Invalid password for $user');
 			if (--attempts == 0)
 				throw 'Failed to input correct password';
@@ -611,7 +497,7 @@ class Main {
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
-		final inf = retry(site.infos.bind(prj));
+		final inf = Connection.getInfo(ProjectName.ofString(prj));
 		final reqversion = argsIterator.next();
 		final version = getVersion(inf, reqversion);
 		doInstall(rep, inf.name, version, version == inf.getLatest());
@@ -712,12 +598,12 @@ class Main {
 		Cli.print("Loading info about the required libraries");
 		for (l in libsToInstall)
 		{
-			if ( l.type == "git" )
+			if (l.type == "git")
 			{
 				// Do not check git repository infos
 				continue;
 			}
-			final inf = retry(site.infos.bind(l.name));
+			final inf = Connection.getInfo(ProjectName.ofString(l.name));
 			l.version = getVersion(inf, l.version);
 		}
 
@@ -758,73 +644,6 @@ class Main {
 		}
 	}
 
-	#if js
-	function download(fileUrl:String, outPath:String):Void {
-		node_fetch.Fetch.call(fileUrl, {
-			headers: {
-				"User-Agent": 'haxelib $VERSION_LONG',
-			}
-		})
-			.then(r -> r.ok ? r.arrayBuffer() : throw 'Request to $fileUrl responded with ${r.statusText}')
-			.then(buf -> File.saveBytes(outPath, Bytes.ofData(buf)))
-			.sync();
-	}
-	#else
-	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
-	function download(fileUrl:String, outPath:String, maxRedirect = 20):Void {
-		final out = try File.append(outPath,true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
-		out.seek(0, SeekEnd);
-
-		final h = createHttpRequest(fileUrl);
-
-		final currentSize = out.tell();
-		if (currentSize > 0)
-			h.addHeader("range", "bytes="+currentSize + "-");
-
-		final progress = Cli.createDownloadOutput(out, currentSize);
-
-		var httpStatus = -1;
-		var redirectedLocation = null;
-		h.onStatus = function(status) {
-			httpStatus = status;
-			switch (httpStatus) {
-				case 301, 302, 307, 308:
-					switch (h.responseHeaders.get("Location")) {
-						case null:
-							throw 'Request to $fileUrl responded with $httpStatus, ${h.responseHeaders}';
-						case location:
-							redirectedLocation = location;
-					}
-				default:
-					// TODO?
-			}
-		};
-		h.onError = function(e) {
-			progress.close();
-
-			switch(httpStatus) {
-				case 416:
-					// 416 Requested Range Not Satisfiable, which means that we probably have a fully downloaded file already
-					// if we reached onError, because of 416 status code, it's probably okay and we should try unzipping the file
-				default:
-					FileSystem.deleteFile(outPath);
-					throw e;
-			}
-		};
-		h.customRequest(false, progress);
-
-		if (redirectedLocation != null) {
-			FileSystem.deleteFile(outPath);
-
-			if (maxRedirect > 0) {
-				download(redirectedLocation, outPath, maxRedirect - 1);
-			} else {
-				throw "Too many redirects.";
-			}
-		}
-	}
-	#end
-
 	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
 		if (FileSystem.exists(haxe.io.Path.join([rep, Data.safe(project), Data.safe(version)])) ) {
@@ -840,10 +659,10 @@ class Main {
 		Cli.print('Downloading $filename...');
 
 		final maxRetry = 3;
-		final fileUrl = haxe.io.Path.join([siteUrl, Data.REPOSITORY, filename]);
+		final fileUrl = haxe.io.Path.join([Connection.siteUrl, Data.REPOSITORY, filename]);
 		for (i in 0...maxRetry) {
 			try {
-				download(fileUrl, filepath);
+				Connection.download(fileUrl, filepath);
 				break;
 			} catch (e:Dynamic) {
 				Cli.print('Failed to download ${fileUrl}. (${i+1}/${maxRetry})\n${e}');
@@ -853,7 +672,7 @@ class Main {
 
 		doInstallFile(rep, filepath, setcurrent);
 		try {
-			retry(site.postInstall.bind(project, version));
+			Connection.postInstall(ProjectName.ofString(project), SemVer.ofString(version));
 		} catch (e:Dynamic) {}
 	}
 
@@ -945,14 +764,15 @@ class Main {
 					continue;
 				}
 			}
+			final name = ProjectName.ofString(d.name);
 
-			if( d.version == "" && d.type == DependencyType.Haxelib )
-				d.version = retry(site.getLatestVersion.bind(d.name));
+			if (d.version == "" && d.type == DependencyType.Haxelib)
+				d.version = Connection.getLatestVersion(name);
 			Cli.print('Installing dependency ${d.name} ${d.version}');
 
 			switch d.type {
 				case Haxelib:
-					final info = retry(site.infos.bind(d.name));
+					final info = Connection.getInfo(name);
 					doInstall(rep, info.name, d.version, false);
 				case Git:
 					useVcs(VcsID.Git, function(vcs) doVcsInstall(rep, vcs, d.name, d.url, d.branch, d.subDir, d.version));
@@ -1104,8 +924,9 @@ class Main {
 				Cli.print('$p was updated');
 			Sys.setCwd(oldCwd);
 		} else {
+			final p = ProjectName.ofString(p);
 			final latest =
-				try retry(site.getLatestVersion.bind(p))
+				try Connection.getLatestVersion(p)
 				catch (e:Dynamic) { Cli.print(e); return; };
 
 			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
@@ -1113,7 +934,7 @@ class Main {
 					if (!Cli.ask('Update $p to $latest'))
 						return;
 				}
-				final info = retry(site.infos.bind(p));
+				final info = Connection.getInfo(p);
 				doInstall(state.rep, info.name, latest,true);
 				state.updated = true;
 			} else
@@ -1159,7 +980,7 @@ class Main {
 		if( !FileSystem.exists(vdir) ){
 			Cli.print('Library $prj version $version is not installed');
 			if(Cli.ask("Would you like to install it?")) {
-				final info = retry(site.infos.bind(prj));
+				final info = Connection.getInfo(ProjectName.ofString(prj));
 				doInstall(rep, info.name, version, true);
 			}
 			return;
@@ -1382,11 +1203,9 @@ class Main {
 		};
 		Http.PROXY = proxy;
 		Cli.print("Testing proxy...");
-		try Http.requestUrl(server.protocol + "://lib.haxe.org") catch( e : Dynamic ) {
-			if(!Cli.ask("Proxy connection failed. Use it anyway")) {
-				return;
-			}
-		}
+		if (!Connection.testConnection() && !Cli.ask("Proxy connection failed. Use it anyway"))
+			return;
+
 		File.saveContent(rep + "/.proxy", haxe.Serializer.run(proxy));
 		Cli.print("Proxy setup done");
 	}
