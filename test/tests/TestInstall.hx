@@ -20,7 +20,7 @@ class TestInstall extends TestBase
 
 	//--------------- constructor ---------------//
 
-	public function new() 
+	public function new()
 	{
 		super();
 		this.repo = Path.join([Sys.getCwd(), "test", REPO]);
@@ -33,11 +33,11 @@ class TestInstall extends TestBase
 	{
 		origRepo = ~/\r?\n/.split(runHaxelib(["config"]).stdout)[0];
 		origRepo = Path.normalize(origRepo);
-		
+
 		if (runHaxelib(["setup", repo]).exitCode != 0) {
 			throw "haxelib setup failed";
 		}
-		
+
 		CWD = Sys.getCwd();
 		var dir = Path.join([CWD, REPO_ROOT, PROJECT_FOLDER]);
 		Sys.setCwd(dir);
@@ -47,12 +47,12 @@ class TestInstall extends TestBase
 	{
 		// restore original CWD:
 		Sys.setCwd(CWD);
-		
+
 		if (runHaxelib(["setup", origRepo]).exitCode != 0) {
 			throw "haxelib setup failed";
 		}
 		deleteDirectory(repo);
-		
+
 	}
 
 	//----------------- tests -------------------//
@@ -61,22 +61,31 @@ class TestInstall extends TestBase
 	{
 		var r = runHaxelib(["install", "haxelib.json"]);
 		assertTrue(r.exitCode == 0);
-		
+
 		checkLibrary(getLibraryName());
 	}
-	
+
 	public function testInstallHaxelibDependencyWithTag():Void
 	{
 		var r = runHaxelib(["install", "tag_haxelib.json"]);
 		assertTrue(r.exitCode == 0);
-		
+
 		var lib = getLibraryName();
 		checkLibrary(lib);
-		
+
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(Path.join([lib, "git", "README.md"])));
 	}
-	
+
+	public function testReinstallHxml() {
+		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		assertEquals(0, r.exitCode);
+		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		assertEquals(0, r.exitCode);
+		var r = runHaxelib(["path", "hx.signal"]);
+		assertEquals(0, r.exitCode);
+	}
+
 	function getLibraryName():String
 	{
 		var haxelibFile = File.read("haxelib.json", false);
@@ -84,14 +93,14 @@ class TestInstall extends TestBase
 		haxelibFile.close();
 		return details.dependencies.toArray()[0].name;
 	}
-	
+
 	function checkLibrary(lib:String):Void
 	{
 		// Library folder exists
 		var libFolder = Path.join([repo, lib]);
 		assertTrue(FileSystem.exists(libFolder));
 		assertTrue(FileSystem.isDirectory(libFolder));
-		
+
 		// Library version is set to git
 		var current = File.read(Path.join([libFolder, ".current"]), false);
 		assertTrue(current.readAll().toString() == "git");

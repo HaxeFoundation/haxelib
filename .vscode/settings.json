@@ -1,5 +1,6 @@
 {
-    "haxe.displayConfigurations": [
+    "haxe.configurations": [
+        ["client_tests.hxml"],
         ["client.hxml"],
         ["server_each.hxml", "-neko", "repo.n"]
     ]

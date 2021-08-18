@@ -1,0 +1,28 @@
+{
+	"name": "haxelib",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "workspace",
+	"workspaceFolder": "/workspace",
+	"remoteEnv": {
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+	},
+	"settings": {
+		"terminal.integrated.profiles.linux": {
+			"bash": {
+				"path": "/bin/bash",
+				"args": [
+					"-l"
+				]
+			}
+		},
+		"terraform.languageServer": {
+			"pathToBinary": "/usr/bin/terraform-ls"
+		}
+	},
+	"extensions": [
+		"ms-azuretools.vscode-docker",
+		"nadako.vshaxe",
+		"hashicorp.terraform",
+	],
+	"remoteUser": "vscode"
+}

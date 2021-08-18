@@ -21,6 +21,7 @@
  */
 package haxelib;
 
+import haxe.CallStack;
 import haxe.ds.Option;
 import haxe.ds.*;
 import haxe.zip.Reader;
@@ -58,33 +59,52 @@ typedef ProjectInfos = {
 	var downloadsPerWeek : Array<{ week:String, count:Int }>;
 }
 
+@:enum abstract CheckLevel(Int) {
+	var NoCheck = 0;
+	var CheckSyntax = 1;
+	var CheckData = 2;
+
+	@:from static inline function fromBool(check:Bool):CheckLevel {
+		return check ? CheckData : NoCheck;
+	}
+
+	@:op(A > B) function gt(b:CheckLevel):Bool;
+	@:op(A >= B) function gte(b:CheckLevel):Bool;
+	@:op(A == B) function eq(b:CheckLevel):Bool;
+	@:op(A <= B) function lte(b:CheckLevel):Bool;
+	@:op(A < B) function lt(b:CheckLevel):Bool;
+}
+
 abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == '') { validate: function () return None }
-			else @:privateAccess new SemVer(this);
+			if (this == '' || this == 'git' || (Std.is(this, String) && this.startsWith('git:')))
+				{ validate: function () return None }
+			else
+				@:privateAccess new SemVer(this);
 
 	static public function isValid(s:String)
 		return new DependencyVersion(s).toValidatable().validate() == None;
 
 	static public var DEFAULT(default, null) = new DependencyVersion('');
+	static public var GIT(default, null) = new DependencyVersion('git');
 }
 
 abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion> {
 	@:to public function toArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
-		
+
 		var result:Array<Dependency> = new Array<Dependency>();
-		
+
 		for (f in fields) {
 			var value:String = Reflect.field(this, f);
 
-			var isGit = value != null && (value + "").startsWith("git:"); 
-			
+			var isGit = value != null && (value + "").startsWith("git:");
+
 			if ( !isGit )
 			{
 				result.push ({
@@ -102,7 +122,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 				var urlParts = value.split("#");
 				var url = urlParts[0];
 				var branch = urlParts.length > 1 ? urlParts[1] : null;
-				
+
 				result.push ({
 					name: f,
 					type: (DependencyType.Git : DependencyType),
@@ -112,10 +132,10 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 					branch: (branch : String),
 				});
 			}
-			
-			
+
+
 		}
-		
+
 		return result;
 	}
 	public inline function iterator()
@@ -295,7 +315,7 @@ class Data {
 		}
 
 
-	public static function readInfos( zip : List<Entry>, check : Bool ) : Infos
+	public static function readInfos( zip : List<Entry>, check : CheckLevel ) : Infos
 		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
 	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
@@ -311,11 +331,11 @@ class Data {
 		}
 	}
 
-	public static function readData( jsondata: String, check : Bool ) : Infos {
+	public static function readData( jsondata: String, check : CheckLevel ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
 			catch ( e : Dynamic )
-				if (check)
+				if (check >= CheckLevel.CheckSyntax)
 					throw 'JSON parse error: $e';
 				else {
 					name : ProjectName.DEFAULT,
@@ -327,7 +347,7 @@ class Data {
 					contributors: [],
 				}
 
-		if (check)
+		if (check >= CheckLevel.CheckData)
 			Validator.validate(doc);
 		else {
 			if (!doc.version.valid)

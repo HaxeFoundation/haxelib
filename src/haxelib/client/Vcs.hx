@@ -243,9 +243,9 @@ class Git extends Vcs {
 
 	override public function update(libName:String):Bool {
 		if (
-			command(executable, ["diff", "--exit-code"]).code != 0
+			command(executable, ["diff", "--exit-code", "--no-ext-diff"]).code != 0
 			||
-			command(executable, ["diff", "--cached", "--exit-code"]).code != 0
+			command(executable, ["diff", "--cached", "--exit-code", "--no-ext-diff"]).code != 0
 		) {
 			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version")) {
 				sure(command(executable, ["reset", "--hard"]));
@@ -328,7 +328,7 @@ class Mercurial extends Vcs {
 	override public function update(libName:String):Bool {
 		command(executable, ["pull"]);
 		var summary = command(executable, ["summary"]).out;
-		var diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
+		var diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos", "--no-ext-diff"]);
 		var status = command(executable, ["status"]);
 
 		// get new pulled changesets:

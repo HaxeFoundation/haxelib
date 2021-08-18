@@ -1,11 +1,11 @@
 # Build haxelib server as a Docker container.
-# Note that it doesn't contain a MySQL database, 
+# Note that it doesn't contain a MySQL database,
 # which need to be launched seperately. See test/docker-compose.yml on how to launch one.
 
 FROM ubuntu:bionic
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
-	&& add-apt-repository ppa:haxe/releases -y \
+	&& add-apt-repository ppa:haxe/haxe3.4 -y \
 	&& apt-get update && apt-get upgrade -y \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		apache2 \
@@ -14,7 +14,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software
 		curl \
 		git \
 		libcurl4-gnutls-dev \
-	&& curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+	&& curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 		nodejs \
 	&& rm -r /var/lib/apt/lists/*
@@ -23,7 +23,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software
 # apache httpd
 RUN rm -rf /var/www/html \
 	&& mkdir -p /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
-	&& chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html 
+	&& chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html
 RUN a2enmod rewrite
 RUN a2enmod proxy
 RUN a2enmod proxy_http
@@ -40,10 +40,11 @@ RUN { \
 
 
 # haxelib
-ENV HAXELIB_PATH /src/.haxelib
-RUN mkdir /haxelib && haxelib setup /haxelib
+ENV HAXELIB_PATH /src/haxelib_global
+RUN mkdir -p ${HAXELIB_PATH} && haxelib setup ${HAXELIB_PATH}
 WORKDIR /src
-COPY .haxelib /src/.haxelib
+COPY libs.hxml run.n /src/
+RUN haxe libs.hxml
 RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
 
