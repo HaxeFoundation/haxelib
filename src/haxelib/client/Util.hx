@@ -9,15 +9,20 @@ class Util {
 			macro neko.Lib.rethrow(e);
 		else
 			macro throw e;
-	}    
+	}
 
-    #if macro
-    static var VERSION = haxe.Json.parse(sys.io.File.getContent("haxelib.json")).version;
-    #end
-    
-    macro static public function getHaxelibVersion() return macro $v{VERSION};
+	#if macro
+	static function readVersionFromHaxelibJson() {
+		return haxe.Json.parse(sys.io.File.getContent("haxelib.json")).version;
+	}
+	#end
+	
+	macro static public function getHaxelibVersion() {
+		return macro $v{readVersionFromHaxelibJson()};
+	}
+
 	macro static public function getHaxelibVersionLong() {
-		var version:String = VERSION;
+		var version:String = readVersionFromHaxelibJson();
 		var p;
 		try {
 			//check if the .git folder exist
@@ -46,5 +51,5 @@ class Util {
 			if (p != null) p.close();
 			return macro $v{version};
 		}
-	}    
+	}
 }

@@ -84,6 +84,7 @@ class RunCi {
 
 	static function testClient():Void {
 		runCommand("haxe", ["client_tests.hxml"]);
+		runCommand("neko", ["bin/test.n"]);
 	}
 
 	static function testServer():Void {
@@ -157,8 +158,12 @@ Listen 2000
 <Directory "$DocumentRoot">
     Options Indexes FollowSymLinks
     AllowOverride All
+' + (switch (systemName()) {
+	case "Windows": '';
+	case _: '
     Order allow,deny
-    Allow from all
+    Allow from all';
+}) + '
     Require all granted
 </Directory>
 ';
@@ -193,6 +198,7 @@ Listen 2000
 				return;
 			} catch (e:Dynamic) {
 				trace(e);
+				trace(CallStack.toString(CallStack.exceptionStack()));
 				Sys.sleep(5.0);
 			}
 			throw "cannot config database";
@@ -202,7 +208,7 @@ Listen 2000
 			case "Windows":
 				configDb();
 
-				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.34-win32-VC15.zip", "bin/httpd.zip");
+				download("https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.41-win32-VC15.zip", "bin/httpd.zip");
 				runCommand("7z", ["x", "bin\\httpd.zip", "-obin\\httpd"]);
 				writeApacheConf("bin\\httpd\\Apache24\\conf\\httpd.conf");
 
@@ -273,7 +279,7 @@ Listen 2000
 
 				writeApacheConf("haxelib.conf");
 				runCommand("sudo", ["ln", "-s", Path.join([Sys.getCwd(), "haxelib.conf"]), "/etc/apache2/conf-enabled/haxelib.conf"]);
-				
+
 				runCommand("sudo", ["service", "apache2", "restart"]);
 				Sys.sleep(2.5);
 
@@ -347,7 +353,7 @@ Listen 2000
 				break;
 			}
 
-			if (Timer.stamp() - t > 120) {
+			if (Timer.stamp() - t > 9 * 60) {
 				throw "server is not reachable...";
 			}
 
@@ -370,14 +376,20 @@ Listen 2000
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 				case _:
 					runCommand("haxe", ["integration_tests.hxml"]);
+					runCommand("neko", ["bin/integration_tests.n"]);
 					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
 			}
+			runCommand("neko", ["bin/integration_tests.n"]);
 		}
-		if (Sys.getEnv("CI") != null && Sys.getEnv("USE_DOCKER") == null) {
-			runWithLocalServer(test);
-		} else {
-			runWithDockerServer(test);
-		}
+		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
+		saveContent(dbConfigPath, Json.stringify({
+			user: Sys.getEnv("HAXELIB_DB_USER"),
+			pass: Sys.getEnv("HAXELIB_DB_PASS"),
+			host: Sys.getEnv("HAXELIB_DB_HOST"),
+			port: Std.parseInt(Sys.getEnv("HAXELIB_DB_PORT")),
+			database: Sys.getEnv("HAXELIB_DB_NAME"),
+		}));
+		test();
 	}
 
 	static function deploy():Void {
@@ -464,16 +476,15 @@ Listen 2000
 		compileLegacyClient();
 		compileLegacyServer();
 
-		// the server can only be compiled with haxe 3.2+
+		// the server can only be compiled with haxe 3.4+
 		// haxe 3.1.3 bundles haxelib client 3.1.0-rc.4, which is not upgradable to later haxelib
 		// so there is no need to test the client either
 		#if (haxe_ver >= 3.2)
 			compileClient();
 			testClient();
-			compileServer();
 		#end
-		// buddy is only compatiable with haxe 3.4+
-		#if (haxe_ver >= 3.4)
+		#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
+			compileServer();
 			testServer();
 		#end
 
@@ -482,13 +493,11 @@ Listen 2000
 			case "Windows", "Linux":
 				integrationTests();
 			case "Mac":
-				#if (haxe_ver >= 3.2)
+				#if ((haxe_ver >= 3.4) && (haxe_ver < 4))
 					integrationTests();
 				#end
 			case _:
 				throw "Unknown system";
 		}
-
-		deploy();
 	}
 }

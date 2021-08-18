@@ -76,7 +76,7 @@ class IntegrationTests extends TestBase {
 				var r = haxelib(["version"]).result();
 				if (r.code == 0)
 					SemVer.ofString(switch(r.out.trim()) {
-						case _.split(" ") => [v] | [v, _]: v;
+						case _.split(" ") => parts: parts[0];
 						case v: v;
 					});
 				else if (r.out.indexOf("3.1.0-rc.4") >= 0)
@@ -147,7 +147,7 @@ class IntegrationTests extends TestBase {
 		dbCnx = sys.db.Mysql.connect({
 			user: dbConfig.user,
 			pass: dbConfig.pass,
-			host: server,
+			host: dbConfig.host,
 			port: dbConfig.port,
 			database: dbConfig.database,
 		});
@@ -181,10 +181,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		var p = new Process("haxelib", ["setup", path]);
-		if (p.exitCode() != 0)
-			throw "unable to set haxelib repo to " + path;
-		p.close();
+		HaxelibTests.runCommand("haxelib", ["setup", path]);
 	}
 
 	static function main():Void {
@@ -202,6 +199,8 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestUser());
 		runner.add(new tests.integration.TestOwner());
 		runner.add(new tests.integration.TestDev());
+		runner.add(new tests.integration.TestRun());
+		runner.add(new tests.integration.TestPath());
 		runner.add(new tests.integration.TestDownloads());
 		var success = runner.run();
 

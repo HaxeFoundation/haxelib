@@ -1,0 +1,109 @@
+name: CI
+on:
+  push:
+    branches:
+      - development
+      - master
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build and export
+        uses: docker/build-push-action@v2
+        with:
+          tags: haxe/lib.haxe.org:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/haxelib-server-image.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: haxelib-server-image
+          path: /tmp/haxelib-server-image.tar
+  push:
+    needs: build
+    if: success() && ( github.repository == 'HaxeFoundation/haxelib' )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: haxelib-server-image
+          path: /tmp
+      - name: Load image
+        run: docker load --input /tmp/haxelib-server-image.tar
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: haxeci
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push image
+        run: docker push haxe/lib.haxe.org:${{ github.sha }}
+  test:
+    needs: push
+    runs-on: ubuntu-latest
+    container: haxe/haxelib_devcontainer_workspace:20210614094507
+    services:
+      haxelib:
+        image: haxe/lib.haxe.org:${{ github.sha }}
+        ports:
+          - "80:80"
+        env:
+          HAXELIB_DB_HOST: mysql
+          HAXELIB_DB_PORT: 3306
+          HAXELIB_DB_USER: dbUser
+          HAXELIB_DB_PASS: dbPass
+          HAXELIB_DB_NAME: haxelib
+      mysql:
+        image: mariadb:10.5
+        ports:
+          - "3306:3306"
+        env:
+          TZ: UTC
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: haxelib
+          MYSQL_USER: dbUser
+          MYSQL_PASSWORD: dbPass
+    env:
+      HAXELIB_SERVER: haxelib
+      HAXELIB_SERVER_PORT: 80
+      HAXELIB_DB_HOST: mysql
+      HAXELIB_DB_PORT: 3306
+      HAXELIB_DB_USER: dbUser
+      HAXELIB_DB_PASS: dbPass
+      HAXELIB_DB_NAME: haxelib
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install Haxe
+        run: |
+          set -ex
+          sudo add-apt-repository ppa:haxe/haxe3.4 -y
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install -y neko haxe
+      - run: neko run.n setup haxelib_global
+      - run: haxe libs.hxml
+      - run: neko run.n run tora > ~/tora.log 2>&1 &
+      - run: haxe ci.hxml
+      - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    container: haxe/haxelib_devcontainer_workspace:20210614094507
+    steps:
+      - uses: actions/checkout@v2
+      - run: yq eval '.Image.Name = "haxe/lib.haxe.org:${{ github.sha }}"' "Dockerrun.aws.json" -i
+      - run: zip -r eb.zip Dockerrun.aws.json .ebextensions
+      - run: eb deploy --process "${GITHUB_REF##*/}-lib-haxe-org"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
