@@ -131,7 +131,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 
 		for (f in fields) {
 			var value:String = Reflect.field(this, f);
-
+			// TODO: Also do mercurial
 			var isGit = value != null && (value + "").startsWith("git:");
 
 			if ( !isGit ){
