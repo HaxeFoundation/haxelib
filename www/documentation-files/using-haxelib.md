@@ -66,14 +66,14 @@ The following commands are available:
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
     <li><a href="#skip-dependencies">--skip-dependencies</a></li>
-    <li><a href="#notimeout">-notimeout</a></li>
+    <li><a href="#notimeout">--notimeout</a></li>
   </ul>
 </div>
 
 <div class="span3">
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
-    <li><a href="#cwd">-cwd</a></li>
+    <li><a href="#cwd">--cwd</a></li>
     <li><a href="#R">-R</a></li>
   </ul>
 </div>
@@ -526,7 +526,7 @@ haxelib run openfl create DisplayingABitmap
 
 > Libraries with either a `run.n` helper, a `Run.hx` module, or another main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
-> You can specify the version to run by appending `:version`, if the library has a [development](#dev) version set the version will be ignored.
+> You can specify the version to run by appending `:version`. If no version is specified, the [development](#dev) version is used if one has been set, otherwise the set version is used.
 >
 > The environment within which the library is run will have the `HAXELIB_RUN` environment variable set to `"1"`, and `HAXELIB_RUN_NAME` set to the name of the library.
 
@@ -658,10 +658,10 @@ haxelib --skip-dependencies
 
 <a name="notimeout" class="anch"></a>
 
-### haxelib -notimeout
+### haxelib --notimeout
 
 ```
-haxelib -notimeout
+haxelib --notimeout
 ```
 
 > Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
@@ -681,10 +681,10 @@ otherwise they'll be passed as arguments to the library.
 
 <a name="cwd" class="anch"></a>
 
-### haxelib -cwd
+### haxelib --cwd
 
 ```
-haxelib -cwd [dir]
+haxelib --cwd [dir]
 ```
 
 > Act like the Haxelib command was run from another repository. Affect all commands that use the "current directory".
