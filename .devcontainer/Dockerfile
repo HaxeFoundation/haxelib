@@ -51,7 +51,7 @@ RUN apt-get update \
     # Install terraform
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - \
     && apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get -y install --no-install-recommends terraform=1.0.0 terraform-ls \
+    && apt-get -y install --no-install-recommends terraform=1.0.5 terraform-ls \
     && echo 'complete -C /usr/bin/terraform terraform' >> /etc/bash.bashrc \
     #
     # Clean up
