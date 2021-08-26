@@ -653,31 +653,22 @@ class Main {
 	}
 
 	function remove() {
-		final rep = getRepositoryPath();
-		final prj = getArgument("Library");
-		final version = argsIterator.next();
-		final pdir = rep + Data.safe(prj);
-		if( version == null ) {
-			if( !FileSystem.exists(pdir) )
-				throw 'Library $prj is not installed';
+		final repository = getRepository();
+		final project = ProjectName.ofString(getArgument("Library"));
+		final versionInput = argsIterator.next();
 
-			if (prj == HAXELIB_LIBNAME && (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME))
+		if (versionInput == null) {
+			if (project == HAXELIB_LIBNAME && (Sys.getEnv("HAXELIB_RUN_NAME") == HAXELIB_LIBNAME))
 				throw 'Removing "$HAXELIB_LIBNAME" requires the --system flag';
 
-			FsUtils.deleteRec(pdir);
-			Cli.print('Library $prj removed');
+			repository.removeProject(project);
+			Cli.print('Library $project removed');
 			return;
 		}
 
-		final vdir = pdir + "/" + Data.safe(version);
-		if( !FileSystem.exists(vdir) )
-			throw 'Library $prj does not have version $version installed';
-
-		final cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
-		if( cur == version )
-			throw 'Cannot remove current version of library $prj';
-		FsUtils.deleteRec(vdir);
-		Cli.print('Library $prj version $version removed');
+		final version = LibraryData.Version.ofString(versionInput);
+		repository.removeProjectVersion(project, version);
+		Cli.print('Library $project version $version removed');
 	}
 
 	function setVersion(library:ProjectName, version:SemVer):Void {
