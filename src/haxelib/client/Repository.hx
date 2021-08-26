@@ -121,6 +121,61 @@ class Repository {
 		return FileSystem.exists(getProjectVersionPath(name, version));
 	}
 
+	/** Removes the project `name` from the repository.
+		Throws an error if `name` is not installed.
+	 **/
+	public function removeProject(name:ProjectName) {
+		final path = getProjectRootPath(name);
+
+		if (!FileSystem.exists(path))
+			throw 'Library $name is not installed';
+
+		FsUtils.deleteRec(path);
+	}
+
+	/**
+		Removes `version` of project `name`.
+
+		Throws an exception if:
+		- `name` or `version` is not installed
+		- `version` matches the current version
+		- the project's development path is set as the path of `version`
+		- the project's development path is set to a subdirectory of it.
+	**/
+	public function removeProjectVersion(name:ProjectName, version:Version) {
+		if (!FileSystem.exists(getProjectRootPath(name)))
+			throw 'Library $name is not installed';
+
+		final versionPath = getProjectVersionPath(name, version);
+		if (!FileSystem.exists(versionPath))
+			throw 'Library $name version $version is not installed';
+
+		final current = getCurrentFileContent(name);
+		if (current == version)
+			throw 'Cannot remove current version of library $name';
+
+		try {
+			confirmRemovalAgainstDev(name, versionPath);
+		} catch (e) {
+			throw 'Cannot remove library `$name` version `$version`: $e\n'
+			+ 'Use `haxelib dev $name` to unset the dev path';
+		}
+
+		FsUtils.deleteRec(versionPath);
+	}
+
+	/** Throws an error if removing `versionPath` conflicts with the dev path of library `name` **/
+	function confirmRemovalAgainstDev(name:ProjectName, versionPath:String) {
+		final devFilePath = getDevFilePath(name);
+		if (!FileSystem.exists(devFilePath))
+			return;
+
+		final devPath = filterAndNormalizeDevPath(File.getContent(devFilePath).trim());
+
+		if (devPath.startsWith(versionPath))
+			throw 'It holds the `dev` version of `$name`';
+	}
+
 	/**
 		Set current version of project `name` to `version`.
 
@@ -249,7 +304,7 @@ class Repository {
 
 		final devFile = Path.join([root, DEV]);
 
-		File.saveContent(devFile, path);
+		File.saveContent(devFile, normalizeDevPath(path));
 	}
 
 	/**
@@ -258,18 +313,18 @@ class Repository {
 		returns null.
 	**/
 	public function getDevPath(name:ProjectName):Null<String> {
+		if (!FileSystem.exists(getProjectRootPath(name)))
+			throw 'Library $name is not installed';
+
 		final devFile = getDevFilePath(name);
 		if (!FileSystem.exists(devFile))
 			return null;
 
-		final path = {
-			final path = File.getContent(devFile).trim();
-			// windows environment variables
-			~/%([A-Za-z0-9_]+)%/g.map(path, function(r) {
-				final env = Sys.getEnv(r.matched(1));
-				return env == null ? "" : env;
-			});
-		}
+		return filterAndNormalizeDevPath(File.getContent(devFile).trim());
+	}
+
+	function filterAndNormalizeDevPath(devPath:String):Null<String> {
+		final path = normalizeDevPath(devPath);
 
 		if (isDevPathExcluded(path))
 			return null;
@@ -277,7 +332,19 @@ class Repository {
 		return path;
 	}
 
-	static function isDevPathExcluded(path:String):Bool {
+	static function normalizeDevPath(devPath:String):Null<String> {
+		// windows environment variables
+		final expanded = ~/%([A-Za-z0-9_]+)%/g.map(
+			devPath,
+			function(r) {
+				final env = Sys.getEnv(r.matched(1));
+				return env == null ? "" : env;
+		});
+
+		return Path.normalize(expanded).addTrailingSlash();
+	}
+
+	static function isDevPathExcluded(normalizedPath:String):Bool {
 		final filters = switch (Sys.getEnv("HAXELIB_DEV_FILTER")) {
 			case null: // no filters set
 				return false;
@@ -285,10 +352,11 @@ class Repository {
 				filterStr.split(";");
 		}
 
-		function normalize(path:String)
-			return Path.normalize(path).toLowerCase();
 		// check that `path` does not start with any of the filtered paths
-		return !filters.exists(function(flt) return normalize(path).startsWith(normalize(flt)));
+		return !filters.exists(function(flt) {
+			final normalizedFilter = Path.normalize(flt).toLowerCase();
+			return normalizedPath.toLowerCase().startsWith(normalizedFilter);
+		});
 	}
 
 	function getDevFilePath(name:String):String {
