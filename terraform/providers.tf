@@ -15,9 +15,9 @@ terraform {
     }
   }
   backend "s3" {
-    bucket         = "haxelib-terraform"
+    bucket         = "haxe-terraform"
     key            = "haxelib.tfstate"
-    dynamodb_table = "haxelib-terraform"
+    dynamodb_table = "haxe-terraform"
     # AWS_DEFAULT_REGION
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
@@ -28,6 +28,9 @@ provider "aws" {
   # AWS_DEFAULT_REGION
   # AWS_ACCESS_KEY_ID
   # AWS_SECRET_ACCESS_KEY
+  assume_role {
+    role_arn = "arn:aws:iam::045355064871:role/haxe2021-haxelib-operator"
+  }
 }
 
 data "aws_canonical_user_id" "current" {}
