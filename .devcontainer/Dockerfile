@@ -51,8 +51,14 @@ RUN apt-get update \
     # Install terraform
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - \
     && apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get -y install --no-install-recommends terraform=1.0.5 terraform-ls \
+    && apt-get -y install --no-install-recommends terraform=1.0.6 terraform-ls \
     && echo 'complete -C /usr/bin/terraform terraform' >> /etc/bash.bashrc \
+    # install kubectl
+    && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+    && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends kubectl \
+    && echo 'source <(kubectl completion bash)' >> /home/vscode/.bashrc \
     #
     # Clean up
     && apt-get autoremove -y \
@@ -73,6 +79,11 @@ RUN cd / \
 ENV LC_ALL=en_US.UTF-8
 RUN python3 -m pip install --ignore-installed --upgrade pip setuptools wheel PyYAML
 RUN pip3 install awsebcli==3.19.4 --upgrade
+
+# install aws-iam-authenticator
+RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
+    && chmod +x ./aws-iam-authenticator \
+    && mv ./aws-iam-authenticator /usr/local/bin/
 
 # Config direnv
 COPY --chown=$USER_UID:$USER_GID direnv.toml /home/$USERNAME/.config/direnv/config.toml

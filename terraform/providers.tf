@@ -5,13 +5,17 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.45"
     }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 2.21"
-    }
     github = {
       source  = "integrations/github"
       version = "~> 4.11"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.4"
+    }
+    mysql = {
+      source = "winebarrel/mysql"
+      version = "~> 1.10"
     }
   }
   backend "s3" {
@@ -34,3 +38,17 @@ provider "aws" {
 }
 
 data "aws_canonical_user_id" "current" {}
+
+provider "kubernetes" {
+  config_path    = "${path.module}/kubeconfig_haxe2021"
+
+  experiments {
+    manifest_resource = true
+  }
+}
+
+provider "mysql" {
+  endpoint = aws_db_instance.haxe-org.endpoint
+  username = var.HAXELIB_DB_USER
+  password = var.HAXELIB_DB_PASS
+}
