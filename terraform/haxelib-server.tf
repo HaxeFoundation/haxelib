@@ -170,7 +170,7 @@ resource "kubernetes_ingress" "haxelib-server" {
 }
 
 resource "aws_route53_record" "haxelib-server" {
-  zone_id = "ZNT6UZLXKF3IS" # haxe.org
+  zone_id = local.haxe_org_zoneid
   name    = "lib-k8s"
   type    = "CNAME"
   ttl     = "30"
