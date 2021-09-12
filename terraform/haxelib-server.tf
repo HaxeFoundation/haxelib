@@ -155,7 +155,7 @@ resource "kubernetes_ingress" "haxelib-server" {
 
   spec {
     rule {
-      host = "lib-k8s.haxe.org"
+      host = "lib.haxe.org"
       http {
         path {
           backend {
@@ -167,12 +167,4 @@ resource "kubernetes_ingress" "haxelib-server" {
       }
     }
   }
-}
-
-resource "aws_route53_record" "haxelib-server" {
-  zone_id = local.haxe_org_zoneid
-  name    = "lib-k8s"
-  type    = "CNAME"
-  ttl     = "30"
-  records = ["k8s.haxe.org"]
 }

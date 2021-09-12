@@ -3,16 +3,11 @@ locals {
 }
 
 resource "aws_route53_record" "lib" {
-  for_each = toset(["A", "AAAA"])
-
   zone_id = local.haxe_org_zoneid
   name    = "lib.haxe.org"
-  type    = each.key
-  alias {
-    name                   = aws_elastic_beanstalk_environment.master-lib-haxe-org.cname
-    zone_id                = data.aws_elastic_beanstalk_hosted_zone.current.id
-    evaluate_target_health = false
-  }
+  type    = "CNAME"
+  ttl     = "30"
+  records = ["k8s.haxe.org"]
 }
 
 resource "aws_route53_record" "master-lib" {
