@@ -1,3 +1,22 @@
+locals {
+  haxelib_server = {
+    stage = {
+      dev = {
+        host  = "development-lib.haxe.org"
+        image = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
+      }
+      prod = {
+        host  = "lib.haxe.org"
+        image = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
+      }
+    }
+  }
+}
+
+output "haxelib_server" {
+  value = local.haxelib_server
+}
+
 resource "kubernetes_secret" "haxelib-db" {
   metadata {
     name = "haxelib-db"
@@ -8,10 +27,13 @@ resource "kubernetes_secret" "haxelib-db" {
 }
 
 resource "kubernetes_deployment" "haxelib-server" {
+  for_each = local.haxelib_server.stage
+
   metadata {
-    name = "haxelib-server"
+    name = "haxelib-server-${each.key}"
     labels = {
-      "app.kubernetes.io/name" = "haxelib-server"
+      "app.kubernetes.io/name"     = "haxelib-server"
+      "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
     }
   }
 
@@ -20,20 +42,22 @@ resource "kubernetes_deployment" "haxelib-server" {
 
     selector {
       match_labels = {
-        "app.kubernetes.io/name" = "haxelib-server"
+        "app.kubernetes.io/name"     = "haxelib-server"
+        "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
       }
     }
 
     template {
       metadata {
         labels = {
-          "app.kubernetes.io/name" = "haxelib-server"
+          "app.kubernetes.io/name"     = "haxelib-server"
+          "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
         }
       }
 
       spec {
         container {
-          image = "haxe/lib.haxe.org:9c1cb344c689dc59b8e89aee5c8b38c632044daf"
+          image = each.value.image
           name  = "haxelib-server"
 
           port {
@@ -117,27 +141,33 @@ resource "kubernetes_deployment" "haxelib-server" {
 }
 
 resource "kubernetes_pod_disruption_budget" "haxelib-server" {
+  for_each = local.haxelib_server.stage
+
   metadata {
-    name = "haxelib-server"
+    name = "haxelib-server-${each.key}"
   }
   spec {
     min_available = 1
     selector {
       match_labels = {
-        "app.kubernetes.io/name" = "haxelib-server"
+        "app.kubernetes.io/name"     = "haxelib-server"
+        "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
       }
     }
   }
 }
 
 resource "kubernetes_service" "haxelib-server" {
+  for_each = local.haxelib_server.stage
+
   metadata {
-    name = "haxelib-server"
+    name = "haxelib-server-${each.key}"
   }
 
   spec {
     selector = {
-      "app.kubernetes.io/name" = "haxelib-server"
+      "app.kubernetes.io/name"     = "haxelib-server"
+      "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
     }
 
     port {
@@ -149,17 +179,19 @@ resource "kubernetes_service" "haxelib-server" {
 }
 
 resource "kubernetes_ingress" "haxelib-server" {
+  for_each = local.haxelib_server.stage
+
   metadata {
-    name = "haxelib-server"
+    name = "haxelib-server-${each.key}"
   }
 
   spec {
     rule {
-      host = "lib.haxe.org"
+      host = each.value.host
       http {
         path {
           backend {
-            service_name = kubernetes_service.haxelib-server.metadata[0].name
+            service_name = kubernetes_service.haxelib-server[each.key].metadata[0].name
             service_port = 80
           }
           path = "/"

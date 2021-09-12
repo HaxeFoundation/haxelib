@@ -14,11 +14,24 @@ terraform {
       version = "~> 2.4"
     }
     mysql = {
-      source = "winebarrel/mysql"
+      source  = "winebarrel/mysql"
       version = "~> 1.10"
     }
   }
   backend "s3" {
+    bucket         = "haxe-terraform"
+    key            = "haxelib.tfstate"
+    dynamodb_table = "haxe-terraform"
+    # AWS_DEFAULT_REGION
+    # AWS_ACCESS_KEY_ID
+    # AWS_SECRET_ACCESS_KEY
+  }
+}
+
+data "terraform_remote_state" "previous" {
+  backend = "s3"
+
+  config = {
     bucket         = "haxe-terraform"
     key            = "haxelib.tfstate"
     dynamodb_table = "haxe-terraform"
@@ -40,7 +53,7 @@ provider "aws" {
 data "aws_canonical_user_id" "current" {}
 
 provider "kubernetes" {
-  config_path    = "${path.module}/kubeconfig_haxe2021"
+  config_path = "${path.module}/kubeconfig_haxe2021"
 
   experiments {
     manifest_resource = true
