@@ -121,6 +121,7 @@ jobs:
           TF_VAR_HAXELIB_DB_PASS: ${{ secrets.TF_VAR_HAXELIB_DB_PASS }}
           TF_VAR_HAXELIB_SERVER_IMAGE_DEVELOPMENT: haxe/lib.haxe.org:${{ github.sha }}
   deploy-prod:
+    if: github.ref == 'refs/heads/master'
     concurrency: deploy
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
