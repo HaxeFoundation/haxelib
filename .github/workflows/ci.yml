@@ -98,6 +98,7 @@ jobs:
       - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
   deploy:
     needs: test
+    concurrency: deploy
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
     env:
