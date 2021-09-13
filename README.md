@@ -1,13 +1,10 @@
-[![TravisCI Build Status](https://travis-ci.org/HaxeFoundation/haxelib.svg?branch=development)](https://travis-ci.org/HaxeFoundation/haxelib)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/HaxeFoundation/haxelib?branch=development&svg=true)](https://ci.appveyor.com/project/HaxeFoundation/haxelib)
-
 # Haxelib: library manager for Haxe
 
-Haxelib is a library management tool shipped with the [Haxe Toolkit](http://haxe.org/).
+Haxelib is a library management tool shipped with the [Haxe Toolkit](https://haxe.org/).
 
-It allows searching, installing, upgrading and removing libraries from the [haxelib repository](http://lib.haxe.org/) as well as submitting libraries to it.
+It allows searching, installing, upgrading and removing libraries from the [haxelib repository](https://lib.haxe.org/) as well as submitting libraries to it.
 
-For more documentation, please refer to http://lib.haxe.org/documentation/
+For more documentation, please refer to https://lib.haxe.org/documentation/
 
 ## Development info
 
@@ -67,7 +64,7 @@ Build files:
 * server_each.hxml: Libraries and configs used by server.hxml and server_tests.hxml.
 * server_legacy.hxml: Build the legacy website.
 * integration_tests.hxml: Build and run tests that test haxelib client and server together.
-* package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib](http://lib.haxe.org/p/haxelib/).
+* package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib](https://lib.haxe.org/p/haxelib/).
 * prepare_tests.hxml: Package the test libs.
 * ci.hxml: Used by our CIs, TravisCI and AppVeyor.
 
