@@ -1,15 +1,13 @@
-name: CI
+name: CI-dev
 
 on:
   push:
-    branches:
-      - development
+    branches-ignore:
       - master
   workflow_dispatch:
 
 jobs:
-  build-dev:
-    if: github.ref == 'refs/heads/development'
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,8 +25,8 @@ jobs:
         with:
           name: haxelib-server-image
           path: /tmp/haxelib-server-image.tar
-  push-dev:
-    needs: build-dev
+  push:
+    needs: build
     if: success() && ( github.repository == 'HaxeFoundation/haxelib' )
     runs-on: ubuntu-latest
     steps:
@@ -48,8 +46,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push image
         run: docker push haxe/lib.haxe.org:${{ github.sha }}
-  test-dev:
-    needs: push-dev
+  test:
+    needs: push
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
     services:
@@ -97,8 +95,8 @@ jobs:
       - run: neko run.n run tora > ~/tora.log 2>&1 &
       - run: haxe ci.hxml
       - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
-  deploy-dev:
-    needs: test-dev
+  deploy:
+    needs: test
     concurrency: deploy
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
@@ -120,28 +118,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_VAR_HAXELIB_DB_PASS: ${{ secrets.TF_VAR_HAXELIB_DB_PASS }}
           TF_VAR_HAXELIB_SERVER_IMAGE_DEVELOPMENT: haxe/lib.haxe.org:${{ github.sha }}
-  deploy-prod:
-    if: github.ref == 'refs/heads/master'
-    concurrency: deploy
-    runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210906154938
-    env:
-      AWS_DEFAULT_REGION: eu-west-1
-      TF_INPUT: 0
-      TF_IN_AUTOMATION: 1
-    steps:
-      # make sure the image exists
-      - run: docker manifest inspect haxe/lib.haxe.org:${{ github.sha }}
-      - uses: actions/checkout@v2
-      - run: terraform init
-        working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - run: terraform apply -auto-approve
-        working-directory: terraform
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_HAXELIB_DB_PASS: ${{ secrets.TF_VAR_HAXELIB_DB_PASS }}
-          TF_VAR_HAXELIB_SERVER_IMAGE_MASTER: haxe/lib.haxe.org:${{ github.sha }}
