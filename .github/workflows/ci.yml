@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-dev:
+    if: github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,8 +27,8 @@ jobs:
         with:
           name: haxelib-server-image
           path: /tmp/haxelib-server-image.tar
-  push:
-    needs: build
+  push-dev:
+    needs: build-dev
     if: success() && ( github.repository == 'HaxeFoundation/haxelib' )
     runs-on: ubuntu-latest
     steps:
@@ -47,8 +48,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push image
         run: docker push haxe/lib.haxe.org:${{ github.sha }}
-  test:
-    needs: push
+  test-dev:
+    needs: push-dev
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
     services:
@@ -96,8 +97,8 @@ jobs:
       - run: neko run.n run tora > ~/tora.log 2>&1 &
       - run: haxe ci.hxml
       - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
-  deploy:
-    needs: test
+  deploy-dev:
+    needs: test-dev
     concurrency: deploy
     runs-on: ubuntu-latest
     container: haxe/haxelib_devcontainer_workspace:20210906154938
@@ -112,10 +113,34 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - run: terraform apply -auto-approve -var="HAXELIB_SERVER_IMAGE_$(tr '[:lower:]' '[:upper:]' <<< "${GITHUB_REF#refs/heads/}")=haxe/lib.haxe.org:${{ github.sha }}"
-        shell: bash
+      - run: terraform apply -auto-approve
         working-directory: terraform
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_VAR_HAXELIB_DB_PASS: ${{ secrets.TF_VAR_HAXELIB_DB_PASS }}
+          TF_VAR_HAXELIB_SERVER_IMAGE_DEVELOPMENT: haxe/lib.haxe.org:${{ github.sha }}
+  deploy-prod:
+    concurrency: deploy
+    runs-on: ubuntu-latest
+    container: haxe/haxelib_devcontainer_workspace:20210906154938
+    env:
+      AWS_DEFAULT_REGION: eu-west-1
+      TF_INPUT: 0
+      TF_IN_AUTOMATION: 1
+    steps:
+      # make sure the image exists
+      - run: docker manifest inspect haxe/lib.haxe.org:${{ github.sha }}
+      - uses: actions/checkout@v2
+      - run: terraform init
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - run: terraform apply -auto-approve
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_HAXELIB_DB_PASS: ${{ secrets.TF_VAR_HAXELIB_DB_PASS }}
+          TF_VAR_HAXELIB_SERVER_IMAGE_MASTER: haxe/lib.haxe.org:${{ github.sha }}
