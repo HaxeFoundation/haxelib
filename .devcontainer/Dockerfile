@@ -18,6 +18,13 @@ RUN apt-get update \
     # Clean up
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
+# https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
+# apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
+# apt-key adv --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
+# apt-key adv --keyserver keyserver.pgp.com --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
+COPY mysql-public-key /tmp/mysql-public-key
+RUN apt-key add /tmp/mysql-public-key
+
 # Configure apt and install packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends apt-utils dialog 2>&1 \
@@ -38,13 +45,12 @@ RUN apt-get update \
     && apt-get install -y git \
     && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     && apt-get install -y nodejs=14.* \
+    # the haxelib server code base is not Haxe 4 ready
     && add-apt-repository ppa:haxe/haxe3.4 \
-    && apt-get install -y neko haxe \
+    && add-apt-repository ppa:haxe/haxe4.2 \
+    && apt-get install -y neko haxe=1:4.2.* \
     # Install mysql-client
     # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-    && (apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-        apt-key adv --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 || \
-        apt-key adv --keyserver keyserver.pgp.com --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5 )\
     && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
     && apt-get update \
     && apt-get -y install mysql-client=5.7.* \
@@ -65,8 +71,8 @@ RUN apt-get update \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install yq
-RUN wget https://github.com/mikefarah/yq/releases/download/v4.7.0/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
+RUN npm install -g yarn \
+    && yarn global add lix --prefix /usr/local
 
 # Install AWS cli
 RUN cd / \
@@ -74,11 +80,6 @@ RUN cd / \
     && unzip awscliv2.zip \
     && ./aws/install \
     && rm -rf ./aws awscliv2.zip
-
-# Install eb cli
-ENV LC_ALL=en_US.UTF-8
-RUN python3 -m pip install --ignore-installed --upgrade pip setuptools wheel PyYAML
-RUN pip3 install awsebcli==3.19.4 --upgrade
 
 # install aws-iam-authenticator
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
@@ -88,13 +89,18 @@ RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/
 # Config direnv
 COPY --chown=$USER_UID:$USER_GID direnv.toml /home/$USERNAME/.config/direnv/config.toml
 
+ENV YARN_CACHE_FOLDER=/yarn
+RUN mkdir -m 777 "$YARN_CACHE_FOLDER"
+RUN mkdir -m 777 "/workspace"
 USER $USER_UID
 WORKDIR /workspace
-COPY workspace/libs.hxml workspace/run.n /workspace/
+COPY --chown=$USER_UID:$USER_GID workspace/package.json workspace/yarn.lock /workspace/
+RUN ls -l && yarn
+COPY --chown=$USER_UID:$USER_GID workspace/libs.hxml workspace/run.n /workspace/
 RUN mkdir -p /workspace/haxelib_global
 RUN haxelib setup /workspace/haxelib_global
 RUN haxe libs.hxml
-VOLUME /workspace/haxelib_global
+VOLUME /workspace/node_modules /workspace/haxelib_global
 USER root
 
 # Switch back to dialog for any ad-hoc use of apt-get

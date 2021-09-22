@@ -12,6 +12,8 @@ run.c
 
 .envrc
 
+node_modules
+
 # run.n is in the repo
 !/run.n
 

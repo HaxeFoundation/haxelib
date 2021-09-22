@@ -1,0 +1,17 @@
+{
+  "name": "haxelib",
+  "version": "0.0.0",
+  "description": "Haxelib is a library management tool shipped with the Haxe Toolkit.",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HaxeFoundation/haxelib.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HaxeFoundation/haxelib/issues"
+  },
+  "homepage": "https://github.com/HaxeFoundation/haxelib#readme",
+  "private": true
+}
