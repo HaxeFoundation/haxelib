@@ -473,8 +473,10 @@ Listen 2000
 		runCommand("haxe", ["package.hxml"]);
 		runCommand("haxe", ["prepare_tests.hxml"]);
 
+		#if (haxe_ver < 4)
 		compileLegacyClient();
 		compileLegacyServer();
+		#end
 
 		// the server can only be compiled with haxe 3.4+
 		// haxe 3.1.3 bundles haxelib client 3.1.0-rc.4, which is not upgradable to later haxelib
