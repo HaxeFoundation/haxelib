@@ -71,8 +71,7 @@ RUN apt-get update \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g yarn \
-    && yarn global add lix --prefix /usr/local
+RUN npm install -g yarn
 
 # Install AWS cli
 RUN cd / \
@@ -95,7 +94,7 @@ RUN mkdir -m 777 "/workspace"
 USER $USER_UID
 WORKDIR /workspace
 COPY --chown=$USER_UID:$USER_GID workspace/package.json workspace/yarn.lock /workspace/
-RUN ls -l && yarn
+RUN yarn
 COPY --chown=$USER_UID:$USER_GID workspace/libs.hxml workspace/run.n /workspace/
 RUN mkdir -p /workspace/haxelib_global
 RUN haxelib setup /workspace/haxelib_global
