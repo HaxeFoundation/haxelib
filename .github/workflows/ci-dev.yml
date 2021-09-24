@@ -83,18 +83,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Install Haxe
-        run: |
-          set -ex
-          sudo add-apt-repository ppa:haxe/haxe3.4 -y
-          sudo apt-get update
-          sudo apt-get upgrade -y
-          sudo apt-get install -y neko haxe
       - run: neko run.n setup haxelib_global
       - run: haxe libs.hxml
-      - run: neko run.n run tora > ~/tora.log 2>&1 &
       - run: haxe ci.hxml
-      - run: neko bin/ci.n || (echo "[BUILD FAILED]" && echo "Tora log:" && cat ~/tora.log && false)
+      - run: neko bin/ci.n
   deploy:
     needs: test
     concurrency: deploy
