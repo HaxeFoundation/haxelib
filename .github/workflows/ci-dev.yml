@@ -86,6 +86,8 @@ jobs:
       - run: neko run.n setup haxelib_global
       - run: haxe libs.hxml
       - run: haxe ci.hxml
+      - name: Make sure the server is up
+        run: curl -sSL "http://${HAXELIB_SERVER}:${HAXELIB_SERVER_PORT}" > /dev/null
       - run: neko bin/ci.n
   deploy:
     needs: test
