@@ -27,6 +27,9 @@ node_modules
 
 deploy_key
 
+# GitHub App private key
+*.private-key.pem
+
 .haxelib
 haxelib_global
 

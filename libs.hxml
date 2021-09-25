@@ -30,3 +30,4 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-uftasks-1,0,0-beta,15.zip -o haxelib_global/ufront-uftasks.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-uftasks.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-2,0,0.zip -o haxelib_global/ufront.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/utest-1,9,6.zip -o haxelib_global/utest.zip && neko run.n install --always --skip-dependencies haxelib_global/utest.zip
+-cmd curl -sSLk https://lib.haxe.org/files/3.0/hxnodejs-12,1,0.zip -o haxelib_global/hxnodejs.zip && neko run.n install --always --skip-dependencies haxelib_global/hxnodejs.zip

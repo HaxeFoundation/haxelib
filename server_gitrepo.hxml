@@ -1,4 +1,5 @@
 --class-path src
 --class-path lib/dts2hx
+--library hxnodejs
 --js gitrepo.js
 --main haxelib.server.GitRepo
