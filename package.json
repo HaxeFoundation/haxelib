@@ -2,7 +2,9 @@
   "name": "haxelib",
   "version": "0.0.0",
   "description": "Haxelib is a library management tool shipped with the Haxe Toolkit.",
-  "scripts": {},
+  "scripts": {
+    "dts2hx": "dts2hx octokit @octokit/auth-app --noLibWrap --useSystemHaxe --output lib/dts2hx"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HaxeFoundation/haxelib.git"
@@ -13,5 +15,11 @@
     "url": "https://github.com/HaxeFoundation/haxelib/issues"
   },
   "homepage": "https://github.com/HaxeFoundation/haxelib#readme",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "octokit": "^1.5.0"
+  },
+  "devDependencies": {
+    "dts2hx": "^0.16.0"
+  }
 }

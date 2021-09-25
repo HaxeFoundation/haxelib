@@ -2,6 +2,7 @@
 *.exe
 *.n
 *.zip
+/*.js
 test/libraries/vsc/
 dump/
 deploy/
