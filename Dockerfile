@@ -44,7 +44,8 @@ ENV HAXELIB_PATH /src/haxelib_global
 RUN mkdir -p ${HAXELIB_PATH} && haxelib setup ${HAXELIB_PATH}
 WORKDIR /src
 COPY libs.hxml run.n /src/
-RUN haxe libs.hxml
+COPY lib/record-macros /src/lib/record-macros
+RUN haxe libs.hxml && rm ${HAXELIB_PATH}/*.zip
 RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
 COPY server*.hxml /src/
 

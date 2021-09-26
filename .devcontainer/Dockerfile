@@ -95,11 +95,14 @@ USER $USER_UID
 WORKDIR /workspace
 COPY --chown=$USER_UID:$USER_GID workspace/package.json workspace/yarn.lock /workspace/
 RUN yarn
+COPY --chown=$USER_UID:$USER_GID workspace/generate_extern.sh /workspace/
+RUN ./generate_extern.sh
 COPY --chown=$USER_UID:$USER_GID workspace/libs.hxml workspace/run.n /workspace/
+COPY --chown=$USER_UID:$USER_GID workspace/lib /workspace/lib
 RUN mkdir -p /workspace/haxelib_global
 RUN haxelib setup /workspace/haxelib_global
-RUN haxe libs.hxml
-VOLUME /workspace/node_modules /workspace/haxelib_global
+RUN haxe libs.hxml && rm /workspace/haxelib_global/*.zip
+VOLUME /workspace/node_modules /workspace/haxelib_global /workspace/lib/dts2hx-generated
 USER root
 
 # Switch back to dialog for any ad-hoc use of apt-get

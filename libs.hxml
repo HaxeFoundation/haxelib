@@ -20,7 +20,6 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/mockatoo-3,2,1.zip -o haxelib_global/mockatoo.zip && neko run.n install --always --skip-dependencies haxelib_global/mockatoo.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/mtwin-1,6,0.zip -o haxelib_global/mtwin.zip && neko run.n install --always --skip-dependencies haxelib_global/mtwin.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/PBKDF2-1,0,0.zip -o haxelib_global/PBKDF2.zip && neko run.n install --always --skip-dependencies haxelib_global/PBKDF2.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/record-macros-1,0,0-alpha.zip -o haxelib_global/record-macros.zip && neko run.n install --always --skip-dependencies haxelib_global/record-macros.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/tora-1,8,1.zip -o haxelib_global/tora.zip && neko run.n install --always --skip-dependencies haxelib_global/tora.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-mvc-1,1,0.zip -o haxelib_global/ufront-mvc.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-mvc.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-orm-1,1,0.zip -o haxelib_global/ufront-orm.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-orm.zip
@@ -31,3 +30,4 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-2,0,0.zip -o haxelib_global/ufront.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/utest-1,9,6.zip -o haxelib_global/utest.zip && neko run.n install --always --skip-dependencies haxelib_global/utest.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/hxnodejs-12,1,0.zip -o haxelib_global/hxnodejs.zip && neko run.n install --always --skip-dependencies haxelib_global/hxnodejs.zip
+-cmd neko run.n dev record-macros lib/record-macros

@@ -1,5 +1,8 @@
 --class-path src
---class-path lib/dts2hx
+--class-path lib/dts2hx-generated
+--class-path lib/node-sys-db
+--class-path hx3compat/std
 --library hxnodejs
+--library record-macros
 --js gitrepo.js
 --main haxelib.server.GitRepo

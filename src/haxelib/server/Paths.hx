@@ -21,7 +21,9 @@
  */
 package haxelib.server;
 
+#if neko
 import neko.Web;
+#end
 import haxe.io.*;
 
 /**
@@ -36,12 +38,16 @@ typedef RelPath = String;
 
 class Paths {
 	static public var CWD(default, null):AbsPath =
-		#if haxelib_api
-			Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
-		#elseif haxelib_legacy
-			Path.normalize(Path.join([Web.getCwd(), ".."]));
+		#if neko
+			#if haxelib_api
+				Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
+			#elseif haxelib_legacy
+				Path.normalize(Path.join([Web.getCwd(), ".."]));
+			#else
+				Web.getCwd();
+			#end
 		#else
-			Web.getCwd();
+			Sys.getCwd();
 		#end
 	static public var DB_CONFIG_NAME(default, null):RelPath = "dbconfig.json";
 	static public var DB_CONFIG(default, null):AbsPath = Path.join([CWD, DB_CONFIG_NAME]);

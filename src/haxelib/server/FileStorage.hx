@@ -25,18 +25,28 @@ import sys.FileSystem;
 import sys.io.*;
 import haxe.io.Path;
 import haxelib.server.Paths;
+using Lambda;
+#if neko
 import neko.Web;
 import aws.*;
 import aws.s3.*;
 import aws.s3.model.*;
 import aws.transfer.*;
-using Lambda;
+#end
 
 /**
 	`FileStorage` is an abstraction to a file system.
 	It maps relative paths to absolute paths, effectively hides the actual location of the storage.
 */
 class FileStorage {
+	static function log(msg:String, ?pos:haxe.PosInfos) {
+		#if neko
+		Web.logMessage(msg);
+		#else
+		trace(msg, pos);
+		#end
+	}
+
 	/**
 		An static instance of `FileStorage` that everyone use.
 		One should not create their own instance of `FileStorage` except when testing.
@@ -51,11 +61,13 @@ class FileStorage {
 			Sys.getEnv("AWS_DEFAULT_REGION")
 		];
 		switch (vars) {
+			#if neko
 			case [bucket, region] if (vars.foreach(function(v) return v != null && v != "")):
-				Web.logMessage('using S3FileStorage with bucket $bucket in ${region}');
+				log('using S3FileStorage with bucket $bucket in ${region}');
 				new S3FileStorage(Paths.CWD, bucket, region);
+			#end
 			case _:
-				Web.logMessage('using LocalFileStorage');
+				log('using LocalFileStorage');
 				new LocalFileStorage(Paths.CWD);
 		}
 	}
@@ -162,6 +174,7 @@ class LocalFileStorage extends FileStorage {
 	}
 }
 
+#if neko
 class S3FileStorage extends FileStorage {
 	/**
 		The local directory for caching.
@@ -283,3 +296,4 @@ class S3FileStorage extends FileStorage {
 		}
 	}
 }
+#end

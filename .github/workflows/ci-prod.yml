@@ -10,7 +10,7 @@ jobs:
   deploy-prod:
     concurrency: deploy
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20210924171609
+    container: haxe/haxelib_devcontainer_workspace:20210926175231
     env:
       AWS_DEFAULT_REGION: eu-west-1
       TF_INPUT: 0

@@ -1,5 +1,6 @@
 package haxelib.server;
 
+import js.lib.Promise;
 import octokit.AuthApp;
 
 class GitRepo {
@@ -12,21 +13,27 @@ class GitRepo {
         installationId: 19601456,
     }
 
-    static function main():Void {
-        var octokit = new octokit.core.Octokit({
-            authStrategy: AuthApp.createAppAuth,
-            auth: githubApp,
-        });
-        octokit.request.call({
+    static public final githubOrg = "haxelib";
+    static public final octokit = new octokit.core.Octokit({
+        authStrategy: AuthApp.createAppAuth,
+        auth: githubApp,
+    });
+
+    static function createRepo(haxelib:String) {
+        var repoName = haxelib; // TODO: validate
+        return octokit.request.call({
             method: "POST",
             url: "/orgs/{org}/repos",
-            org: "haxelib",
-            name: "test_createdWithOctokit",
-            "private": true,
-        })
-            .then(r -> {
-                trace(r);
-            })
-            .catchError(err -> trace(err));
+            org: githubOrg,
+            name: repoName,
+        });
+    }
+
+    static function main():Void {
+		SiteDb.init();
+        var repo = new Repo();
+        var infos = repo.infos("lime");
+        trace(infos);
+		SiteDb.cleanup();
     }
 }

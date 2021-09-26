@@ -33,6 +33,8 @@ deploy_key
 .haxelib
 haxelib_global
 
+.devcontainer/workspace
+
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/config.yml

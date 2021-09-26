@@ -206,7 +206,13 @@ abstract ProjectName(String) to String {
 		function add(m, r)
 			a.push( { msg: m, check: r } );
 
-		add("%VALUE is not a String", Std.is.bind(_, String));
+		add("%VALUE is not a String", 
+			#if (haxe_ver < 4.1)
+				Std.is.bind(_, String)
+			#else
+				Std.isOfType.bind(_, String)
+			#end
+		);
 		add("%VALUE is too short", function (s) return s.length >= 3);
 		add("%VALUE contains invalid characters", Data.alphanum.match);
 		add("%VALUE is a reserved name", function(s) return RESERVED_NAMES.indexOf(s.toLowerCase()) == -1);

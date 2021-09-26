@@ -22,7 +22,6 @@
 package haxelib.server;
 
 import haxe.io.*;
-import neko.Web;
 import sys.io.*;
 import sys.*;
 
@@ -34,6 +33,7 @@ import haxelib.server.FileStorage;
 
 class Repo implements SiteApi {
 
+	#if neko
 	static function run() {
 		FileSystem.createDirectory(TMP_DIR);
 
@@ -45,6 +45,7 @@ class Repo implements SiteApi {
 		else
 			throw "Invalid remoting call";
 	}
+	#end
 
 	public function new() {}
 
@@ -150,7 +151,7 @@ class Repo implements SiteApi {
 			tmpFile,
 			function(path):String {
 				var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
-				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); neko.Lib.rethrow(e); };
+				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); #if neko neko.Lib.rethrow(e); #else throw e; #end };
 				file.close();
 
 				var infos = Data.readInfos(zip,true);
@@ -361,6 +362,7 @@ class Repo implements SiteApi {
 		p.update();
 	}
 
+	#if neko
 	static function main() {
 		var error = null;
 		SiteDb.init();
@@ -373,5 +375,6 @@ class Repo implements SiteApi {
 		if( error != null )
 			neko.Lib.rethrow(error.e);
 	}
+	#end
 
 }
