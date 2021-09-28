@@ -16,12 +16,18 @@
   "private": true,
   "dependencies": {
     "deasync": "^0.1.23",
+    "fs-extra": "^10.0.0",
     "mysql2": "^2.3.0",
+    "node-fetch": "^2",
     "octokit": "^1.5.0",
-    "promise-synchronizer": "^3.0.0"
+    "promise-synchronizer": "^3.0.0",
+    "simple-git": "^2.45.1"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/mysql": "^2.15.19",
+    "@types/node": "^16.10.1",
+    "@types/node-fetch": "^2",
     "dts2hx": "^0.16.1"
   }
 }

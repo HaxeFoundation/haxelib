@@ -10,6 +10,7 @@ haxelib_repo/
 repo_integration_tests/
 /haxelib
 run.c
+/tmp
 
 .envrc
 

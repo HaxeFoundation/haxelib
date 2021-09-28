@@ -25,6 +25,7 @@ import haxelib.client.Util.*;
 import haxe.crypto.Md5;
 import haxe.*;
 import haxe.ds.*;
+import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Path;
 import haxe.zip.*;
@@ -39,6 +40,16 @@ import haxelib.client.Vcs;
 using StringTools;
 using Lambda;
 using haxelib.Data;
+
+#if js
+using haxelib.client.Main.PromiseSynchronizer;
+
+@:jsRequire("promise-synchronizer")
+private extern class PromiseSynchronizer {
+	@:selfCall
+	static public function sync<T>(p:js.lib.Promise<T>):T;
+}
+#end
 
 private enum CommandCategory {
 	Basic;
@@ -200,7 +211,9 @@ class Main {
 		addCommand("version", version, "print the currently used haxelib version", Information, false);
 		addCommand("help", usage, "display this list of options", Information, false);
 
+		#if neko
 		addCommand("submit", submit, "submit or update a library package", Development);
+		#end
 		addCommand("register", register, "register a new user", Development);
 		addCommand("dev", dev, "set the development directory for a given library", Development, false);
 		//TODO: generate command about VCS by Vcs.getAll()
@@ -212,7 +225,9 @@ class Main {
 		addCommand("deleterepo", deleteRepo, "delete the local repository", Miscellaneous, false);
 		addCommand("convertxml", convertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand("run", run, "run the specified library with parameters", Miscellaneous, false);
+		#if neko
 		addCommand("proxy", proxy, "setup the Http proxy", Miscellaneous);
+		#end
 
 		// deprecated commands
 		addCommand("local", local, "install the specified package locally", Deprecated("Use `haxelib install <file>` instead"), false);
@@ -492,7 +507,9 @@ class Main {
 				}
 				try {
 					if( c.net ) {
+						#if neko
 						loadProxy();
+						#end
 						checkUpdate();
 					}
 					c.f();
@@ -527,6 +544,7 @@ class Main {
 		Sys.exit(1);
 	}
 
+	#if neko
 	inline function createHttpRequest(url:String):Http {
 		var req = new Http(url);
 		req.addHeader("User-Agent", 'haxelib $VERSION_LONG');
@@ -534,6 +552,7 @@ class Main {
 			req.cnxTimeout = 0;
 		return req;
 	}
+	#end
 
 	// ---- COMMANDS --------------------
 
@@ -618,6 +637,7 @@ class Main {
 		return ret;
 	}
 
+	#if neko
 	function submit() {
 		var file = param("Package");
 
@@ -701,6 +721,7 @@ class Main {
 		var msg = retry(site.processSubmit.bind(id,user,password));
 		print(msg);
 	}
+	#end
 
 	function readPassword(user:String, prompt = "Password"):String {
 		var password = Md5.encode(param(prompt,true));
@@ -896,6 +917,18 @@ class Main {
 		}).join('\n');
 	}
 
+	#if js
+	function download(fileUrl:String, outPath:String):Void {
+		node_fetch.Fetch.call(fileUrl, {
+			headers: {
+				"User-Agent": 'haxelib $VERSION_LONG',
+			}
+		})
+			.then(r -> r.ok ? r.arrayBuffer() : throw 'Request to $fileUrl responded with ${r.statusText}')
+			.then(buf -> File.saveBytes(outPath, Bytes.ofData(buf)))
+			.sync();
+	}
+	#else
 	// maxRedirect set to 20, which is most browsers' default value according to https://stackoverflow.com/a/36041063/267998
 	function download(fileUrl:String, outPath:String, maxRedirect = 20):Void {
 		var out = try File.append(outPath,true) catch (e:Dynamic) throw 'Failed to write to $outPath: $e';
@@ -952,6 +985,7 @@ class Main {
 			}
 		}
 	}
+	#end
 
 	function doInstall( rep, project, version, setcurrent ) {
 		// check if exists already
@@ -1716,6 +1750,7 @@ class Main {
 		return args;
 	}
 
+	#if neko
 	function proxy() {
 		var rep = getRepository();
 		var host = param("Proxy host");
@@ -1750,6 +1785,7 @@ class Main {
 		var rep = getRepository();
 		try Http.PROXY = haxe.Unserializer.run(File.getContent(rep + "/.proxy")) catch( e : Dynamic ) { };
 	}
+	#end
 
 	function convertXml() {
 		var cwd = Sys.getCwd();
