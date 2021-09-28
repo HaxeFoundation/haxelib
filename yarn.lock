@@ -321,10 +321,10 @@ deprecation@^2.0.0, deprecation@^2.3.1:
   resolved "https://registry.yarnpkg.com/deprecation/-/deprecation-2.3.1.tgz#6368cbdb40abf3373b525ac87e4a260c3a700919"
   integrity sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==
 
-dts2hx@^0.16.0:
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/dts2hx/-/dts2hx-0.16.0.tgz#21ba3b0052e8809786d44f93dff7f33098280a89"
-  integrity sha512-pyfk90me0QlXRIiZaOzudN9Qyk09e7aKZttOJQ8zCeyXHKAos+/OJno9dfs8HVbU8pA7Mqvg1Nc8RuVmeirJug==
+dts2hx@^0.16.1:
+  version "0.16.1"
+  resolved "https://registry.yarnpkg.com/dts2hx/-/dts2hx-0.16.1.tgz#05e656261c3f52025e6c80b5e9a4a8cbc71dc24a"
+  integrity sha512-f1OMWhVnrUyInJ2E8cuHrlcw7H304IrgTU9W1itmLBCJZQ3h/XUk355pZR2qCQ1BOAhGIZuYniG8vRCDaTfTpA==
   dependencies:
     typescript "3.7.4"
 

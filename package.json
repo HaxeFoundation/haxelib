@@ -22,6 +22,6 @@
   },
   "devDependencies": {
     "@types/mysql": "^2.15.19",
-    "dts2hx": "^0.16.0"
+    "dts2hx": "^0.16.1"
   }
 }
