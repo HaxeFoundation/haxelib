@@ -27,10 +27,10 @@
 		</div>
 
 		<ul class="nav nav-tabs nav-justified" role="tablist">
-			@if(hasReadme){<li @if (type == "readme") {class="active"}><a href="/p/@project/@info.curversion">About</a></li>}
-			<li @if (type =="releasenotes") {class="active"}><a href="/p/@project/@info.curversion/releasenotes">Release notes</a></li>
-			@if(hasChangelog){<li @if (type =="changelog") {class="active"}><a href="/p/@project/@info.curversion/changelog">Changelog</a></li>}
-			@if(hasLicense){<li @if (type =="license") {class="active"}><a href="/p/@project/@info.curversion/license/" >License</a></li>}
+			@if(hasReadme){<li @if (type == "readme") {class="active"}><a href="/p/@project/@version">About</a></li>}
+			<li @if (type =="releasenotes") {class="active"}><a href="/p/@project/@version/releasenotes">Release notes</a></li>
+			@if(hasChangelog){<li @if (type =="changelog") {class="active"}><a href="/p/@project/@version/changelog">Changelog</a></li>}
+			@if(hasLicense){<li @if (type =="license") {class="active"}><a href="/p/@project/@version/license/" >License</a></li>}
 		</ul>
 
 		@if (type == "readme") {
