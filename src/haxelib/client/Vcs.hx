@@ -26,14 +26,13 @@ using haxelib.client.Vcs;
 
 interface IVcs {
 	/** The name of the vcs system. **/
-	var name(default, null):String;
+	final name:String;
 	/** The directory used to install vcs library versions to. **/
-	var directory(default, null):String;
+	final directory:String;
 	/** The vcs executable. **/
-	var executable(default, null):String;
+	final executable:String;
 	/** Whether or not the executable can be accessed successfully. **/
 	var available(get, null):Bool;
-	var settings(default, null):Settings;
 
 	/**
 		Clone repository at `vcsPath` into `libPath`.
@@ -79,77 +78,55 @@ enum VcsError {
 	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
 }
 
-
-typedef Settings = {
-	@:optional final flat:Bool;
-	@:optional final debug:Bool;
-	@:optional final quiet:Bool;
-}
-
-
 /** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
 class Vcs implements IVcs {
-	static var reg:Map<VcsID, Vcs>;
+	static var flat = false;
 
-	public var name(default, null):String;
-	public var directory(default, null):String;
-	public var executable(default, null):String;
-	public var settings(default, null):Settings;
-
+	public final name:String;
+	public final directory:String;
+	public final executable:String;
 	public var available(get, null):Bool;
 
 	var availabilityChecked = false;
 	var executableSearched = false;
 
-	public static function initialize(settings:Settings) {
-		if (reg == null) {
-			reg = [
-				VcsID.Git => new Git(settings),
-				VcsID.Hg => new Mercurial(settings)
-			];
-		} else {
-			if (reg.get(VcsID.Git) == null)
-				reg.set(VcsID.Git, new Git(settings));
-			if (reg.get(VcsID.Hg) == null)
-				reg.set(VcsID.Hg, new Mercurial(settings));
-		}
-	}
-
-
-	function new(executable:String, directory:String, name:String, settings:Settings) {
+	function new(executable:String, directory:String, name:String) {
 		this.name = name;
 		this.directory = directory;
 		this.executable = executable;
-		this.settings = {
-			flat: settings.flat != null ? settings.flat : false,
-			debug: settings.debug != null ? settings.debug : false,
-			quiet: settings.quiet != null && !settings.debug ? settings.quiet : false
-		}
 	}
 
+	@:allow(haxelib.client.Main.new)
+	static function setFlat(flat:Bool) {
+		Vcs.flat = flat;
+	}
 
-	public static function get(id:VcsID, settings:Settings):Null<Vcs> {
-		initialize(settings);
+	static var reg:Map<VcsID, Vcs>;
+	public static function get(id:VcsID):Null<Vcs> {
+		if (reg == null)
+			reg = [
+				VcsID.Git => new Git("git", "git", "Git"),
+				VcsID.Hg => new Mercurial("hg", "hg", "Mercurial")
+			];
+
 		return reg.get(id);
 	}
 
 	public static function getDirectoryFor(id:VcsID):String {
-		return switch (get(id, {})) {
+		return switch (get(id)) {
 			case null: throw 'Unable to get directory for $id';
 			case vcs: vcs.directory;
 		}
 	}
 
-	static function set(id:VcsID, vcs:Vcs, settings:Settings, ?rewrite:Bool):Void {
-		initialize(settings);
+	static function set(id:VcsID, vcs:Vcs, ?rewrite:Bool):Void {
 		final existing = reg.get(id) != null;
 		if (!existing || rewrite)
 			reg.set(id, vcs);
 	}
 
 	/** Returns the relevant Vcs if a vcs version is installed at `libPath`. **/
-	public static function getVcsForDevLib(libPath:String, settings:Settings):Null<Vcs> {
-		initialize(settings);
+	public static function getVcsForDevLib(libPath:String):Null<Vcs> {
 		for (k in reg.keys()) {
 			if (FileSystem.exists(libPath + "/" + k) && FileSystem.isDirectory(libPath + "/" + k))
 				return reg.get(k);
@@ -161,8 +138,7 @@ class Vcs implements IVcs {
 		switch (commandResult) {
 			case {code: 0}: //pass
 			case {code: code, out:out}:
-				if (!settings.quiet)
-					Sys.stderr().writeString(out);
+				Cli.printOptionalError(out);
 				Sys.exit(code);
 		}
 	}
@@ -181,10 +157,10 @@ class Vcs implements IVcs {
         }
         final out = p.stdout.readAll().toString();
         final err = p.stderr.readAll().toString();
-        if (settings.debug && out != "")
-        	Sys.println(out);
-        if (settings.debug && err != "")
-        	Sys.stderr().writeString(err);
+        if (out != "")
+			Cli.printDebug(out);
+        if (err != "")
+			Cli.printDebugError(err);
         final code = p.exitCode();
         final ret = {
             code: code,
@@ -208,7 +184,7 @@ class Vcs implements IVcs {
 		return available;
 	}
 
-	@:final function get_available():Bool {
+	final function get_available():Bool {
 		if (!availabilityChecked)
 			checkExecutable();
 		return available;
@@ -226,8 +202,10 @@ class Vcs implements IVcs {
 /** Class wrapping `git` operations. **/
 class Git extends Vcs {
 
-	public function new(settings:Settings)
-		super("git", "git", "Git", settings);
+	@:allow(haxelib.client.Vcs.get)
+	function new(executable:String, directory:String, name:String) {
+		super(executable, directory, name);
+	}
 
 	override function checkExecutable():Bool {
 		// with `help` cmd because without any cmd `git` can return exit-code = 1.
@@ -274,11 +252,10 @@ class Git extends Vcs {
 			||
 			command(executable, ["diff", "--cached", "--exit-code", "--no-ext-diff"]).code != 0
 		) {
-			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can pull latest version")) {
+			if (Cli.ask('Reset changes to $libName $name repo so we can pull latest version')) {
 				sure(command(executable, ["reset", "--hard"]));
 			} else {
-				if (!settings.quiet)
-					Sys.println(name + " repo left untouched");
+				Cli.printOptional('$name repo left untouched');
 				return false;
 			}
 		}
@@ -307,14 +284,13 @@ class Git extends Vcs {
 
 		final vcsArgs = ["clone", url, libPath];
 
-		if (settings == null || !settings.flat)
+		if (!Vcs.flat)
 			vcsArgs.push('--recursive');
 
 		//TODO: move to Vcs.run(vcsArgs)
 		//TODO: use settings.quiet
 		if (command(executable, vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-
 
 		Sys.setCwd(libPath);
 
@@ -336,8 +312,10 @@ class Git extends Vcs {
 /** Class wrapping `hg` operations. **/
 class Mercurial extends Vcs {
 
-	public function new(settings:Settings)
-		super("hg", "hg", "Mercurial", settings);
+	@:allow(haxelib.client.Vcs.get)
+	function new(executable:String, directory:String, name:String) {
+		super(executable, directory, name);
+	}
 
 	override function searchExecutable():Void {
 		super.searchExecutable();
@@ -368,20 +346,18 @@ class Mercurial extends Vcs {
 		summary = summary.substr(summary.lastIndexOf("\n") + 1);
 		// we don't know any about locale then taking only Digit-exising:s
 		var changed = ~/(\d)/.match(summary);
-		if (changed && !settings.quiet)
+		if (changed)
 			// print new pulled changesets:
-			Sys.println(summary);
+			Cli.printOptional(summary);
 
 
 		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
-			if (!settings.quiet)
-				Sys.println(diff.out);
-			if (Cli.ask("Reset changes to " + libName + " " + name + " repo so we can update to latest version")) {
+			Cli.printOptional(diff.out);
+			if (Cli.ask('Reset changes to $libName $name repo so we can update to latest version')) {
 				sure(command(executable, ["update", "--clean"]));
 			} else {
 				changed = false;
-				if (!settings.quiet)
-					Sys.println(name + " repo left untouched");
+				Cli.printOptional('$name repo left untouched');
 			}
 		} else if (changed) {
 			sure(command(executable, ["update"]));

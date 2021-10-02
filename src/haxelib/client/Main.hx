@@ -22,7 +22,6 @@
 package haxelib.client;
 
 import haxe.Http;
-import haxe.Timer;
 import haxe.crypto.Md5;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
@@ -77,108 +76,6 @@ class CommandInfo {
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
-class ProgressOut extends haxe.io.Output {
-
-	final o : haxe.io.Output;
-	final startSize : Int;
-	final start : Float;
-
-	var cur : Int;
-	var curReadable : Float;
-	var max : Null<Int>;
-	var maxReadable : Null<Float>;
-
-	public function new(o, currentSize) {
-		this.o = o;
-		startSize = currentSize;
-		cur = currentSize;
-		start = Timer.stamp();
-	}
-
-	function report(n) {
-		cur += n;
-
-		final tag : String = ((max != null ? max : cur) / 1000000) > 1 ? "MB" : "KB";
-
-		curReadable = tag == "MB" ? cur / 1000000 : cur / 1000;
-		curReadable = Math.round( curReadable * 100 ) / 100; // 12.34 precision.
-
-		if( max == null )
-			Sys.print('${curReadable} ${tag}\r');
-		else {
-			maxReadable = tag == "MB" ? max / 1000000 : max / 1000;
-			maxReadable = Math.round( maxReadable * 100 ) / 100; // 12.34 precision.
-
-			Sys.print('${curReadable}${tag} / ${maxReadable}${tag} (${Std.int((cur*100.0)/max)}%)\r');
-		}
-	}
-
-	public override function writeByte(c) {
-		o.writeByte(c);
-		report(1);
-	}
-
-	public override function writeBytes(s,p,l) {
-		final r = o.writeBytes(s,p,l);
-		report(r);
-		return r;
-	}
-
-	public override function close() {
-		super.close();
-		o.close();
-
-		var time = Timer.stamp() - start;
-		final downloadedBytes = cur - startSize;
-		var speed = (downloadedBytes / time) / 1000;
-		time = Std.int(time * 10) / 10;
-		speed = Std.int(speed * 10) / 10;
-
-		final tag : String = (downloadedBytes / 1000000) > 1 ? "MB" : "KB";
-		var readableBytes : Float = (tag == "MB") ? downloadedBytes / 1000000 : downloadedBytes / 1000;
-		readableBytes = Math.round( readableBytes * 100 ) / 100; // 12.34 precision.
-
-		Sys.println('Download complete: ${readableBytes}${tag} in ${time}s (${speed}KB/s)');
-	}
-
-	public override function prepare(m) {
-		max = m + startSize;
-	}
-
-}
-
-class ProgressIn extends haxe.io.Input {
-
-	final i : haxe.io.Input;
-	final tot : Int;
-
-	var pos : Int;
-
-	public function new( i, tot ) {
-		this.i = i;
-		this.pos = 0;
-		this.tot = tot;
-	}
-
-	public override function readByte() {
-		final c = i.readByte();
-		report(1);
-		return c;
-	}
-
-	public override function readBytes(buf,pos,len) {
-		final k = i.readBytes(buf,pos,len);
-		report(k);
-		return k;
-	}
-
-	function report( nbytes : Int ) {
-		pos += nbytes;
-		Sys.print( Std.int((pos * 100.0) / tot) + "%\r" );
-	}
-
-}
-
 class Main {
 	static final HAXELIB_LIBNAME:ProjectName = ProjectName.ofString("haxelib");
 
@@ -189,9 +86,6 @@ class Main {
 	final mainArgs:Array<String>;
 	final argsIterator:ArrayIterator<String>;
 	final settings : {
-		debug : Bool,
-		quiet : Bool,
-		flat : Bool,
 		global : Bool,
 		skipDependencies : Bool,
 	};
@@ -203,13 +97,18 @@ class Main {
 	final alreadyUpdatedVcsDependencies = new Map<String,String>();
 
 	function new(args:ArgsInfo) {
-		final always = args.flags.contains(Always);
-		final never = args.flags.contains(Never);
-
 		// argument parsing already took care of mutual exclusivity
-		Cli.defaultAnswer =
-			if (!always && !never) null // neither specified
-			else (always && !never); // boolean logic
+		if (args.flags.contains(Always))
+			Cli.defaultAnswer = Always;
+		else if (args.flags.contains(Never))
+			Cli.defaultAnswer = Never;
+
+		if (args.flags.contains(Quiet))
+			Cli.mode = Quiet;
+		else if (args.flags.contains(Debug))
+			Cli.mode = Debug;
+
+		Vcs.setFlat(args.flags.contains(Flat));
 
 		updateCwd(args.repeatedOptions.get(Cwd));
 
@@ -224,9 +123,6 @@ class Main {
 		argsIterator = mainArgs.iterator();
 
 		settings = {
-			debug : args.flags.contains(Debug),
-			quiet : args.flags.contains(Quiet),
-			flat : args.flags.contains(Flat),
 			global : args.flags.contains(Global),
 			skipDependencies : args.flags.contains(SkipDependencies)
 		};
@@ -415,7 +311,6 @@ class Main {
 			#end
 			Register => create(register, 5, true),
 			Dev => create(dev, 2),
-			// TODO: generate command about VCS by Vcs.getAll()
 			Git => create(vcs.bind(VcsID.Git), 5, true),
 			Hg => create(vcs.bind(VcsID.Hg), 5, true),
 
@@ -439,8 +334,8 @@ class Main {
 		final commandInfo = commands[command];
 
 		if (commandInfo.useInstead != null)
-			Sys.println(
-				'Warning: Command `$command` is deprecated and will be removed in future.\n'+
+			Cli.printWarning(
+				'Command `$command` is deprecated and will be removed in future.\n'+
 				'Use `${commandInfo.useInstead}` instead.'
 			);
 
@@ -467,11 +362,11 @@ class Main {
 		} catch (e:RepoManager.InvalidConfiguration) {
 			switch e.type {
 				case NoneSet:
-					Cli.writeError('This is the first time you are running haxelib. Please run `haxelib setup` first.');
+					Cli.printError('Error: This is the first time you are running haxelib. Please run `haxelib setup` first.');
 				case NotFound(_):
-					Cli.writeError('${e.message}. Please run `haxelib setup` again.');
+					Cli.printError('Error: ${e.message}. Please run `haxelib setup` again.');
 				case IsFile(_):
-					Cli.writeError('${e.message}. Please remove it and run `haxelib setup` again.');
+					Cli.printError('Error: ${e.message}. Please remove it and run `haxelib setup` again.');
 			}
 			Sys.exit(1);
 		} catch(e:haxe.Exception) {
@@ -660,10 +555,7 @@ class Main {
 		h.onError = function(e) throw e;
 		h.onData = Cli.print;
 
-		final inp = if ( settings.quiet == false )
-			new ProgressIn(new haxe.io.BytesInput(data),data.length);
-		else
-			new haxe.io.BytesInput(data);
+		final inp = Cli.createUploadInput(data);
 
 		h.fileTransfer("file", id, inp, data.length);
 		Cli.print("Sending data.... ");
@@ -889,10 +781,7 @@ class Main {
 		if (currentSize > 0)
 			h.addHeader("range", "bytes="+currentSize + "-");
 
-		final progress = if (settings != null && settings.quiet == false )
-			new ProgressOut(out, currentSize);
-		else
-			out;
+		final progress = Cli.createDownloadOutput(out, currentSize);
 
 		var httpStatus = -1;
 		var redirectedLocation = null;
@@ -1007,10 +896,7 @@ class Main {
 			if( n.charAt(0) == "/" || n.charAt(0) == "\\" || n.split("..").length > 1 )
 				throw "Invalid filename : "+n;
 
-			if (settings.debug) {
-				final percent = Std.int((i / total) * 100);
-				Sys.print('${i + 1}/$total ($percent%)\r');
-			}
+			Cli.printInstallStatus(i, total);
 
 			final dirs = ~/[\/\\]/g.split(n);
 			var path = "";
@@ -1021,12 +907,11 @@ class Main {
 				path += "/";
 			}
 			if( file == "" ) {
-				if( path != "" && settings.debug ) Cli.print('  Created $path');
+				if( path != "") Cli.printDebug('  Created $path');
 				continue; // was just a directory
 			}
 			path += file;
-			if (settings.debug)
-				Cli.print('  Install $path');
+			Cli.printDebug('  Install $path');
 			final data = Reader.unzip(zipfile);
 			File.saveBytes(target+path,data);
 		}
@@ -1205,11 +1090,7 @@ class Main {
 	function doUpdate( p : String, state : { updated : Bool, rep : String, prompt : Bool } ) {
 		final pdir = state.rep + Data.safe(p);
 
-		final vcs = Vcs.getVcsForDevLib(pdir, {
-			flat: settings.flat,
-			debug: settings.debug,
-			quiet: settings.quiet
-		});
+		final vcs = Vcs.getVcsForDevLib(pdir);
 		if(vcs != null) {
 			if(!vcs.available)
 				throw VcsError.VcsUnavailable(vcs);
@@ -1223,7 +1104,9 @@ class Main {
 				Cli.print('$p was updated');
 			Sys.setCwd(oldCwd);
 		} else {
-			final latest = try retry(site.getLatestVersion.bind(p)) catch( e : Dynamic ) { Sys.println(e); return; };
+			final latest =
+				try retry(site.getLatestVersion.bind(p))
+				catch (e:Dynamic) { Cli.print(e); return; };
 
 			if( !FileSystem.exists(pdir+"/"+Data.safe(latest)) ) {
 				if( state.prompt ) {
@@ -1365,30 +1248,17 @@ class Main {
 		// TODO: ask if existing repo have changes.
 
 		// find existing repo:
-		var vcs = Vcs.getVcsForDevLib(proj, {
-			flat: settings.flat,
-			debug: settings.debug,
-			quiet: settings.quiet
-		});
+		var vcs = Vcs.getVcsForDevLib(proj);
 		// remove existing repos:
 		while(vcs != null) {
 			deleteRec(proj + "/" + vcs.directory);
-			vcs = Vcs.getVcsForDevLib(proj, {
-				flat: settings.flat,
-				debug: settings.debug,
-				quiet: settings.quiet
-			});
+			vcs = Vcs.getVcsForDevLib(proj);
 		}
 	}
 
 	inline function useVcs(id:VcsID, fn:Vcs->Void):Void {
 		// Prepare check vcs.available:
-		final vcs = Vcs.get(id, {
-			flat: settings.flat,
-			debug: settings.debug,
-			quiet: settings.quiet
-		}
-		);
+		final vcs = Vcs.get(id);
 		if(vcs == null || !vcs.available)
 			throw 'Could not use $id, please make sure it is installed and available in your PATH.';
 		return fn(vcs);
@@ -1580,8 +1450,8 @@ class Main {
 			} catch (e:ScriptRunner.ScriptError) {
 				Sys.exit(e.code);
 			} catch (e:haxe.Exception) {
-				Cli.print('Warning: Failed to run updated haxelib: $e');
-				Cli.print('Warning: Resorting to system haxelib...');
+				Cli.printWarning('Failed to run updated haxelib: $e');
+				Cli.printWarning('Resorting to system haxelib...');
 			}
 		}
 
@@ -1589,12 +1459,12 @@ class Main {
 			try {
 				Args.extractAll(args);
 			} catch (e:SwitchError) {
-				Cli.writeError(e.message);
+				Cli.printError(e.message);
 				Cli.print("Run 'haxelib help' for detailed help.");
 				Sys.exit(1);
 				return;
 			} catch (e:InvalidCommand) {
-				Cli.writeError(e.message);
+				Cli.printError(e.message);
 				usage();
 				Sys.exit(1);
 				return;
@@ -1606,7 +1476,7 @@ class Main {
 		} catch (e:haxe.Exception) {
 			if (priorityFlags.contains(Debug))
 				rethrow(e);
-			Cli.writeError('Error: ${e.message}');
+			Cli.printError('Error: ${e.message}');
 			Sys.exit(1);
 			return;
 		};
