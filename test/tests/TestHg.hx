@@ -4,7 +4,7 @@ import sys.FileSystem;
 import haxelib.client.Vcs;
 
 class TestHg extends TestVcs {
-	static inline var REPO_PATH = 'test/repo/hg';
+	static final REPO_PATH = 'test/repo/hg';
 
 	static public function init() {
 		HaxelibTests.deleteDirectory(REPO_PATH);

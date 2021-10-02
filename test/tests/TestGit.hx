@@ -4,7 +4,7 @@ import sys.FileSystem;
 import haxelib.client.Vcs;
 
 class TestGit extends TestVcs {
-	static inline var REPO_PATH = 'test/repo/git';
+	static final REPO_PATH = 'test/repo/git';
 
 	static public function init() {
 		HaxelibTests.deleteDirectory(REPO_PATH);
