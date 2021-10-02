@@ -310,13 +310,15 @@ class Connection {
 		return [for (data in versionsData) data.name];
 	}
 
-	public static function getVersionsForLibraries(libraries:Array<ProjectName>):Map<ProjectName, Array<SemVer>> {
+	public static function getVersionsForLibraries(libraries:Array<ProjectName>):Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}> {
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
-		final map = new Map<ProjectName, Array<SemVer>>();
+		final map = new Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>();
 
 		for (lib in libraries) {
-			final versionsData = retry(data.site.infos.bind(lib)).versions;
-			map[lib] = [for(data in versionsData) data.name];
+			final info = retry(data.site.infos.bind(lib));
+			final versionsData = info.versions;
+			// TODO with stricter capitalisation we won't have to use info.name maybe
+			map[lib] = {confirmedName: ProjectName.ofString(info.name), versions:[for(data in versionsData) data.name]};
 		}
 		return map;
 	}
