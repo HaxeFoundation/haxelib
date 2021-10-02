@@ -243,7 +243,13 @@ class Installer {
 
 	/** Install the latest version of `library` from haxelib. **/
 	public function installLatestFromHaxelib(library:ProjectName) {
-		final versions = Connection.getVersions(library);
+		final info = Connection.getInfo(library);
+		// TODO with stricter capitalisation we won't have to check this maybe
+		// that way we only have to check the versions
+		final library = ProjectName.ofString(info.name);
+
+		final versions = [for (v in info.versions) v.name];
+
 		if (versions.length == 0)
 			throw new NoHaxelibReleases(library);
 
@@ -264,7 +270,12 @@ class Installer {
 		the new version is always set as the current one.
 	 **/
 	public function installFromHaxelib(library:ProjectName, version:SemVer, forceSet:Bool = false) {
-		final versions = Connection.getVersions(library);
+		// TODO with stricter capitalisation we won't have to check this maybe
+		final info = Connection.getInfo(library);
+		final library = ProjectName.ofString(info.name);
+
+		final versions = [for (v in info.versions) v.name];
+
 		if (versions.length == 0)
 			throw new NoHaxelibReleases(library);
 		if (!versions.contains(version))
@@ -361,7 +372,10 @@ class Installer {
 		}
 
 		final semVer = try SemVer.ofString(current) catch (_) null;
-		final latest = Connection.getLatestVersion(library);
+
+		final info = Connection.getInfo(library);
+		final library = ProjectName.ofString(info.name);
+		final latest = info.getLatest();
 
 		if (semVer != null && semVer == latest) {
 			throw new AlreadyUpToDate('Library $library is already up to date');
@@ -496,8 +510,15 @@ class Installer {
 
 		final versionsData = getVersionsForEmptyLibs(libs);
 
-		for (lib in libs)
-			installData.add(AllInstallData.create(lib.name, lib.data, versionsData[lib.name]));
+		for (lib in libs) {
+			final data = versionsData[lib.name];
+			if (data == null) {
+				installData.add(AllInstallData.create(lib.name, lib.data, null));
+				continue;
+			}
+			final libName = data.confirmedName;
+			installData.add(AllInstallData.create(libName, lib.data, data.versions));
+		}
 
 		return installData;
 	}
@@ -510,7 +531,15 @@ class Installer {
 		final versionsData = getVersionsForEmptyLibs(libs);
 
 		for (lib in libs) {
-			final allInstallData = AllInstallData.create(lib.name, lib.data, versionsData[lib.name]);
+			final allInstallData = {
+				final data = versionsData[lib.name];
+				if (data == null) {
+					AllInstallData.create(lib.name, lib.data, null);
+				} else {
+					final libName = data.confirmedName;
+					AllInstallData.create(libName, lib.data, data.versions);
+				}
+			}
 
 			final lowerCaseName = ProjectName.ofString((allInstallData.name : String).toLowerCase());
 
@@ -529,7 +558,7 @@ class Installer {
 	/** Returns a map of version information for libraries in `libs` that have empty version information.
 	**/
 	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:LibFlagData}>):
-		Map<ProjectName, Array<SemVer>>
+		Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>
 	{
 		final toCheck:Array<ProjectName> = [];
 		for (lib in libs)

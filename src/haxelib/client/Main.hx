@@ -519,13 +519,15 @@ class Main {
 		}
 
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
-		final library = ProjectName.ofString(toInstall);
+		// TODO with stricter capitalisation we won't have to check this maybe
+		final info = Connection.getInfo(ProjectName.ofString(toInstall));
+		final library = ProjectName.ofString(info.name);
 
 		final versionGiven = argsIterator.next();
-		final version = switch versionGiven {
-			case null: Connection.getLatestVersion(library);
-			case v: SemVer.ofString(v);
-		}
+		final version = SemVer.ofString(switch versionGiven {
+			case null: info.getLatest();
+			case v: v;
+		});
 		// check if exists already
 		if (scope.isLibraryInstalled(library) && scope.getVersion(library) == version)
 			return Cli.print('$library version $version is already installed and set as current.');
@@ -638,6 +640,8 @@ class Main {
 		if (input == null)
 			return installer.updateAll();
 
+		/* TODO we used to check for all case combinations
+		by iterating through all library names */
 		final library = ProjectName.ofString(input);
 
 		if (!scope.isLibraryInstalled(library)) {
