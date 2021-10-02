@@ -322,6 +322,8 @@ class Installer {
 			updateIfNeeded(library);
 		} catch (e:AlreadyUpToDate) {
 			log(e.toString());
+		} catch (e:VcsUpdateCancelled) {
+			return;
 		}
 	}
 
@@ -340,6 +342,8 @@ class Installer {
 				updateIfNeeded(library);
 				updated = true;
 			} catch(e:AlreadyUpToDate) {
+				continue;
+			} catch (e:VcsUpdateCancelled) {
 				continue;
 			} catch(e) {
 				log("Failed to update: " + e.toString());
@@ -758,10 +762,13 @@ class Installer {
 		} catch (e:VcsError) {
 			Sys.setCwd(oldCwd);
 			switch e {
-				case CommandFailed(vcs, code, stdout, stderr):
+				case CommandFailed(_, code, stdout, stderr):
 					throw new VcsCommandFailed(id, code, stdout, stderr);
-				default: throw e; // other errors aren't expected here
+				default: Util.rethrow(e); // other errors aren't expected here
 			}
+		} catch (e:haxe.Exception) {
+			Sys.setCwd(oldCwd);
+			Util.rethrow(e);
 		}
 		Sys.setCwd(oldCwd);
 		if (!success)

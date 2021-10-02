@@ -90,6 +90,8 @@ enum VcsError {
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 }
 
+class VcsUpdateCancelled extends haxe.Exception {}
+
 /** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
 abstract class Vcs implements IVcs {
 	/** If set to true, recursive cloning is disabled **/
@@ -162,33 +164,45 @@ abstract class Vcs implements IVcs {
 		return available;
 	}
 
-	final function runStrict(args:Array<String>):{
+	final function runStrict(args:Array<String>, ?debugLog:(msg:String) -> Void):{
 		code:Int,
 		out:String,
 		err:String
-	}{
+	} {
+		inline function print(msg)
+			if (debugLog != null && msg != "")
+				debugLog(msg);
+
+		print("# Running command: " + executable + " " + args.toString() + "\n");
+
 		final proc = command(executable, args);
 		switch (proc) {
 			case {code: 0}: // pass
+				print(proc.out);
+				print(proc.err);
+				print('# Exited with code ${proc.code}\n');
 			case {code: code, out: out, err: err}:
 				throw CommandFailed(this, code, out, err);
 		}
 		return proc;
 	}
 
-	final function run(args:Array<String>, ?debugLog:(msg:String)->Void): {
+	final function run(args:Array<String>, ?debugLog:(msg:String) -> Void):{
 		code:Int,
 		out:String,
 		err:String
 	} {
-		final proc = command(executable, args);
-
 		inline function print(msg)
 			if (debugLog != null && msg != "")
 				debugLog(msg);
 
+		print("# Running command: " + executable + " " + args.toString() + "\n");
+
+		final proc = command(executable, args);
+
 		print(proc.out);
 		print(proc.err);
+		print('# Exited with code ${proc.code}\n');
 
 		return proc;
 	}
@@ -273,13 +287,20 @@ class Git extends Vcs {
 			|| run(["diff", "--cached", "--exit-code", "--no-ext-diff"], debugLog).code != 0
 		) {
 			if (confirm == null || !confirm())
-				return false;
-			runStrict(["reset", "--hard"]);
+				throw new VcsUpdateCancelled('$name update in ${Sys.getCwd()} was cancelled');
+			runStrict(["reset", "--hard"], debugLog);
 		}
 
-		final code = run(["pull"], debugLog).code;
+		runStrict(["fetch"], debugLog);
+
+		// `git rev-parse @{u}` will fail if detached
+		final checkUpstream = run(["rev-parse", "@{u}"], debugLog);
+
+		if (checkUpstream.out == runStrict(["rev-parse", "HEAD"], debugLog).out)
+			return false; // already up to date
+
 		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
-		if (code != 0) {
+		if (checkUpstream.code != 0) {
 			// get parent-branch:
 			final branch = {
 				final raw = run(["show-branch"], debugLog).out;
@@ -290,9 +311,9 @@ class Git extends Vcs {
 					raw;
 			}
 
-			runStrict(["checkout", branch, "--force"]);
-			runStrict(["pull"]);
+			runStrict(["checkout", branch, "--force"], debugLog);
 		}
+		runStrict(["merge"], debugLog);
 		return true;
 	}
 
@@ -366,20 +387,18 @@ class Mercurial extends Vcs {
 		summary = summary.substr(0, summary.length - 1);
 		summary = summary.substr(summary.lastIndexOf("\n") + 1);
 		// we don't know any about locale then taking only Digit-exising:s
-		var changed = ~/(\d)/.match(summary);
+		final changed = ~/(\d)/.match(summary);
 		if (changed)
 			// print new pulled changesets:
 			log(summary);
 
 		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
 			log(diff.out);
-			if (confirm != null && confirm()) {
-				runStrict(["update", "--clean"]);
-			} else {
-				changed = false;
-			}
+			if (confirm == null || !confirm())
+				throw new VcsUpdateCancelled('$name update in ${Sys.getCwd()} was cancelled');
+			runStrict(["update", "--clean"], debugLog);
 		} else if (changed) {
-			runStrict(["update"]);
+			runStrict(["update"], debugLog);
 		}
 
 		return changed;
