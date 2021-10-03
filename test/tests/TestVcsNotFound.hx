@@ -3,8 +3,7 @@ package tests;
 import sys.FileSystem;
 import haxe.io.*;
 
-import haxelib.client.Cli;
-import haxelib.client.Vcs;
+import haxelib.api.Vcs;
 
 class TestVcsNotFound extends TestBase
 {
@@ -24,8 +23,6 @@ class TestVcsNotFound extends TestBase
 	//--------------- initialize ----------------//
 
 	override public function setup():Void {
-		Cli.mode = Quiet;
-
 		Sys.setCwd(Path.join([CWD, REPO_ROOT]));
 
 		if(FileSystem.exists(REPO_DIR)) {
@@ -37,7 +34,6 @@ class TestVcsNotFound extends TestBase
 	}
 
 	override public function tearDown():Void {
-		Cli.mode = None;
 		// restore original CWD & PATH:
 		Sys.setCwd(CWD);
 

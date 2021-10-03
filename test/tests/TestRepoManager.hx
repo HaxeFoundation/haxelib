@@ -3,7 +3,7 @@ package tests;
 import sys.io.File;
 import sys.FileSystem;
 
-import haxelib.client.RepoManager;
+import haxelib.api.RepoManager;
 
 using haxe.io.Path;
 

@@ -5,10 +5,13 @@ import sys.io.File;
 import haxe.io.Path;
 
 import haxelib.Data;
+import haxelib.api.RepoManager;
+import haxelib.api.Installer;
+import haxelib.api.Scope;
 
 using StringTools;
 
-class TestInstall extends TestBase {
+class TestInstaller extends TestBase {
 
 	static final REPO = "haxelib-repo";
 	static final PROJECT_FOLDER = "UseGitDep";
@@ -18,6 +21,8 @@ class TestInstall extends TestBase {
 
 	final repo:String;
 
+	var scope:Scope;
+	var installer:Installer;
 
 	//--------------- constructor ---------------//
 
@@ -30,39 +35,37 @@ class TestInstall extends TestBase {
 	//--------------- initialize ----------------//
 
 	override public function setup():Void {
-		origRepo = Path.normalize(~/\r?\n/.split(runHaxelib(["config"]).stdout)[0]);
+		origRepo = RepoManager.getGlobalPath();
 
-		if (runHaxelib(["setup", repo]).exitCode != 0)
-			throw "haxelib setup failed";
+		RepoManager.setGlobalPath(repo);
 
 		CWD = Sys.getCwd();
 		final dir = Path.join([CWD, REPO_ROOT, PROJECT_FOLDER]);
 		Sys.setCwd(dir);
+
+		scope = getScope();
+		installer = new Installer(scope);
 	}
 
 	override public function tearDown():Void {
 		// restore original CWD:
 		Sys.setCwd(CWD);
 
-		if (runHaxelib(["setup", origRepo]).exitCode != 0)
-			throw "haxelib setup failed";
+		RepoManager.setGlobalPath(origRepo);
 
 		deleteDirectory(repo);
-
 	}
 
 	//----------------- tests -------------------//
 
 	public function testInstallHaxelibParameter():Void {
-		final r = runHaxelib(["install", "haxelib.json"]);
-		assertTrue(r.exitCode == 0);
+		installer.installFromHaxelibJson("haxelib.json");
 
 		checkLibrary(getLibraryName());
 	}
 
 	public function testInstallHaxelibDependencyWithTag():Void {
-		final r = runHaxelib(["install", "tag_haxelib.json"]);
-		assertTrue(r.exitCode == 0);
+		installer.installFromHaxelibJson("tag_haxelib.json");
 
 		final lib = getLibraryName();
 		checkLibrary(lib);
@@ -87,16 +90,14 @@ class TestInstall extends TestBase {
 	}
 
 	public function testReinstallHxml() {
-		final r = runHaxelib(["install", "git-deps.hxml", "--always"]);
-		assertEquals(0, r.exitCode);
-		final r = runHaxelib(["install", "git-deps.hxml", "--always"]);
-		assertEquals(0, r.exitCode);
-		final r = runHaxelib(["path", "hx.signal"]);
-		assertEquals(0, r.exitCode);
+		installer.installFromHxml("git-deps.hxml");
+
+		installer.installFromHxml("git-deps.hxml");
+
+		assertTrue(scope.isLibraryInstalled(ProjectName.ofString("hx.signal")));
 	}
 
-	function getLibraryName():String
-	{
+	function getLibraryName():String {
 		final haxelibFile = File.read("haxelib.json", false);
 		final details = Data.readData(haxelibFile.readAll().toString(), false );
 		haxelibFile.close();

@@ -69,7 +69,7 @@ class HaxelibTests {
 		}
 		r.add(new TestVcsNotFound());
 
-		r.add(new TestInstall());
+		r.add(new TestInstaller());
 		r.add(new TestRepoManager());
 		r.add(new TestArgs());
 
