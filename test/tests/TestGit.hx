@@ -1,7 +1,7 @@
 package tests;
 
 import sys.FileSystem;
-import haxelib.client.Vcs;
+import haxelib.api.Vcs;
 
 class TestGit extends TestVcs {
 	static final REPO_PATH = 'test/repo/git';

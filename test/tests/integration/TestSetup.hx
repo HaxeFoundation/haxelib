@@ -1,6 +1,6 @@
 package tests.integration;
 
-import haxelib.client.RepoManager;
+import haxelib.api.RepoManager;
 
 class TestSetup extends IntegrationTests {
 	function testCleanEnv():Void {

@@ -5,8 +5,7 @@ import sys.FileSystem;
 import haxe.io.*;
 import haxe.unit.TestCase;
 
-import haxelib.client.Cli;
-import haxelib.client.Vcs;
+import haxelib.api.Vcs;
 
 class TestVcs extends TestBase
 {
@@ -39,7 +38,6 @@ class TestVcs extends TestBase
 	//--------------- initialize ----------------//
 
 	override public function setup():Void {
-		Cli.mode = Quiet;
 		Sys.setCwd(Path.join([CWD, REPO_ROOT]));
 
 		if(FileSystem.exists(REPO_DIR)) {
@@ -51,7 +49,6 @@ class TestVcs extends TestBase
 	}
 
 	override public function tearDown():Void {
-		Cli.mode = None;
 		// restore original CWD:
 		Sys.setCwd(CWD);
 
@@ -155,7 +152,11 @@ class TestVcs extends TestBase
 		assertTrue(FileSystem.exists("." + vcs.directory));
 
 		// in this case `libName` can get any value:
-		vcs.update("LIBNAME");
+		vcs.update(()-> {
+			assertTrue(false);
+			// we are not expecting to be asked for confirmation
+			return false;
+		} );
 
 		// Now we get actual version (0.9.3 or newer) with README.md.
 		assertTrue(FileSystem.exists("README.md"));
@@ -180,12 +181,8 @@ class TestVcs extends TestBase
 		FileSystem.deleteFile("build.hxml");
 		File.saveContent("file", "new file \"file\" with content");
 
-		//Hack: set the default answer:
-		Cli.defaultAnswer = Always;
-
 		// update to HEAD:
-		// in this case `libName` can get any value:
-		vcs.update("LIBNAME");
+		vcs.update(() -> true);
 
 		// Now we get actual version (0.9.3 or newer) with README.md.
 		assertTrue(FileSystem.exists("README.md"));
@@ -209,12 +206,14 @@ class TestVcs extends TestBase
 		FileSystem.deleteFile("build.hxml");
 		File.saveContent("file", "new file \"file\" with content");
 
-		//Hack: set the default answer:
-		Cli.defaultAnswer = Never;
-
 		// update to HEAD:
-		// in this case `libName` can get any value:
-		vcs.update("LIBNAME");
+
+		try {
+			vcs.update(() -> false);
+			assertTrue(false);
+		} catch (e:VcsUpdateCancelled) {
+			assertTrue(true);
+		}
 
 		// We get no reset and update:
 		assertTrue(FileSystem.exists("file"));

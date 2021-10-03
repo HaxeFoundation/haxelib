@@ -3,6 +3,10 @@ package tests;
 import sys.FileSystem;
 import haxe.io.Path;
 
+import haxelib.api.RepoManager;
+import haxelib.api.Installer;
+import haxelib.api.Scope;
+
 class TestRemoveSymlinks extends TestBase
 {
 	//----------- properties, fields ------------//
@@ -16,25 +20,25 @@ class TestRemoveSymlinks extends TestBase
 	public function new() {
 		super();
 		lib = "symlinks";
+
 		repo = Path.join([Sys.getCwd(), "test", REPO]);
 	}
 
 	//--------------- initialize ----------------//
 
 	override public function setup():Void {
-		origRepo = Path.normalize(~/\r?\n/.split(runHaxelib(["config"]).stdout)[0]);
+		origRepo = RepoManager.getGlobalPath();
 
 		final libzip = Path.join([Sys.getCwd(), "test", "libraries", lib + ".zip"]);
-		if (runHaxelib(["setup", repo]).exitCode != 0)
-			throw "haxelib setup failed";
 
-		if (runHaxelib(["local", libzip]).exitCode != 0)
-			throw "haxelib local failed";
+		RepoManager.setGlobalPath(repo);
+
+		final installer = new Installer(getScope());
+		installer.installLocal(libzip);
 	}
 
 	override public function tearDown():Void {
-		if (runHaxelib(["setup", origRepo]).exitCode != 0)
-			throw "haxelib setup failed";
+		RepoManager.setGlobalPath(origRepo);
 
 		deleteDirectory(repo);
 	}
