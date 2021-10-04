@@ -148,7 +148,7 @@ class GitRepo {
             final localVersionDir:AbsPath = Path.join([localHaxelibDir, Data.safe(haxelib), Data.safe(version)]);
             return parentVersion
                 .then(parentVersion ->
-                    if (parentVersion == version) {
+                    if (parentVersion != null && parentVersion == version) {
                         console.log('You already have $haxelib version $version imported');
                         null;
                     } else {
