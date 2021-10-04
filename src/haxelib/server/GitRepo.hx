@@ -127,8 +127,8 @@ class GitRepo {
                                 gitRepo
                                     .checkout("master")
                                     .reset(HARD, [sha])
-                                    .push(remote, "master")
-                                    .pushTags(remote);
+                                    .push([remote, "master", "--force"])
+                                    .push([remote, "--tags", "--force"]);
                             })
                     )
                     .then(_ -> gitRepo)
@@ -229,7 +229,13 @@ class GitRepo {
                             )
                             .then(_ ->
                                 gitRepo.then(g -> g
-                                    .add("--all")
+                                    .add([
+                                        // make sure removed files are staged
+                                        "--all",
+
+                                        // include gitignored files
+                                        "--force",
+                                    ])
                                     .commit('import $haxelib ${version.name}', {
                                         "--date": version.date
                                     })
