@@ -170,7 +170,7 @@ class GitRepo {
             return parentVersion
                 .then(parentVersion ->
                     if (parentVersion != null && parentVersion == version.name) {
-                        console.log('You already have $haxelib version $version imported');
+                        console.log('You already have $haxelib version ${version.name} imported');
                         null;
                     } else {
                         (parentVersion != null ? gitRepo.then(g -> g.checkout(parentVersion)).then(_ -> null) : Promise.resolve(null))
