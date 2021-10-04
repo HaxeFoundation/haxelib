@@ -115,9 +115,35 @@ class GitRepo {
             .then(gitRepo ->
                 getRemoteRepo(haxelib)
                     .then(_ -> createInstallationAccessToken())
-                    .then(token -> gitRepo.pushTags('https://x-access-token:$token@github.com/haxelib/$haxelib.git'))
+                    .then(token -> 'https://x-access-token:$token@github.com/haxelib/$haxelib.git')
+                    .then(remote -> 
+                        getImportedVersions(Promise.resolve(gitRepo))
+                            .then(versions -> versions[versions.length - 1])
+                            .then(largest ->
+                                gitRepo.log(["-1", "--format=format:%H", 'refs/tags/$largest'])
+                                    .then(logs -> logs.latest.hash)
+                            )
+                            .then(sha -> {
+                                gitRepo
+                                    .checkout("master")
+                                    .reset(HARD, [sha])
+                                    .push(remote, "master")
+                                    .pushTags(remote);
+                            })
+                    )
                     .then(_ -> gitRepo)
             );
+    }
+
+    static function getImportedVersions(gitRepo:Promise<SimpleGit>):Promise<Array<SemVer>> {
+        return gitRepo.then(g ->
+            g.tags().then(r -> {
+                var versions = r.all.map(SemVer.ofString);
+                // from smaller to larger
+                versions.sort(function (a, b) return SemVer.compare(a, b));
+                versions;
+            })
+        );
     }
 
     static function importToLocalGit(haxelib:String):Promise<SimpleGit> {
@@ -158,14 +184,7 @@ class GitRepo {
                 return gitRepo;
 
             final version = versions[0];
-            final importedVersions:Promise<Array<SemVer>> = gitRepo.then(g ->
-                g.tags().then(r -> {
-                    var versions = r.all.map(SemVer.ofString);
-                    // from smaller to larger
-                    versions.sort(function (a, b) return SemVer.compare(a, b));
-                    versions;
-                })
-            );
+            final importedVersions:Promise<Array<SemVer>> = getImportedVersions(gitRepo);
             final parentVersion = importedVersions.then(verions -> {
                 var parent = null;
                 for (v in verions) {
