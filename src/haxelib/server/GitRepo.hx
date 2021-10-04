@@ -10,16 +10,20 @@ import sys.FileSystem;
 import js.lib.Promise;
 import octokit.AuthApp;
 import js.Node.*;
+import simple_git.SimpleGit;
 import SimpleGit.default_ as git;
 
 @:access(haxelib)
 class GitRepo {
+    static public final root:AbsPath = Path.directory(Sys.programPath());
+    static public final privateKeyFile:AbsPath = FileSystem.absolutePath(Sys.getEnv("GITHUB_APP_PRIVATE_KEY_FILE"));
+
     // Auth as an "installation"
     // https://github.com/organizations/haxelib/settings/installations/19601456
     static public final githubApp = {
         appId: 139127,
         clientId: "Iv1.89d7675c50ba41de",
-        privateKey: Sys.getEnv("GITHUB_APP_PRIVATE_KEY"),
+        privateKey: File.getContent(privateKeyFile),
         installationId: 19601456,
     }
 
@@ -32,7 +36,21 @@ class GitRepo {
     static public final localGitDir:AbsPath = Path.join([TMP_DIR, "git"]);
     static public final localHaxelibDir:AbsPath = Path.join([TMP_DIR, ".haxelib"]);
 
-    static public final root:AbsPath = Path.directory(Sys.programPath());
+    static function getRemoteRepo(haxelib:String) {
+        var repoName = haxelib; // TODO: validate
+        return octokit.request.call({
+            method: "GET",
+            url: "/repos/{owner}/{repo}",
+            owner: githubOrg,
+            repo: repoName,
+        })
+            .then(r -> r.data.ssh_url)
+            .catchError(err -> {
+                trace(err);
+                createRemoteRepo(haxelib)
+                    .then(_ -> getRemoteRepo(haxelib));
+            });
+    }
 
     static function createRemoteRepo(haxelib:String) {
         var repoName = haxelib; // TODO: validate
@@ -83,16 +101,31 @@ class GitRepo {
         }
     }
 
-    static function importToRemote(haxelib:String) {
-        var gitRepoDir:AbsPath = Path.join([localGitDir, haxelib]);
+    static function importToRemote(haxelib:String):Promise<SimpleGit> {
+        return importToLocalGit(haxelib)
+            .then(gitRepo ->
+                getRemoteRepo(haxelib)
+                    .then(_ -> gitRepo.pushTags('git@github.com:haxelib/$haxelib.git'))
+                    .then(_ -> gitRepo)
+            );
+    }
+
+    static function importToLocalGit(haxelib:String):Promise<SimpleGit> {
+        final gitRepoDir:AbsPath = Path.join([localGitDir, haxelib]);
         FileSystem.createDirectory(gitRepoDir);
-        var gitRepo = git({
+
+        final gitRepo:Promise<SimpleGit> = Promise.resolve(git({
             baseDir: gitRepoDir,
             config: [
                 'user.name=haxelib',
                 'user.email=contact@haxe.org',
             ]
-        }).init(false);
+        }))
+            .then(g -> g
+                .env("GIT_SSH_COMMAND", 'ssh -i ${privateKeyFile}')
+                .init(false)
+                .then(_ -> g)
+            );
 
         var haxelibRepo = new Repo();
         var infos = haxelibRepo.infos(haxelib);
@@ -110,50 +143,38 @@ class GitRepo {
         }
 
         Sys.setCwd(TMP_DIR);
-        var client = new haxelib.client.Main();
-        client.settings = {
-            debug: false,
-            quiet: true,
-            flat: false,
-            always: true,
-            never: false,
-            global: false,
-            system: false,
-            skipDependencies: false,
-        };
-        if (Path.normalize(client.getRepository()) != Path.normalize(localHaxelibDir)) {
-            throw "haxelib is not setup properly";
-        }
 
-        function importVersions(versions:ReadOnlyArray<SemVer>) {
+        function importVersions(versions:ReadOnlyArray<VersionInfos>) {
             if (versions.length <= 0)
-                return Promise.resolve();
+                return gitRepo;
 
             final version = versions[0];
-            final importedVersions:Promise<Array<SemVer>> = gitRepo.tags().then(r -> {
-                var versions = r.all.map(SemVer.ofString);
-                // from smaller to larger
-                versions.sort(function (a, b) return SemVer.compare(a, b));
-                versions;
-            });
+            final importedVersions:Promise<Array<SemVer>> = gitRepo.then(g ->
+                g.tags().then(r -> {
+                    var versions = r.all.map(SemVer.ofString);
+                    // from smaller to larger
+                    versions.sort(function (a, b) return SemVer.compare(a, b));
+                    versions;
+                })
+            );
             final parentVersion = importedVersions.then(verions -> {
                 var parent = null;
                 for (v in verions) {
-                    if (v > version)
+                    if (v > version.name)
                         break;
                     parent = v;
                 }
                 parent;
             });
-            final localVersionDir:AbsPath = Path.join([localHaxelibDir, Data.safe(haxelib), Data.safe(version)]);
+            final localVersionDir:AbsPath = Path.join([localHaxelibDir, Data.safe(haxelib), Data.safe(version.name)]);
             return parentVersion
                 .then(parentVersion ->
-                    if (parentVersion != null && parentVersion == version) {
+                    if (parentVersion != null && parentVersion == version.name) {
                         console.log('You already have $haxelib version $version imported');
                         null;
                     } else {
-                        (parentVersion != null ? gitRepo.checkout(parentVersion).then(_ -> null) : Promise.resolve(null))
-                            .then(_ -> Sys.command("neko", [Path.join([root, "run.n"]), "install", haxelib, version, "--never"]))
+                        (parentVersion != null ? gitRepo.then(g -> g.checkout(parentVersion)).then(_ -> null) : Promise.resolve(null))
+                            .then(_ -> Sys.command("neko", [Path.join([root, "run.n"]), "install", haxelib, version.name, "--never"]))
                             .then(_ ->
                                 // replace the files in git workspace with the haxelib archive contents
                                 FsExtra.readdir(gitRepoDir)
@@ -178,16 +199,22 @@ class GitRepo {
                                     )
                                     .then(_ -> console.log("copied files"))
                             )
-                            .then(_ -> gitRepo.add("--all"))
-                            .then(_ -> gitRepo.commit('import $haxelib $version'))
-                            .then(_ -> gitRepo.addTag(version))
-                            .then(_ -> console.log('imported $haxelib $version'));
+                            .then(_ ->
+                                gitRepo.then(g -> g
+                                    .add("--all")
+                                    .commit('import $haxelib ${version.name}', {
+                                        "--date": version.date
+                                    })
+                                    .addTag(version.name)
+                                )
+                            )
+                            .then(_ -> console.log('imported $haxelib ${version.name}'));
                     }
                 )
                 .then(_ -> importVersions(versions.slice(1)));
         }
 
-        importVersions(versionsDateSorted.map(v -> v.name));
+        return importVersions(versionsDateSorted);
     }
 
     static function main():Void {
