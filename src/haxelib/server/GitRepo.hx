@@ -205,7 +205,7 @@ class GitRepo {
                                     .commit('import $haxelib ${version.name}', {
                                         "--date": version.date
                                     })
-                                    .addTag(version.name)
+                                    .addAnnotatedTag(version.name, version.comments)
                                 )
                             )
                             .then(_ -> console.log('imported $haxelib ${version.name}'));
