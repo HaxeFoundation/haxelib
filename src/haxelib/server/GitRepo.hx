@@ -36,6 +36,15 @@ class GitRepo {
     static public final localGitDir:AbsPath = Path.join([TMP_DIR, "git"]);
     static public final localHaxelibDir:AbsPath = Path.join([TMP_DIR, ".haxelib"]);
 
+    static function createInstallationAccessToken():Promise<String> {
+        return octokit.request.call({
+            method: "POST",
+            url: "/app/installations/{installation_id}/access_tokens",
+            installation_id: githubApp.installationId
+        })
+            .then(r -> r.data.token);
+    }
+
     static function getRemoteRepo(haxelib:String) {
         var repoName = haxelib; // TODO: validate
         return octokit.request.call({
@@ -105,7 +114,8 @@ class GitRepo {
         return importToLocalGit(haxelib)
             .then(gitRepo ->
                 getRemoteRepo(haxelib)
-                    .then(_ -> gitRepo.pushTags('git@github.com:haxelib/$haxelib.git'))
+                    .then(_ -> createInstallationAccessToken())
+                    .then(token -> gitRepo.pushTags('https://x-access-token:$token@github.com/haxelib/$haxelib.git'))
                     .then(_ -> gitRepo)
             );
     }
@@ -122,7 +132,6 @@ class GitRepo {
             ]
         }))
             .then(g -> g
-                .env("GIT_SSH_COMMAND", 'ssh -i ${privateKeyFile}')
                 .init(false)
                 .then(_ -> g)
             );
