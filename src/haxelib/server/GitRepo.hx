@@ -32,6 +32,8 @@ class GitRepo {
     static public final localGitDir:AbsPath = Path.join([TMP_DIR, "git"]);
     static public final localHaxelibDir:AbsPath = Path.join([TMP_DIR, ".haxelib"]);
 
+    static public final root:AbsPath = Path.directory(Sys.programPath());
+
     static function createRemoteRepo(haxelib:String) {
         var repoName = haxelib; // TODO: validate
         return octokit.request.call({
@@ -137,46 +139,51 @@ class GitRepo {
             final parentVersion = importedVersions.then(verions -> {
                 var parent = null;
                 for (v in verions) {
-                    if (v >= version)
+                    if (v > version)
                         break;
                     parent = v;
                 }
                 parent;
             });
             final localVersionDir:AbsPath = Path.join([localHaxelibDir, Data.safe(haxelib), Data.safe(version)]);
-            if (!FileSystem.exists(localVersionDir)) {
-                client.doInstall(client.getRepository(), haxelib, version, true);
-            }
             return parentVersion
-                .then(parentVersion -> parentVersion == null ? null : gitRepo.checkout(parentVersion))
-                .then(_ ->
-                    // replace the files in git workspace with the haxelib archive contents
-                    FsExtra.readdir(gitRepoDir)
-                        .then(files -> Promise.all([
-                            for (file in files)
-                            if (file != ".git")
-                            FsExtra.remove(Path.join([gitRepoDir, file]))
-                        ]))
-                        .then(_ -> trace("cleared git workspace"))
-                        .then(_ ->
-                            FsExtra.readdir(localVersionDir)
-                                .then(files -> Promise.all([
-                                    for (file in files)
-                                        FsExtra.copy(
-                                            Path.join([localVersionDir, file]),
-                                            Path.join([gitRepoDir, file]),
-                                            {
-                                                recursive: true,
-                                            }
-                                        )
-                                ]))
-                        )
-                        .then(_ -> trace("copied files"))
+                .then(parentVersion ->
+                    if (parentVersion == version) {
+                        console.log('You already have $haxelib version $version imported');
+                        null;
+                    } else {
+                        (parentVersion != null ? gitRepo.checkout(parentVersion).then(_ -> null) : Promise.resolve(null))
+                            .then(_ -> Sys.command("neko", [Path.join([root, "run.n"]), "install", haxelib, version, "--never"]))
+                            .then(_ ->
+                                // replace the files in git workspace with the haxelib archive contents
+                                FsExtra.readdir(gitRepoDir)
+                                    .then(files -> Promise.all([
+                                        for (file in files)
+                                        if (file != ".git")
+                                        FsExtra.remove(Path.join([gitRepoDir, file]))
+                                    ]))
+                                    .then(_ -> console.log("cleared git workspace"))
+                                    .then(_ ->
+                                        FsExtra.readdir(localVersionDir)
+                                            .then(files -> Promise.all([
+                                                for (file in files)
+                                                    FsExtra.copy(
+                                                        Path.join([localVersionDir, file]),
+                                                        Path.join([gitRepoDir, file]),
+                                                        {
+                                                            recursive: true,
+                                                        }
+                                                    )
+                                            ]))
+                                    )
+                                    .then(_ -> console.log("copied files"))
+                            )
+                            .then(_ -> gitRepo.add("--all"))
+                            .then(_ -> gitRepo.commit('import $haxelib $version'))
+                            .then(_ -> gitRepo.addTag(version))
+                            .then(_ -> console.log('imported $haxelib $version'));
+                    }
                 )
-                .then(_ -> gitRepo.add("--all"))
-                .then(_ -> gitRepo.commit('import $haxelib $version'))
-                .then(_ -> gitRepo.addTag(version))
-                .then(_ -> trace('imported $haxelib $version'))
                 .then(_ -> importVersions(versions.slice(1)));
         }
 
@@ -188,7 +195,12 @@ class GitRepo {
         FileSystem.createDirectory(localHaxelibDir);
 		SiteDb.init();
         // installAllVersions("jQueryExtern");
-        importToRemote("jQueryExtern");
+        switch (Sys.args()) {
+            case [haxelib]:
+                importToRemote(haxelib);
+            case _:
+                throw "haxelib name expected";
+        }
 		SiteDb.cleanup();
     }
 }
