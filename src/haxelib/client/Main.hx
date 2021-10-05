@@ -544,7 +544,7 @@ class Main {
 		Sys.exit(1);
 	}
 
-	#if neko
+	#if !js
 	inline function createHttpRequest(url:String):Http {
 		var req = new Http(url);
 		req.addHeader("User-Agent", 'haxelib $VERSION_LONG');
