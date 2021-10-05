@@ -19,15 +19,18 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
 # /files are stored in S3
 
 # for recent versions of haxelib client, which send UA, use https, and support redirection
-RewriteBase /
-RewriteCond %{HTTPS} =on [OR]
-RewriteCond %{HTTP:X-Forwarded-Proto} =https
-RewriteCond %{ENV:HAXELIB_CDN} !^$
-RewriteCond %{HTTP_USER_AGENT} !^$
-RewriteRule "^files/(.*)$" "https://%{ENV:HAXELIB_CDN}/files/$1" [L,R=302]
+# RewriteBase /
+# RewriteCond %{HTTPS} =on [OR]
+# RewriteCond %{HTTP:X-Forwarded-Proto} =https
+# RewriteCond %{ENV:HAXELIB_CDN} !^$
+# RewriteCond %{HTTP_USER_AGENT} !^$
+# RewriteRule "^files/(.*)$" "https://%{ENV:HAXELIB_CDN}/files/$1" [L,R=302]
 
 # for older versions of haxelib client
 RewriteBase /
+RewriteCond %{HTTPS} !on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTP_USER_AGENT} ^$
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{ENV:HAXELIB_CDN} !^$
 RewriteRule "^files/(.*)$" "http://%{ENV:HAXELIB_CDN}/files/$1" [P]

@@ -4,7 +4,8 @@ import ufront.MVC;
 import ufront.ufadmin.controller.*;
 import website.api.*;
 import website.model.SiteDb;
-import haxelib.server.FileStorage;
+import haxelib.*;
+import haxelib.server.*;
 import haxe.io.*;
 using StringTools;
 using tink.CoreApi;
@@ -96,19 +97,32 @@ class HomeController extends Controller {
 
 	/**
 		`/files` is backed by a `FileStorage`.
-		In production, it should be routed by httpd to S3 using mod_proxy, thus
-		this function should never be called.
+		This function only handles https traffic.
+		Non-https traffic is handled by httpd with mod_rewrite and mod_proxy. See `www/.htaccess`.
 	*/
 	@:route("/files/3.0/$fileName")
-	public function downloadFile( fileName:String ) {
-		return FileStorage.instance.readFile(
-			'files/3.0/$fileName',
-			function(path) {
-				var r = new FilePathResult(path);
-				r.setContentTypeByFilename(Path.withoutDirectory(path));
-				return r;
+	public function downloadFile( fileName:String ):ActionResult {
+		var r = ~/^([A-Za-z0-9_.,-]{3,})-([0-9]+,.+).zip$/;
+		if (r.match(fileName)) {
+			var project = Data.unsafe(r.matched(1));
+			var version = SemVer.ofString(Data.unsafe(r.matched(2)));
+			if (project == "lime" && version.valid && version <= SemVer.ofString("7.9.0")) {
+				return new RedirectResult('https://github.com/haxelib/${project}/archive/refs/tags/${version}.zip');
 			}
-		);
+		}
+		return switch (Sys.getEnv("HAXELIB_CDN")) {
+			case null:
+				FileStorage.instance.readFile(
+					'files/3.0/$fileName',
+					function(path) {
+						var r = new FilePathResult(path);
+						r.setContentTypeByFilename(Path.withoutDirectory(path));
+						return r;
+					}
+				);
+			case cdn:
+				new RedirectResult('https://${cdn}/files/3.0/$fileName');
+		}
 	}
 
 	@cacheRequest
