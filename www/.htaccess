@@ -30,7 +30,6 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
 RewriteBase /
 RewriteCond %{HTTPS} !on
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteCond %{HTTP_USER_AGENT} ^$
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{ENV:HAXELIB_CDN} !^$
 RewriteRule "^files/(.*)$" "http://%{ENV:HAXELIB_CDN}/files/$1" [P]
