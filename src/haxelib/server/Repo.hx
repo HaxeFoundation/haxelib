@@ -31,6 +31,8 @@ import haxelib.server.Paths.*;
 import haxelib.server.SiteDb;
 import haxelib.server.FileStorage;
 
+using StringTools;
+
 class Repo implements SiteApi {
 
 	#if neko
@@ -114,6 +116,11 @@ class Repo implements SiteApi {
 			throw "Invalid user name, please use alphanumeric characters";
 		if( User.manager.count($name == name) > 0 )
 			throw 'User name "$name" is already taken';
+
+		// spam filter
+		if( mail.endsWith("@id123.uno") )
+			throw 'Leave us alone';
+
 		var u = new User();
 		u.name = name;
 		u.pass = pass;
@@ -158,6 +165,10 @@ class Repo implements SiteApi {
 				var u = User.manager.search({ name : user }).first();
 				if( u == null || u.pass != pass )
 					throw "Invalid username or password";
+
+				// spam filter
+				if( infos.url.endsWith(".eu.org") )
+					throw "Leave us alone";
 
 				var devs = infos.contributors.map(function(user) {
 					var u = User.manager.search({ name : user }).first();
