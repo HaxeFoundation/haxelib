@@ -21,38 +21,6 @@
  */
 package haxelib.client;
 
-import haxe.io.Input;
-
-private class ProgressIn extends Input {
-	final i:Input;
-	final tot:Int;
-
-	var pos:Int;
-
-	public function new(i, tot) {
-		this.i = i;
-		this.pos = 0;
-		this.tot = tot;
-	}
-
-	public override function readByte() {
-		final c = i.readByte();
-		report(1);
-		return c;
-	}
-
-	public override function readBytes(buf, pos, len) {
-		final k = i.readBytes(buf, pos, len);
-		report(k);
-		return k;
-	}
-
-	function report(nbytes:Int) {
-		pos += nbytes;
-		Cli.printString(Std.int((pos * 100.0) / tot) + "%\r");
-	}
-}
-
 enum OutputMode {
 	Quiet;
 	Debug;
@@ -125,19 +93,16 @@ class Cli {
 		return s.toString();
 	}
 
-	public static function createUploadInput(data:haxe.io.Bytes):haxe.io.Input {
-		final dataBytes = new haxe.io.BytesInput(data);
-		if (mode == Quiet)
-			return dataBytes;
-		return new ProgressIn(dataBytes, data.length);
-	}
-
 	public static function printInstallStatus(_, current:Int, total:Int) {
 		Sys.stdout().writeString("\033[2K\r");
 		if (current != total) {
 			final percent = Std.int((current / total) * 100);
 			Sys.print('${current + 1}/$total ($percent%)');
 		}
+	}
+
+	public static function printUploadStatus(pos:Int, total:Int) {
+		Sys.print("\033[2K\r" + Std.int((pos * 100.0) / total) + "%");
 	}
 
 	public static function printDownloadStatus(_:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) {
