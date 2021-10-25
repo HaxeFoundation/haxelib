@@ -22,9 +22,11 @@
 package haxelib.client;
 
 import sys.FileSystem;
+import sys.io.File;
 import haxe.io.Path;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
+import haxe.zip.Tools;
 
 using StringTools;
 
@@ -185,5 +187,33 @@ class FsUtils {
 		}
 
 		return FileSystem.absolutePath(path);
-    }
+	}
+
+	public static function zipDirectory(root:String):List<Entry> {
+		final ret = new List<Entry>();
+		function seek(dir:String) {
+			for (name in FileSystem.readDirectory(dir))
+				if (!name.startsWith('.')) {
+					final full = '$dir/$name';
+					if (FileSystem.isDirectory(full))
+						seek(full);
+					else {
+						final blob = File.getBytes(full);
+						final entry:Entry = {
+							fileName: full.substr(root.length + 1),
+							fileSize: blob.length,
+							fileTime: FileSystem.stat(full).mtime,
+							compressed: false,
+							dataSize: blob.length,
+							data: blob,
+							crc32: haxe.crypto.Crc32.make(blob),
+						};
+						Tools.compress(entry, 9);
+						ret.push(entry);
+					}
+				}
+		}
+		seek(root);
+		return ret;
+	}
 }

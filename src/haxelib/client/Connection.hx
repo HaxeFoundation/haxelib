@@ -2,7 +2,10 @@ package haxelib.client;
 
 import haxe.Http;
 import haxe.Timer;
+import haxe.zip.*;
+import haxe.io.BytesOutput;
 import haxe.io.Output;
+import haxe.io.Input;
 import haxe.remoting.HttpConnection;
 import sys.FileSystem;
 import sys.io.File;
@@ -102,23 +105,19 @@ private class ProgressOut extends Output {
 	final o:Output;
 	final startSize:Int;
 	final start:Float;
-	final _progress:Null<DownloadProgress>;
 
 	var cur:Int;
 	var max:Null<Int>;
 
-	public function new(o, currentSize, ?_progress) {
+	public function new(o, currentSize, progress) {
 		start = Timer.stamp();
 		this.o = o;
 		startSize = currentSize;
 		cur = currentSize;
-		this._progress = _progress;
+		this.progress = progress;
 	}
 
-	inline function progress(finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float):Void {
-		if (_progress != null)
-			_progress(finished, cur, max, downloaded, time);
-	}
+	dynamic function progress(finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float):Void {}
 
 	function report(n) {
 		cur += n;
@@ -149,31 +148,64 @@ private class ProgressOut extends Output {
 	}
 }
 
+private class ProgressIn extends Input {
+	final i:Input;
+	final tot:Int;
+
+	var pos:Int;
+
+	public function new(i, tot, progress) {
+		this.i = i;
+		this.pos = 0;
+		this.tot = tot;
+		this.progress = progress;
+	}
+
+	dynamic function progress(pos:Int, total:Int):Void {}
+
+	public override function readByte() {
+		final c = i.readByte();
+		report(1);
+		return c;
+	}
+
+	public override function readBytes(buf, pos, len) {
+		final k = i.readBytes(buf, pos, len);
+		report(k);
+		return k;
+	}
+
+	function report(nbytes:Int) {
+		pos += nbytes;
+		progress(pos,tot);
+	}
+}
+
 /** Wraps interactions with the server so that they are attempted three times **/
 class Connection {
 	/** The number of times a server interaction will be attempted. Defaults to 3. **/
 	public static var retries = 3;
 
 	/** If set to false, the connection timeout time is unlimited. **/
-	public static var hasTimeout(null, set):Bool;
+	public static var hasTimeout(default, set) = true;
 
 	static function set_hasTimeout(value:Bool) {
 		if (value)
 			haxe.remoting.HttpConnection.TIMEOUT = 10;
 		else
 			haxe.remoting.HttpConnection.TIMEOUT = 0;
-		return value;
+		return hasTimeout = value;
 	}
 
 	public static var useSsl(default, set) = true;
-	public static function set_useSsl(value:Bool):Bool {
+	static function set_useSsl(value:Bool):Bool {
 		if (useSsl != value)
 			data = null;
 		return useSsl = value;
 	}
 
 	public static var remote(default, set):Null<String> = null;
-	public static function set_remote(value:String):String {
+	static function set_remote(value:String):String {
 		if (remote != value)
 			data = null;
 		return remote = value;
@@ -324,14 +356,101 @@ class Connection {
 	}
 
 	#if !js
-	public static inline function createRequest():Http {
+	public static function submitLibrary(path:String, login:(Array<String>)->{name:String, password:String},
+		?overwrite:(version:SemVer)->Bool,
+		?logUploadStatus:(current:Int, total:Int) -> Void
+	) {
+		var data:haxe.io.Bytes, zip:List<Entry>;
+		if (FileSystem.isDirectory(path)) {
+			zip = FsUtils.zipDirectory(path);
+			final out = new BytesOutput();
+			new Writer(out).write(zip);
+			data = out.getBytes();
+		} else {
+			data = File.getBytes(path);
+			zip = Reader.readZip(new haxe.io.BytesInput(data));
+		}
+
+		final infos = Data.readInfos(zip, true);
+		Data.checkClassPath(zip, infos);
+
+		// ask user which contributor they are
+		final user = login(infos.contributors);
+		// ensure they are already a contributor for the latest release
+		Connection.checkDeveloper(infos.name, user.name);
+
+		checkDependencies(infos.dependencies);
+
+		// check if this version already exists
+		if (doesVersionExist(infos.name, infos.version) && !(overwrite == null || overwrite(infos.version)))
+			throw "Aborted";
+
+		uploadAndSubmit(user, data, logUploadStatus);
+	}
+
+	static function checkDependencies(dependencies:Dependencies) {
+		for (d in dependencies) {
+			final versions:Array<String> = getVersions(ProjectName.ofString(d.name));
+			if (d.version == "")
+				continue;
+			if (!versions.contains(d.version))
+				throw "Library " + d.name + " does not have version " + d.version;
+		}
+	}
+
+	static function doesVersionExist(library:ProjectName, version:SemVer):Bool {
+		final versions = try Connection.getVersions(library) catch (_:Dynamic) null;
+		if (versions == null)
+			return false;
+		return versions.contains(version);
+	}
+
+	static function uploadAndSubmit(user, data, uploadProgress:Null<(pos:Int, total:Int) -> Void>) {
+		// query a submit id that will identify the file
+		final id = getSubmitId();
+
+		upload(data, id, uploadProgress);
+
+		log("Processing file...");
+
+		// processing might take some time, make sure we wait
+		final oldTimeout = HttpConnection.TIMEOUT;
+		if (hasTimeout) // don't ignore `hasTimeout` being false
+			HttpConnection.TIMEOUT = 1000;
+
+		// ask the server to register the sent file
+		final msg = processSubmit(id, user.name, user.password);
+		log(msg);
+
+		HttpConnection.TIMEOUT = oldTimeout;
+	}
+
+	static function upload(data:haxe.io.Bytes, id:String, logUploadStatus:Null<(pos:Int, total:Int) -> Void>) {
+		// directly send the file data over Http
+		final h = createRequest();
+		h.onError = function(e) throw e;
+		h.onData = log;
+
+		final inp = {
+			final dataBytes = new haxe.io.BytesInput(data);
+			if (logUploadStatus == null)
+				dataBytes;
+			new ProgressIn(dataBytes, data.length, logUploadStatus);
+		}
+
+		h.fileTransfer("file", id, inp, data.length);
+		log("Sending data...");
+		h.request(true);
+	}
+
+	static inline function createRequest():Http {
 		return createHttpRequest('${data.server.protocol}://${data.server.host}:${data.server.port}/${data.server.url}');
 	}
 
 	static inline function createHttpRequest(url:String):Http {
 		final req = new Http(url);
 		req.addHeader("User-Agent", "haxelib " + Util.getHaxelibVersionLong());
-		if (haxe.remoting.HttpConnection.TIMEOUT == 0)
+		if (!hasTimeout)
 			req.cnxTimeout = 0;
 		return req;
 	}
@@ -370,15 +489,15 @@ class Connection {
 	public static function isNewUser(userName:String)
 		return retry(data.site.isNewUser.bind(userName));
 
-	public static function checkDeveloper(library:ProjectName, userName:String)
-		return retry(data.site.checkDeveloper.bind(library, userName));
-
-	public static function getSubmitId()
-		return retry(data.site.getSubmitId.bind());
-
-	public static function processSubmit(id:String, userName:String, password:String)
-		return retry(data.site.processSubmit.bind(id, userName, password));
-
 	public static function checkPassword(userName:String, password:String)
 		return retry(data.site.checkPassword.bind(userName, password));
+
+	static function checkDeveloper(library:ProjectName, userName:String)
+		return retry(data.site.checkDeveloper.bind(library, userName));
+
+	static function getSubmitId()
+		return retry(data.site.getSubmitId.bind());
+
+	static function processSubmit(id:String, userName:String, password:String)
+		return retry(data.site.processSubmit.bind(id, userName, password));
 }

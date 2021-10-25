@@ -23,8 +23,6 @@ package haxelib.client;
 
 import haxe.Http;
 import haxe.crypto.Md5;
-import haxe.io.BytesOutput;
-import haxe.zip.*;
 import haxe.iterators.ArrayIterator;
 
 import sys.FileSystem;
@@ -345,112 +343,35 @@ class Main {
 		return encodedPassword;
 	}
 
-	function zipDirectory(root:String):List<Entry> {
-		final ret = new List<Entry>();
-		function seek(dir:String) {
-			for (name in FileSystem.readDirectory(dir)) if (!name.startsWith('.')) {
-				final full = '$dir/$name';
-				if (FileSystem.isDirectory(full)) seek(full);
-				else {
-					final blob = File.getBytes(full);
-					final entry:Entry = {
-						fileName: full.substr(root.length+1),
-						fileSize : blob.length,
-						fileTime : FileSystem.stat(full).mtime,
-						compressed : false,
-						dataSize : blob.length,
-						data : blob,
-						crc32: haxe.crypto.Crc32.make(blob),
-					};
-					Tools.compress(entry, 9);
-					ret.push(entry);
-				}
-			}
-		}
-		seek(root);
-		return ret;
-	}
-
 	#if neko
-	function submit() {
-		final file = getArgument("Package");
+	function getContributor(contributors:Array<String>): {name:String, password:String} {
+		var user:String = contributors[0];
 
-		var data:haxe.io.Bytes, zip:List<Entry>;
-		if (FileSystem.isDirectory(file)) {
-			zip = zipDirectory(file);
-			final out = new BytesOutput();
-			new Writer(out).write(zip);
-			data = out.getBytes();
-		} else {
-			data = File.getBytes(file);
-			zip = Reader.readZip(new haxe.io.BytesInput(data));
-		}
-
-		final infos = Data.readInfos(zip,true);
-		Data.checkClassPath(zip, infos);
-
-		var user:String = infos.contributors[0];
-
-		if (infos.contributors.length > 1)
+		if (contributors.length > 1)
 			do {
-				Cli.print('Which of these users are you: ${infos.contributors}');
+				Cli.print('Which of these users are you: $contributors');
 				user = getArgument("User");
-			} while ( infos.contributors.indexOf(user) == -1 );
+			} while (contributors.indexOf(user) == -1);
 
-		final password = if( Connection.isNewUser(user) ) {
+		final password = if (Connection.isNewUser(user)) {
 			Cli.print('This is your first submission as \'$user\'');
 			Cli.print("Please enter the following information for registration");
 			doRegister(user);
 		} else {
 			readPassword(user);
 		}
+		return { name: user, password: password };
+	}
 
-		Connection.checkDeveloper(infos.name,user);
+	function submit() {
+		final file = getArgument("Package");
 
-		// check dependencies validity
-		for( d in infos.dependencies ) {
-			final infos = Connection.getInfo(ProjectName.ofString(d.name));
-			if( d.version == "" )
-				continue;
-			var found = false;
-			for( v in infos.versions )
-				if( v.name == d.version ) {
-					found = true;
-					break;
-				}
-			if( !found )
-				throw "Library " + d.name + " does not have version " + d.version;
-		}
-
-		// check if this version already exists
-
-		final versions = try Connection.getVersions(infos.name) catch( _ : Dynamic ) null;
-		if( versions != null )
-			for( v in versions )
-				if( v == infos.version && !Cli.ask('You\'re about to overwrite existing version \'${v}\', please confirm') )
-					throw "Aborted";
-
-		// query a submit id that will identify the file
-		final id = Connection.getSubmitId();
-
-		// directly send the file data over Http
-		final h = Connection.createRequest();
-		h.onError = function(e) throw e;
-		h.onData = Cli.print;
-
-		final inp = Cli.createUploadInput(data);
-
-		h.fileTransfer("file", id, inp, data.length);
-		Cli.print("Sending data.... ");
-		h.request(true);
-
-		// processing might take some time, make sure we wait
-		Cli.print("Processing file.... ");
-		if (haxe.remoting.HttpConnection.TIMEOUT != 0) // don't ignore -notimeout
-			haxe.remoting.HttpConnection.TIMEOUT = 1000;
-		// ask the server to register the sent file
-		final msg = Connection.processSubmit(id,user,password);
-		Cli.print(msg);
+		Connection.submitLibrary(
+			file,
+			getContributor,
+			function(version) return Cli.ask('You\'re about to overwrite existing version \'$version\', please confirm'),
+			(Cli.mode == Quiet) ? null : Cli.printUploadStatus
+		);
 	}
 	#end
 
