@@ -512,22 +512,6 @@ class Main {
 		Cli.print(getRepositoryPath());
 	}
 
-	static function getCurrent( proj, dir ) {
-		return try { getDev(dir); return "dev"; } catch( e : Dynamic ) try File.getContent(dir + "/.current").trim() catch( e : Dynamic ) throw "Library "+proj+" is not installed : run 'haxelib install "+proj+"'";
-	}
-
-	static function getDev( dir ) {
-		var path = File.getContent(dir + "/.dev").trim();
-		path = ~/%([A-Za-z0-9_]+)%/g.map(path,function(r) {
-			final env = Sys.getEnv(r.matched(1));
-			return env == null ? "" : env;
-		});
-		final filters = try Sys.getEnv("HAXELIB_DEV_FILTER").split(";") catch( e : Dynamic ) null;
-		if( filters != null && !filters.exists(function(flt) return StringTools.startsWith(path.toLowerCase().split("\\").join("/"),flt.toLowerCase().split("\\").join("/"))) )
-			throw "This .dev is filtered";
-		return path;
-	}
-
 	function list() {
 		final scope = getScope();
 
@@ -686,36 +670,25 @@ class Main {
 	}
 
 	function dev() {
-		final rep = getRepositoryPath();
-		final project = getArgument("Library");
-		var dir = argsIterator.next();
-		final proj = rep + Data.safe(project);
-		if( !FileSystem.exists(proj) ) {
-			FileSystem.createDirectory(proj);
-		}
-		final devfile = proj+"/.dev";
-		if( dir == null ) {
-			if( FileSystem.exists(devfile) )
-				FileSystem.deleteFile(devfile);
-			Cli.print("Development directory disabled");
-		}
-		else {
-			while ( dir.endsWith("/") || dir.endsWith("\\") ) {
-				dir = dir.substr(0,-1);
-			}
-			if (!FileSystem.exists(dir)) {
-				Cli.print('Directory $dir does not exist');
-			} else {
-				dir = FileSystem.fullPath(dir);
-				try {
-					File.saveContent(devfile, dir);
-					Cli.print('Development directory set to $dir');
-				}
-				catch (e:Dynamic) {
-					Cli.print('Could not write to $devfile');
-				}
-			}
+		final project = ProjectName.ofString(getArgument("Library"));
+		final dir = argsIterator.next();
 
+		final repository = getRepository();
+
+		if (dir == null) {
+			repository.removeDevPath(project);
+			Cli.print("Development directory disabled");
+			return;
+		}
+		final dir = haxe.io.Path.removeTrailingSlashes(dir);
+		if (!FileSystem.exists(dir))
+			throw 'Directory $dir does not exist';
+		try {
+			final dir = FileSystem.fullPath(dir);
+			repository.setDevPath(project, dir);
+			Cli.print('Development directory set to $dir');
+		} catch (e) {
+			Cli.print('Failed to set development directory to $dir: ' + e.message);
 		}
 	}
 

@@ -308,6 +308,15 @@ class Repository {
 	}
 
 	/**
+		Removes the development directory for `name`, if one was set.
+	**/
+	public function removeDevPath(name:ProjectName) {
+		final devFile = getDevFilePath(name);
+		if (FileSystem.exists(devFile))
+			FileSystem.deleteFile(devFile);
+	}
+
+	/**
 		Returns the development path for `name`.
 		If no development path is set, or it is filtered out,
 		returns null.
