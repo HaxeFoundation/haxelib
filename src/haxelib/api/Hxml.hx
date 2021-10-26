@@ -3,8 +3,11 @@ package haxelib.api;
 using StringTools;
 
 private final regex = ~/\r?\n/g;
-/** strip comments, trim whitespace from each line and remove empty lines **/
-function normalizeHxml(hxmlContents:String) {
+
+/** Normalizes `hxmlContents` by stripping comments, trimming whitespace
+	from each line and removing empty lines
+**/
+function normalizeHxml(hxmlContents:String):String {
 	return regex.split(hxmlContents).map(StringTools.trim).filter(function(line) {
 		return line != "" && !line.startsWith("#");
 	}).join('\n');

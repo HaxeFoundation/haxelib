@@ -99,6 +99,8 @@ private class ConnectionData {
 	}
 }
 
+/** Signature of function used to log the progress of a download. **/
+@:noDoc
 typedef DownloadProgress = (finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void;
 
 private class ProgressOut extends Output {
@@ -181,12 +183,12 @@ private class ProgressIn extends Input {
 	}
 }
 
-/** Wraps interactions with the server so that they are attempted three times **/
+/** Class that provides functions for interactions with the Haxelib server. **/
 class Connection {
 	/** The number of times a server interaction will be attempted. Defaults to 3. **/
 	public static var retries = 3;
 
-	/** If set to false, the connection timeout time is unlimited. **/
+	/** If set to `false`, the connection timeout time is unlimited. **/
 	public static var hasTimeout(default, set) = true;
 
 	static function set_hasTimeout(value:Bool) {
@@ -196,7 +198,7 @@ class Connection {
 			haxe.remoting.HttpConnection.TIMEOUT = 0;
 		return hasTimeout = value;
 	}
-
+	/** Whether to use SSL when connecting. Set to `true` by default. **/
 	public static var useSsl(default, set) = true;
 	static function set_useSsl(value:Bool):Bool {
 		if (useSsl != value)
@@ -204,6 +206,7 @@ class Connection {
 		return useSsl = value;
 	}
 
+	/** The server url to be used as the Haxelib database.  **/
 	public static var remote(default, set):Null<String> = null;
 	static function set_remote(value:String):String {
 		if (remote != value)
@@ -214,7 +217,7 @@ class Connection {
 	/** Function to which connection information will be logged. **/
 	public static dynamic function log(msg:String) {}
 
-	/** Returns the name of the host**/
+	/** Returns the domain of the Haxelib server. **/
 	public static function getHost():String {
 		return data.server.host;
 	}
@@ -226,8 +229,12 @@ class Connection {
 		return data;
 	}
 
+	/** Downloads the file from `fileUrl` into `outpath`.
+
+		`downloadProgress` is the function used to log download information.
+	 **/
 	#if js
-	public static function download(fileUrl:String, outPath:String, ?_):Void {
+	public static function download(fileUrl:String, outPath:String, downloadProgress = null):Void {
 		node_fetch.Fetch.call(fileUrl, {
 			headers: {
 				"User-Agent": 'haxelib ${Util.getHaxelibVersionLong()}',
@@ -337,11 +344,13 @@ class Connection {
 		throw 'Failed due to HTTP timeout after multiple retries';
 	}
 
+	/** Returns the array of available versions for `library`. **/
 	public static function getVersions(library:ProjectName):Array<SemVer> {
 		final versionsData = retry(data.site.infos.bind(library)).versions;
 		return [for (data in versionsData) data.name];
 	}
 
+	/** Returns a map of the library names in `libraries` with their validated names (to ensure correct capitalisation) and available versions. **/
 	public static function getVersionsForLibraries(libraries:Array<ProjectName>):Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}> {
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		final map = new Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>();
@@ -356,6 +365,19 @@ class Connection {
 	}
 
 	#if !js
+	/**
+		Submits the library at `path` and uploads it.
+
+		`login` is called with the project's contributors and expects one of them
+		to be returned along with the password.
+
+		If the library version being submitted already exists, `overwrite` is called
+		with the library version, and the version is overwritten only if it returns `true`,
+		otherwise the operation is aborted. If `overwrite` is not passed in, the
+		operation is aborted by default.
+
+		`logUploadStatus` can be passed in optionally to show progress during upload.
+	**/
 	public static function submitLibrary(path:String, login:(Array<String>)->{name:String, password:String},
 		?overwrite:(version:SemVer)->Bool,
 		?logUploadStatus:(current:Int, total:Int) -> Void
@@ -455,11 +477,13 @@ class Connection {
 		return req;
 	}
 
+	/** Sets the proxy that will be used for http requests **/
 	public static function setProxy(proxy:{host:String, port:Null<Int>, auth:Null<{user:String, pass:String}>}):Void {
 		Http.PROXY = proxy;
 	}
 
-	/** Returns `true` if connection is successful, or `false` if it fails **/
+	/** Makes a connection attempt across the internet, and returns `true`
+		if connection is successful, or `false` if it fails. **/
 	public static function testConnection():Bool {
 		try {
 			Http.requestUrl(data.server.protocol + "://lib.haxe.org");
@@ -472,27 +496,35 @@ class Connection {
 
 	// Could maybe be done with a macro ??
 
+	/** Returns the latest version of `library`. **/
 	public static function getLatestVersion(library:ProjectName):SemVer
 		return retry(data.site.getLatestVersion.bind(library));
 
+	/** Returns the project information of `library` **/
 	public static function getInfo(library:ProjectName):ProjectInfos
 		return retry(data.site.infos.bind(library));
 
+	/** Searches libraries with `word` as the search term. **/
 	public static function search(word:String)
 		return retry(data.site.search.bind(word));
 
+	/** Informs the server of a successful installation of `version` of `library` **/
 	public static function postInstall(library:ProjectName, version:SemVer)
 		return retry(data.site.postInstall.bind(library, version));
 
+	/** Returns user information for `userName` **/
 	public static function getUserData(userName:String)
 		return retry(data.site.user.bind(userName));
 
+	/** Registers user with `name`, `encodedPassword`, `email`, and `fullname`. **/
 	public static function register(name:String, encodedPassword:String, email:String, fullname:String)
 		return retry(data.site.register.bind(name, encodedPassword, email, fullname));
 
+	/** Returns `true` if no user with `userName` exists yet. **/
 	public static function isNewUser(userName:String)
 		return retry(data.site.isNewUser.bind(userName));
 
+	/** Checks that `password` is the correct password for `userName`. **/
 	public static function checkPassword(userName:String, password:String)
 		return retry(data.site.checkPassword.bind(userName, password));
 

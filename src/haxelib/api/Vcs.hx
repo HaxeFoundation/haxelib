@@ -67,10 +67,12 @@ interface IVcs {
 	final Hg = "hg";
 	final Git = "git";
 
+	/** Returns `true` if `s` constitutes a valid VcsID **/
 	public static function isVcs(s:String) {
 		return s == Hg || s == Git;
 	}
 
+	/** Returns `s` as a VcsID if it is valid, otherwise throws an error. **/
 	public static function ofString(s:String):VcsID {
 		if (s == Git)
 			return Git;
@@ -90,6 +92,7 @@ enum VcsError {
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 }
 
+/** Exception thrown when a vcs update is cancelled. **/
 class VcsUpdateCancelled extends haxe.Exception {}
 
 /** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
@@ -112,6 +115,8 @@ abstract class Vcs implements IVcs {
 	}
 
 	static var reg:Map<VcsID, Vcs>;
+
+	/** Returns the Vcs instance for `id`. **/
 	public static function get(id:VcsID):Null<Vcs> {
 		if (reg == null)
 			reg = [
@@ -122,6 +127,7 @@ abstract class Vcs implements IVcs {
 		return reg.get(id);
 	}
 
+	/** Returns the sub directory to use for library versions of `id`. **/
 	public static function getDirectoryFor(id:VcsID):String {
 		return switch (get(id)) {
 			case null: throw 'Unable to get directory for $id';

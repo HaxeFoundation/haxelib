@@ -10,6 +10,10 @@ import haxelib.api.LibraryData.VcsData;
 
 using StringTools;
 
+/** Enum representing the different possible version information
+	that a Haxe `-lib` flag could hold, or a dependency string in a
+	`haxelib.json` file.
+ **/
 enum LibFlagData {
 	None;
 	Haxelib(version:SemVer);

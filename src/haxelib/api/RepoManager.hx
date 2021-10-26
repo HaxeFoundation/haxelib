@@ -12,8 +12,14 @@ using haxe.io.Path;
 #error "RepoManager requires Haxe 4.1 or newer"
 #end
 
+/** Exception thrown when an error happens when
+	changing or retrieving a repository path.
+ **/
 class RepoException extends haxe.Exception {}
 
+/** Enum representing the different possible causes
+	for a misconfigured global repository.
+ **/
 enum InvalidConfigurationType {
 	/** There is no configuration set **/
 	NoneSet;
@@ -23,7 +29,10 @@ enum InvalidConfigurationType {
 	IsFile(path:String);
 }
 
+/** Exception thrown when a global repository has been misconfigured.
+**/
 class InvalidConfiguration extends RepoException {
+	/** The type of configuration error. **/
 	public final type:InvalidConfigurationType;
 	public function new(type:InvalidConfigurationType) {
 		final message = switch type {
@@ -34,7 +43,6 @@ class InvalidConfiguration extends RepoException {
 		super(message);
 		this.type = type;
 	}
-
 }
 
 /** Manager for the location of the haxelib database. **/

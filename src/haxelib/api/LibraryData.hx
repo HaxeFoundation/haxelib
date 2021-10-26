@@ -5,6 +5,7 @@ import haxe.DynamicAccess;
 import haxelib.Data.ProjectName;
 import haxelib.api.Vcs.VcsID;
 
+/** Exception thrown upon errors regarding library data, such as invalid versions. **/
 class LibraryDataException extends haxe.Exception {}
 
 /**
@@ -30,36 +31,29 @@ abstract Version(String) to String from SemVer from VcsID {
 	}
 }
 
+/** A library version which can only be `dev`. **/
+@:noDoc
 enum abstract Dev(String) to String {
 	final Dev = "dev";
 }
 
-/** Like Version, but also has the possible value of `dev` **/
-abstract VersionOrDev(String) from VcsID from SemVer from Version from Dev to String {
-	inline public function new(s:String) {
-		this = try {
-			Version.ofString(s);
-		} catch(e:LibraryDataException) {
-			if (s == Dev.Dev)
-				s;
-			else
-				throw new LibraryDataException('`$s` is neither a valid library version nor equal to `dev`');
-		}
-	}
-}
+/** Like `Version`, but also has the possible value of `dev`. **/
+abstract VersionOrDev(String) from VcsID from SemVer from Version from Dev to String {}
 
+/** Interface which all types of library data implement. **/
 interface ILibraryData {
 	final version:VersionOrDev;
 	final dependencies:Array<ProjectName>;
 }
 
+/** Data for a library installed from the haxelib server. **/
 @:structInit
 class LibraryData implements ILibraryData {
 	public final version:SemVer;
 	public final dependencies:Array<ProjectName>;
 }
 
-/** Also includes the dev Path **/
+/** Data for a library located in a local development path. **/
 @:structInit
 class DevLibraryData implements ILibraryData {
 	public final version:Dev;
@@ -67,6 +61,7 @@ class DevLibraryData implements ILibraryData {
 	public final path:String;
 }
 
+/** Data for a library installed via vcs. **/
 @:structInit
 class VcsLibraryData implements ILibraryData {
 	public final version:VcsID;
@@ -79,6 +74,7 @@ private final hashRegex = ~/^([a-f0-9]{7,40})$/;
 function isCommitHash(str:String)
 	return hashRegex.match(str);
 
+/** Class containing repoducible git or hg library data. **/
 @:structInit
 class VcsData {
 	/** url from which to install **/

@@ -7,6 +7,7 @@ import haxelib.api.ScriptRunner;
 
 using StringTools;
 
+/** Information on the installed versions of a library. **/
 typedef InstallationInfo = {
 	final name:ProjectName;
 	final versions:Array<String>;
@@ -53,7 +54,9 @@ function getScopeForRepository(repository:Repository, ?dir:String):Scope {
 	giving information on them, or running them.
 **/
 abstract class Scope {
+	/** Whether the scope is local. **/
 	public final isLocal:Bool;
+	/** The repository which is used to resolve the scope's libraries. **/
 	public final repository:Repository;
 	final overrides:LockFormat;
 
@@ -100,14 +103,25 @@ abstract class Scope {
 	/** Returns whether `library` version is currently overridden. **/
 	public abstract function isOverridden(library:ProjectName):Bool;
 
+	/** Returns an array of the libraries in the scope. **/
 	public abstract function getLibraryNames():Array<ProjectName>;
 
+	/** Returns an array of installation information on libraries in the scope.
+
+		If `filter` is given, ignores libraries that do not contain it as a substring.
+	 **/
 	public abstract function getArrayOfLibraryInfo(?filter:String):Array<InstallationInfo>;
 
+	/** Returns the path to the source directory of `version` of `library`. **/
 	public abstract function getPath(library:ProjectName, ?version:Version):String;
 
+	/** Returns the required build arguments for `version` of `library` as an hxml string.
+	 **/
 	public abstract function getArgsAsHxml(library:ProjectName, ?version:Version):String;
 
+	/** Returns the required build arguments for each library version in `libraries`
+		as one combined hxml string.
+	**/
 	public abstract function getArgsAsHxmlForLibraries(libraries:Array<{library:ProjectName, version:Null<Version>}>):String;
 
 	abstract function resolveCompiler():LibraryData;

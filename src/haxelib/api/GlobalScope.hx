@@ -2,7 +2,6 @@ package haxelib.api;
 
 import sys.io.File;
 import haxe.ds.GenericStack;
-import haxe.ds.Option;
 import haxe.io.Path;
 
 import haxelib.Data;
@@ -14,6 +13,10 @@ import haxelib.api.Hxml;
 
 using StringTools;
 
+/**
+	A Global Scope, which resolves libraries using the repository's global configured current
+	library versions.
+**/
 class GlobalScope extends Scope {
 	function new(repository:Repository) {
 		super(false, repository);

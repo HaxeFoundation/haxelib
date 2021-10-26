@@ -6,6 +6,7 @@ import haxelib.Data.ProjectName;
 import haxelib.Data.DependencyVersion;
 import haxelib.api.LibraryData;
 
+/** Contains data with which a library script is executed. **/
 @:structInit
 class CallData {
 	/** Directory in which the script will start. Defaults to current working directory. **/
@@ -13,13 +14,14 @@ class CallData {
 	/** Array of arguments to be passed on to the library call. **/
 	public final args:Array<String> = [];
 	/**
-		Whether to pass `--haxelib-global` to the haxe compiler when running.
-		(only works with haxe 4.0.0 and above)
+		Whether to pass `--haxelib-global` to the haxe compiler when running
+		(only works with haxe 4.0.0 and above).
 	**/
 	public final useGlobalRepo:Bool = false;
 }
 
-// either the project `name` or `name:version`
+@:noDoc
+/** either the project `name` or `name:version` **/
 abstract Dependency(String) from ProjectName to String {
 	inline function new(d) this = d;
 	public static function fromNameAndVersion(name:ProjectName, version:DependencyVersion):Dependency
@@ -29,8 +31,10 @@ abstract Dependency(String) from ProjectName to String {
 		});
 }
 
+@:noDoc
 typedef Dependencies = Array<Dependency>;
 
+@:noDoc
 /** Library data needed in order to run it **/
 typedef LibraryRunData = {
 	name:ProjectName,
@@ -53,7 +57,10 @@ private typedef State = {
 	final runName:Null<String>;
 }
 
+/** Exception which is thrown if running a library script returns a non-zero code. **/
+@:noDoc
 class ScriptError extends haxe.Exception {
+	/** The error code returned by the library script call. **/
 	public final code:Int;
 	public function new(name:ProjectName, code:Int) {
 		super('Script for library "$name" exited with error code: $code');
@@ -61,10 +68,16 @@ class ScriptError extends haxe.Exception {
 	}
 }
 
+/** Class containing function for running a library's script. **/
+@:noDoc
 class ScriptRunner {
 	static final HAXELIB_RUN = "HAXELIB_RUN";
 	static final HAXELIB_RUN_NAME = "HAXELIB_RUN_NAME";
 
+	/** Run `library`, with `callData`.
+
+		`compilerData` is used if it is an interpreted script.
+	 **/
 	public static function run(library:LibraryRunData, compilerData:LibraryData, callData:CallData):Void {
 		final type = getType(library);
 
