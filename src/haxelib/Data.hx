@@ -180,6 +180,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 	}
 	#end
 
+	/** Returns an array of the names of the dependencies. **/
 	public inline function getNames():Array<ProjectName>
 		return [for(name in Reflect.fields(this)) ProjectName.ofString(name) ];
 

@@ -12,13 +12,9 @@ using StringTools;
 using Lambda;
 using haxelib.Data;
 
+/** Exception thrown when an error occurs during installation. **/
 class InstallationException extends haxe.Exception {}
-class NoHaxelibReleases extends InstallationException {
-	public function new(lib:String) super('The library $lib has not yet released a version');
-}
-class HaxelibVersionNotFound extends InstallationException {
-	public function new(lib:String, version:SemVer) super('No such version $version for library $lib');
-}
+/** Exception thrown when a `vcs` error interrupts installation. **/
 class VcsCommandFailed extends InstallationException {
 	public final type:VcsID;
 	public final code:Int;
@@ -34,6 +30,7 @@ class VcsCommandFailed extends InstallationException {
 	}
 }
 
+/** Enum for indication the importance of a log message. **/
 enum LogPriority {
 	/** Regular messages **/
 	Default;
@@ -105,10 +102,10 @@ class UserInterface {
 	}
 }
 
-/** Like LibFlagData, but None is not an option.
+/** Like `LibFlagData`, but `None` is not an option.
 
-	Always contains enough information to reproducibly
-	install the same version of a library.
+	Always contains enough information to reproduce
+	the same library installation.
 **/
 enum InstallData {
 	Haxelib(version:SemVer);
@@ -130,14 +127,14 @@ private class AllInstallData {
 
 	public static function create(name:ProjectName, libFlagData:LibFlagData, versionData:Null<Array<SemVer>>):AllInstallData {
 		if (versionData != null && versionData.length == 0)
-			throw new NoHaxelibReleases(name);
+			throw new InstallationException('The library $name has not yet released a version');
 
 		return switch libFlagData {
 			case None:
 				final semVer = getLatest(versionData);
 				new AllInstallData(name, semVer, Haxelib(semVer), true);
 			case Haxelib(version) if (!versionData.contains(version)):
-				throw new HaxelibVersionNotFound(name, version);
+				throw new InstallationException('No such version $version for library $name');
 			case Haxelib(version):
 				new AllInstallData(name, version, Haxelib(version), version == getLatest(versionData));
 			case VcsInstall(version, vcsData):
@@ -162,7 +159,7 @@ private function getLatest(versions:Array<SemVer>):SemVer {
 	return versions[0]; // otherwise the most recent one
 }
 
-/** Class for installing libraries into the scope and setting their versions.
+/** Class for installing libraries into a scope and setting their versions.
 **/
 class Installer {
 	/** If set to `true` library dependencies will not
@@ -182,6 +179,9 @@ class Installer {
 	final vcsBranchesByLibraryName = new Map<ProjectName, String>();
 
 	/** Creates a new Installer object that installs projects to `scope`.
+
+		If `userInterface` is passed in, it will be used as the interface
+		for logging information and for operations that require user confirmation.
 	 **/
 	public function new(scope:Scope, ?userInterface:UserInterface){
 		this.scope = scope;
@@ -223,7 +223,7 @@ class Installer {
 		vcsBranchesByLibraryName.clear();
 	}
 
-	/** Installs libraries from the `haxelib.json` at `path` **/
+	/** Installs libraries from the `haxelib.json` file at `path`. **/
 	public function installFromHaxelibJson(path:String) {
 		final path = FileSystem.fullPath(path);
 		userInterface.log('Installing libraries from $path');
@@ -284,7 +284,7 @@ class Installer {
 		}
 	}
 
-	/** Install the latest version of `library` from haxelib. **/
+	/** Installs the latest version of `library` from the haxelib server. **/
 	public function installLatestFromHaxelib(library:ProjectName) {
 		final info = Connection.getInfo(library);
 		// TODO with stricter capitalisation we won't have to check this maybe
@@ -294,7 +294,7 @@ class Installer {
 		final versions = [for (v in info.versions) v.name];
 
 		if (versions.length == 0)
-			throw new NoHaxelibReleases(library);
+			throw new InstallationException('The library $library has not yet released a version');
 
 		final version = getLatest(versions);
 		downloadAndInstall(library, version);
@@ -309,8 +309,8 @@ class Installer {
 
 	/** Installs `version` of `library` from the haxelib server.
 
-		If `forceSet` is set to true and running in a global scope,
-		the new version is always set as the current one.
+		If `forceSet` is set to true and the installer is running with
+		a global scope, the new version is always set as the current one.
 	 **/
 	public function installFromHaxelib(library:ProjectName, version:SemVer, forceSet:Bool = false) {
 		// TODO with stricter capitalisation we won't have to check this maybe
@@ -320,9 +320,9 @@ class Installer {
 		final versions = [for (v in info.versions) v.name];
 
 		if (versions.length == 0)
-			throw new NoHaxelibReleases(library);
+			throw new InstallationException('The library $library has not yet released a version');
 		if (!versions.contains(version))
-			throw new HaxelibVersionNotFound(library, version);
+			throw new InstallationException('No such version $version for library $library');
 
 		downloadAndInstall(library, version);
 
@@ -336,7 +336,7 @@ class Installer {
 	}
 
 	/**
-		Install `library` from a git or hg repository (specified by `id`)
+		Installs `library` from a git or hg repository (specified by `id`)
 
 		`vcsData` contains information on the source repository
 		and the requested state.
@@ -745,7 +745,7 @@ class Installer {
 						throw 'Could not checkout branch, tag or path "$branch": ' + stderr;
 					case CantCheckoutVersion(_, version, stderr):
 						throw 'Could not checkout tag "$version": ' + stderr;
-					case CommandFailed(vcs, code, stdout, stderr):
+					case CommandFailed(_, code, stdout, stderr):
 						throw new VcsCommandFailed(id, code, stdout, stderr);
 				};
 			}

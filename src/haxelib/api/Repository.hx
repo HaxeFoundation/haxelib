@@ -11,14 +11,23 @@ using Lambda;
 using StringTools;
 using haxe.io.Path;
 
+/** Exception thrown when there is an error with the configured
+	current version of a library.
+ **/
 class CurrentVersionException extends haxe.Exception {}
 
+/** Instance of a repository which can be used to get information on
+	library versions installed in the repository, as well as
+	directly modifying them.
+ **/
 class Repository {
 	static final CURRENT = ".current";
 
 	/**
-		Returns the path to the repository.
-		Throws an exception if it has been deleted.
+		The path to the repository.
+
+		If this field is being accessed and the repository path
+		is missing, an exception is thrown.
 	**/
 	public var path(get, null):String;
 
@@ -137,6 +146,7 @@ class Repository {
 		Removes `version` of project `name`.
 
 		Throws an exception if:
+
 		- `name` or `version` is not installed
 		- `version` matches the current version
 		- the project's development path is set as the path of `version`
