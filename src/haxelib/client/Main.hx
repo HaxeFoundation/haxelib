@@ -774,12 +774,19 @@ class Main {
 
 	function why() {
 		var library = param("Library to check for: ");
-		var hxmlPath = sys.FileSystem.exists('haxelib.json') ? paramOpt() : param("Hxml File: ");
+		var path = sys.FileSystem.exists('haxelib.json') ? paramOpt() : param("Hxml File or Library: ");
+		var version = paramOpt();
 		var repository = getRepository();
 		var scanResults:WhyResult = Failure;
-		if (hxmlPath != null) {
-			var hxmlFile = sys.io.File.getContent(hxmlPath);
-			scanResults = scanForDep(hxmlFile, library, repository);
+		if (path != null) {
+			if (path.toLowerCase().endsWith(".hxml")) {
+				var hxmlFile = sys.io.File.getContent(path);
+				scanResults = scanForDep(hxmlFile, library, repository);
+			} else {
+				var dir = getLibrary(path, version).dir;
+				scanResults = scanForDepFromLib(Data.readData(Path.join([dir, "haxelib.json"]), CheckData), library, [], repository, true);
+			}
+			
 		} else {
 			// If it's null that means it has to exist
 			var hxlibJson = sys.io.File.getContent('haxelib.json');
@@ -824,13 +831,8 @@ class Main {
 					// Directly required, return that it's directly required
 					return DirectlyRequired;
 				}
-				var results = new List();
-				checkRec(rep, libName, type == "git" ? "git" : libVersion, results, false);
-				var path = '';
-				if (!results.isEmpty()) {
-					path = results.first().dir;
-				}
-				if (path == '')
+				var path = getLibrary(libName, libVersion);
+				if (path == null)
 					continue;
 				var haxelibData = Data.readData(sys.io.File.getContent(path + '/haxelib.json'), CheckData);
 				var haxelibResults = scanForDepFromLib(haxelibData, lib, [libName], rep);
@@ -853,13 +855,7 @@ class Main {
 			if (dep.name == scanFor) {
 				return direct ? DirectlyRequired : Success(newPath);
 			}
-			var results = new List();
-			checkRec(rep, dep.name, null, results, false);
-			var dir = '';
-			if (!results.isEmpty())
-				dir = results.first().dir;
-			else 
-				continue;
+			
 			var haxelibData = Data.readData(sys.io.File.getContent(path + '/haxelib.json'), CheckData);
 			var scanResult = scanForDepFromLib(haxelibData, scanFor, newPath, rep);
 			if (scanResult != Failure) {
@@ -867,6 +863,13 @@ class Main {
 			}
 		}
 		return Failure;
+	}
+	function getLibrary(name:String, version:Null<String>):Null<{project: String, version:String, dir:String, info:Infos}> {
+		var results = new List();
+		checkRec(getRepository(), name, version, results, false);
+		if (results.isEmpty())
+			return null;
+		return results.first();
 	}
 	function installFromHxml( rep:String, path:String ) {
 		var targets  = [
