@@ -799,7 +799,7 @@ class Main {
 			case DirectlyRequired:
 				print('This is directly required by your project.');
 			case Success(depPath): 
-				print('Dependency Structure: ${depPath.join(', ')}');
+				print('Dependency Structure: ${depPath.join('> ')}');
 		}
 	}
 	function scanForDep(hxml:String, lib:String, rep:String):WhyResult {
@@ -839,7 +839,7 @@ class Main {
 
 				if (haxelibResults != Failure)
 					return haxelibResults;
-			} else if (line.endsWith('.hxml')) {
+			} else if (line.toLowerCase().endsWith('.hxml')) {
 				var hxmlOutput = scanForDep(sys.io.File.getContent(line.trim()), lib, rep);
 				if (hxmlOutput != Failure)
 					return hxmlOutput;
