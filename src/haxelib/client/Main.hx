@@ -58,7 +58,11 @@ private enum CommandCategory {
 	Miscellaneous;
 	Deprecated(msg:String);
 }
-
+private enum WhyResult {
+	DirectlyRequired;
+	Failure;
+	Success(path:Array<String>);
+}
 class SiteProxy extends haxe.remoting.Proxy<haxelib.SiteApi> {
 }
 
@@ -210,6 +214,7 @@ class Main {
 		addCommand("libpath", libpath, "returns the root path of a library", Information, false);
 		addCommand("version", version, "print the currently used haxelib version", Information, false);
 		addCommand("help", usage, "display this list of options", Information, false);
+		addCommand("why", why, "list why a lib is required", Information, false);
 
 		#if neko
 		addCommand("submit", submit, "submit or update a library package", Development);
@@ -788,6 +793,105 @@ class Main {
 		return version;
 	}
 
+	function why() {
+		var library = param("Library to check for: ");
+		var path = sys.FileSystem.exists('haxelib.json') ? paramOpt() : param("Hxml File or Library: ");
+		var version = paramOpt();
+		var repository = getRepository();
+		var scanResults:WhyResult = Failure;
+		if (path != null) {
+			if (path.toLowerCase().endsWith(".hxml")) {
+				var hxmlFile = sys.io.File.getContent(path);
+				scanResults = scanForDep(hxmlFile, library, repository);
+			} else {
+				var dir = getLibrary(path, version).dir;
+				scanResults = scanForDepFromLib(Data.readData(Path.join([dir, "haxelib.json"]), CheckData), library, [], repository, true);
+			}
+			
+		} else {
+			// If it's null that means it has to exist
+			var hxlibJson = sys.io.File.getContent('haxelib.json');
+			scanResults = scanForDepFromLib(Data.readData(hxlibJson, CheckData), library, [], repository, true);
+
+		}
+		switch (scanResults) {
+			case Failure:
+				print('Couldn\'t find a reason or ${library} isn\'t required by the project.');
+			case DirectlyRequired:
+				print('This is directly required by your project.');
+			case Success(depPath): 
+				print('Dependency Structure: ${depPath.join('> ')}');
+		}
+	}
+	function scanForDep(hxml:String, lib:String, rep:String):WhyResult {
+		for (line in hxml.split('\n')) {
+			line = line.trim();
+
+			var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
+			if (libraryFlagEReg.match(line)) {
+				var key = libraryFlagEReg.matchedRight().trim();
+				var parts = ~/:/.split(key);
+				var libName = parts[0];
+				var libVersion:String = null;
+				var branch:String = null;
+				var url:String = null;
+				var type:String = "haxelib";
+				if (parts.length > 1) {
+					if (parts[1].startsWith("git:")) {
+						type = "git";
+						var urlParts = parts[1].substr(4).split("#");
+						url = urlParts[0];
+						branch = urlParts.length > 1 ? urlParts[1] : null;
+					} else 
+					{
+						type = "haxelib";
+						libVersion = parts[1];
+					}
+				}
+				if (libName == lib) {
+					// Directly required, return that it's directly required
+					return DirectlyRequired;
+				}
+				var path = getLibrary(libName, libVersion);
+				if (path == null)
+					continue;
+				var haxelibData = Data.readData(sys.io.File.getContent(path + '/haxelib.json'), CheckData);
+				var haxelibResults = scanForDepFromLib(haxelibData, lib, [libName], rep);
+
+				if (haxelibResults != Failure)
+					return haxelibResults;
+			} else if (line.toLowerCase().endsWith('.hxml')) {
+				var hxmlOutput = scanForDep(sys.io.File.getContent(line.trim()), lib, rep);
+				if (hxmlOutput != Failure)
+					return hxmlOutput;
+			}
+		}
+		return Failure;
+	}
+
+	function scanForDepFromLib(libData:Infos, scanFor:String, path:Array<String>, rep:String, direct:Bool = false):WhyResult {
+		for (dep in libData.dependencies) {
+			var newPath = path.copy();
+			newPath.push(dep.name);
+			if (dep.name == scanFor) {
+				return direct ? DirectlyRequired : Success(newPath);
+			}
+			
+			var haxelibData = Data.readData(sys.io.File.getContent(path + '/haxelib.json'), CheckData);
+			var scanResult = scanForDepFromLib(haxelibData, scanFor, newPath, rep);
+			if (scanResult != Failure) {
+				return scanResult;
+			}
+		}
+		return Failure;
+	}
+	function getLibrary(name:String, version:Null<String>):Null<{project: String, version:String, dir:String, info:Infos}> {
+		var results = new List();
+		checkRec(getRepository(), name, version, results, false);
+		if (results.isEmpty())
+			return null;
+		return results.first();
+	}
 	function installFromHxml( rep:String, path:String ) {
 		var targets  = [
 			'-java ' => 'hxjava',
