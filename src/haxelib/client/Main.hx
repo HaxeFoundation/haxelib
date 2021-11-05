@@ -795,6 +795,7 @@ class Main {
 			'-cs ' => 'hxcs',
 		];
 		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
+		var autoLibsToInstall = [];
 
 		function processHxml(path) {
 			var hxml = normalizeHxml(sys.io.File.getContent(path));
@@ -804,9 +805,7 @@ class Main {
 
 				for (target in targets.keys())
 					if (l.startsWith(target)) {
-						var lib = targets[target];
-						if (!libsToInstall.exists(lib))
-							libsToInstall[lib] = { name: lib, version: null, type:"haxelib", url: null, branch: null, subDir: null }
+						autoLibsToInstall.push(targets[target]);
 					}
 
 				var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
@@ -854,6 +853,18 @@ class Main {
 			}
 		}
 		processHxml(path);
+
+		for(name in autoLibsToInstall) {
+			var addToLibs = true;
+			for(lib in libsToInstall) {
+				if(lib.name == name) {
+					addToLibs = false;
+					break;
+				}
+			}
+			if(!Lambda.exists(libsToInstall, lib -> lib.name == name))
+				libsToInstall[name] = { name: name, version: null, type:"haxelib", url: null, branch: null, subDir: null }
+		}
 
 		if (Lambda.empty(libsToInstall))
 			return;
