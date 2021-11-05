@@ -855,13 +855,6 @@ class Main {
 		processHxml(path);
 
 		for(name in autoLibsToInstall) {
-			var addToLibs = true;
-			for(lib in libsToInstall) {
-				if(lib.name == name) {
-					addToLibs = false;
-					break;
-				}
-			}
 			if(!Lambda.exists(libsToInstall, lib -> lib.name == name))
 				libsToInstall[name] = { name: name, version: null, type:"haxelib", url: null, branch: null, subDir: null }
 		}
