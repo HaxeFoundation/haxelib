@@ -84,6 +84,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+      - run: echo "Hello from PR"
       - run: neko run.n setup haxelib_global
       - run: haxe libs.hxml
       - run: haxe ci.hxml
