@@ -790,9 +790,9 @@ class Main {
 
 	function installFromHxml( rep:String, path:String ) {
 		var targets  = [
-			'-java ' => 'hxjava',
-			'-cpp ' => 'hxcpp',
-			'-cs ' => 'hxcs',
+			~/^(-{1,2})java / => 'hxjava',
+			~/^(-{1,2})cpp / => 'hxcpp',
+			~/^(-{1,2})cs / => 'hxcs',
 		];
 		var libsToInstall = new Map<String, {name:String,version:String,type:String,url:String,branch:String,subDir:String}>();
 		var autoLibsToInstall = [];
@@ -804,9 +804,8 @@ class Main {
 				l = l.trim();
 
 				for (target in targets.keys())
-					if (l.startsWith(target)) {
+					if (target.match(l))
 						autoLibsToInstall.push(targets[target]);
-					}
 
 				var libraryFlagEReg = ~/^(-lib|-L|--library)\b/;
 				if (libraryFlagEReg.match(l))
