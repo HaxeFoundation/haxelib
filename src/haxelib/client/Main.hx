@@ -842,9 +842,9 @@ class Main {
 						type = "haxelib";
 					}
 
-					switch libsToInstall[key] {
+					switch libsToInstall[libName] {
 						case null, { version: null } :
-							libsToInstall.set(key, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
+							libsToInstall.set(libName, { name:libName, version:libVersion, type: type, url: url, subDir: subDir, branch: branch } );
 						default:
 					}
 				}
