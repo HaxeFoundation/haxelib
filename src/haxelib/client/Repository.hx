@@ -254,7 +254,7 @@ class Repository {
 	}
 
 	inline function getCurrentFilePath(name:ProjectName):String {
-		return addToRepoPath(Data.safe(name), CURRENT);
+		return addToRepoPath(name, CURRENT);
 	}
 
 	inline function getCurrentFileContent(name:ProjectName):String {
@@ -265,7 +265,7 @@ class Repository {
 	}
 
 	inline function getProjectRootPath(name:ProjectName):String {
-		return addToRepoPath(Data.safe(name)).addTrailingSlash();
+		return addToRepoPath(name).addTrailingSlash();
 	}
 
 	inline function getProjectVersionPath(name:ProjectName, version:Version):String {
@@ -275,13 +275,13 @@ class Repository {
 			if (!SemVer.isValid(version)) throw 'Unknown library version $version';
 			version;
 		}
-		return addToRepoPath(Data.safe(name), Data.safe(versionDir)).addTrailingSlash();
+		return addToRepoPath(name, Data.safe(versionDir).toLowerCase()).addTrailingSlash();
 	}
 
-	inline function addToRepoPath(name:String, ?sub:String):String {
+	inline function addToRepoPath(name:ProjectName, ?sub:String):String {
 		return Path.join([
 			path,
-			name,
+			Data.safe(name).toLowerCase(),
 			if (sub != null)
 				sub
 			else
@@ -368,7 +368,7 @@ class Repository {
 		});
 	}
 
-	function getDevFilePath(name:String):String {
-		return addToRepoPath(Data.safe(name), DEV);
+	function getDevFilePath(name:ProjectName):String {
+		return addToRepoPath(name, DEV);
 	}
 }
