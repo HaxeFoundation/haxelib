@@ -6,6 +6,7 @@ import haxe.io.*;
 import haxe.unit.TestCase;
 import haxelib.Data;
 
+using StringTools;
 
 class TestInstall extends TestBase
 {
@@ -75,6 +76,20 @@ class TestInstall extends TestBase
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(Path.join([lib, "git", "README.md"])));
+	}
+
+	public function testInstallHxmlRepeatedLibs() {
+		final r = runHaxelib(["install", "repeated-libs.hxml", "--never"]);
+		final lines = r.stdout.split("\n");
+
+		// number of times that haxelib is listed
+		var count = 0;
+
+		for (line in lines)
+			if (line.ltrim().startsWith("haxelib"))
+				count++;
+
+		assertEquals(1, count);
 	}
 
 	public function testReinstallHxml() {
