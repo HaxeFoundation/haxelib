@@ -21,7 +21,6 @@
  */
 package haxelib.client;
 
-import haxe.Http;
 import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
 
@@ -753,12 +752,11 @@ class Main {
 		final port = Std.parseInt(getArgument("Proxy port"));
 		final authName = getArgument("Proxy user login");
 		final authPass = authName == "" ? "" : getArgument("Proxy user pass");
-		final proxy = {
-			host : host,
-			port : port,
-			auth : authName == "" ? null : { user : authName, pass : authPass },
-		};
-		Http.PROXY = proxy;
+		Connection.setProxy({
+			host: host,
+			port: port,
+			auth: authName == "" ? null : {user: authName, pass: authPass}
+		});
 		Cli.print("Testing proxy...");
 		if (!Connection.testConnection() && !Cli.ask("Proxy connection failed. Use it anyway"))
 			return;
@@ -769,7 +767,10 @@ class Main {
 
 	function loadProxy() {
 		final rep = getRepositoryPath();
-		try Http.PROXY = haxe.Unserializer.run(File.getContent(rep + "/.proxy")) catch( e : Dynamic ) { };
+		final content = try File.getContent(rep + "/.proxy") catch(e) return; // return if no proxy set
+		final proxy = haxe.Unserializer.run(content);
+
+		Connection.setProxy(proxy);
 	}
 	#end
 

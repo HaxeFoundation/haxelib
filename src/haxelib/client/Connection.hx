@@ -455,6 +455,10 @@ class Connection {
 		return req;
 	}
 
+	public static function setProxy(proxy:{host:String, port:Null<Int>, auth:Null<{user:String, pass:String}>}):Void {
+		Http.PROXY = proxy;
+	}
+
 	/** Returns `true` if connection is successful, or `false` if it fails **/
 	public static function testConnection():Bool {
 		try {
