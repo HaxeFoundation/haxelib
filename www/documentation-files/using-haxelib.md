@@ -86,6 +86,7 @@ Also, following environment variables affect haxelib behavior if set:
   <ul>
     <li><a href="#HAXELIB_NO_SSL">HAXELIB_NO_SSL</a></li>
     <li><a href="#HAXELIB_REMOTE">HAXELIB_REMOTE</a></li>
+    <li><a href="#HAXELIB_DEV_FILTER">HAXELIB_DEV_FILTER</a></li>
   </ul>
 </div>
 </div>
@@ -174,7 +175,9 @@ haxelib remove format 3.1.2
 
 ## haxelib list [search]
 
-List all the installed projects and their versions. For each project, the version surrounded by brackets is the current one.
+List all the installed projects and their versions, sorted alphabetically by their names.
+
+For each project, the version surrounded by brackets is the current one.
 
 ### haxelib list
 
@@ -201,7 +204,7 @@ haxelib set [project-name] [version]
 haxelib set tink_core 1.0.0-rc.8
 ```
 
-> Change the current version for a given project. The version must be already installed.
+> Change the current version for a given project. If the version is not already installed, a prompt will be shown to install it.
 
 
 
@@ -289,9 +292,7 @@ haxelib path openfl hxcpp format
 
 > Prints the source paths to one or more libraries, as well as any dependencies and compiler definitions required by those libraries.
 >
-> You can specify a version by appending `:version` to the library name. If no version is specified the set version is used.
->
-> If a [development](#dev) version is set it'll be used even if a version is specified.
+> You can specify a version by appending `:version` to the library name. If no version is specified, the [development](#dev) version is used if one has been set, otherwise the set version is used.
 >
 > This command is used by Haxe compiler to get required paths and flags for libraries.
 
@@ -408,6 +409,8 @@ haxelib dev starling                     # Cancel dev, use installed version.
 > This command is useful when developing a library and testing changes on a project.
 >
 > If the directory is omitted the development version of the library will be deactivated.
+>
+> See also: [`HAXELIB_DEV_FILTER`](HAXELIB_DEV_FILTER) environment variable
 
 
 <a name="git" class="anch"></a>
@@ -415,10 +418,12 @@ haxelib dev starling                     # Cancel dev, use installed version.
 ### haxelib git
 
 ```
-haxelib git [project-name] [git-clone-path] [branch]
+haxelib git [project-name] [git-clone-path] [branch] [subDir] [tag]
 haxelib git minject https://github.com/massiveinteractive/minject.git         # Use HTTP git path.
 haxelib git minject git@github.com:massiveinteractive/minject.git             # Use SSH git path.
 haxelib git minject git@github.com:massiveinteractive/minject.git v2          # Checkout branch or tag `v2`.
+haxelib git hashlink git@github.com:HaxeFoundation/hashlink.git master other/haxelib/
+# Checkout branch `master`, and set up a development path to `other/haxelib/` within the repository.
 ```
 
 > Use a git repository as library.
@@ -426,6 +431,8 @@ haxelib git minject git@github.com:massiveinteractive/minject.git v2          # 
 > This is useful for using a more up-to-date development version, a fork of the original project, or for having a private library that you do not wish to post to Haxelib.
 >
 > When you use `haxelib update` any libraries that are installed using GIT will automatically pull the latest version.
+>
+> If a parameter is passed in for `subDir`, then once the repository is cloned, a <a href="#dev">`dev`</a> path will be set up to the sub directory inside the repository.
 
 
 
@@ -434,7 +441,7 @@ haxelib git minject git@github.com:massiveinteractive/minject.git v2          # 
 ### haxelib hg
 
 ```
-haxelib hg [project-name] [mercurial-clone-path] [branch]
+haxelib hg [project-name] [mercurial-clone-path] [branch] [subDir] [revision]
 ```
 
 > Use a mercurial repository as library.
@@ -516,11 +523,11 @@ haxelib run openfl setup
 haxelib run openfl create DisplayingABitmap
 ```
 
-> Libraries with either a `run.n` helper or a main class defined in `haxelib.json`, can be executed using `haxelib run`.
+> Libraries with either a `run.n` helper, a `Run.hx` module, or another main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
 > You can specify the version to run by appending `:version`, if the library has a [development](#dev) version set the version will be ignored.
 >
-> The library will receive the `HAXELIB_RUN` environment variable with value `"1"` and `HAXELIB_RUN_NAME` with the name of the library as value.
+> The environment within which the library is run will have the `HAXELIB_RUN` environment variable set to `"1"`, and `HAXELIB_RUN_NAME` set to the name of the library.
 
 
 <a name="proxy" class="anch"></a>
@@ -691,7 +698,16 @@ haxelib -R [host:port[/dir]]
 
 If `HAXELIB_NO_SSL` is set to `1` or `true`, then haxelib client will use http instead of https.
 
+<a name="HAXELIB_REMOTE" class="anch"></a>
+
 ## HAXELIB_REMOTE
 
 `HAXELIB_REMOTE` may contain a url to a custom Haxelib server instead of `https://lib.haxe.org/`.
 However, if <a href="#R">-R</a> command line argument is provided, then `HAXELIB_REMOTE` is ignored.
+
+<a name="HAXELIB_DEV_FILTER" class="anch"></a>
+
+## HAXELIB_DEV_FILTER
+
+`HAXELIB_DEV_FILTER` can be set to a directory, or multiple directories separated by semicolons (`;`).
+Unless a library has a development path within any of these directories, the development path is ignored.
