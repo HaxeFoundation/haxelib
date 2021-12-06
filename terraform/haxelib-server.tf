@@ -56,6 +56,17 @@ resource "kubernetes_deployment" "haxelib-server" {
       }
 
       spec {
+        topology_spread_constraint {
+          max_skew           = 1
+          topology_key       = "kubernetes.io/hostname"
+          when_unsatisfiable = "ScheduleAnyway"
+          label_selector {
+            match_labels = {
+              "app.kubernetes.io/instance" = "haxelib-server-${each.key}"
+            }
+          }
+        }
+
         container {
           image = each.value.image
           name  = "haxelib-server"
