@@ -67,7 +67,7 @@ class TestData extends TestBase {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
 		var info = Data.readInfos(zip, true);
 		assertEquals( "haxelib", info.name );
-		assertEquals( "GPL", info.license );
+		assertEquals( "MIT", info.license );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
 		var info = Data.readInfos(zip, true);
