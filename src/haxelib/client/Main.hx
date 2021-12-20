@@ -477,21 +477,19 @@ class Main {
 
 	function setupAndGetInstaller(?scope:Scope) {
 		if (scope == null) scope = getScope();
-		final installer = new Installer(scope);
-		installer.log = function(msg, priority = Default){
-			switch priority {
-				case Default: Cli.print(msg);
-				case Debug: Cli.printDebug(msg);
-				case Optional: Cli.printOptional(msg);
-			}
+		final userInterface:Installer.UserInterface = {
+			log: function(msg, priority) {
+				switch priority {
+					case Default: Cli.print(msg);
+					case Debug: Cli.printDebug(msg);
+					case Optional: Cli.printOptional(msg);
+				}
+			},
+			confirm: Cli.ask,
+			logInstallationProgress: (Cli.mode == Debug) ? Cli.printInstallStatus: null,
+			logDownloadProgress: (Cli.mode != Quiet) ? Cli.printDownloadStatus : null
 		}
-		installer.confirm = Cli.ask;
-		if (Cli.mode == Debug)
-			installer.installationProgress = Cli.printInstallStatus;
-		if (Cli.mode != Quiet)
-			installer.downloadProgress = Cli.printDownloadStatus;
-
-		return installer;
+		return new Installer(scope, userInterface);
 	}
 
 	function install() {

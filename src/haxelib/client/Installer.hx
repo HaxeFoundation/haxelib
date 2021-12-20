@@ -44,6 +44,67 @@ enum LogPriority {
 		raw executable output. **/
 	Debug;
 }
+
+/**
+	A instance of a user interface used by an Installer instance.
+
+	Contains functions that are executed on certain events or for
+	logging information.
+**/
+@:structInit
+class UserInterface {
+	final _log:Null<(msg:String, priority:LogPriority)-> Void>;
+	final _confirm:(msg:String)->Bool;
+	final _logDownloadProgress:Null<(filename:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void>;
+	final _logInstallationProgress:Null<(msg:String, current:Int, total:Int) -> Void>;
+
+	/**
+		`log` function used for logging information.
+
+		`confirm` function used to confirm certain operations before they occur.
+		If it returns `true`, the operation will take place,
+		otherwise it will be cancelled.
+
+		`downloadProgress` function used to track download progress of libraries from the Haxelib server.
+
+		`installationProgress` function used to track installation progress.
+	**/
+	public function new(
+		?log:Null<(msg:String, priority:LogPriority)-> Void>,
+		?confirm:Null<(msg:String)->Bool>,
+		?logDownloadProgress:Null<(filename:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void>,
+		?logInstallationProgress:Null<(msg:String, current:Int, total:Int) -> Void>
+	) {
+		_log = log;
+		_confirm = confirm != null ? confirm : (_)-> {true;};
+		_logDownloadProgress = logDownloadProgress;
+		_logInstallationProgress = logInstallationProgress;
+	}
+
+	public inline function log(msg:String, priority:LogPriority = Default):Void {
+		if (_log != null)
+			_log(msg, priority);
+	}
+
+	public inline function confirm(msg:String):Bool {
+		return _confirm(msg);
+	}
+
+	public inline function logInstallationProgress(msg:String, current:Int, total:Int):Void {
+		if (_logInstallationProgress != null)
+			_logInstallationProgress(msg, current, total);
+	}
+
+	public inline function logDownloadProgress(filename:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float):Void {
+		if (_logDownloadProgress != null)
+			_logDownloadProgress(filename, finished, cur, max, downloaded, time);
+	}
+
+	public inline function getDownloadProgressFunction():Null<(filename:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void> {
+		return _logDownloadProgress;
+	}
+}
+
 /** Like LibFlagData, but None is not an option.
 
 	Always contains enough information to reproducibly
@@ -116,41 +177,23 @@ class Installer {
 
 	final scope:Scope;
 	final repository:Repository;
+	final userInterface:UserInterface;
 
 	final vcsBranchesByLibraryName = new Map<ProjectName, String>();
 
 	/** Creates a new Installer object that installs projects to `scope`.
 	 **/
-	public function new(scope:Scope){
+	public function new(scope:Scope, ?userInterface:UserInterface){
 		this.scope = scope;
 		repository = scope.repository;
+
+		this.userInterface = userInterface != null? userInterface : {};
 	}
-
-	/** Function to pass log information into. **/
-	public dynamic function log(msg:String, priority:LogPriority = Default):Void
-		if(priority != Debug) Sys.println(msg);
-
-	/**
-		Confirmation function when overriding installed git libraries for example.
-
-		If it returns `true`, the operation will take place,
-		otherwise it will be cancelled.
-	 **/
-	public dynamic function confirm(msg:String):Bool {return true;}
-
-	/** Function to execute when a haxelib or local library is being installed. **/
-	public var installationProgress:Null<(msg:String, current:Int, total:Int) -> Void> = null;
-
-	/** Function to execute when a library is being downloaded from the haxelib server.
-
-		Information on the download progress is passed in.
-	 **/
-	public var downloadProgress:Null<(filename:String, finished:Bool, cur:Int, max:Null<Int>, downloaded:Int, time:Float) -> Void> = null;
 
 	/** Installs library from the zip file at `path`. **/
 	public function installLocal(path:String) {
 		final path = FileSystem.fullPath(path);
-		log('Installing $path');
+		userInterface.log('Installing $path');
 		// read zip content
 		final zip = FsUtils.unzip(path);
 
@@ -163,8 +206,8 @@ class Installer {
 		// set current version
 		scope.setVersion(library, version);
 
-		log('  Current version is now $version');
-		log("Done");
+		userInterface.log('  Current version is now $version');
+		userInterface.log("Done");
 
 		handleDependencies(library, version, info.dependencies);
 	}
@@ -183,7 +226,7 @@ class Installer {
 	/** Installs libraries from the `haxelib.json` at `path` **/
 	public function installFromHaxelibJson(path:String) {
 		final path = FileSystem.fullPath(path);
-		log('Installing libraries from $path');
+		userInterface.log('Installing libraries from $path');
 
 		final dependencies = Data.readData(File.getContent(path), false).dependencies;
 
@@ -205,14 +248,14 @@ class Installer {
 	 **/
 	public function installFromHxml(path:String, ?confirmHxmlInstall:(libs:Array<{name:ProjectName, version:Version}>) -> Bool) {
 		final path = FileSystem.fullPath(path);
-		log('Installing all libraries from $path:');
+		userInterface.log('Installing all libraries from $path:');
 		final libsToInstall = LibFlagData.fromHxml(path);
 
 		if (libsToInstall.empty())
 			return;
 
 		// Check the version numbers are all good
-		log("Loading info about the required libraries");
+		userInterface.log("Loading info about the required libraries");
 
 		final installData = getFilteredInstallData(libsToInstall);
 
@@ -228,14 +271,14 @@ class Installer {
 			try
 				installFromInstallData(library.name, library.installData)
 			catch (e) {
-				log(e.toString());
+				userInterface.log(e.toString());
 				continue;
 			}
 
 			if (library.isLatest || !scope.isLibraryInstalled(library.name))
 				setVersionAndLog(library.name, library.installData);
 
-			log("Done");
+			userInterface.log("Done");
 
 			handleDependenciesGeneral(library.name, library.installData);
 		}
@@ -258,8 +301,8 @@ class Installer {
 
 		scope.setVersion(library, version);
 
-		log('  Current version is now $version');
-		log("Done");
+		userInterface.log('  Current version is now $version');
+		userInterface.log("Done");
 
 		handleDependencies(library, version);
 	}
@@ -285,9 +328,9 @@ class Installer {
 
 		if (scope.isLocal || version == getLatest(versions) || !scope.isLibraryInstalled(library) || forceSet) {
 			scope.setVersion(library, version);
-			log('  Current version is now $version');
+			userInterface.log('  Current version is now $version');
 		}
-		log("Done");
+		userInterface.log("Done");
 
 		handleDependencies(library, version);
 	}
@@ -305,11 +348,11 @@ class Installer {
 
 		if (vcsData.subDir != null) {
 			final path = scope.getPath(library);
-			log('  Development directory set to $path');
+			userInterface.log('  Development directory set to $path');
 		} else {
-			log('  Current version is now $id');
+			userInterface.log('  Current version is now $id');
 		}
-		log("Done");
+		userInterface.log("Done");
 
 		handleDependenciesVcs(library, id, vcsData.subDir);
 	}
@@ -321,7 +364,7 @@ class Installer {
 		try {
 			updateIfNeeded(library);
 		} catch (e:AlreadyUpToDate) {
-			log(e.toString());
+			userInterface.log(e.toString());
 		} catch (e:VcsUpdateCancelled) {
 			return;
 		}
@@ -337,7 +380,7 @@ class Installer {
 		var updated = false;
 
 		for (library in libraries) {
-			log('Checking $library');
+			userInterface.log('Checking $library');
 			try {
 				updateIfNeeded(library);
 				updated = true;
@@ -346,15 +389,15 @@ class Installer {
 			} catch (e:VcsUpdateCancelled) {
 				continue;
 			} catch(e) {
-				log("Failed to update: " + e.toString());
-				log(e.stack.toString(), Debug);
+				userInterface.log("Failed to update: " + e.toString());
+				userInterface.log(e.stack.toString(), Debug);
 			}
 		}
 
 		if (updated)
-			log("All libraries are now up-to-date");
+			userInterface.log("All libraries are now up-to-date");
 		else
-			log("All libraries are already up-to-date");
+			userInterface.log("All libraries are already up-to-date");
 	}
 
 	function updateIfNeeded(library:ProjectName) {
@@ -384,16 +427,16 @@ class Installer {
 		if (semVer != null && semVer == latest) {
 			throw new AlreadyUpToDate('Library $library is already up to date');
 		} else if (repository.isVersionInstalled(library, latest)) {
-			log('Latest version $latest of $library is already installed');
+			userInterface.log('Latest version $latest of $library is already installed');
 			// only ask if running in a global scope
-			if (!scope.isLocal && !confirm('Set $library to $latest'))
+			if (!scope.isLocal && !userInterface.confirm('Set $library to $latest'))
 				return;
 		} else {
 			downloadAndInstall(library, latest);
 		}
 		scope.setVersion(library, latest);
-		log('  Current version is now $latest');
-		log("Done");
+		userInterface.log('  Current version is now $latest');
+		userInterface.log("Done");
 
 		handleDependencies(library, latest);
 	}
@@ -458,11 +501,11 @@ class Installer {
 		for (lib in installData) {
 			final library = lib.name;
 			final version = lib.version;
-			log('Installing dependency $library $version');
+			userInterface.log('Installing dependency $library $version');
 
 			switch lib.installData {
 				case Haxelib(v) if (!forceInstallDependencies && repository.isVersionInstalled(library, v)):
-					log('Library $library version $v is already installed');
+					userInterface.log('Library $library version $v is already installed');
 					continue;
 				default:
 			}
@@ -470,7 +513,7 @@ class Installer {
 			try
 				installFromInstallData(library, lib.installData)
 			catch (e) {
-				log(e.toString());
+				userInterface.log(e.toString());
 				continue;
 			}
 			// vcs versions always get set
@@ -478,7 +521,7 @@ class Installer {
 				setVersionAndLog(library, lib.installData);
 			}
 
-			log("Done");
+			userInterface.log("Done");
 			handleDependenciesGeneral(library, lib.installData);
 		}
 	}
@@ -498,14 +541,14 @@ class Installer {
 			case VcsInstall(version, vcsData):
 				scope.setVcsVersion(library, version, vcsData);
 				if (vcsData.subDir == null){
-					log('  Current version is now $version');
+					userInterface.log('  Current version is now $version');
 				} else {
 					final path = scope.getPath(library);
-					log('  Development directory set to $path');
+					userInterface.log('  Development directory set to $path');
 				}
 			case Haxelib(version):
 				scope.setVersion(library, version);
-				log('  Current version is now $version');
+				userInterface.log('  Current version is now $version');
 		}
 	}
 
@@ -604,15 +647,18 @@ class Installer {
 		// download to temporary file
 		final filename = Data.fileName(library, version);
 
-		log('Downloading $filename...');
+		userInterface.log('Downloading $filename...');
 
 		final filepath = haxe.io.Path.join([repository.path, filename]);
 
-		final progress =
-			if (downloadProgress == null) null
-			else (f, c, m, d, t)-> {downloadProgress('Downloading $filename', f, c, m, d, t);};
+		final progressFunction = switch userInterface.getDownloadProgressFunction() {
+			case null:
+				null;
+			case fn:
+				(f, c, m, d, t) -> {fn('Downloading $filename', f, c, m, d, t);};
+		};
 
-		Connection.download(filename, filepath, progress);
+		Connection.download(filename, filepath, progressFunction);
 
 		final zip = try FsUtils.unzip(filepath) catch (e) {
 			FileSystem.deleteFile(filepath);
@@ -627,7 +673,7 @@ class Installer {
 	}
 
 	function installZip(library:ProjectName, version:SemVer, zip:List<haxe.zip.Entry>):Void {
-		log('Installing $library...');
+		userInterface.log('Installing $library...');
 		final rootPath = repository.getProjectPath(library);
 		FsUtils.safeDir(rootPath);
 		final versionPath = repository.getVersionPath(library, version);
@@ -649,8 +695,7 @@ class Installer {
 			if (fileName.charAt(0) == "/" || fileName.charAt(0) == "\\" || fileName.split("..").length > 1)
 				throw new InstallationException("Invalid filename : " + fileName);
 
-			if (installationProgress != null)
-				installationProgress('Installing $library $version', i, total);
+			userInterface.logInstallationProgress('Installing $library $version', i, total);
 
 			final dirs = ~/[\/\\]/g.split(fileName);
 			final file = dirs.pop();
@@ -664,15 +709,14 @@ class Installer {
 
 			if (file == "") {
 				if (path != "")
-					log('  Created $path', Debug);
+					userInterface.log('  Created $path', Debug);
 				continue; // was just a directory
 			}
 			path += file;
-			log('  Install $path', Debug);
+			userInterface.log('  Install $path', Debug);
 			File.saveBytes(versionPath + path, haxe.zip.Reader.unzip(zipfile));
 		}
-		if (installationProgress != null)
-			installationProgress('Done installing $library $version', total, total);
+		userInterface.logInstallationProgress('Done installing $library $version', total, total);
 	}
 
 	function installVcs(library:ProjectName, id:VcsID, vcsData:VcsData) {
@@ -686,10 +730,10 @@ class Installer {
 		final url:String = vcsData.url;
 
 		function doVcsClone() {
-			log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
+			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
 			final tag = vcsData.tag;
 			try {
-				vcs.clone(libPath, url, branch, tag, log.bind(_, Debug));
+				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug));
 			} catch (error:VcsError) {
 				FsUtils.deleteRec(libPath);
 				switch (error) {
@@ -708,7 +752,7 @@ class Installer {
 		}
 
 		if (repository.isVersionInstalled(library, id)) {
-			log('You already have $library version ${vcs.directory} installed.');
+			userInterface.log('You already have $library version ${vcs.directory} installed.');
 
 			final wasUpdated = vcsBranchesByLibraryName.exists(library);
 			// difference between a key not having a value and the value being null
@@ -718,21 +762,21 @@ class Installer {
 			// TODO check different urls as well
 			if (branch != null && (!wasUpdated || currentBranch != branch)) {
 				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
-				if (!confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
-					log('Library $library $id repository remains at "$currentBranchStr"');
+				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
+					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');
 					return;
 				}
 				FsUtils.deleteRec(libPath);
 				doVcsClone();
 			} else if (wasUpdated) {
-				log('Library $library version ${vcs.directory} already up to date.');
+				userInterface.log('Library $library version ${vcs.directory} already up to date.');
 				return;
 			} else {
-				log('Updating $library version ${vcs.directory}...');
+				userInterface.log('Updating $library version ${vcs.directory}...');
 				try {
 					updateVcs(library, id, vcs);
 				} catch (e:AlreadyUpToDate){
-					log(e.toString());
+					userInterface.log(e.toString());
 				}
 			}
 		} else {
@@ -751,13 +795,13 @@ class Installer {
 		final success = try {
 			vcs.update(
 				function() {
-					if (confirm('Reset changes to $library $id repository in order to update to latest version'))
+					if (userInterface.confirm('Reset changes to $library $id repository in order to update to latest version'))
 						return true;
-					log('$library repository has not been modified', Optional);
+					userInterface.log('$library repository has not been modified', Optional);
 					return false;
 				},
-				log.bind(_, Debug),
-				log.bind(_, Optional)
+				userInterface.log.bind(_, Debug),
+				userInterface.log.bind(_, Optional)
 			);
 		} catch (e:VcsError) {
 			Sys.setCwd(oldCwd);
@@ -773,6 +817,6 @@ class Installer {
 		Sys.setCwd(oldCwd);
 		if (!success)
 			throw new AlreadyUpToDate('Library $library $id repository is already up to date');
-		log('$library was updated');
+		userInterface.log('$library was updated');
 	}
 }
