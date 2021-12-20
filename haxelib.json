@@ -1,7 +1,7 @@
 {
 	"name": "haxelib",
 	"url" : "https://lib.haxe.org/documentation/",
-	"license": "GPL",
+	"license": "MIT",
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
