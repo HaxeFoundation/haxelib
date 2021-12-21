@@ -76,17 +76,14 @@ class TestInstaller extends TestBase {
 
 	public function testInstallHxmlWithBackend() {
 		// test for issue #511
-		final r = runHaxelib(["install", "target-lib.hxml", "--never"]);
-		final lines = r.stdout.split("\n");
-
-		// number of times that hxcpp is listed
-		var count = 0;
-
-		for (line in lines)
-			if (line.ltrim().startsWith("hxcpp"))
-				count++;
-
-		assertEquals(1, count);
+		installer.installFromHxml("target-lib.hxml", (libs) -> {
+			var count = 0;
+			for (lib in libs)
+				if (lib.name == "hxcpp")
+					count++;
+			assertEquals(1, count);
+			return false;
+		});
 	}
 
 	public function testReinstallHxml() {
