@@ -199,15 +199,28 @@ class GlobalScope extends Scope {
 	static var haxeVersion(get, null):SemVer;
 
 	static function get_haxeVersion():SemVer {
-		if (haxeVersion == null) {
-			final p = new sys.io.Process('haxe', ['--version']);
-			if (p.exitCode() != 0) {
-				throw 'Cannot get haxe version: ${p.stderr.readAll().toString()}';
-			}
-			final str = p.stdout.readAll().toString();
-			haxeVersion = SemVer.ofString(str.split('+')[0]);
+		if (haxeVersion != null)
+			return haxeVersion;
+
+		function attempt(cmd:String, arg:String, readStdErr = false):SemVer {
+			final p = new sys.io.Process(cmd, [arg]);
+			final outCode = p.exitCode();
+			final err = p.stderr.readAll().toString();
+			final versionStr = if (readStdErr) err else p.stdout.readAll().toString();
+			p.close();
+			if (outCode != 0)
+				throw 'Cannot get haxe version: $err';
+			return SemVer.ofString(versionStr.split('+')[0]);
 		}
-		return haxeVersion;
+
+		return try {
+			// this works on haxe 4.0 and above
+			haxeVersion = attempt("haxe", "--version");
+		} catch (_) {
+			// old haxe versions only understand `-version`
+			// they also print the version to stderr for whatever reason...
+			haxeVersion = attempt("haxe", "-version", true);
+		}
 	}
 
 	function resolveCompiler():LibraryData {
