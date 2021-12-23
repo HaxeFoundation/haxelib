@@ -588,7 +588,7 @@ class Installer {
 				}
 			}
 
-			final lowerCaseName = ProjectName.ofString((allInstallData.name : String).toLowerCase());
+			final lowerCaseName = ProjectName.ofString(allInstallData.name.toLowerCase());
 
 			final includedVersions = includedLibs[lowerCaseName];
 			if (includedVersions != null && (lib.isTargetLib || isVersionIncluded(allInstallData.installData, includedVersions)))

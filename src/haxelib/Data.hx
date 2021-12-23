@@ -233,6 +233,7 @@ typedef Infos = {
 }
 
 /** A valid project name string. **/
+@:forward(toLowerCase)
 abstract ProjectName(String) to String {
 	static var RESERVED_NAMES = ["haxe", "all"];
 	static var RESERVED_EXTENSIONS = ['.zip', '.hxml'];
