@@ -519,7 +519,7 @@ class Main {
 		final libraryInfo = scope.getArrayOfLibraryInfo(argsIterator.next());
 
 		// sort projects alphabetically
-		libraryInfo.sort(function(a, b) return Reflect.compare((a.name:String).toLowerCase(), (b.name:String).toLowerCase()));
+		libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
 
 		for (library in libraryInfo) {
 			var line = '${library.name}:';
