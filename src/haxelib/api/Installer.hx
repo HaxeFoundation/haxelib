@@ -275,20 +275,24 @@ class Installer {
 				continue;
 			}
 
-			if (library.isLatest || !scope.isLibraryInstalled(library.name))
-				setVersionAndLog(library.name, library.installData);
+			final libraryName = switch library.installData {
+				case VcsInstall(version, vcsData): getName(library.name, version, vcsData.subDir);
+				case _: library.name;
+			}
+
+			if (library.isLatest || !scope.isLibraryInstalled(libraryName))
+				setVersionAndLog(libraryName, library.installData);
 
 			userInterface.log("Done");
 
-			handleDependenciesGeneral(library.name, library.installData);
+			handleDependenciesGeneral(libraryName, library.installData);
 		}
 	}
 
 	/** Installs the latest version of `library` from the haxelib server. **/
 	public function installLatestFromHaxelib(library:ProjectName) {
 		final info = Connection.getInfo(library);
-		// TODO with stricter capitalisation we won't have to check this maybe
-		// that way we only have to check the versions
+		// get correct name capitalization so that the logged output is correct
 		final library = ProjectName.ofString(info.name);
 
 		final versions = [for (v in info.versions) v.name];
@@ -313,8 +317,8 @@ class Installer {
 		a global scope, the new version is always set as the current one.
 	 **/
 	public function installFromHaxelib(library:ProjectName, version:SemVer, forceSet:Bool = false) {
-		// TODO with stricter capitalisation we won't have to check this maybe
 		final info = Connection.getInfo(library);
+		// get correct name capitalization so that the logged output is correct
 		final library = ProjectName.ofString(info.name);
 
 		final versions = [for (v in info.versions) v.name];
@@ -343,6 +347,8 @@ class Installer {
 	**/
 	public function installVcsLibrary(library:ProjectName, id:VcsID, vcsData:VcsData) {
 		installVcs(library, id, vcsData);
+
+		library = getName(library, id, vcsData.subDir);
 
 		scope.setVcsVersion(library, id, vcsData);
 
@@ -452,6 +458,19 @@ class Installer {
 		}
 	}
 
+	/** Get the name found in the `haxelib.json` for a vcs library.
+
+		If `givenName` is an alias (it is completely different from the internal name)
+		then `givenName` is returned instead
+	 **/
+	function getName(givenName:ProjectName, id:VcsID, subDir:Null<String>):ProjectName {
+		final jsonPath = scope.getPath(givenName, id) + (if (subDir != null) subDir else "") + Data.JSON;
+		if (!FileSystem.exists(jsonPath))
+			return givenName;
+		final internalName = Data.readData(File.getContent(jsonPath), false).name;
+		return ProjectName.getCorrectOrAlias(internalName, givenName);
+	}
+
 	function handleDependenciesGeneral(library:ProjectName, installData:InstallData) {
 		if (skipDependencies)
 			return;
@@ -499,23 +518,28 @@ class Installer {
 		final installData = getInstallData(libs);
 
 		for (lib in installData) {
-			final library = lib.name;
 			final version = lib.version;
-			userInterface.log('Installing dependency $library $version');
+			userInterface.log('Installing dependency ${lib.name} $version');
 
 			switch lib.installData {
-				case Haxelib(v) if (!forceInstallDependencies && repository.isVersionInstalled(library, v)):
-					userInterface.log('Library $library version $v is already installed');
+				case Haxelib(v) if (!forceInstallDependencies && repository.isVersionInstalled(lib.name, v)):
+					userInterface.log('Library ${lib.name} version $v is already installed');
 					continue;
 				default:
 			}
 
 			try
-				installFromInstallData(library, lib.installData)
+				installFromInstallData(lib.name, lib.installData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
 			}
+
+			final library = switch lib.installData {
+				case VcsInstall(version, vcsData): getName(lib.name, version, vcsData.subDir);
+				case _: lib.name;
+			}
+
 			// vcs versions always get set
 			if (!scope.isLibraryInstalled(library) || lib.installData.match(VcsInstall(_))) {
 				setVersionAndLog(library, lib.installData);
@@ -674,8 +698,7 @@ class Installer {
 
 	function installZip(library:ProjectName, version:SemVer, zip:List<haxe.zip.Entry>):Void {
 		userInterface.log('Installing $library...');
-		final rootPath = repository.getProjectPath(library);
-		FsUtils.safeDir(rootPath);
+
 		final versionPath = repository.getVersionPath(library, version);
 		FsUtils.safeDir(versionPath);
 
@@ -780,6 +803,7 @@ class Installer {
 				}
 			}
 		} else {
+			FsUtils.safeDir(libPath);
 			doVcsClone();
 		}
 

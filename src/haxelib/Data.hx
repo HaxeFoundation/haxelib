@@ -298,6 +298,18 @@ abstract ProjectName(String) to String {
 			case v: v;
 		}
 
+	/**
+		If `alias` is just a different capitalization of `correct`, returns `correct`.
+
+		If `alias` is completely different, returns `alias` instead.
+	**/
+	static public function getCorrectOrAlias(correct:ProjectName, alias:ProjectName) {
+		return if (correct.toLowerCase() == alias.toLowerCase())
+			correct
+		else
+			alias;
+	}
+
 	/** Default project name **/
 	static public var DEFAULT(default, null) = new ProjectName('unknown');
 }
@@ -420,15 +432,22 @@ class Data {
 		}
 	}
 
-	/** Extracts project information from `jsondata`, validating it according to `check`. **/
-	public static function readData( jsondata: String, check : CheckLevel ) : Infos {
+	/**
+		Extracts project information from `jsondata`, validating it according to `check`.
+
+		`defaultName` is the project name to use if it is empty when the check value allows it.
+	**/
+	public static function readData( jsondata: String, check : CheckLevel, ?defaultName:ProjectName ) : Infos {
+		if (defaultName == null)
+			defaultName = ProjectName.DEFAULT;
+
 		var doc:Infos =
 			try Json.parse(jsondata)
 			catch ( e : Dynamic )
 				if (check >= CheckLevel.CheckSyntax)
 					throw 'JSON parse error: $e';
 				else {
-					name : ProjectName.DEFAULT,
+					name : defaultName,
 					url : '',
 					version : SemVer.DEFAULT,
 					releasenote: 'No haxelib.json found',
@@ -457,7 +476,7 @@ class Data {
 			doc.classPath = '';
 
 		if (doc.name.validate() != None)
-			doc.name = ProjectName.DEFAULT;
+			doc.name = defaultName;
 
 		if (doc.description == null)
 			doc.description = '';

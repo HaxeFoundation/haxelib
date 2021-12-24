@@ -21,7 +21,11 @@ class CurrentVersionException extends haxe.Exception {}
 	directly modifying them.
  **/
 class Repository {
+	/** Name of file used to keep track of current version. **/
 	static final CURRENT = ".current";
+
+	/** Name of file used to keep track of capitalization. **/
+	static final NAME = ".name";
 
 	/**
 		The path to the repository.
@@ -77,11 +81,14 @@ class Repository {
 		var libraryName:ProjectName;
 
 		for (dir in FileSystem.readDirectory(path)) {
-			// hidden or not a folder
-			if (dir.startsWith(".") || !FileSystem.isDirectory(Path.join([path, dir])))
+			// hidden, not a folder, or has upper case letters
+			if (dir.startsWith(".") || !FileSystem.isDirectory(Path.join([path, dir])) || dir.toLowerCase() != dir)
 				continue;
 
-			libraryName = try ProjectName.ofString(Data.unsafe(dir)) catch (_:haxe.Exception) continue;
+			libraryName = getCorrectProjectName(
+				try ProjectName.ofString(Data.unsafe(dir))
+				catch (_:haxe.Exception) continue
+			);
 
 			if (!isFilteredOut(libraryName))
 				projects.push(libraryName);
@@ -190,6 +197,9 @@ class Repository {
 		Set current version of project `name` to `version`.
 
 		Throws an error if `name` or `version` of `name` is not installed.
+
+		`name` may also be used as the official version of the library name
+		if installing a proper semver release
 	 **/
 	public function setCurrentVersion(name:ProjectName, version:Version):Void {
 		if (!FileSystem.exists(getProjectRootPath(name)))
@@ -199,8 +209,15 @@ class Repository {
 			throw 'Library $name version $version is not installed';
 
 		final currentFilePath = getCurrentFilePath(name);
+		final isNewLibrary = !FileSystem.exists(currentFilePath);
 
 		File.saveContent(currentFilePath, version);
+
+		// if the library is being installed for the first time, or this is a proper version
+		// or it is a git/hg/dev version but there are no proper versions installed
+		// proper semver releases replace names given by git/hg/dev versions
+		if (isNewLibrary || SemVer.isValid(version) || !doesLibraryHaveOfficialVersion(name))
+			setCapitalizationIfNeeded(name);
 	}
 
 	/**
@@ -263,8 +280,57 @@ class Repository {
 		return getProjectVersionPath(name, version);
 	}
 
+	/**
+		Returns the correctly capitalized name for library `name`.
+
+		`name` can be any possible capitalization variation of the library name.
+	**/
+	public function getCorrectName(name:ProjectName):ProjectName {
+		return getCorrectProjectName(name);
+	}
+
+	static inline function doesNameHaveCapitals(name:ProjectName):Bool {
+		return name != ProjectName.ofString(name.toLowerCase());
+	}
+
+	function setCapitalizationIfNeeded(name:ProjectName):Void {
+		// if it is not all lowercase then we save the actual capitalisation in the `.name` file
+		final filePath = getNameFilePath(name);
+
+		if (doesNameHaveCapitals(name)) {
+			File.saveContent(filePath, name);
+			return;
+		}
+
+		try
+			FileSystem.deleteFile(filePath)
+		catch (_) {
+			// file didn't exist so we're good
+		}
+	}
+
+	// returns whether or not `name` has any versions installed which are not dev/git/hg
+	function doesLibraryHaveOfficialVersion(name:ProjectName):Bool {
+		final root = getProjectRootPath(name);
+
+		for (sub in FileSystem.readDirectory(root)) {
+			// ignore .dev and .current files
+			if (sub.startsWith("."))
+				continue;
+
+			final version = Data.unsafe(sub);
+			if (SemVer.isValid(version))
+				return true;
+		}
+		return false;
+	}
+
 	inline function getCurrentFilePath(name:ProjectName):String {
 		return addToRepoPath(name, CURRENT);
+	}
+
+	inline function getNameFilePath(name:ProjectName):String {
+		return addToRepoPath(name, NAME);
 	}
 
 	inline function getCurrentFileContent(name:ProjectName):String {
@@ -272,6 +338,13 @@ class Repository {
 				File.getContent(getCurrentFilePath(name)).trim()
 			catch(e:haxe.Exception)
 				throw new CurrentVersionException('No current version set for library \'$name\'');
+	}
+
+	inline function getCorrectProjectName(name:ProjectName):ProjectName {
+		return try
+				ProjectName.ofString(File.getContent(getNameFilePath(name)).trim())
+			catch(e:haxe.Exception)
+				name;
 	}
 
 	inline function getProjectRootPath(name:ProjectName):String {
@@ -309,8 +382,13 @@ class Repository {
 	public function setDevPath(name:ProjectName, path:String) {
 		final root = getProjectRootPath(name);
 
-		if (!FileSystem.exists(root))
-			FileSystem.createDirectory(root);
+		final isNew = !FileSystem.exists(root);
+
+		FileSystem.createDirectory(root);
+
+		if (isNew || !doesLibraryHaveOfficialVersion(name)) {
+			setCapitalizationIfNeeded(name);
+		}
 
 		final devFile = Path.join([root, DEV]);
 
