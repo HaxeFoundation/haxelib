@@ -437,10 +437,9 @@ class Main {
 					return installer.installFromHaxelibJson(jsonPath);
 			}
 		}
-
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
-		// TODO with stricter capitalisation we won't have to check this maybe
 		final info = Connection.getInfo(ProjectName.ofString(toInstall));
+		// for display purposes, here we use the corrected project name.
 		final library = ProjectName.ofString(info.name);
 
 		final versionGiven = argsIterator.next();
@@ -544,8 +543,6 @@ class Main {
 		if (input == null)
 			return installer.updateAll();
 
-		/* TODO we used to check for all case combinations
-		by iterating through all library names */
 		final library = ProjectName.ofString(input);
 
 		if (!scope.isLibraryInstalled(library)) {
@@ -686,6 +683,16 @@ class Main {
 			throw 'Directory $dir does not exist';
 		try {
 			final dir = FileSystem.fullPath(dir);
+
+			final project = {
+				final jsonPath = haxe.io.Path.join([dir, Data.JSON]);
+				if (!FileSystem.exists(jsonPath))
+					project;
+				else {
+					final internalName = Data.readData(File.getContent(jsonPath), false).name;
+					ProjectName.getCorrectOrAlias(internalName, project);
+				}
+			}
 			repository.setDevPath(project, dir);
 			Cli.print('Development directory set to $dir');
 		} catch (e) {

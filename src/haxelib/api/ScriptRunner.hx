@@ -37,7 +37,10 @@ typedef Dependencies = Array<Dependency>;
 @:noDoc
 /** Library data needed in order to run it **/
 typedef LibraryRunData = {
+	/** This may be an alias. **/
 	name:ProjectName,
+	/** This is the actual name found in the `haxelib.json`. **/
+	internalName:ProjectName,
 	version:VersionOrDev,
 	dependencies:Dependencies,
 	main:String,
@@ -90,7 +93,7 @@ class ScriptRunner {
 		setState({
 			dir: library.path,
 			run: "1",
-			runName: library.name
+			runName: library.internalName
 		});
 
 		final output = Sys.command(cmd, args);

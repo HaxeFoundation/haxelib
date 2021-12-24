@@ -37,7 +37,8 @@ class GlobalScope extends Scope {
 				Dependency.fromNameAndVersion(name, version)];
 
 		final libraryRunData = {
-			name: library,
+			name: ProjectName.getCorrectOrAlias(info.name, library),
+			internalName: info.name,
 			version: resolved.version,
 			dependencies: dependencies,
 			path: resolved.path,
@@ -139,7 +140,9 @@ class GlobalScope extends Scope {
 
 		while (!stack.isEmpty()) {
 			final cur = stack.pop();
-			final library = cur.library;
+			// turn it to lowercase always (so that `LiBrArY:1.2.0` and `library:1.3.0` clash because
+			// they are different versions), and then get the correct name if provided
+			final library = repository.getCorrectName(ProjectName.ofString(cur.library.toLowerCase()));
 			final version = cur.version;
 
 			// check for duplicates
@@ -147,7 +150,7 @@ class GlobalScope extends Scope {
 				final otherVersion = includedLibraries[library];
 				// if the current library is part of the original set of inputs, and if the versions don't match
 				if (topLevelLibs.contains(cur) && version != null && version != otherVersion)
-					throw 'Cannot process `$library:$version`:'
+					throw 'Cannot process `${cur.library}:$version`: '
 						+ 'Library $library has two versions included : $otherVersion and $version';
 				continue;
 			}
@@ -167,7 +170,7 @@ class GlobalScope extends Scope {
 
 			final info = {
 				final jsonContent = try File.getContent(resolved.path + Data.JSON) catch (_) null;
-				Data.readData(jsonContent, jsonContent != null ? CheckSyntax : NoCheck);
+				Data.readData(jsonContent, jsonContent != null ? CheckSyntax : NoCheck, library);
 			}
 
 			// path and version compiler define
@@ -177,7 +180,9 @@ class GlobalScope extends Scope {
 				else
 					resolved.path
 			);
-			addLine('-D $library=${info.version}');
+			// if info.name is not the placeholder for an empty name (i.e. unknown), use it, otherwise
+			// fall back to the value in the .name file
+			addLine('-D ${info.name}=${info.version}');
 
 			// add dependencies to stack
 			final dependencies = info.dependencies.toArray();
