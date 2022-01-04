@@ -14,7 +14,7 @@ using StringTools;
 class TestInstaller extends TestBase {
 
 	static final REPO = "haxelib-repo";
-	static final PROJECT_FOLDER = "UseGitDep";
+	static final PROJECT_FOLDER = "InstallDeps";
 	static final REPO_ROOT = "test/libraries";
 	static var CWD:String = null;
 	static var origRepo:String = null;
