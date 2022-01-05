@@ -85,4 +85,36 @@ abstract class TestVcs extends IntegrationTests {
 		assertTrue(r.out.indexOf("Bar") >= 0);
 		assertSuccess(r);
 	}
+
+	function testAliasing() {
+		// allowed to set dev name to something other than the name found in haxelib.json
+		final r = haxelib([cmd, "bar-alias", vcsLibPath]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "bar-alias"]).result();
+		assertTrue(r.out.indexOf("bar-alias") >= 0);
+		assertSuccess(r);
+
+		// however, the define given by path (-D ...) still uses the actual name
+		final r = haxelib(["path", "bar-alias"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.trim().endsWith('-D Bar=1.0.0'));
+	}
+
+	function testInvalidAliasing() {
+		// #357 alias still has to be a valid project name
+		final r = haxelib([cmd, "lib#", vcsLibPath]).result();
+		assertFail(r);
+
+		final r = haxelib(["list", "lib#"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.indexOf("lib#") < 0);
+
+		final r = haxelib([cmd, "lib//", vcsLibPath]).result();
+		assertFail(r);
+
+		final r = haxelib(["list", "lib//"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.indexOf("lib//") < 0);
+	}
 }
