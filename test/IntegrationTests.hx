@@ -125,6 +125,39 @@ class IntegrationTests extends TestBase {
 		assertTrue(true);
 	}
 
+	/** Asserts that multi-line terminal output matches expected.
+
+		Handles newline difference between platforms.
+	  **/
+	function assertOutputEquals(expectedLines:Array<String>, output:String) {
+		final outputLines = output.rtrim().split("\n").map((line) -> {line.rtrim();});
+
+		final lineNumberMsg = "Output has the expected number of lines";
+		final notMatchedMsg = '`${output.rtrim()}` does not match expected: `${expectedLines.join("\n")}`';
+
+
+		assertEquals(lineNumberMsg,
+			if (expectedLines.length == outputLines.length)
+				lineNumberMsg
+			else
+				notMatchedMsg
+		);
+
+		final allMatchedMsg = "Output matches";
+
+		assertEquals(allMatchedMsg,
+			try {
+				for (i => line in expectedLines) {
+					if (line != outputLines[i])
+						throw "NOT MATCHED";
+				}
+				allMatchedMsg;
+			} catch (_) {
+				notMatchedMsg;
+			}
+		);
+	}
+
 	final dbConfig:Dynamic = Json.parse(File.getContent("www/dbconfig.json"));
 	var dbCnx:sys.db.Connection;
 	function resetDB():Void {
@@ -199,7 +232,9 @@ class IntegrationTests extends TestBase {
 		final runner = new TestRunner();
 		runner.add(new tests.integration.TestEmpty());
 		runner.add(new tests.integration.TestSetup());
-		runner.add(new tests.integration.TestSimple());
+		runner.add(new tests.integration.TestSubmit());
+		runner.add(new tests.integration.TestInstall());
+		runner.add(new tests.integration.TestRemove());
 		runner.add(new tests.integration.TestUpgrade());
 		runner.add(new tests.integration.TestUpdate());
 		runner.add(new tests.integration.TestList());
@@ -210,6 +245,9 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestDev());
 		runner.add(new tests.integration.TestRun());
 		runner.add(new tests.integration.TestPath());
+		runner.add(new tests.integration.TestLibpath());
+		runner.add(new tests.integration.TestGit());
+		runner.add(new tests.integration.TestHg());
 		final success = runner.run();
 
 		if (!success) {
