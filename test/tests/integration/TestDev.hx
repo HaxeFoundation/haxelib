@@ -3,6 +3,8 @@ package tests.integration;
 import haxelib.SemVer;
 
 class TestDev extends IntegrationTests {
+	final libNoHaxelibJson = "libraries/libNoHaxelibJson";
+
 	function testDev():Void {
 		{
 			final r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
@@ -41,6 +43,16 @@ class TestDev extends IntegrationTests {
 		}
 	}
 
+	function testPreferenceOfHaxelibJsonName() {
+		final r = haxelib(["dev", "bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.startsWith("Bar"));
+		assertSuccess(r);
+		// even though the user used "bar", we show "Bar" as that is what is found in haxelib.json
+	}
+
 	function testWrongPath():Void {
 		{
 			final r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar_not_exist"])]).result();
@@ -57,7 +69,7 @@ class TestDev extends IntegrationTests {
 
 	function testNoHaxelibJson():Void {
 		{
-			final r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "bin"])]).result();
+			final r = haxelib(["dev", "Bar", libNoHaxelibJson]).result();
 			assertSuccess(r);
 		}
 
@@ -71,7 +83,7 @@ class TestDev extends IntegrationTests {
 			final r = haxelib(["path", "Bar"]).result();
 			final out = ~/\r?\n/g.split(r.out);
 			assertEquals(
-				sys.FileSystem.fullPath(Path.join([IntegrationTests.projectRoot, "bin"])).normalize().addTrailingSlash(),
+				sys.FileSystem.fullPath(libNoHaxelibJson).normalize().addTrailingSlash(),
 				out[0].normalize().addTrailingSlash()
 			);
 			if (clientVer > SemVer.ofString("3.1.0-rc.4"))
@@ -128,6 +140,65 @@ class TestDev extends IntegrationTests {
 			final r = haxelib(["list", "UseCp"]).result();
 			assertSuccess(r);
 			assertTrue(r.out.indexOf("UseCp") == -1);
+		}
+	}
+
+	function testNameReplacement() {
+		// if there is no haxelib.json, we use the last version of the name the user used
+
+		final r = haxelib(["dev", "BAR", libNoHaxelibJson]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("BAR") >= 0);
+		assertSuccess(r);
+
+		final r = haxelib(["dev", "Bar", libNoHaxelibJson]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertSuccess(r);
+	}
+
+	function testNameCorrection() {
+		// when a proper version is installed, the capitalization of the library is overwritten
+		// #529
+		{
+			final r = haxelib(["dev", "BAR", libNoHaxelibJson]).result();
+			assertSuccess(r);
+		}
+
+		{
+			final r = haxelib(["list", "Bar"]).result();
+			assertTrue(r.out.indexOf("BAR") >= 0);
+			assertSuccess(r);
+		}
+
+		{
+			final r = haxelib(["install", "libraries/libBar.zip"]).result();
+			assertSuccess(r);
+		}
+
+		// the proper version replaces the name shown in list
+		{
+			final r = haxelib(["list", "Bar"]).result();
+			assertFalse(r.out.indexOf("BAR") >= 0);
+			assertTrue(r.out.indexOf("Bar") >= 0);
+			assertSuccess(r);
+		}
+
+		{
+			final r = haxelib(["dev", "BAR", libNoHaxelibJson]).result();
+			assertSuccess(r);
+		}
+
+		// remains like this even if dev is run again
+		{
+			final r = haxelib(["list", "Bar"]).result();
+			assertFalse(r.out.indexOf("BAR") >= 0);
+			assertTrue(r.out.indexOf("Bar") >= 0);
+			assertSuccess(r);
 		}
 	}
 }
