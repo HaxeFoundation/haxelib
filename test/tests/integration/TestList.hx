@@ -1,5 +1,6 @@
 package tests.integration;
 
+import sys.FileSystem;
 import haxelib.SemVer;
 
 class TestList extends IntegrationTests {
@@ -110,5 +111,30 @@ class TestList extends IntegrationTests {
 				assertTrue(pos2 >= pos1);
 			}
 		}
+	}
+
+	function testInvalidDirectories():Void {
+		FileSystem.createDirectory('${projectRoot}$repo/LIBRARY');
+
+		final r = haxelib(["list"]).result();
+		assertSuccess(r);
+		// the command should not crash
+		assertEquals("", r.out);
+		// LIBRARY is not a valid project directory, so it is not listed
+	}
+
+	function testInvalidVersions():Void {
+		final r = haxelib(["install", "libraries/libBar.zip"]).result();
+		assertSuccess(r);
+
+		FileSystem.createDirectory('${projectRoot}$repo/bar/invalid/');
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertSuccess(r);
+		// the command should not crash
+
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertTrue(r.out.indexOf("[1.0.0]") >= 0);
+		assertTrue(r.out.indexOf("invalid") < 0);
 	}
 }

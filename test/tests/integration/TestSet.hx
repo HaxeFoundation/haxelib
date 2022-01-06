@@ -1,5 +1,7 @@
 package tests.integration;
 
+import sys.FileSystem;
+
 class TestSet extends IntegrationTests {
 
 	override function setup() {
@@ -13,6 +15,12 @@ class TestSet extends IntegrationTests {
 
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]), bar.pw]).result();
 		assertSuccess(r);
+	}
+
+	override function tearDown() {
+		Utils.resetGitRepo('libraries/libBar');
+
+		super.tearDown();
 	}
 
 	function test():Void {
@@ -144,5 +152,45 @@ class TestSet extends IntegrationTests {
 			assertTrue(r.out.indexOf("[1.0.0]") >= 0);
 			assertTrue(r.out.indexOf("2.0.0") >= 0);
 		}
+	}
+
+	function testGit() {
+		final gitPath = '${projectRoot}test/libraries/libBar';
+
+		Utils.makeGitRepo(gitPath);
+
+		final r = haxelib(["git", "Bar", gitPath]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.indexOf("[git]") >= 0);
+
+		final r = haxelib(["install", "Bar"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.indexOf("[2.0.0]") >= 0);
+		assertTrue(r.out.indexOf("git") >= 0);
+
+		final r = haxelib(["set", "Bar", "git"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertSuccess(r);
+		assertTrue(r.out.indexOf("2.0.0") >= 0);
+		assertTrue(r.out.indexOf("[git]") >= 0);
+	}
+
+	function testInvalidVersion() {
+		// #526
+		final r = haxelib(["install", "Bar"]).result();
+		assertSuccess(r);
+
+		FileSystem.createDirectory(Path.join([projectRoot, repo, "bar", "invalid"]));
+
+		final r = haxelib(["set", "Bar", "invalid"]).result();
+		assertFail(r);
 	}
 }
