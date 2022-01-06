@@ -1,9 +1,18 @@
 package tests.integration;
 
 class TestRemove extends IntegrationTests {
+	final gitLibPath = "libraries/libBar";
+	override function setup() {
+		super.setup();
 
+		Utils.makeGitRepo(gitLibPath);
+	}
 
+	override function tearDown() {
+		Utils.resetGitRepo(gitLibPath);
 
+		super.tearDown();
+	}
 	function testNormal():Void {
 		final r = haxelib(["install", "libraries/libBar.zip"]).result();
 		assertSuccess(r);
@@ -65,5 +74,23 @@ class TestRemove extends IntegrationTests {
 		assertTrue(r.out.indexOf("Bar") >= 0);
 		assertTrue(r.out.indexOf("1.0.0") < 0);
 		assertTrue(r.out.indexOf("[2.0.0]") >= 0);
+	}
+
+	function testRemovalWithDevSet() {
+		final r = haxelib(["git", "Bar", gitLibPath, "main", "git/bar/"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["install", "libraries/libBar.zip"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["remove", "Bar", "git"]).result();
+		assertFail(r);
+
+		assertOutputEquals([
+				"Error: Cannot remove library `Bar` version `git`: It holds the `dev` version of `Bar`",
+				"Use `haxelib dev Bar` to unset the dev path"
+			],
+			r.err.trim()
+		);
 	}
 }

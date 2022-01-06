@@ -16,6 +16,8 @@ function makeGitRepo(libPath:String) {
 	runCommand(cmd, ["init"]);
 	runCommand(cmd, ["add", "-A"]);
 	runCommand(cmd, ["commit", "-m", "Create repo"]);
+	// different systems may have different default branch names set
+	runCommand(cmd, ["branch", "--move", "main"]);
 
 	Sys.setCwd(oldCwd);
 }

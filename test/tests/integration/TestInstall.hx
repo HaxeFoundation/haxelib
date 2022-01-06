@@ -9,6 +9,11 @@ class TestInstall extends IntegrationTests {
 		assertSuccess(r);
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
 		assertSuccess(r);
+
+		final r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
+		assertSuccess(r);
+		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo.zip"]), foo.pw]).result();
+		assertSuccess(r);
 	}
 
 	function testNormal():Void {
@@ -81,6 +86,24 @@ class TestInstall extends IntegrationTests {
 		}
 	}
 
+	function testFromHaxelibJsonWithSkipDependencies() {
+		final haxelibJson = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/other_foo_haxelib.json"]);
+
+		{
+			final r = haxelib(["install", haxelibJson, "--skip-dependencies"]).result();
+			assertSuccess(r);
+		}
+
+		{
+			final r = haxelib(["list"]).result();
+			assertSuccess(r);
+			// Foo was still installed
+			assertTrue(r.out.indexOf("Foo") >= 0);
+			// but bar wasn't
+			assertTrue(r.out.indexOf("Bar") < 0);
+		}
+	}
+
 	function testFromHxml() {
 		final hxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/build.hxml"]);
 
@@ -111,5 +134,4 @@ class TestInstall extends IntegrationTests {
 			assertSuccess(r);
 		}
 	}
-
 }
