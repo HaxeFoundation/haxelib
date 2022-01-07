@@ -65,6 +65,7 @@ The following commands are available:
     <li><a href="#quiet">--quiet</a></li>
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
+    <li><a href="#skip-dependencies">--skip-dependencies</a></li>
   </ul>
 </div>
 
@@ -640,6 +641,18 @@ haxelib --global
 ```
 
 > Force the usage of the global repository even if inside a local repository created with <code>haxelib [newrepo](#newrepo)</code>.
+
+
+
+<a name="skip-dependencies" class="anch"></a>
+
+### haxelib --skip-dependencies
+
+```
+haxelib --skip-dependencies
+```
+
+> When [installing](#install) or [updating](#update) a library, the dependencies are ignored.
 
 
 
