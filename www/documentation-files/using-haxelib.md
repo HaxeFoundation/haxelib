@@ -66,7 +66,7 @@ The following commands are available:
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
     <li><a href="#skip-dependencies">--skip-dependencies</a></li>
-    <li><a href="#notimeout">-no-timeout</a></li>
+    <li><a href="#notimeout">-notimeout</a></li>
   </ul>
 </div>
 
