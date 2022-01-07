@@ -181,7 +181,11 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		HaxelibTests.runCommand("haxelib", ["setup", path]);
+		final p = new Process("haxelib", ["setup", path]);
+		final exitCode = p.exitCode();
+
+		if (exitCode != 0)
+			Sys.exit(exitCode);
 	}
 
 	static function main():Void {
