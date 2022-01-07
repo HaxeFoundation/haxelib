@@ -66,6 +66,7 @@ The following commands are available:
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
     <li><a href="#skip-dependencies">--skip-dependencies</a></li>
+    <li><a href="#notimeout">-no-timeout</a></li>
   </ul>
 </div>
 
@@ -73,7 +74,6 @@ The following commands are available:
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
     <li><a href="#cwd">-cwd</a></li>
-    <li><a href="#notimeout">-no-timeout</a></li>
     <li><a href="#R">-R</a></li>
   </ul>
 </div>
@@ -656,6 +656,18 @@ haxelib --skip-dependencies
 
 
 
+<a name="notimeout" class="anch"></a>
+
+### haxelib -notimeout
+
+```
+haxelib -notimeout
+```
+
+> Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
+
+
+
 <a name="parameters" class="anch"></a>
 
 # Parameters
@@ -676,18 +688,6 @@ haxelib -cwd [dir]
 ```
 
 > Act like the Haxelib command was run from another repository. Affect all commands that use the "current directory".
-
-
-
-<a name="notimeout" class="anch"></a>
-
-### haxelib -no-timeout
-
-```
-haxelib -no-timeout
-```
-
-> Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
 
 
 
