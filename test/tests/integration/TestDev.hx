@@ -56,7 +56,7 @@ class TestDev extends IntegrationTests {
 	function testWrongPath():Void {
 		{
 			final r = haxelib(["dev", "Bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar_not_exist"])]).result();
-			// assertTrue(r.code != 0); //TODO
+			assertFalse(r.code == 0);
 		}
 
 		{
