@@ -208,7 +208,8 @@ class Cli {
 		Sys.print(str);
 
 	public static inline function printWarning(message:String)
-		Sys.println('Warning: ' + message);
+		if (mode != Quiet)
+			Sys.stderr().writeString('Warning: $message\n');
 
 	public static inline function printError(message:String)
 		Sys.stderr().writeString('${message}\n');
