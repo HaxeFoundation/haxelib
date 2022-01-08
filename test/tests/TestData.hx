@@ -248,6 +248,22 @@ class TestData extends TestBase {
 		assertEquals( "", Data.readData(getJsonInfos({ classPath: null }), false).classPath );
 	}
 
+	function testAliasCheck() {
+		// same one
+		final project = ProjectName.ofString("project");
+		assertEquals(project, ProjectName.getCorrectOrAlias(project, project));
+
+		// differently capitalized, original is returned
+		final projectA = ProjectName.ofString("project");
+		final projectB = ProjectName.ofString("PROJECT");
+		assertEquals(projectA, ProjectName.getCorrectOrAlias(projectA, projectB));
+
+		// completely different, alias is returned
+		final project = ProjectName.ofString("project");
+		final alias = ProjectName.ofString("alias");
+		assertEquals(alias, ProjectName.getCorrectOrAlias(project, alias));
+	}
+
 	function readDataOkay( json ) {
 		try {
 			Data.readData( json,true );
