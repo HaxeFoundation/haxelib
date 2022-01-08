@@ -45,11 +45,6 @@ class HaxelibTests {
 	static function main():Void {
 		final r = new TestRunner();
 
-		r.add(new TestSemVer());
-		r.add(new TestData());
-		r.add(new TestRemoveSymlinks());
-		r.add(new TestRemoveSymlinksBroken());
-
 		final isCI = Sys.getEnv("CI") != null;
 
 		// The test repo https://bitbucket.org/fzzr/hx.signal is gone.
@@ -67,13 +62,22 @@ class HaxelibTests {
 		} else {
 			Sys.println("git not found.");
 		}
-		r.add(new TestVcsNotFound());
 
+		r.add(new TestVcsNotFound());
+		r.add(new TestSemVer());
+		r.add(new TestData());
+		r.add(new TestRemoveSymlinks());
+		r.add(new TestRemoveSymlinksBroken());
 		r.add(new TestInstaller());
 		r.add(new TestRepoManager());
+		r.add(new TestGlobalScope());
+
 		r.add(new TestArgs());
 
 		final success = r.run();
+
+		TestScope.cleanUpRepo();
+
 		Sys.exit(success ? 0 : 1);
 	}
 }
