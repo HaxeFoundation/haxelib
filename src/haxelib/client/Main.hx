@@ -1767,8 +1767,7 @@ class Main {
 		final deps = dependencies.toArray();
 		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
 		final args = [];
-		// TODO: change comparison to '4.0.0' upon Haxe 4.0 release
-		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0-rc.5')) >= 0) {
+		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0')) >= 0) {
 			args.push('--haxelib-global');
 		}
 		for (d in deps) {
