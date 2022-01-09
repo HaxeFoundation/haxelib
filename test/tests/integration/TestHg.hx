@@ -1,6 +1,6 @@
 package tests.integration;
 
-import tests.integration.Utils;
+import tests.util.Vcs;
 
 class TestHg extends TestVcs {
 	function new () {

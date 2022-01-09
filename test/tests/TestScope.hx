@@ -3,6 +3,8 @@ package tests;
 import sys.io.File;
 import sys.FileSystem;
 
+import tests.util.DirectoryState;
+
 import haxelib.Data;
 import haxelib.SemVer;
 
@@ -19,12 +21,13 @@ abstract class TestScope extends TestBase {
 	static final REPO = "haxelib-repo";
 	static final origRepo = RepoManager.getGlobalPath();
 	static final repo = Path.join([Sys.getCwd(), "test", REPO]);
-	static final lib1Path = '$repo/lib/1,0,0/';
-	static final lib2Path = '$repo/lib/2,0,0/';
-	static final libGitPath = '$repo/lib/git/';
 
 	static final devlibPath = 'tmp/devlib/';
-	static final capitalizedPath = '$repo/capitalized/1,0,0/';
+
+	static final lib1Path = 'lib/1,0,0/';
+	static final lib2Path = 'lib/2,0,0/';
+	static final libGitPath = 'lib/git/';
+	static final capitalizedPath = 'capitalized/1,0,0/';
 
 	var scope:Scope;
 
@@ -51,14 +54,13 @@ abstract class TestScope extends TestBase {
 	**/
 	abstract private function initScope():Void;
 
-	private function initRepo() {
-		FileSystem.createDirectory(lib1Path);
-		File.saveContent('$lib1Path/haxelib.json', '{"name": "lib", "version":"1.0.0"}');
-
-		FileSystem.createDirectory(lib2Path);
-		File.saveContent('$lib2Path/haxelib.json', '{"name": "lib", "version":"2.0.0"}');
-		File.saveContent('$lib2Path/extraParams.hxml', "--macro include('pack')\n# comment");
-		File.saveContent('$lib2Path/Run.hx',
+	private final repoDir = new DirectoryState(repo,
+		[lib1Path, lib2Path, libGitPath, capitalizedPath],
+		[
+			'$lib1Path/haxelib.json' => '{"name": "lib", "version":"1.0.0"}',
+			'$lib2Path/haxelib.json' => '{"name": "lib", "version":"2.0.0"}',
+			'$lib2Path/extraParams.hxml' => "--macro include('pack')\n# comment",
+			'$lib2Path/Run.hx' =>
 '
 function main() {
 	switch(Sys.args()) {
@@ -68,22 +70,22 @@ function main() {
 		case _: Sys.exit(0);
 	}
 }
-'
-		);
+',
+			'$libGitPath/haxelib.json' => '{"name": "LIB", "version":"3.0.0"}',
+			'$libGitPath/Run.hx' => 'function main() {Sys.exit(Sys.args()[0] == Sys.getEnv("HAXELIB_RUN_NAME") ? 0 : 1);}'
+		]
+	);
 
-		FileSystem.createDirectory(libGitPath);
-		File.saveContent('$libGitPath/haxelib.json', '{"name": "LIB", "version":"3.0.0"}');
-		File.saveContent('$libGitPath/Run.hx', 'function main() {Sys.exit(Sys.args()[0] == Sys.getEnv("HAXELIB_RUN_NAME") ? 0 : 1);}');
+	private function initRepo() {
+		repoDir.build();
 
 		FileSystem.createDirectory(devlibPath);
 		File.saveContent('$devlibPath/haxelib.json', '{"name": "devlib", "version":"1.0.0", "dependencies":{"lib":"1.0.0"}}');
-
-		FileSystem.createDirectory(capitalizedPath);
 	}
 
 	static function cleanUpRepo() {
 		HaxelibTests.deleteDirectory(repo);
-		HaxelibTests.deleteDirectory(devlibPath);
+		HaxelibTests.deleteDirectory(devlibPath.split("/")[0]);
 	}
 
 	function testVersion():Void {
@@ -101,14 +103,14 @@ function main() {
 
 	function testGetPath():Void {
 		final lib = ProjectName.ofString("lib");
-		assertEquals(lib2Path, scope.getPath(lib));
+		assertEquals('$repo/$lib2Path', scope.getPath(lib));
 
 		final one = SemVer.ofString("1.0.0");
 		scope.setVersion(lib, one);
-		assertEquals(lib1Path, scope.getPath(lib, one));
+		assertEquals('$repo/$lib1Path', scope.getPath(lib, one));
 
 		scope.setVcsVersion(lib, VcsID.Git);
-		assertEquals(libGitPath, scope.getPath(lib, VcsID.Git));
+		assertEquals('$repo/$libGitPath', scope.getPath(lib, VcsID.Git));
 
 		final devlib = ProjectName.ofString("devlib");
 		// test override
@@ -238,31 +240,31 @@ function main() {
 	}
 
 	function testGetArgsAsHxml() {
-		assertEquals('--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib")));
+		assertEquals('--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib")));
 		// with extraParams.hxml
-		assertEquals('$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib"), SemVer.ofString("1.0.0")));
+		assertEquals('$repo/$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib"), SemVer.ofString("1.0.0")));
 		// this one has LIB in the haxelib.json
-		assertEquals('$libGitPath\n-D LIB=3.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib"), VcsID.Git));
+		assertEquals('$repo/$libGitPath\n-D LIB=3.0.0', scope.getArgsAsHxml(ProjectName.ofString("lib"), VcsID.Git));
 
 		// different capitalization
-		assertEquals('--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0', scope.getArgsAsHxml(ProjectName.ofString("LIB")));
+		assertEquals('--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0', scope.getArgsAsHxml(ProjectName.ofString("LIB")));
 
 		// dev lib (depends on lib 1.0.0)
 		final devPath = FileSystem.absolutePath(devlibPath).addTrailingSlash();
 
-		assertEquals('$devPath\n-D devlib=1.0.0\n$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("devlib")));
-		assertEquals('$devPath\n-D devlib=1.0.0\n$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("DEVLIB")));
+		assertEquals('$devPath\n-D devlib=1.0.0\n$repo/$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("devlib")));
+		assertEquals('$devPath\n-D devlib=1.0.0\n$repo/$lib1Path\n-D lib=1.0.0', scope.getArgsAsHxml(ProjectName.ofString("DEVLIB")));
 
 		// capitalized
 		// this one has no haxelib.json so the version just shows 0.0.0
-		assertEquals('$capitalizedPath\n-D Capitalized=0.0.0', scope.getArgsAsHxml(ProjectName.ofString("Capitalized")));
-		assertEquals('$capitalizedPath\n-D Capitalized=0.0.0', scope.getArgsAsHxml(ProjectName.ofString("capitalized")));
+		assertEquals('$repo/$capitalizedPath\n-D Capitalized=0.0.0', scope.getArgsAsHxml(ProjectName.ofString("Capitalized")));
+		assertEquals('$repo/$capitalizedPath\n-D Capitalized=0.0.0', scope.getArgsAsHxml(ProjectName.ofString("capitalized")));
 	}
 
 	function testGetArgsAsHxmlForLibraries() {
 		// same lib repeated
 		assertEquals(
-			'--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0',
+			'--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0',
 			scope.getArgsAsHxmlForLibraries([
 				{
 					library: ProjectName.ofString("lib"),
@@ -277,7 +279,7 @@ function main() {
 
 		// two libs
 		assertEquals(
-			'--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0\n$capitalizedPath\n-D Capitalized=0.0.0',
+			'--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0\n$repo/$capitalizedPath\n-D Capitalized=0.0.0',
 			scope.getArgsAsHxmlForLibraries([
 				{
 					library: ProjectName.ofString("lib"),
@@ -291,7 +293,7 @@ function main() {
 		);
 		// different order
 		assertEquals(
-			'$capitalizedPath\n-D Capitalized=0.0.0\n--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0',
+			'$repo/$capitalizedPath\n-D Capitalized=0.0.0\n--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0',
 			scope.getArgsAsHxmlForLibraries([
 				{
 					library: ProjectName.ofString("capitalized"),
@@ -308,7 +310,7 @@ function main() {
 		final devPath = FileSystem.absolutePath(devlibPath).addTrailingSlash();
 
 		assertEquals(
-			'--macro include(\'pack\')\n$lib2Path\n-D lib=2.0.0\n$devPath\n-D devlib=1.0.0',
+			'--macro include(\'pack\')\n$repo/$lib2Path\n-D lib=2.0.0\n$devPath\n-D devlib=1.0.0',
 			scope.getArgsAsHxmlForLibraries([
 				{
 					library: ProjectName.ofString("lib"),

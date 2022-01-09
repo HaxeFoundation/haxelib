@@ -1,7 +1,6 @@
-package tests.integration;
+package tests.util;
 
 import sys.io.Process;
-import haxe.io.Path;
 
 /**
 	Makes library at `libPath` into a git repo and commits all files.

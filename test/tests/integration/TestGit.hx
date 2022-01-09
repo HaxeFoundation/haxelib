@@ -1,6 +1,6 @@
 package tests.integration;
 
-import tests.integration.Utils;
+import tests.util.Vcs;
 
 class TestGit extends TestVcs {
 	function new () {

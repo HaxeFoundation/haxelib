@@ -163,13 +163,13 @@ class TestRepoManager extends TestBase {
 		/* to non existent folder */
 
 		RepoManager.setGlobalPath("toDelete");
-		FileSystem.deleteDirectory("toDelete");
+		deleteDirectory("toDelete");
 		assertTrue(isInvalid());
 
 		/* to a file */
 
 		RepoManager.setGlobalPath("toDelete");
-		FileSystem.deleteDirectory("toDelete");
+		deleteDirectory("toDelete");
 
 		// create the file
 		File.saveContent("toDelete", "");

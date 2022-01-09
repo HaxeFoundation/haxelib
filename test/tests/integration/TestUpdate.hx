@@ -1,16 +1,18 @@
 package tests.integration;
 
+import tests.util.Vcs;
+
 class TestUpdate extends IntegrationTests {
 
 	final gitLibPath = 'libraries/libBar';
 
 	override function setup() {
 		super.setup();
-		Utils.makeGitRepo(gitLibPath);
+		makeGitRepo(gitLibPath);
 	}
 
 	override function tearDown() {
-		Utils.resetGitRepo(gitLibPath);
+		resetGitRepo(gitLibPath);
 		super.tearDown();
 	}
 
