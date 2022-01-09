@@ -37,6 +37,7 @@ import haxelib.Util.rethrow;
 using StringTools;
 using Lambda;
 using haxelib.Data;
+using haxelib.api.RepoReformatter;
 
 @:structInit
 class CommandInfo {
@@ -210,6 +211,7 @@ class Main {
 			#if neko
 			Proxy => create(proxy, 5, true),
 			#end
+			FixRepo => create(fixRepo, 0),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
@@ -475,21 +477,34 @@ class Main {
 	}
 
 	function getScope():Scope {
-		if (useGlobalRepo)
-			return Scope.getScopeForRepository(Repository.getGlobal());
-		return Scope.getScope();
+		return Scope.getScopeForRepository(getRepository());
 	}
 
 	function getRepository():Repository {
-		if (useGlobalRepo)
-			return Repository.getGlobal();
-		return Repository.get();
+		final repository = if (useGlobalRepo) Repository.getGlobal() else Repository.get();
+
+		if (repository.doesRepositoryRequireReformat()) {
+			final cmd = "haxelib fixrepo" + if (useGlobalRepo) " --global" else "";
+			Cli.printWarning('Repository requires reformatting. To reformat, run `$cmd`.');
+		} else if (repository.isRepositoryIncompatible()) {
+			Cli.printWarning('Repository is incompatible with this version of haxelib. Please run `haxelib update haxelib`.');
+		}
+
+		return repository;
 	}
 
 	function getRepositoryPath():String {
 		if (useGlobalRepo)
 			return RepoManager.getGlobalPath();
 		return RepoManager.getPath();
+	}
+
+	function fixRepo() {
+		final repository = if (useGlobalRepo) Repository.getGlobal() else Repository.get();
+
+		Cli.printOptional('Fixing repository: ${repository.path}');
+		repository.reformat(Cli.printDebug);
+		Cli.printOptional('Finished fixing repository: ${repository.path}');
 	}
 
 	function setup() {
