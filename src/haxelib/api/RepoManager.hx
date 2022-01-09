@@ -110,12 +110,17 @@ class RepoManager {
 				throw new RepoException('Error accessing Haxelib repository: $e');
 			// configure the default as the global repository
 			File.saveContent(getConfigFilePath(), defaultPath);
+			initRepository(defaultPath);
 			return defaultPath;
 		}
 		if (!FileSystem.exists(rep))
 			throw new InvalidConfiguration(NotFound(rep));
 		else if (!FileSystem.isDirectory(rep))
 			throw new InvalidConfiguration(IsFile(rep));
+
+		if (isRepositoryUninitialized(rep))
+			initRepository(rep);
+
 		return rep;
 	}
 
@@ -131,7 +136,10 @@ class RepoManager {
 		if (isSamePath(path, configFile))
 			throw new RepoException('Cannot use $path because it is reserved for config file');
 
-		safeDir(path);
+		final isNew = safeDir(path);
+		if (isNew)
+			initRepository(path);
+
 		File.saveContent(configFile, path);
 	}
 
@@ -207,6 +215,7 @@ class RepoManager {
 		final created = FsUtils.safeDir(path, true);
 		if(!created)
 			throw new RepoException('Local repository already exists ($path)');
+		initRepository(path);
 	}
 
 	/**
@@ -222,6 +231,14 @@ class RepoManager {
 		final deleted = FsUtils.deleteRec(path);
 		if (!deleted)
 			throw new RepoException('No local repository found ($path)');
+	}
+
+	static function isRepositoryUninitialized(path:String) {
+		return FileSystem.readDirectory(path).length == 0;
+	}
+
+	static function initRepository(path:String) {
+		RepoReformatter.initRepoVersion(path);
 	}
 
 	static function getConfigFilePath():String {
