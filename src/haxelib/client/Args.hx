@@ -85,7 +85,7 @@ enum abstract Flag(String) to String {
 	final System = "system";
 	final SkipDependencies = "skip-dependencies";
 	// hidden
-	final NoTimeout = "notimeout";
+	final NoTimeout = "no-timeout";
 
 	public static final MUTUALLY_EXCLUSIVE = [[Quiet, Debug], [Always, Never]];
 
@@ -95,9 +95,16 @@ enum abstract Flag(String) to String {
 	**/
 	public static final PRIORITY = [System, Debug, Global];
 
+	static final ALIASES = ["notimeout" => NoTimeout];
+
 	static final FLAGS = Util.getValues(Flag);
 
 	public static function ofString(str:String):Null<Flag> {
+		// first check aliases
+		final alias = ALIASES.get(str);
+		if (alias != null)
+			return alias;
+
 		for (flag in FLAGS) {
 			if ((flag:String) == str)
 				return flag;
@@ -108,11 +115,18 @@ enum abstract Flag(String) to String {
 }
 
 enum abstract Option(String) to String {
-	final Remote = "R";
+	final Remote = "remote";
+
+	static final ALIASES = ["R" => Remote];
 
 	static final OPTIONS = Util.getValues(Option);
 
 	public static function ofString(str:String):Null<Option> {
+		// first check aliases
+		final alias = ALIASES.get(str);
+		if (alias != null)
+			return alias;
+
 		for (option in OPTIONS) {
 			if ((option:String) == str)
 				return option;
