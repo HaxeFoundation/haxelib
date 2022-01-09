@@ -2,6 +2,8 @@ package tests.integration;
 
 import sys.FileSystem;
 
+import tests.util.Vcs;
+
 class TestSet extends IntegrationTests {
 
 	override function setup() {
@@ -18,7 +20,7 @@ class TestSet extends IntegrationTests {
 	}
 
 	override function tearDown() {
-		Utils.resetGitRepo('libraries/libBar');
+		resetGitRepo('libraries/libBar');
 
 		super.tearDown();
 	}
@@ -157,7 +159,7 @@ class TestSet extends IntegrationTests {
 	function testGit() {
 		final gitPath = '${projectRoot}test/libraries/libBar';
 
-		Utils.makeGitRepo(gitPath);
+		makeGitRepo(gitPath);
 
 		final r = haxelib(["git", "Bar", gitPath]).result();
 		assertSuccess(r);

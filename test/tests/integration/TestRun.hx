@@ -1,5 +1,7 @@
 package tests.integration;
 
+import tests.util.Vcs;
+
 class TestRun extends IntegrationTests {
 
 #if !system_haxelib
@@ -25,8 +27,8 @@ class TestRun extends IntegrationTests {
 	static final bar2Path = Path.join([IntegrationTests.projectRoot, IntegrationTests.repo, "bar/2,0,0"]).addTrailingSlash();
 
 	override function tearDown() {
-		Utils.resetGitRepo(libEnvironment);
-		Utils.resetHgRepo(libEnvironment);
+		resetGitRepo(libEnvironment);
+		resetHgRepo(libEnvironment);
 
 		super.tearDown();
 	}
@@ -96,7 +98,7 @@ class TestRun extends IntegrationTests {
 		final r = haxelib(["remove", "alias"]).result();
 		assertSuccess(r);
 
-		Utils.makeGitRepo(libEnvironment);
+		makeGitRepo(libEnvironment);
 
 		final r = haxelib(["git", "alias", libEnvironment]).result();
 		assertSuccess(r);
@@ -110,8 +112,8 @@ class TestRun extends IntegrationTests {
 		final r = haxelib(["remove", "alias"]).result();
 		assertSuccess(r);
 
-		Utils.resetGitRepo(libEnvironment);
-		Utils.makeHgRepo(libEnvironment);
+		resetGitRepo(libEnvironment);
+		makeHgRepo(libEnvironment);
 
 		final r = haxelib(["hg", "alias", libEnvironment]).result();
 		assertSuccess(r);
