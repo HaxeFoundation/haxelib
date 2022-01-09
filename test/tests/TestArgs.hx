@@ -7,7 +7,7 @@ class TestArgs extends TestCase {
 
 	public function testPriorityFlags() {
 		final priorityFlags = Args.extractPriorityFlags([
-					"--debug", "--global", "--system", "--skip-dependencies", "--notimeout",
+					"--debug", "--global", "--system", "--skip-dependencies", "--no-timeout",
 					"--flat", "--always", "version"
 			]);
 		// priority
@@ -48,7 +48,7 @@ class TestArgs extends TestCase {
 
 	public function testFlags() {
 		final flags = Args.extractAll([
-			"--debug", "--global", "--system", "--skip-dependencies", "--notimeout",
+			"--debug", "--global", "--system", "--skip-dependencies", "--no-timeout",
 			"--flat", "--always", "version"
 		]).flags;
 		// given
@@ -89,14 +89,14 @@ class TestArgs extends TestCase {
 
 	public function testOptions() {
 		// one value given
-		final remote = Args.extractAll(["-R", "remotePath", "version"]).options[Remote];
+		final remote = Args.extractAll(["--remote", "remotePath", "version"]).options[Remote];
 		assertEquals("remotePath", remote);
 
 		// option without value should give error
-		assertFalse(areSwitchesValid(["version", "-R"]));
+		assertFalse(areSwitchesValid(["version", "--remote"]));
 
 		// when a normal option is repeated, should just give the last one.
-		final remote = Args.extractAll(["-R", "remotePath", "-R", "otherPath", "version"]).options[Remote];
+		final remote = Args.extractAll(["--remote", "remotePath", "--remote", "otherPath", "version"]).options[Remote];
 		assertEquals("otherPath", remote);
 
 		// not included
@@ -133,7 +133,7 @@ class TestArgs extends TestCase {
 		assertTrue(flags.contains(Debug));
 		assertTrue(flags.contains(SkipDependencies));
 		// options
-		final argsInfo = Args.extractAll(["-cwd", "path", "-R", "remotePath", "version"]);
+		final argsInfo = Args.extractAll(["-cwd", "path", "-remote", "remotePath", "version"]);
 
 		assertEquals("path", argsInfo.repeatedOptions[Cwd][0]);
 		assertEquals("remotePath", argsInfo.options[Remote]);
@@ -143,6 +143,13 @@ class TestArgs extends TestCase {
 
 		assertEquals("path", directories[0]);
 		assertEquals("otherPath", directories[1]);
+	}
+
+	public function testAliases() {
+		final argsInfo = Args.extractAll(["-R", "remotePath", "--notimeout", "version"]);
+
+		assertEquals("remotePath", argsInfo.options[Remote]);
+		assertTrue(argsInfo.flags.contains(NoTimeout));
 	}
 
 	public function testCommands() {
