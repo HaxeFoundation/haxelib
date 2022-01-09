@@ -66,7 +66,7 @@ The following commands are available:
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
     <li><a href="#skip-dependencies">--skip-dependencies</a></li>
-    <li><a href="#notimeout">--notimeout</a></li>
+    <li><a href="#no-timeout">--no-timeout</a></li>
   </ul>
 </div>
 
@@ -74,7 +74,7 @@ The following commands are available:
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
     <li><a href="#cwd">--cwd</a></li>
-    <li><a href="#R">-R</a></li>
+    <li><a href="#remote">--remote</a></li>
   </ul>
 </div>
 </div>
@@ -656,12 +656,12 @@ haxelib --skip-dependencies
 
 
 
-<a name="notimeout" class="anch"></a>
+<a name="no-timeout" class="anch"></a>
 
-### haxelib --notimeout
+### haxelib --no-timeout
 
 ```
-haxelib --notimeout
+haxelib --no-timeout
 ```
 
 > Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
@@ -691,11 +691,12 @@ haxelib --cwd [dir]
 
 
 
-<a name="R" class="anch"></a>
+<a name="remote" class="anch"></a>
 
-### haxelib -R
+### haxelib --remote
 
 ```
+haxelib --remote [host:port[/dir]]
 haxelib -R [host:port[/dir]]
 ```
 
@@ -716,7 +717,7 @@ If `HAXELIB_NO_SSL` is set to `1` or `true`, then haxelib client will use http i
 ## HAXELIB_REMOTE
 
 `HAXELIB_REMOTE` may contain a url to a custom Haxelib server instead of `https://lib.haxe.org/`.
-However, if <a href="#R">-R</a> command line argument is provided, then `HAXELIB_REMOTE` is ignored.
+However, if <a href="#remote">--remote</a> command line argument is provided, then `HAXELIB_REMOTE` is ignored.
 
 <a name="HAXELIB_DEV_FILTER" class="anch"></a>
 
