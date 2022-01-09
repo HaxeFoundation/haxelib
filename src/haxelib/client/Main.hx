@@ -282,7 +282,7 @@ class Main {
 				+ "You can also setup the proxy with 'haxelib proxy'.\n"
 				+ haxe.CallStack.toString(haxe.CallStack.exceptionStack());
 			case "Blocked":
-				"Http connection timeout. Try running 'haxelib --notimeout <command>' to disable timeout";
+				"Http connection timeout. Try running 'haxelib --no-timeout <command>' to disable timeout";
 			case "std@get_cwd":
 				"Current working directory is unavailable";
 			case _:
