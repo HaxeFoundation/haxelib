@@ -1,25 +1,5 @@
-locals {
-  haxelib_server = {
-    stage = {
-      dev = {
-        host  = "development-lib.haxe.org"
-        host_do = "do-development-lib.haxe.org"
-        image = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
-      }
-      prod = {
-        host  = "lib.haxe.org"
-        host_do = "do-lib.haxe.org"
-        image = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
-      }
-    }
-  }
-}
-
-output "haxelib_server" {
-  value = local.haxelib_server
-}
-
-resource "kubernetes_secret" "haxelib-db" {
+resource "kubernetes_secret" "do-haxelib-db" {
+  provider = kubernetes.do
   metadata {
     name = "haxelib-db"
   }
@@ -28,9 +8,10 @@ resource "kubernetes_secret" "haxelib-db" {
   }
 }
 
-resource "kubernetes_deployment" "haxelib-server" {
+resource "kubernetes_deployment" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
+  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
     labels = {
@@ -104,7 +85,7 @@ resource "kubernetes_deployment" "haxelib-server" {
             name = "HAXELIB_DB_PASS"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.haxelib-db.metadata[0].name
+                name = kubernetes_secret.do-haxelib-db.metadata[0].name
                 key  = "HAXELIB_DB_PASS"
               }
             }
@@ -153,9 +134,10 @@ resource "kubernetes_deployment" "haxelib-server" {
   }
 }
 
-resource "kubernetes_pod_disruption_budget" "haxelib-server" {
+resource "kubernetes_pod_disruption_budget" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
+  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
   }
@@ -170,9 +152,10 @@ resource "kubernetes_pod_disruption_budget" "haxelib-server" {
   }
 }
 
-resource "kubernetes_service" "haxelib-server" {
+resource "kubernetes_service" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
+  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
   }
@@ -191,20 +174,28 @@ resource "kubernetes_service" "haxelib-server" {
   }
 }
 
-resource "kubernetes_ingress" "haxelib-server" {
+resource "kubernetes_ingress" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
+  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
+    annotations = {
+      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
+    }
   }
 
   spec {
+    tls {
+      hosts       = [each.value.host_do]
+      secret_name = "haxelib-server-${each.key}-tls"
+    }
     rule {
-      host = each.value.host
+      host = each.value.host_do
       http {
         path {
           backend {
-            service_name = kubernetes_service.haxelib-server[each.key].metadata[0].name
+            service_name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
             service_port = 80
           }
           path = "/"

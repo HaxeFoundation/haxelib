@@ -18,6 +18,22 @@ resource "aws_route53_record" "development-lib" {
   records = ["k8s.haxe.org"]
 }
 
+resource "aws_route53_record" "do-lib" {
+  zone_id = local.haxe_org_zoneid
+  name    = "do-lib.haxe.org"
+  type    = "CNAME"
+  ttl     = "86400"
+  records = ["do-k8s.haxe.org"]
+}
+
+resource "aws_route53_record" "do-development-lib" {
+  zone_id = local.haxe_org_zoneid
+  name    = "do-development-lib.haxe.org"
+  type    = "CNAME"
+  ttl     = "86400"
+  records = ["do-k8s.haxe.org"]
+}
+
 # Verify domain for the "haxelib" GitHub org
 # https://github.com/haxelib/
 resource "aws_route53_record" "_github-challenge-haxelib" {

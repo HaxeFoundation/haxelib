@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.45"
     }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.16"
+    }
     github = {
       source  = "integrations/github"
       version = "~> 4.11"
@@ -52,6 +56,12 @@ provider "aws" {
 
 data "aws_canonical_user_id" "current" {}
 
+provider "digitalocean" {
+  # DIGITALOCEAN_ACCESS_TOKEN
+  # SPACES_ACCESS_KEY_ID
+  # SPACES_SECRET_ACCESS_KEY
+}
+
 provider "kubernetes" {
   config_path = "${path.module}/kubeconfig_haxe2021"
 
@@ -64,4 +74,10 @@ provider "mysql" {
   endpoint = aws_db_instance.haxe-org.endpoint
   username = var.HAXELIB_DB_USER
   password = var.HAXELIB_DB_PASS
+}
+
+provider "kubernetes" {
+  alias = "do"
+
+  config_path = "${path.module}/kubeconfig_do"
 }
