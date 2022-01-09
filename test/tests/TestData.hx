@@ -278,5 +278,4 @@ class TestData extends TestBase {
 		}
 		return Json.stringify(infos);
 	}
-
 }

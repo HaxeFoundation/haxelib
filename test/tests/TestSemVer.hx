@@ -12,6 +12,7 @@ class TestSemVer extends TestBase {
 			previewNum : previewNum
 		};
 	}
+
 	public function testToString() {
 		assertEquals( "0.1.2", make(0,1,2) );
 
@@ -61,12 +62,9 @@ class TestSemVer extends TestBase {
 		assertEquals( "invalid", parseInvalid("10.50.2-rc.01"));
 	}
 
-	function parseInvalid( str:String ) {
-		return try {
-			(SemVer.ofString( str ) : String);
-		} catch (e:String) {
-			"invalid";
-		}
+	function parseInvalid( str:String ):String {
+		return try SemVer.ofString(str)
+			catch (e:String) "invalid";
 	}
 
 }

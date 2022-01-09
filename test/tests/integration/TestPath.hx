@@ -1,16 +1,13 @@
 package tests.integration;
 
-import haxe.io.Path;
-using IntegrationTests;
-using StringTools;
 using Lambda;
 
 class TestPath extends IntegrationTests {
 #if !system_haxelib
 	function testMain():Void {
-		var r = haxelib(["dev", "BadHaxelibJson", Path.join([IntegrationTests.projectRoot, "test/libraries/libBadHaxelibJson"])]).result();
+		final r = haxelib(["dev", "BadHaxelibJson", Path.join([IntegrationTests.projectRoot, "test/libraries/libBadHaxelibJson"])]).result();
 		assertSuccess(r);
-		var r = haxelib(["path", "BadHaxelibJson"]).result();
+		final r = haxelib(["path", "BadHaxelibJson"]).result();
 		assertFail(r);
 	}
 #end

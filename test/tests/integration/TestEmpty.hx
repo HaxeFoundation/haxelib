@@ -1,54 +1,51 @@
 package tests.integration;
 
-import haxe.*;
-import haxe.io.*;
-import haxelib.*;
-import IntegrationTests.*;
-using IntegrationTests;
+import haxe.Http;
+import haxelib.SemVer;
 
 class TestEmpty extends IntegrationTests {
 	function testEmpty():Void {
 		// the initial local and remote repos are empty
 
-		var installResult = haxelib(["install", "foo"]).result();
+		final installResult = haxelib(["install", "foo"]).result();
 		assertTrue(installResult.code != 0);
 
-		var upgradeResult = haxelib(["upgrade"]).result();
+		final upgradeResult = haxelib(["upgrade"]).result();
 		assertSuccess(upgradeResult);
 
-		var updateResult = haxelib(["update", "foo"]).result();
+		final updateResult = haxelib(["update", "foo"]).result();
 		// assertTrue(updateResult.code != 0);
 
-		var removeResult = haxelib(["remove", "foo"]).result();
+		final removeResult = haxelib(["remove", "foo"]).result();
 		assertTrue(removeResult.code != 0);
 
-		var upgradeResult = haxelib(["list"]).result();
+		final upgradeResult = haxelib(["list"]).result();
 		assertSuccess(upgradeResult);
 
-		var removeResult = haxelib(["set", "foo", "0.0"], "y\n").result();
+		final removeResult = haxelib(["set", "foo", "0.0"], "y\n").result();
 		assertTrue(removeResult.code != 0);
 
-		var searchResult = haxelib(["search", "foo"]).result();
+		final searchResult = haxelib(["search", "foo"]).result();
 		assertSuccess(searchResult);
 		assertTrue(searchResult.out.indexOf("0") >= 0);
 
-		var infoResult = haxelib(["info", "foo"]).result();
+		final infoResult = haxelib(["info", "foo"]).result();
 		assertTrue(infoResult.code != 0);
 
-		var userResult = haxelib(["user", "foo"]).result();
+		final userResult = haxelib(["user", "foo"]).result();
 		assertTrue(userResult.code != 0);
 
-		var configResult = haxelib(["config"]).result();
+		final configResult = haxelib(["config"]).result();
 		assertSuccess(configResult);
 
-		var pathResult = haxelib(["path", "foo"]).result();
+		final pathResult = haxelib(["path", "foo"]).result();
 		assertTrue(pathResult.code != 0);
 
 		if (clientVer > SemVer.ofString("3.1.0-rc.4")) {
-			var versionResult = haxelib(["version"]).result();
+			final versionResult = haxelib(["version"]).result();
 			assertSuccess(versionResult);
 
-			var helpResult = haxelib(["help"]).result();
+			final helpResult = haxelib(["help"]).result();
 			assertSuccess(helpResult);
 		}
 	}

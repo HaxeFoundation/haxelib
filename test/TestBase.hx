@@ -1,16 +1,18 @@
-import sys.*;
-import sys.io.*;
-import haxe.io.*;
-import haxe.unit.*;
+import sys.FileSystem;
+import sys.io.Process;
+import haxe.io.Eof;
+import haxe.unit.TestCase;
+
 
 class TestBase extends TestCase {
-	static var haxelibPath = FileSystem.fullPath("run.n");
+	static final haxelibPath = FileSystem.fullPath("run.n");
+
 	public function runHaxelib(args:Array<String>, printProgress = false) {
-		var p = new Process("neko", [haxelibPath].concat(args));
+		final p = new Process("neko", [haxelibPath].concat(args));
 		var stdout = '';
 		var stderr = '';
 		var eofCount = 0;
-		var c;
+		var c:Int;
 		while (eofCount < 2) {
 			eofCount = 0;
 			try {
@@ -32,7 +34,7 @@ class TestBase extends TestCase {
 			Sys.stdout().flush();
 			Sys.stderr().flush();
 		}
-		var exitCode = p.exitCode();
+		final exitCode = p.exitCode();
 		p.close();
 		return {
 			stdout: stdout,

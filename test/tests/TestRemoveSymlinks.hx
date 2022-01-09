@@ -1,54 +1,48 @@
 package tests;
 
 import sys.FileSystem;
-import sys.io.*;
 import haxe.io.Path;
-import haxe.unit.TestCase;
 
 class TestRemoveSymlinks extends TestBase
 {
 	//----------- properties, fields ------------//
 
-	static var REPO = "haxelib-repo";
-	var lib:String = "symlinks";
-	var repo:String = null;
+	static final REPO = "haxelib-repo";
+	final repo:String;
+	var lib:String;
 	var origRepo:String;
 
 	//--------------- constructor ---------------//
-	public function new()
-	{
+	public function new() {
 		super();
-		this.repo = Path.join([Sys.getCwd(), "test", REPO]);
+		lib = "symlinks";
+		repo = Path.join([Sys.getCwd(), "test", REPO]);
 	}
 
 	//--------------- initialize ----------------//
 
-	override public function setup():Void
-	{
-		origRepo = ~/\r?\n/.split(runHaxelib(["config"]).stdout)[0];
-		origRepo = Path.normalize(origRepo);
+	override public function setup():Void {
+		origRepo = Path.normalize(~/\r?\n/.split(runHaxelib(["config"]).stdout)[0]);
 
-		var libzip = Path.join([Sys.getCwd(), "test", "libraries", lib + ".zip"]);
-		if (runHaxelib(["setup", repo]).exitCode != 0) {
+		final libzip = Path.join([Sys.getCwd(), "test", "libraries", lib + ".zip"]);
+		if (runHaxelib(["setup", repo]).exitCode != 0)
 			throw "haxelib setup failed";
-		}
-		if (runHaxelib(["local", libzip]).exitCode != 0) {
+
+		if (runHaxelib(["local", libzip]).exitCode != 0)
 			throw "haxelib local failed";
-		}
 	}
 
 	override public function tearDown():Void {
-		if (runHaxelib(["setup", origRepo]).exitCode != 0) {
+		if (runHaxelib(["setup", origRepo]).exitCode != 0)
 			throw "haxelib setup failed";
-		}
+
 		deleteDirectory(repo);
 	}
 
 	//----------------- tests -------------------//
 
-	public function testRemoveLibWithSymlinks():Void
-	{
-		var code = runHaxelib(["remove", lib]).exitCode;
+	public function testRemoveLibWithSymlinks():Void {
+		final code = runHaxelib(["remove", lib]).exitCode;
 		assertEquals(code, 0);
 		assertFalse(FileSystem.exists(Path.join([repo, lib])));
 	}
