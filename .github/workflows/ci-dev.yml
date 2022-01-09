@@ -50,7 +50,7 @@ jobs:
   test:
     needs: push
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20211206183139
+    container: haxe/haxelib_devcontainer_workspace:20220109090548
     services:
       haxelib:
         image: haxe/lib.haxe.org:${{ github.sha }}
@@ -95,7 +95,7 @@ jobs:
     needs: test
     concurrency: deploy
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20211206183139
+    container: haxe/haxelib_devcontainer_workspace:20220109090548
     env:
       AWS_DEFAULT_REGION: eu-west-1
       TF_INPUT: 0

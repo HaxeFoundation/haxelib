@@ -1,7 +1,7 @@
 version: '3'
 services:
   workspace:
-    image: haxe/haxelib_devcontainer_workspace:20211206183139
+    image: haxe/haxelib_devcontainer_workspace:20220109090548
     init: true
     volumes:
       - /var/run/docker.sock:/var/run/docker-host.sock
@@ -14,6 +14,10 @@ services:
       - HAXELIB_DB_USER=dbUser
       - HAXELIB_DB_PASS=dbPass
       - HAXELIB_DB_NAME=haxelib
+      - EARTHLY_BUILDKIT_HOST=tcp://earthly:8372
+      - EARTHLY_SECRET_FILES=.envrc=/workspace/.envrc
+      - EARTHLY_USE_INLINE_CACHE=true
+      - EARTHLY_SAVE_INLINE_CACHE=true
     user: vscode
     entrypoint: /usr/local/share/docker-init.sh
     command: sleep infinity
@@ -40,3 +44,16 @@ services:
     ports:
       - "3306:3306"
     restart: unless-stopped
+  earthly:
+    image: earthly/buildkitd:v0.6.2
+    privileged: true
+    environment:
+      - BUILDKIT_TCP_TRANSPORT_ENABLED=true
+    expose:
+      - 8372
+    volumes:
+      # https://docs.earthly.dev/docs/guides/using-the-earthly-docker-images/buildkit-standalone#earthly_tmp_dir
+      - earthly-tmp:/tmp/earthly:rw
+
+volumes:
+  earthly-tmp:

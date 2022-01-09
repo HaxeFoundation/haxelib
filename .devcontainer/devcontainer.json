@@ -16,13 +16,14 @@
 			}
 		},
 		"terraform.languageServer": {
-			"pathToBinary": "/usr/bin/terraform-ls"
+			"pathToBinary": "/usr/local/bin/terraform-ls"
 		}
 	},
 	"extensions": [
 		"ms-azuretools.vscode-docker",
 		"nadako.vshaxe",
 		"hashicorp.terraform",
+		"earthly.earthfile-syntax-highlighting",
 	],
 	"remoteUser": "vscode"
 }
