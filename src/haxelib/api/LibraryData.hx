@@ -2,7 +2,6 @@ package haxelib.api;
 
 import haxe.DynamicAccess;
 
-import haxelib.Data.ProjectName;
 import haxelib.api.Vcs.VcsID;
 
 /** Exception thrown upon errors regarding library data, such as invalid versions. **/

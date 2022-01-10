@@ -1,7 +1,5 @@
 package haxelib.api;
 
-import haxelib.Data;
-
 import haxelib.api.LibraryData;
 import haxelib.api.ScriptRunner;
 

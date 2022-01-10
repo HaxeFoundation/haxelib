@@ -4,6 +4,7 @@ import sys.FileSystem;
 import sys.io.File;
 import haxe.io.Path;
 
+import haxelib.ProjectName;
 import haxelib.Data;
 import haxelib.api.RepoManager;
 import haxelib.api.Installer;
