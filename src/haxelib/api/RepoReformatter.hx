@@ -5,7 +5,7 @@ import sys.FileSystem;
 import sys.io.File;
 import haxe.io.Path;
 
-import haxelib.Data.ProjectName;
+import haxelib.ProjectName;
 import haxelib.api.LibraryData;
 
 using Lambda;
@@ -187,7 +187,7 @@ class RepoReformatter {
 			}
 
 			final library = ProjectName.ofString(Data.unsafe(subDir));
-			final nameFile = @:privateAccess repo.getNameFilePath(library);
+			final nameFile = Path.join([newPath, @:privateAccess Repository.NAME_FILE]);
 
 			if (!FileSystem.exists(nameFile)) {
 				log('Setting name for `$library`');

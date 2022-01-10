@@ -142,7 +142,7 @@ class GlobalScope extends Scope {
 			final cur = stack.pop();
 			// turn it to lowercase always (so that `LiBrArY:1.2.0` and `library:1.3.0` clash because
 			// they are different versions), and then get the correct name if provided
-			final library = repository.getCorrectName(ProjectName.ofString(cur.library.toLowerCase()));
+			final library = repository.getCorrectName(cur.library);
 			final version = cur.version;
 
 			// check for duplicates
