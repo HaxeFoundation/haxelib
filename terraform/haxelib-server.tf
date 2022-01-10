@@ -2,14 +2,14 @@ locals {
   haxelib_server = {
     stage = {
       dev = {
-        host  = "development-lib.haxe.org"
+        host    = "development-lib.haxe.org"
         host_do = "do-development-lib.haxe.org"
-        image = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
+        image   = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
       }
       prod = {
-        host  = "lib.haxe.org"
+        host    = "lib.haxe.org"
         host_do = "do-lib.haxe.org"
-        image = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
+        image   = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
       }
     }
   }
@@ -196,6 +196,17 @@ resource "kubernetes_ingress" "haxelib-server" {
 
   metadata {
     name = "haxelib-server-${each.key}"
+    annotations = {
+      "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
+      "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
+        proxy_cache mycache;
+        proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        proxy_cache_revalidate on;
+        proxy_cache_lock on;
+        add_header X-Cache-Status $upstream_cache_status;
+      EOT
+    }
   }
 
   spec {

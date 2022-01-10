@@ -195,7 +195,16 @@ resource "kubernetes_ingress" "do-haxelib-server" {
   metadata {
     name = "haxelib-server-${each.key}"
     annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
+      "cert-manager.io/cluster-issuer"                    = "letsencrypt-production"
+      "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
+      "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
+        proxy_cache mycache;
+        proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        proxy_cache_revalidate on;
+        proxy_cache_lock on;
+        add_header X-Cache-Status $upstream_cache_status;
+      EOT
     }
   }
 
