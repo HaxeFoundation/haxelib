@@ -27,6 +27,7 @@ RUN rm -rf /var/www/html \
 RUN a2enmod rewrite
 RUN a2enmod proxy
 RUN a2enmod proxy_http
+RUN a2enmod headers
 RUN a2dismod mpm_event
 RUN a2enmod mpm_prefork
 RUN mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*

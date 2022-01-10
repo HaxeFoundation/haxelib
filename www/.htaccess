@@ -47,6 +47,10 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.n/$1 [L]
 
+# for all text/html
+# max-age: 60 seconds, stale-while-revalidate: 7 days
+Header append Cache-Control "public, max-age=60, stale-while-revalidate=604800" "expr=%{CONTENT_TYPE} == 'text/html; charset=utf-8'"
+
 # Get our stuff gzipped
 
 SetOutputFilter DEFLATE
