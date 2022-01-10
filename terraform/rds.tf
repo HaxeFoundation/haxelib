@@ -1,24 +1,18 @@
 resource "aws_db_instance" "haxe-org" {
-  allocated_storage    = 20
-  engine               = "mysql"
-  engine_version       = "5.6.51"
-  instance_class       = "db.t2.micro"
-  name                 = "ebdb"
-  username             = "Andy"
-  parameter_group_name = aws_db_parameter_group.default.name
-  option_group_name    = aws_db_option_group.default.name
-  publicly_accessible  = true
-  skip_final_snapshot  = true
+  allocated_storage               = 20
+  engine                          = "mysql"
+  engine_version                  = "5.6.51"
+  instance_class                  = "db.t2.micro"
+  name                            = "ebdb"
+  username                        = "Andy"
+  parameter_group_name            = aws_db_parameter_group.default.name
+  option_group_name               = aws_db_option_group.default.name
+  enabled_cloudwatch_logs_exports = ["general", "slowquery", "error"]
+  publicly_accessible             = true
+  skip_final_snapshot             = true
 
-  tags = {
-    "Name"                              = "master"
-    "elasticbeanstalk:environment-id"   = "e-mqcf2epbq2"
-    "elasticbeanstalk:environment-name" = "master"
-  }
-  tags_all = {
-    "Name"                              = "master"
-    "elasticbeanstalk:environment-id"   = "e-mqcf2epbq2"
-    "elasticbeanstalk:environment-name" = "master"
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -36,6 +30,22 @@ resource "aws_db_parameter_group" "default" {
     apply_method = "pending-reboot"
     name         = "max_connect_errors"
     value        = "1000"
+  }
+  parameter {
+    name  = "general_log"
+    value = "1"
+  }
+  parameter {
+    name  = "slow_query_log"
+    value = "1"
+  }
+  parameter {
+    name  = "long_query_time"
+    value = "1"
+  }
+  parameter {
+    name  = "sort_buffer_size"
+    value = "8388608"
   }
 
   lifecycle {
