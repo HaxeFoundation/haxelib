@@ -290,7 +290,7 @@ class Repository {
 	}
 
 	static inline function doesNameHaveCapitals(name:ProjectName):Bool {
-		return name != ProjectName.ofString(name.toLowerCase());
+		return name != name.toLowerCase();
 	}
 
 	function setCapitalization(name:ProjectName):Void {
@@ -309,7 +309,7 @@ class Repository {
 	function getCapitalization(name:ProjectName):ProjectName {
 		final filePath = addToRepoPath(name, NAME_FILE);
 		if (!FileSystem.exists(filePath))
-			return ProjectName.ofString(name.toLowerCase());
+			return name.toLowerCase();
 
 		final content = try {
 			File.getContent(filePath);

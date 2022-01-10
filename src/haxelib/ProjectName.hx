@@ -8,7 +8,6 @@ import haxelib.Validator;
 using StringTools;
 
 /** A valid project name string. **/
-@:forward(toLowerCase)
 abstract ProjectName(String) to String {
 	static var RESERVED_NAMES = ["haxe", "all"];
 	static var RESERVED_EXTENSIONS = ['.zip', '.hxml'];
@@ -55,6 +54,9 @@ abstract ProjectName(String) to String {
 	**/
 	public function validate()
 		return toValidatable().validate();
+
+	public function toLowerCase():ProjectName
+		return new ProjectName(this.toLowerCase());
 
 	/**
 		Returns `s` as a `ProjectName` if it is valid,
