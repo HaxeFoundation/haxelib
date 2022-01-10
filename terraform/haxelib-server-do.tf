@@ -197,9 +197,11 @@ resource "kubernetes_ingress" "do-haxelib-server" {
     annotations = {
       "cert-manager.io/cluster-issuer"                    = "letsencrypt-production"
       "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
+
+      # https://nginx.org/en/docs/http/ngx_http_proxy_module.html
       "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
         proxy_cache mycache;
-        proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
         proxy_cache_background_update on;
         proxy_cache_revalidate on;
         proxy_cache_lock on;
