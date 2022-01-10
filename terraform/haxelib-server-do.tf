@@ -49,6 +49,20 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             }
           }
         }
+        # affinity {
+        #   node_affinity {
+        #     preferred_during_scheduling_ignored_during_execution {
+        #       preference {
+        #         match_expressions {
+        #           key      = "node.kubernetes.io/instance-type"
+        #           operator = "In"
+        #           values   = ["s-4vcpu-8gb"]
+        #         }
+        #       }
+        #       weight = 1
+        #     }
+        #   }
+        # }
 
         container {
           image = each.value.image
