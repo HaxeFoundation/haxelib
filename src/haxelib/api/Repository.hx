@@ -25,7 +25,7 @@ class Repository {
 	static final CURRENT = ".current";
 
 	/** Name of file used to keep track of capitalization. **/
-	static final NAME = ".name";
+	static final NAME_FILE = ".name";
 
 	/**
 		The path to the repository.
@@ -74,23 +74,20 @@ class Repository {
 		inline function isFilteredOut(name:String) {
 			if (filter == null)
 				return false;
-			return !name.toLowerCase().contains(filter);
+			return !name.contains(filter);
 		}
 
 		final projects = [];
-		var libraryName:ProjectName;
 
 		for (dir in FileSystem.readDirectory(path)) {
 			// hidden, not a folder, or has upper case letters
-			if (dir.startsWith(".") || !FileSystem.isDirectory(Path.join([path, dir])) || dir.toLowerCase() != dir)
+			if (dir.startsWith(".") || dir.toLowerCase() != dir || !FileSystem.isDirectory(Path.join([path, dir])))
 				continue;
 
-			libraryName = getCorrectProjectName(
-				try ProjectName.ofString(Data.unsafe(dir))
-				catch (_:haxe.Exception) continue
-			);
+			final allLower = try ProjectName.ofString(Data.unsafe(dir)) catch (_) continue;
+			final libraryName = getCapitalization(allLower);
 
-			if (!isFilteredOut(libraryName))
+			if (!isFilteredOut(allLower))
 				projects.push(libraryName);
 		}
 		return projects;
@@ -217,7 +214,7 @@ class Repository {
 		// or it is a git/hg/dev version but there are no proper versions installed
 		// proper semver releases replace names given by git/hg/dev versions
 		if (isNewLibrary || SemVer.isValid(version) || !doesLibraryHaveOfficialVersion(name))
-			setCapitalizationIfNeeded(name);
+			setCapitalization(name);
 	}
 
 	/**
@@ -286,27 +283,42 @@ class Repository {
 		`name` can be any possible capitalization variation of the library name.
 	**/
 	public function getCorrectName(name:ProjectName):ProjectName {
-		return getCorrectProjectName(name);
+		final rootPath = getProjectRootPath(name);
+		if (!FileSystem.exists(rootPath))
+			throw 'Library $name is not installed';
+
+		return getCapitalization(name);
 	}
 
 	static inline function doesNameHaveCapitals(name:ProjectName):Bool {
 		return name != ProjectName.ofString(name.toLowerCase());
 	}
 
-	function setCapitalizationIfNeeded(name:ProjectName):Void {
+	function setCapitalization(name:ProjectName):Void {
 		// if it is not all lowercase then we save the actual capitalisation in the `.name` file
-		final filePath = getNameFilePath(name);
+		final filePath = addToRepoPath(name, NAME_FILE);
 
 		if (doesNameHaveCapitals(name)) {
 			File.saveContent(filePath, name);
 			return;
 		}
 
-		try
-			FileSystem.deleteFile(filePath)
-		catch (_) {
-			// file didn't exist so we're good
+		if (FileSystem.exists(filePath))
+			FileSystem.deleteFile(filePath);
+	}
+
+	function getCapitalization(name:ProjectName):ProjectName {
+		final filePath = addToRepoPath(name, NAME_FILE);
+		if (!FileSystem.exists(filePath))
+			return ProjectName.ofString(name.toLowerCase());
+
+		final content = try {
+			File.getContent(filePath);
+		} catch (e) {
+			throw 'Failed when checking the name for library \'$name\': $e';
 		}
+
+		return ProjectName.ofString(content.trim());
 	}
 
 	// returns whether or not `name` has any versions installed which are not dev/git/hg
@@ -338,13 +350,6 @@ class Repository {
 				File.getContent(getCurrentFilePath(name)).trim()
 			catch(e:haxe.Exception)
 				throw new CurrentVersionException('No current version set for library \'$name\'');
-	}
-
-	inline function getCorrectProjectName(name:ProjectName):ProjectName {
-		return try
-				ProjectName.ofString(File.getContent(getNameFilePath(name)).trim())
-			catch(e:haxe.Exception)
-				name;
 	}
 
 	inline function getProjectRootPath(name:ProjectName):String {
@@ -387,7 +392,7 @@ class Repository {
 		FileSystem.createDirectory(root);
 
 		if (isNew || !doesLibraryHaveOfficialVersion(name)) {
-			setCapitalizationIfNeeded(name);
+			setCapitalization(name);
 		}
 
 		final devFile = Path.join([root, DEV]);
