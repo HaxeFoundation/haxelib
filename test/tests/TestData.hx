@@ -6,6 +6,7 @@ import haxe.io.*;
 import haxe.zip.*;
 import sys.io.*;
 import haxelib.Data;
+import haxelib.ProjectName;
 using StringTools;
 
 class TestData extends TestBase {

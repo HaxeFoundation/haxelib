@@ -5,7 +5,7 @@ import sys.FileSystem;
 
 import tests.util.DirectoryState;
 
-import haxelib.Data;
+import haxelib.ProjectName;
 import haxelib.SemVer;
 
 import haxelib.api.Vcs;

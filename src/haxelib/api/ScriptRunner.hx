@@ -2,7 +2,6 @@ package haxelib.api;
 
 import sys.FileSystem;
 
-import haxelib.Data.ProjectName;
 import haxelib.Data.DependencyVersion;
 import haxelib.api.LibraryData;
 

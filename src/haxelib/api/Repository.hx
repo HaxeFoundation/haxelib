@@ -3,7 +3,6 @@ package haxelib.api;
 import sys.FileSystem;
 import sys.io.File;
 
-import haxelib.Data;
 import haxelib.api.RepoManager;
 import haxelib.api.LibraryData;
 
