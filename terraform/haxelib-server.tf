@@ -201,6 +201,7 @@ resource "kubernetes_ingress" "haxelib-server" {
 
       # https://nginx.org/en/docs/http/ngx_http_proxy_module.html
       "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
+        proxy_set_header Cookie "";
         proxy_cache mycache;
         proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
         proxy_cache_background_update on;
