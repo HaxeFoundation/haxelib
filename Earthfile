@@ -190,7 +190,7 @@ devcontainer:
     COPY --chown=$USER_UID:$USER_GID package.json yarn.lock .
     RUN yarn
     COPY --chown=$USER_UID:$USER_GID generate_extern.sh .
-    RUN ./generate_extern.sh
+    RUN bash generate_extern.sh
     COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
     COPY --chown=$USER_UID:$USER_GID lib lib
     RUN mkdir -p haxelib_global
@@ -256,3 +256,88 @@ do-kubeconfig:
         . ./.envrc \
         && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
     SAVE ARTIFACT --keep-ts kubeconfig
+
+haxelib-server:
+    FROM ubuntu:$UBUNTU_RELEASE
+
+    RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
+        && add-apt-repository ppa:haxe/haxe3.4 -y \
+        && apt-get update && apt-get upgrade -y \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            apache2 \
+            neko-dev \
+            haxe \
+            curl \
+            git \
+            libcurl4-gnutls-dev \
+        && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            nodejs \
+        && rm -r /var/lib/apt/lists/*
+
+    # apache httpd
+    RUN rm -rf /var/www/html \
+        && mkdir -p /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
+        && chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
+        && a2enmod rewrite \
+        && a2enmod proxy \
+        && a2enmod proxy_http \
+        && a2enmod headers \
+        && a2dismod mpm_event \
+        && a2enmod mpm_prefork \
+        && mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
+    COPY apache2.conf /etc/apache2/apache2.conf
+    RUN { \
+            echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
+            echo 'LoadModule tora_module /usr/lib/x86_64-linux-gnu/neko/mod_tora2.ndll'; \
+            echo 'AddHandler tora-handler .n'; \
+        } > /etc/apache2/mods-enabled/tora.conf \
+        && apachectl stop
+
+    # haxelib
+    ENV HAXELIB_PATH /src/haxelib_global
+    RUN mkdir -p ${HAXELIB_PATH} && haxelib setup ${HAXELIB_PATH}
+    WORKDIR /src
+    COPY libs.hxml run.n /src/
+    COPY lib/record-macros /src/lib/record-macros
+    RUN haxe libs.hxml && rm ${HAXELIB_PATH}/*.zip
+    RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+    COPY server*.hxml /src/
+
+    COPY www/package*.json /src/www/
+    WORKDIR /src/www/
+    RUN npm install --unsafe-perm
+
+    COPY www /src/www/
+    COPY src/legacyhaxelib/.htaccess /src/www/legacy/
+    COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
+    COPY src/legacyhaxelib/website.mtt /src/www/legacy/
+    COPY src /src/src/
+
+    RUN rm -rf /var/www/html
+    RUN ln -s /src/www /var/www/html
+    RUN mkdir -p /var/www/html/files
+    RUN mkdir -p /var/www/html/tmp
+
+    WORKDIR /src
+
+    RUN haxe server_legacy.hxml
+    RUN haxe server_website.hxml
+    RUN haxe server_tasks.hxml
+    RUN haxe server_api.hxml
+
+    EXPOSE 80
+    VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
+    CMD apachectl restart && haxelib run tora
+
+    ARG HAXELIB_SERVER_IMAGE_NAME=haxe/lib.haxe.org
+    ARG HAXELIB_SERVER_IMAGE_TAG=latest
+    SAVE IMAGE --push "$HAXELIB_SERVER_IMAGE_NAME:$HAXELIB_SERVER_IMAGE_TAG" "$HAXELIB_SERVER_IMAGE_NAME:latest"
+
+copy-image:
+    LOCALLY
+    ARG --required SRC
+    ARG --required DEST
+    RUN docker pull "$SRC"
+    RUN docker tag "$SRC" "$DEST"
+    RUN docker push "$DEST"

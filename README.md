@@ -74,10 +74,11 @@ Folders:
 * /bin/: The compile target for building the haxelib client, legacy client, and others.
 * /www/: The compile target (and supporting files) for the haxelib website (including legacy server)
 * /test/: Source code and files for testings.
+* /terraform/: Terraform module that defines the haxelib server (lib.haxe.org) infrastructure.
 
 Other files:
 
 * schema.json: JSON schema of haxelib.json.
 * deploy.json: Deploy configuration used by `haxelib run ufront deploy` for pushing the haxelib website to lib.haxe.org.
 * deploy_key.enc: Encrypted ssh private key for logging in to lib.haxe.org. Used by TravisCI.
-* Dockerfile: Docker build file for building an image that runs the haxelib server.
+* Earthfile: [Earthly](https://earthly.dev/) build file for building an image for [Visual Studio Code Remote - Containers](https://code.visualstudio.com/docs/remote/containers) and an image for deploying to our infrastructure.

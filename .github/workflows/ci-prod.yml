@@ -10,7 +10,14 @@ jobs:
   deploy-prod:
     concurrency: deploy
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:20220109090548
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ghcr.io/HaxeFoundation/haxelib_devcontainer_workspace:${{ github.sha }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     env:
       AWS_DEFAULT_REGION: eu-west-1
       TF_INPUT: 0
