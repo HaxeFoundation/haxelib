@@ -21,12 +21,11 @@ devcontainer-base:
     ARG INSTALL_ZSH="false"
     ARG UPGRADE_PACKAGES="true"
     ARG ENABLE_NONROOT_DOCKER="true"
-    ARG USE_MOBY="true"
-    COPY .devcontainer/library-scripts/*.sh /tmp/library-scripts/
+    ARG USE_MOBY="false"
+    COPY .devcontainer/library-scripts/common-debian.sh .devcontainer/library-scripts/docker-debian.sh /tmp/library-scripts/
     RUN apt-get update \
         && /bin/bash /tmp/library-scripts/common-debian.sh "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" "true" "true" \
-        # Use Docker script from script library to set things up
-        && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "/var/run/docker-host.sock" "/var/run/docker.sock" "${USERNAME}" \
+        && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "/var/run/docker-host.sock" "/var/run/docker.sock" "${USERNAME}" "${USE_MOBY}" \
         # Clean up
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
@@ -52,6 +51,7 @@ devcontainer-base:
             direnv \
             tzdata \
             python3-pip \
+            docker-ce \ # install docker engine for running +ci target
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
@@ -228,6 +228,9 @@ devcontainer:
     COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
     VOLUME /workspace/haxelib_global
 
+    # config haxelib for $USERNAME
+    RUN haxelib setup /workspace/haxelib_global
+
     # Config direnv
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
 
@@ -245,9 +248,12 @@ devcontainer:
 
     USER root
 
+    # config haxelib for root
+    RUN haxelib setup /workspace/haxelib_global
+
     ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     ARG DEVCONTAINER_IMAGE_TAG=latest
-    SAVE IMAGE --push "$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG" "$DEVCONTAINER_IMAGE_NAME:latest"
+    SAVE IMAGE --push "$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG"
 
 devcontainer-rebuild:
     RUN --no-cache date +%Y%m%d%H%M%S | tee buildtime
@@ -362,7 +368,7 @@ haxelib-server:
 
     ARG HAXELIB_SERVER_IMAGE_NAME=haxe/lib.haxe.org
     ARG HAXELIB_SERVER_IMAGE_TAG=latest
-    SAVE IMAGE --push "$HAXELIB_SERVER_IMAGE_NAME:$HAXELIB_SERVER_IMAGE_TAG" "$HAXELIB_SERVER_IMAGE_NAME:latest"
+    SAVE IMAGE --push "$HAXELIB_SERVER_IMAGE_NAME:$HAXELIB_SERVER_IMAGE_TAG"
 
 copy-image:
     LOCALLY
@@ -371,3 +377,45 @@ copy-image:
     RUN docker pull "$SRC"
     RUN docker tag "$SRC" "$DEST"
     RUN docker push "$DEST"
+
+ci-runner:
+    FROM +devcontainer
+    COPY test .
+    COPY ci.hxml .
+    RUN haxe ci.hxml
+    SAVE ARTIFACT bin/ci.n
+
+ci-test:
+    FROM +devcontainer
+    COPY hx3compat hx3compat
+    COPY lib/node-sys-db lib/node-sys-db
+    COPY lib/record-macros lib/record-macros
+    COPY src src
+    COPY www www
+    COPY test test
+    COPY *.hxml .
+    COPY haxelib.json run.n README.md . # for package.hxml
+    COPY +ci-runner/ci.n bin/ci.n
+    ENV HAXELIB_SERVER=localhost
+    ENV HAXELIB_SERVER_PORT=80
+    ENV HAXELIB_DB_HOST=localhost
+    ENV HAXELIB_DB_PORT=3306
+    ENV HAXELIB_DB_USER=dbUser
+    ENV HAXELIB_DB_PASS=dbPass
+    ENV HAXELIB_DB_NAME=haxelib
+    WITH DOCKER \
+            --compose test/docker-compose.yml \
+            --load haxelib_server:latest=+haxelib-server
+        RUN neko bin/ci.n
+    END
+
+ci:
+    BUILD +ci-test
+    ARG --required GIT_REF_NAME
+    ARG --required GIT_SHA
+    BUILD +devcontainer \
+        --DEVCONTAINER_IMAGE_TAG="$GIT_REF_NAME" \
+        --DEVCONTAINER_IMAGE_TAG="$GIT_SHA"
+    BUILD +haxelib-server \
+        --HAXELIB_SERVER_IMAGE_TAG="$GIT_REF_NAME" \
+        --HAXELIB_SERVER_IMAGE_TAG="$GIT_SHA"
