@@ -2,6 +2,7 @@ VERSION 0.6
 ARG UBUNTU_RELEASE=bionic
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
 ARG DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/haxelib_devcontainer_workspace
+ARG HAXELIB_SERVER_IMAGE_NAME_DEFAULT=haxe/lib.haxe.org
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -251,38 +252,39 @@ devcontainer:
     # config haxelib for root
     RUN haxelib setup /workspace/haxelib_global
 
-    ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
-    ARG DEVCONTAINER_IMAGE_TAG=latest
-    SAVE IMAGE --push "$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG"
+    ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
+    ARG IMAGE_TAG=latest
+    ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
+    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
 
 devcontainer-rebuild:
     RUN --no-cache date +%Y%m%d%H%M%S | tee buildtime
-    ARG DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
+    ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     BUILD \
         --platform=linux/amd64 \
         +devcontainer \
-        --DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME" \
-        --DEVCONTAINER_IMAGE_TAG="$(cat buildtime)"
+        --IMAGE_NAME="$IMAGE_NAME" \
+        --IMAGE_TAG="$(cat buildtime)"
     BUILD +devcontainer-update-refs \
-        --DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME" \
-        --DEVCONTAINER_IMAGE_TAG="$(cat buildtime)"
+        --IMAGE_NAME="$IMAGE_NAME" \
+        --IMAGE_TAG="$(cat buildtime)"
 
 devcontainer-update-refs:
-    ARG --required DEVCONTAINER_IMAGE_NAME
-    ARG --required DEVCONTAINER_IMAGE_TAG
+    ARG --required IMAGE_NAME
+    ARG --required IMAGE_TAG
     BUILD +devcontainer-update-ref \
-        --DEVCONTAINER_IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME" \
-        --DEVCONTAINER_IMAGE_TAG="$DEVCONTAINER_IMAGE_TAG" \
+        --IMAGE_NAME="$IMAGE_NAME" \
+        --IMAGE_TAG="$IMAGE_TAG" \
         --FILE='./.devcontainer/docker-compose.yml' \
         --FILE='./.github/workflows/ci-dev.yml' \
         --FILE='./.github/workflows/ci-prod.yml'
 
 devcontainer-update-ref:
-    ARG --required DEVCONTAINER_IMAGE_NAME
-    ARG --required DEVCONTAINER_IMAGE_TAG
+    ARG --required IMAGE_NAME
+    ARG --required IMAGE_TAG
     ARG --required FILE
     COPY "$FILE" file.src
-    RUN sed -e "s#$DEVCONTAINER_IMAGE_NAME:[a-z0-9]*#$DEVCONTAINER_IMAGE_NAME:$DEVCONTAINER_IMAGE_TAG#g" file.src > file.out
+    RUN sed -e "s#$IMAGE_NAME:[a-z0-9]*#$IMAGE_NAME:$IMAGE_TAG#g" file.src > file.out
     SAVE ARTIFACT --keep-ts file.out $FILE AS LOCAL $FILE
 
 do-kubeconfig:
@@ -366,9 +368,10 @@ haxelib-server:
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
     CMD apachectl restart && haxelib run tora
 
-    ARG HAXELIB_SERVER_IMAGE_NAME=haxe/lib.haxe.org
-    ARG HAXELIB_SERVER_IMAGE_TAG=latest
-    SAVE IMAGE --push "$HAXELIB_SERVER_IMAGE_NAME:$HAXELIB_SERVER_IMAGE_TAG"
+    ARG IMAGE_NAME="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT"
+    ARG IMAGE_TAG=latest
+    ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
+    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
 
 copy-image:
     LOCALLY
@@ -413,9 +416,11 @@ ci:
     BUILD +ci-test
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
-    BUILD +devcontainer \
-        --DEVCONTAINER_IMAGE_TAG="$GIT_REF_NAME" \
-        --DEVCONTAINER_IMAGE_TAG="$GIT_SHA"
+    BUILD +devcontainer \ 
+        --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
+        --IMAGE_TAG="$GIT_REF_NAME" \
+        --IMAGE_TAG="$GIT_SHA"
     BUILD +haxelib-server \
-        --HAXELIB_SERVER_IMAGE_TAG="$GIT_REF_NAME" \
-        --HAXELIB_SERVER_IMAGE_TAG="$GIT_SHA"
+        --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
+        --IMAGE_TAG="$GIT_REF_NAME" \
+        --IMAGE_TAG="$GIT_SHA"
