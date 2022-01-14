@@ -255,6 +255,7 @@ devcontainer:
     ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
     ARG IMAGE_TAG=latest
     ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
+    RUN --no-cache echo "$IMAGE_CACHE"
     SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
 
 devcontainer-rebuild:
@@ -413,7 +414,6 @@ ci-test:
     END
 
 ci:
-    BUILD +ci-test
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
     BUILD +devcontainer \ 
@@ -424,3 +424,4 @@ ci:
         --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_SHA"
+    BUILD +ci-test
