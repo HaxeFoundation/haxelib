@@ -21,18 +21,18 @@ services:
     user: vscode
     entrypoint: /usr/local/share/docker-init.sh
     command: sleep infinity
-  haxelib:
-    build: ..
-    ports:
-      - "80:80"
-    environment:
-      - HAXELIB_DB_HOST=dbHost
-      - HAXELIB_DB_PORT=3306
-      - HAXELIB_DB_USER=dbUser
-      - HAXELIB_DB_PASS=dbPass
-      - HAXELIB_DB_NAME=haxelib
-    volumes:
-      - ../www:/var/www/html
+  # haxelib:
+  #   build: ..
+  #   ports:
+  #     - "80:80"
+  #   environment:
+  #     - HAXELIB_DB_HOST=dbHost
+  #     - HAXELIB_DB_PORT=3306
+  #     - HAXELIB_DB_USER=dbUser
+  #     - HAXELIB_DB_PASS=dbPass
+  #     - HAXELIB_DB_NAME=haxelib
+  #   volumes:
+  #     - ../www:/var/www/html
   dbHost:
     image: mariadb:10.5
     environment:
