@@ -159,6 +159,35 @@ earthly:
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
+haxelib-deps:
+    FROM +devcontainer-base
+    USER $USERNAME
+    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
+    COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
+    RUN mkdir -p haxelib_global
+    RUN haxelib setup haxelib_global
+    RUN haxe libs.hxml && rm haxelib_global/*.zip
+    SAVE ARTIFACT haxelib_global
+
+node-modules-prod:
+    FROM +devcontainer-base
+    USER $USERNAME
+    COPY --chown=$USER_UID:$USER_GID package.json yarn.lock .
+    RUN yarn --production
+    SAVE ARTIFACT node_modules
+
+node-modules-dev:
+    FROM +node-modules-prod
+    RUN yarn
+    SAVE ARTIFACT node_modules
+
+dts2hx-externs:
+    FROM +node-modules-dev
+    USER $USERNAME
+    COPY --chown=$USER_UID:$USER_GID generate_extern.sh .
+    RUN bash generate_extern.sh
+    SAVE ARTIFACT lib/dts2hx-generated
+
 devcontainer:
     FROM +devcontainer-base
 
@@ -187,16 +216,12 @@ devcontainer:
 
     USER $USERNAME
 
-    COPY --chown=$USER_UID:$USER_GID package.json yarn.lock .
-    RUN yarn
-    COPY --chown=$USER_UID:$USER_GID generate_extern.sh .
-    RUN bash generate_extern.sh
-    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
-    COPY --chown=$USER_UID:$USER_GID lib lib
-    RUN mkdir -p haxelib_global
-    RUN haxelib setup haxelib_global
-    RUN haxe libs.hxml && rm haxelib_global/*.zip
-    VOLUME /workspace/node_modules /workspace/haxelib_global /workspace/lib/dts2hx-generated
+    COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
+    VOLUME /workspace/node_modules
+    COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
+    VOLUME /workspace/lib/dts2hx-generated
+    COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
+    VOLUME /workspace/haxelib_global
 
     # Config direnv
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
