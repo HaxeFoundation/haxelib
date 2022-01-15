@@ -252,41 +252,12 @@ devcontainer:
     # config haxelib for root
     RUN haxelib setup /workspace/haxelib_global
 
+    ARG GIT_SHA
+    ENV GIT_SHA="$GIT_SHA"
     ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
-    ARG IMAGE_TAG=latest
+    ARG IMAGE_TAG=development
     ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
-    RUN --no-cache echo "$IMAGE_CACHE"
     SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
-
-devcontainer-rebuild:
-    RUN --no-cache date +%Y%m%d%H%M%S | tee buildtime
-    ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
-    BUILD \
-        --platform=linux/amd64 \
-        +devcontainer \
-        --IMAGE_NAME="$IMAGE_NAME" \
-        --IMAGE_TAG="$(cat buildtime)"
-    BUILD +devcontainer-update-refs \
-        --IMAGE_NAME="$IMAGE_NAME" \
-        --IMAGE_TAG="$(cat buildtime)"
-
-devcontainer-update-refs:
-    ARG --required IMAGE_NAME
-    ARG --required IMAGE_TAG
-    BUILD +devcontainer-update-ref \
-        --IMAGE_NAME="$IMAGE_NAME" \
-        --IMAGE_TAG="$IMAGE_TAG" \
-        --FILE='./.devcontainer/docker-compose.yml' \
-        --FILE='./.github/workflows/ci-dev.yml' \
-        --FILE='./.github/workflows/ci-prod.yml'
-
-devcontainer-update-ref:
-    ARG --required IMAGE_NAME
-    ARG --required IMAGE_TAG
-    ARG --required FILE
-    COPY "$FILE" file.src
-    RUN sed -e "s#$IMAGE_NAME:[a-z0-9]*#$IMAGE_NAME:$IMAGE_TAG#g" file.src > file.out
-    SAVE ARTIFACT --keep-ts file.out $FILE AS LOCAL $FILE
 
 do-kubeconfig:
     FROM +doctl
@@ -369,8 +340,10 @@ haxelib-server:
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
     CMD apachectl restart && haxelib run tora
 
+    ARG GIT_SHA
+    ENV GIT_SHA="$GIT_SHA"
     ARG IMAGE_NAME="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT"
-    ARG IMAGE_TAG=latest
+    ARG IMAGE_TAG=development
     ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
     SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
 
@@ -419,9 +392,11 @@ ci:
     BUILD +devcontainer \ 
         --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_SHA"
+        --IMAGE_TAG="$GIT_SHA" \
+        --GIT_SHA="$GIT_SHA"
     BUILD +haxelib-server \
         --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_SHA"
+        --IMAGE_TAG="$GIT_SHA" \
+        --GIT_SHA="$GIT_SHA"
     BUILD +ci-test
