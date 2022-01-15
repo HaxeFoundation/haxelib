@@ -267,6 +267,70 @@ do-kubeconfig:
         && KUBECONFIG="kubeconfig" doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
     SAVE ARTIFACT --keep-ts kubeconfig
 
+aws-ndll:
+    FROM +haxelib-deps
+    SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
+
+haxelib-server-builder:
+    FROM haxe:3.4
+
+    WORKDIR /workspace
+    COPY lib/record-macros lib/record-macros
+    COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
+    COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
+    COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
+    RUN haxelib setup /workspace/haxelib_global
+
+haxelib-server-legacy:
+    FROM +haxelib-server-builder
+    COPY server_legacy.hxml server_each.hxml .
+    COPY src src
+    COPY hx3compat hx3compat
+    COPY www/legacy www/legacy
+    RUN haxe server_legacy.hxml
+    SAVE ARTIFACT www/legacy/index.n
+
+haxelib-server-website:
+    FROM +haxelib-server-builder
+    COPY server_website.hxml server_each.hxml .
+    COPY src src
+    COPY hx3compat hx3compat
+    RUN haxe server_website.hxml
+    SAVE ARTIFACT www/index.n
+
+haxelib-server-website-highlighter:
+    FROM +haxelib-server-builder
+    COPY server_website_highlighter.hxml .
+    RUN haxe server_website_highlighter.hxml
+    SAVE ARTIFACT www/js/highlighter.js
+
+haxelib-server-tasks:
+    FROM +haxelib-server-builder
+    COPY server_tasks.hxml server_each.hxml .
+    COPY src src
+    COPY hx3compat hx3compat
+    RUN haxe server_tasks.hxml
+    SAVE ARTIFACT www/tasks.n
+
+haxelib-server-api:
+    FROM +haxelib-server-builder
+    COPY server_api.hxml server_each.hxml .
+    COPY src src
+    COPY hx3compat hx3compat
+    RUN haxe server_api.hxml
+    SAVE ARTIFACT www/api/3.0/index.n
+
+haxelib-server-www-node-modules:
+    FROM +devcontainer-base
+    WORKDIR /src/www/
+    COPY www/package*.json .
+    RUN npm install --unsafe-perm
+    SAVE ARTIFACT node_modules
+
+tora:
+    FROM +haxelib-deps
+    SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
+
 haxelib-server:
     FROM ubuntu:$UBUNTU_RELEASE
 
@@ -275,14 +339,8 @@ haxelib-server:
         && apt-get update && apt-get upgrade -y \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             apache2 \
-            neko-dev \
-            haxe \
-            curl \
-            git \
-            libcurl4-gnutls-dev \
-        && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            nodejs \
+            neko \
+            libapache2-mod-neko \
         && rm -r /var/lib/apt/lists/*
 
     # apache httpd
@@ -304,41 +362,32 @@ haxelib-server:
         } > /etc/apache2/mods-enabled/tora.conf \
         && apachectl stop
 
-    # haxelib
-    ENV HAXELIB_PATH /src/haxelib_global
-    RUN mkdir -p ${HAXELIB_PATH} && haxelib setup ${HAXELIB_PATH}
+    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+
     WORKDIR /src
-    COPY libs.hxml run.n /src/
-    COPY lib/record-macros /src/lib/record-macros
-    RUN haxe libs.hxml && rm ${HAXELIB_PATH}/*.zip
-    RUN cp ${HAXELIB_PATH}/aws-sdk-neko/*/ndll/Linux64/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
-    COPY server*.hxml /src/
 
-    COPY www/package*.json /src/www/
-    WORKDIR /src/www/
-    RUN npm install --unsafe-perm
+    COPY www www
+    COPY +haxelib-server-www-node-modules/node_modules /src/www/node_modules
 
-    COPY www /src/www/
     COPY src/legacyhaxelib/.htaccess /src/www/legacy/
     COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
     COPY src/legacyhaxelib/website.mtt /src/www/legacy/
-    COPY src /src/src/
 
     RUN rm -rf /var/www/html
     RUN ln -s /src/www /var/www/html
     RUN mkdir -p /var/www/html/files
     RUN mkdir -p /var/www/html/tmp
 
-    WORKDIR /src
-
-    RUN haxe server_legacy.hxml
-    RUN haxe server_website.hxml
-    RUN haxe server_tasks.hxml
-    RUN haxe server_api.hxml
+    COPY +haxelib-server-legacy/index.n www/legacy/index.n
+    COPY +haxelib-server-website-highlighter/highlighter.js www/js/highlighter.js
+    COPY +haxelib-server-website/index.n www/index.n
+    COPY +haxelib-server-tasks/tasks.n www/tasks.n
+    COPY +haxelib-server-api/index.n www/api/3.0/index.n
+    COPY +tora/run.n tora.n
 
     EXPOSE 80
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
-    CMD apachectl restart && haxelib run tora
+    CMD apachectl restart && neko tora.n
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
