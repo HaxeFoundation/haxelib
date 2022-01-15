@@ -320,12 +320,16 @@ haxelib-server-api:
     RUN haxe server_api.hxml
     SAVE ARTIFACT www/api/3.0/index.n
 
-haxelib-server-www-node-modules:
+haxelib-server-www-js:
     FROM +devcontainer-base
-    WORKDIR /src/www/
-    COPY www/package*.json .
-    RUN npm install --unsafe-perm
-    SAVE ARTIFACT node_modules
+    RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
+    RUN curl -fsSL https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
+    SAVE ARTIFACT *.js
+
+haxelib-server-www-css:
+    FROM +devcontainer-base
+    RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
+    SAVE ARTIFACT *.css
 
 tora:
     FROM +haxelib-deps
@@ -367,7 +371,8 @@ haxelib-server:
     WORKDIR /src
 
     COPY www www
-    COPY +haxelib-server-www-node-modules/node_modules /src/www/node_modules
+    COPY +haxelib-server-www-js/* /src/www/js/
+    COPY +haxelib-server-www-css/* /src/www/css/
 
     COPY src/legacyhaxelib/.htaccess /src/www/legacy/
     COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
