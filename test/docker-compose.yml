@@ -1,7 +1,7 @@
 version: '3'
 services:
   haxelib_server:
-    image: haxelib_server:latest
+    image: haxe/lib.haxe.org:development
     ports:
       - "80:80"
     environment:

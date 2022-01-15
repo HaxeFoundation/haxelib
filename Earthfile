@@ -431,7 +431,7 @@ ci-test:
     ENV HAXELIB_DB_NAME=haxelib
     WITH DOCKER \
             --compose test/docker-compose.yml \
-            --load haxelib_server:latest=+haxelib-server
+            --load haxe/lib.haxe.org:development=+haxelib-server
         RUN neko bin/ci.n
     END
 
