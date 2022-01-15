@@ -255,9 +255,10 @@ devcontainer:
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
     ARG IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME_DEFAULT"
-    ARG IMAGE_TAG=development
+    ARG IMAGE_TAG="development"
+    ARG IMAGE_TAG2="${IMAGE_TAG}"
     ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
-    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
+    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:$IMAGE_TAG2"
 
 do-kubeconfig:
     FROM +doctl
@@ -397,9 +398,10 @@ haxelib-server:
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
     ARG IMAGE_NAME="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT"
-    ARG IMAGE_TAG=development
+    ARG IMAGE_TAG="development"
+    ARG IMAGE_TAG2="$IMAGE_TAG"
     ARG IMAGE_CACHE="$IMAGE_NAME:$IMAGE_TAG"
-    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG"
+    SAVE IMAGE --cache-from="$IMAGE_CACHE" --push "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:$IMAGE_TAG2"
 
 copy-image:
     LOCALLY
@@ -446,11 +448,11 @@ ci:
     BUILD +devcontainer \ 
         --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_SHA" \
+        --IMAGE_TAG2="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
     BUILD +haxelib-server \
         --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_SHA" \
+        --IMAGE_TAG2="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
     BUILD +ci-test
