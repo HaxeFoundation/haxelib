@@ -9,8 +9,6 @@ on:
 
 env:
   EARTHLY_BUILDKIT_HOST: tcp://earthly:8372
-  EARTHLY_USE_INLINE_CACHE: "true"
-  EARTHLY_SAVE_INLINE_CACHE: "true"
   FORCE_COLOR: 1
 
 jobs:
@@ -38,9 +36,13 @@ jobs:
           username: haxeci
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - run: earthly --allow-privileged +ci-tests
+        env:
+          EARTHLY_NO_CACHE: "true"
       - run: earthly +ci-images --GIT_REF_NAME="${{ github.ref_name }}" --GIT_SHA="${{ github.sha }}"
         env:
           EARTHLY_PUSH: "${{ github.repository_owner == 'HaxeFoundation' && github.event_name == 'push' }}"
+          EARTHLY_USE_INLINE_CACHE: "true"
+          EARTHLY_SAVE_INLINE_CACHE: "true"
   deploy-development:
     if: success() && github.repository_owner == 'HaxeFoundation' && github.event_name == 'push' && github.ref_name == 'development'
     needs: test
