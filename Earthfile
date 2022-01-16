@@ -370,9 +370,12 @@ haxelib-server:
         && a2enmod proxy \
         && a2enmod proxy_http \
         && a2enmod headers \
+        && a2enmod status \
         && a2dismod mpm_event \
         && a2enmod mpm_prefork \
-        && mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.dist && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
+        && rm /etc/apache2/apache2.conf \
+        && rm /etc/apache2/mods-enabled/status.conf \
+        && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
             echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
@@ -410,7 +413,7 @@ haxelib-server:
     CMD apachectl restart && neko tora.n
 
     HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-        CMD curl -fsSL http://localhost/documentation/
+        CMD curl -fsSL http://localhost/server-status?auto
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
