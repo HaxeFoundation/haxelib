@@ -347,6 +347,7 @@ haxelib-server:
             neko \
             libapache2-mod-neko \
             libcurl3-gnutls \ # for aws.ndll
+            libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
 
     # apache httpd
