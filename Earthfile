@@ -413,7 +413,7 @@ haxelib-server:
     CMD apachectl restart && neko tora.n
 
     HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-        CMD curl -fsSL http://localhost/server-status?auto
+        CMD curl -fsSL http://localhost/httpd-status?auto
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
