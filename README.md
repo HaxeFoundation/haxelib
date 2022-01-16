@@ -48,9 +48,9 @@ neko bin/haxelib.n -R http://localhost/ search foo
 
 To run tests:
 ```
-earthly +ci-run
+earthly --allow-privileged +ci-tests
 ```
-Note that the earthly +ci-run target will create and destroy its own database.
+Note that the earthly +ci-tests target will create and destroy its own database.
 
 ### About this repo
 

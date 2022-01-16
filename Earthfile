@@ -418,7 +418,7 @@ ci-runner:
     RUN haxe ci.hxml
     SAVE ARTIFACT bin/ci.n
 
-ci-test:
+ci-tests:
     FROM +devcontainer
     COPY hx3compat hx3compat
     COPY lib/node-sys-db lib/node-sys-db
@@ -442,7 +442,7 @@ ci-test:
         RUN neko bin/ci.n
     END
 
-ci:
+ci-images:
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
     BUILD +devcontainer \ 
@@ -455,4 +455,3 @@ ci:
         --IMAGE_TAG="$GIT_REF_NAME" \
         --IMAGE_TAG2="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
-    BUILD +ci-test
