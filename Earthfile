@@ -367,7 +367,7 @@ haxelib-server:
         } > /etc/apache2/mods-enabled/tora.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll;
+    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
 
     WORKDIR /src
 
