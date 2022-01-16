@@ -147,6 +147,16 @@ resource "kubernetes_deployment" "haxelib-server" {
               }
             }
           }
+
+          liveness_probe {
+            http_get {
+              path = "/documentation/"
+              port = 80
+            }
+            initial_delay_seconds = 10
+            period_seconds        = 15
+            timeout_seconds       = 5
+          }
         }
       }
     }
@@ -197,7 +207,7 @@ resource "kubernetes_ingress" "haxelib-server" {
   metadata {
     name = "haxelib-server-${each.key}"
     annotations = {
-      "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
+      "nginx.ingress.kubernetes.io/proxy-buffering" = "on"
 
       # https://nginx.org/en/docs/http/ngx_http_proxy_module.html
       "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT

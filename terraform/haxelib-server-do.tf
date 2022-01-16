@@ -142,6 +142,16 @@ resource "kubernetes_deployment" "do-haxelib-server" {
               }
             }
           }
+
+          liveness_probe {
+            http_get {
+              path = "/documentation/"
+              port = 80
+            }
+            initial_delay_seconds = 10
+            period_seconds        = 15
+            timeout_seconds       = 5
+          }
         }
       }
     }
