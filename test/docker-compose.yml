@@ -22,5 +22,7 @@ services:
       - MYSQL_PASSWORD=dbPass
     volumes:
       - database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
 volumes:
   database: {}

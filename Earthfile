@@ -342,6 +342,7 @@ haxelib-server:
         && add-apt-repository ppa:haxe/haxe3.4 -y \
         && apt-get update && apt-get upgrade -y \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            curl \
             apache2 \
             neko \
             libapache2-mod-neko \
@@ -393,6 +394,9 @@ haxelib-server:
     EXPOSE 80
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
     CMD apachectl restart && neko tora.n
+
+    HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+        CMD curl -fsSL http://localhost/documentation/
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
