@@ -7,7 +7,7 @@ terraform {
     }
     digitalocean = {
       source  = "digitalocean/digitalocean"
-      version = "~> 2.16"
+      version = "~> 2.17"
     }
     github = {
       source  = "integrations/github"

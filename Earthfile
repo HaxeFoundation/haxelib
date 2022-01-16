@@ -165,6 +165,15 @@ earthly:
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
+rclone:
+    FROM +devcontainer-base
+    ARG --required TARGETARCH
+    ARG RCLONE_VERSION=1.57.0
+    RUN curl -fsSL "https://downloads.rclone.org/v1.57.0/rclone-v1.57.0-linux-${TARGETARCH}.zip" -o rclone.zip \
+        && unzip -qq rclone.zip \
+        && rm rclone.zip
+    SAVE ARTIFACT rclone-*/rclone
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
@@ -219,6 +228,9 @@ devcontainer:
     # Install earthly
     COPY +earthly/earthly /usr/local/bin/
     RUN earthly bootstrap --no-buildkit --with-autocomplete
+
+    # Install rclone
+    COPY +rclone/rclone /usr/local/bin/
 
     USER $USERNAME
 
