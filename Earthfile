@@ -348,16 +348,19 @@ tora:
     SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
 
 haxelib-server:
-    FROM ubuntu:$UBUNTU_RELEASE
+    FROM phusion/baseimage:focal-1.1.0
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
-        && add-apt-repository ppa:haxe/haxe3.4 -y \
+        && add-apt-repository ppa:haxe/releases -y \
         && apt-get update && apt-get upgrade -y \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             curl \
             apache2 \
             neko \
             libapache2-mod-neko \
+        && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
+        && apt-get update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             libcurl3-gnutls \ # for aws.ndll
             libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
@@ -410,7 +413,16 @@ haxelib-server:
 
     EXPOSE 80
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
-    CMD apachectl restart && neko tora.n
+
+    RUN mkdir /etc/service/httpd
+    COPY server-daemon-httpd.sh /etc/service/httpd/run
+    RUN chmod a+x /etc/service/httpd/run
+
+    RUN mkdir /etc/service/tora
+    COPY server-daemon-tora.sh /etc/service/tora/run
+    RUN chmod a+x /etc/service/tora/run
+
+    CMD ["/sbin/my_init"]
 
     HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
         CMD curl -fsSL http://localhost/httpd-status?auto
