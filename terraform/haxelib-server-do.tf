@@ -145,7 +145,7 @@ resource "kubernetes_deployment" "do-haxelib-server" {
 
           liveness_probe {
             http_get {
-              path = "/documentation/"
+              path = "/httpd-status?auto"
               port = 80
             }
             initial_delay_seconds = 10
