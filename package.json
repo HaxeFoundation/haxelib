@@ -18,7 +18,7 @@
     "deasync": "^0.1.23",
     "fs-extra": "^10.0.0",
     "mysql2": "^2.3.0",
-    "node-fetch": "^2",
+    "node-fetch": "^3",
     "octokit": "^1.5.0",
     "promise-synchronizer": "^3.0.0",
     "simple-git": "^2.45.1"
