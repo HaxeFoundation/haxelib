@@ -3,7 +3,6 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_macro-0,6,4.zip -o haxelib_global/tink_macro.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_macro.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/promhx-1,1,0.zip -o haxelib_global/promhx.zip && neko run.n install --always --skip-dependencies haxelib_global/promhx.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/asynctools-0,1,0.zip -o haxelib_global/asynctools.zip && neko run.n install --always --skip-dependencies haxelib_global/asynctools.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/aws-sdk-neko-0,2,0.zip -o haxelib_global/aws-sdk-neko.zip && neko run.n install --always --skip-dependencies haxelib_global/aws-sdk-neko.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/buddy-2,8,1.zip -o haxelib_global/buddy.zip && neko run.n install --always --skip-dependencies haxelib_global/buddy.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/cleversort-1,0,3.zip -o haxelib_global/cleversort.zip && neko run.n install --always --skip-dependencies haxelib_global/cleversort.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/compiletime-2,6,0.zip -o haxelib_global/compiletime.zip && neko run.n install --always --skip-dependencies haxelib_global/compiletime.zip

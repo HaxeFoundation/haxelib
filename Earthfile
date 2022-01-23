@@ -182,6 +182,8 @@ haxelib-deps:
     RUN mkdir -p haxelib_global
     RUN haxelib setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
+    COPY github.com/andyli/aws-sdk-neko:0852144508e55c1d28ff7425a59ddf6f1758240a+package-zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
+    RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
     SAVE ARTIFACT haxelib_global
 
 node-modules-prod:
