@@ -112,20 +112,24 @@ resource "kubernetes_deployment" "haxelib-server" {
 
           env {
             name  = "HAXELIB_CDN"
-            value = "d1smpvufia21az.cloudfront.net"
+            value = digitalocean_cdn.haxelib.endpoint
           }
 
           env {
             name  = "HAXELIB_S3BUCKET"
-            value = aws_s3_bucket.lib-haxe-org.bucket
+            value = digitalocean_spaces_bucket.haxelib.name
+          }
+          env {
+            name  = "HAXELIB_S3BUCKET_ENDPOINT"
+            value = "${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com"
           }
 
           env {
             name = "AWS_ACCESS_KEY_ID"
             value_from {
               secret_key_ref {
-                name = "haxelib-server"
-                key  = "AWS_ACCESS_KEY_ID"
+                name = "haxelib-server-do-spaces"
+                key  = "SPACES_ACCESS_KEY_ID"
               }
             }
           }
@@ -133,19 +137,14 @@ resource "kubernetes_deployment" "haxelib-server" {
             name = "AWS_SECRET_ACCESS_KEY"
             value_from {
               secret_key_ref {
-                name = "haxelib-server"
-                key  = "AWS_SECRET_ACCESS_KEY"
+                name = "haxelib-server-do-spaces"
+                key  = "SPACES_SECRET_ACCESS_KEY"
               }
             }
           }
           env {
-            name = "AWS_DEFAULT_REGION"
-            value_from {
-              secret_key_ref {
-                name = "haxelib-server"
-                key  = "AWS_DEFAULT_REGION"
-              }
-            }
+            name  = "AWS_DEFAULT_REGION"
+            value = "us-east-1"
           }
 
           liveness_probe {
