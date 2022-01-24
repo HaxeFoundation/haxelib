@@ -58,13 +58,14 @@ class FileStorage {
 	static function get_instance() return instance != null ? instance : instance = {
 		var vars = [
 			Sys.getEnv("HAXELIB_S3BUCKET"),
-			Sys.getEnv("AWS_DEFAULT_REGION")
+			Sys.getEnv("AWS_DEFAULT_REGION"),
 		];
 		switch (vars) {
 			#if neko
 			case [bucket, region] if (vars.foreach(function(v) return v != null && v != "")):
-				log('using S3FileStorage with bucket $bucket in ${region}');
-				new S3FileStorage(Paths.CWD, bucket, region);
+				var endpoint = Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT");
+				log('using S3FileStorage with bucket $bucket in ${region} ${endpoint == null ? "" : endpoint}');
+				new S3FileStorage(Paths.CWD, bucket, region, endpoint);
 			#end
 			case _:
 				log('using LocalFileStorage');
@@ -196,27 +197,26 @@ class S3FileStorage extends FileStorage {
 		The public endpoint of the S3 bucket.
 		e.g. 'http://${bucket}.s3-website-${region}.amazonaws.com/'
 	*/
-	public var bucketEndpoint(get, never):String;
-	function get_bucketEndpoint()
-		return 'http://${bucketName}.s3-website-${bucketRegion}.amazonaws.com/';
+	public var bucketEndpointOverride(default, null):String;
 
 	var s3Client(default, null):S3Client;
 	var transferClient(default, null):TransferClient;
 
 	static var awsInited = false;
 
-	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String):Void {
+	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String, ?bucketEndpointOverride:String):Void {
 		assertAbsolute(localPath);
 		this.localPath = localPath;
 		this.bucketName = bucketName;
 		this.bucketRegion = bucketRegion;
+		this.bucketEndpointOverride = bucketEndpointOverride;
 
 		if (!awsInited) {
 			Aws.initAPI();
 			awsInited = true;
 		}
 
-		this.transferClient = new TransferClient(this.s3Client = new S3Client(bucketRegion));
+		this.transferClient = new TransferClient(this.s3Client = new S3Client(bucketRegion, bucketEndpointOverride));
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
