@@ -6,7 +6,7 @@ resource "aws_route53_record" "lib" {
   zone_id = local.haxe_org_zoneid
   name    = "lib.haxe.org"
   type    = "CNAME"
-  ttl     = "86400"
+  ttl     = "360"
   records = ["k8s.haxe.org"]
 }
 
@@ -14,8 +14,8 @@ resource "aws_route53_record" "development-lib" {
   zone_id = local.haxe_org_zoneid
   name    = "development-lib.haxe.org"
   type    = "CNAME"
-  ttl     = "86400"
-  records = ["k8s.haxe.org"]
+  ttl     = "60"
+  records = ["do-k8s.haxe.org"]
 }
 
 resource "aws_route53_record" "do-lib" {
