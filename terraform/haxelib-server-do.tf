@@ -227,11 +227,23 @@ resource "kubernetes_ingress" "do-haxelib-server" {
 
   spec {
     tls {
-      hosts       = [each.value.host_do]
+      hosts       = [each.value.host_do, each.value.host]
       secret_name = "haxelib-server-${each.key}-tls"
     }
     rule {
       host = each.value.host_do
+      http {
+        path {
+          backend {
+            service_name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
+            service_port = 80
+          }
+          path = "/"
+        }
+      }
+    }
+    rule {
+      host = each.value.host
       http {
         path {
           backend {
