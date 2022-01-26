@@ -1,5 +1,6 @@
 package website;
 
+import website.cache.DummyCache;
 import website.controller.*;
 import ufront.mailer.*;
 import ufront.MVC;
@@ -30,8 +31,8 @@ class Server {
 			responseMiddleware: [],
 		});
 		ufApp.injector.map( String, "documentationPath" ).toValue( neko.Web.getCwd()+"documentation-files/" );
-		ufApp.injector.map( UFCacheConnectionSync ).toClass( DBCacheConnection );
-		ufApp.injector.map( UFCacheConnection ).toClass( DBCacheConnection );
+		ufApp.injector.map( UFCacheConnectionSync ).toClass( DummyCacheConnection );
+		ufApp.injector.map( UFCacheConnection ).toClass( DummyCacheConnection );
 
 		// var cacheMiddleware = new RequestCacheMiddleware();
 		// ufApp.addRequestMiddleware( cacheMiddleware, true ).addResponseMiddleware( cacheMiddleware, true );
