@@ -43,8 +43,8 @@ class HomeController extends Controller {
 	public function homepage() {
 		var allProjects =  projectListApi.all().sure();
 		
-		var latestProjects =  projectListApi.latest( 12 * 3 ).sure() ;
-		var popularProjects = prepareProjectList( projectListApi.all().sure() );
+		var latestProjects =  projectListApi.latest( 12 * 2 ).sure() ;
+		var popularProjects = prepareProjectList( projectListApi.all(6).sure() );
 		var users = userApi.getUserList().sure();
 		var tags = projectListApi.getTagList( 25 ).sure();
 		

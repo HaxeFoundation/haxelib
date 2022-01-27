@@ -7,9 +7,9 @@ using Lambda;
 using CleverSort;
 
 class ProjectListApi extends UFApi {
-	public function all():Outcome<Array<Project>,Error> {
+	public function all(limit:Int = 300):Outcome<Array<Project>,Error> {
 		try {
-			var all = Project.manager.search(1 == 1,{ orderBy: [-downloads,name] });
+			var all = Project.manager.search(1 == 1,{ orderBy: [-downloads,name], limit: limit });
 			return Success( all.array() );
 		}
 		catch ( e:Dynamic ) return Failure( Error.withData("Failed to get list of all projects",e) );
