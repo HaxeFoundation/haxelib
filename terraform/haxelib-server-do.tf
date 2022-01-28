@@ -1,3 +1,15 @@
+resource "kubernetes_secret" "do-haxelib-s3fs-config" {
+  provider = kubernetes.do
+
+  metadata {
+    name = "haxelib-s3fs-config"
+  }
+
+  data = {
+    "passwd" = "${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_ACCESS_KEY_ID}:${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_SECRET_ACCESS_KEY}"
+  }
+}
+
 resource "kubernetes_secret" "do-haxelib-db" {
   provider = kubernetes.do
   metadata {
@@ -118,6 +130,10 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             name  = "HAXELIB_S3BUCKET_ENDPOINT"
             value = "${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com"
           }
+          env {
+            name = "HAXELIB_S3BUCKET_MOUNTED_PATH"
+            value = "/var/haxelib-s3fs"
+          }
 
           env {
             name = "AWS_ACCESS_KEY_ID"
@@ -142,6 +158,13 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             value = "us-east-1"
           }
 
+          volume_mount {
+            name       = "pod-haxelib-s3fs"
+            mount_path = "/var/haxelib-s3fs"
+            mount_propagation = "HostToContainer"
+            read_only  = false
+          }
+
           liveness_probe {
             http_get {
               path = "/httpd-status?auto"
@@ -151,6 +174,58 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             period_seconds        = 15
             timeout_seconds       = 5
           }
+        }
+
+        container {
+          image = "haxe/s3fs:latest"
+          name  = "s3fs"
+          command = [
+            "s3fs", digitalocean_spaces_bucket.haxelib.name, "/var/s3fs",
+            "-f",
+            "-o", "passwd_file=/haxelib-s3fs-config/passwd",
+            "-o", "url=https://${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com",
+          ]
+
+          security_context {
+            privileged = true
+          }
+
+          resources {
+            requests = {
+              cpu    = "0.1"
+              memory = "50Mi"
+            }
+          }
+
+          volume_mount {
+            name       = "haxelib-s3fs-config"
+            mount_path = "/haxelib-s3fs-config"
+            read_only  = true
+          }
+
+          volume_mount {
+            name       = "pod-haxelib-s3fs"
+            mount_path = "/var/s3fs"
+            mount_propagation = "Bidirectional"
+            read_only  = false
+          }
+        }
+
+        volume {
+          name = "haxelib-s3fs-config"
+          secret {
+            secret_name = kubernetes_secret.do-haxelib-s3fs-config.metadata[0].name
+            items {
+              key  = "passwd"
+              path = "passwd"
+              mode = "0600"
+            }
+          }
+        }
+
+        volume {
+          name = "pod-haxelib-s3fs"
+          empty_dir {}
         }
       }
     }

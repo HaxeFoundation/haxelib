@@ -492,3 +492,14 @@ ci-images:
         --IMAGE_TAG="$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
+
+s3fs-image:
+    FROM ubuntu:focal
+    RUN apt-get update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            s3fs \
+        && rm -r /var/lib/apt/lists/*
+    ENV MNT_POINT /var/s3fs
+    RUN mkdir -p "$MNT_POINT"
+    ARG IMAGE_TAG=latest
+    SAVE IMAGE --push haxe/s3fs:$IMAGE_TAG
