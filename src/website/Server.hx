@@ -31,9 +31,9 @@ class Server {
 			responseMiddleware: [],
 		});
 		ufApp.injector.map( String, "documentationPath" ).toValue( neko.Web.getCwd()+"documentation-files/" );
-		ufApp.injector.map( UFCacheConnectionSync ).toClass( DBCacheConnection );
-		ufApp.injector.map( UFCacheConnection ).toClass( DBCacheConnection );
 
+		ufApp.injector.map( UFCacheConnectionSync ).toClass( DummyCacheConnection );
+		ufApp.injector.map( UFCacheConnection ).toClass( DummyCacheConnection );
 		// var cacheMiddleware = new RequestCacheMiddleware();
 		// ufApp.addRequestMiddleware( cacheMiddleware, true ).addResponseMiddleware( cacheMiddleware, true );
 
@@ -50,10 +50,6 @@ class Server {
 		var wasUpload = handleHaxelibUpload();
 		if ( wasUpload==false ) {
 			SiteDb.init();
-
-			var cacheAPI = new ufront.cache.DBCache.DBCacheApi();
-			cacheAPI.setup();
-
 			ufApp.executeRequest();
 			SiteDb.cleanup();
 		}

@@ -37,7 +37,7 @@ typedef AbsPath = String;
 typedef RelPath = String;
 
 class Paths {
-	static public var CWD(default, null):AbsPath =
+	static public var CWD(default, never):AbsPath =
 		#if neko
 			#if haxelib_api
 				Path.normalize(Path.join([Web.getCwd(), "..", ".."]));
@@ -49,12 +49,12 @@ class Paths {
 		#else
 			Sys.getCwd();
 		#end
-	static public var DB_CONFIG_NAME(default, null):RelPath = "dbconfig.json";
-	static public var DB_CONFIG(default, null):AbsPath = Path.join([CWD, DB_CONFIG_NAME]);
-	static public var DB_FILE_NAME(default, null):RelPath = "haxelib.db";
-	static public var DB_FILE(default, null):AbsPath = Path.join([CWD, DB_FILE_NAME]);
+	static public var DB_CONFIG_NAME(default, never):RelPath = "dbconfig.json";
+	static public var DB_CONFIG(default, never):AbsPath = Path.join([CWD, DB_CONFIG_NAME]);
+	static public var DB_FILE_NAME(default, never):RelPath = "haxelib.db";
+	static public var DB_FILE(default, never):AbsPath = Path.join([CWD, DB_FILE_NAME]);
 
-	static public var TMP_DIR_NAME(default, null):RelPath = "tmp";
-	static public var TMP_DIR(default, null):AbsPath = Path.join([CWD, TMP_DIR_NAME]);
-	static public var REP_DIR_NAME(default, null):RelPath = Data.REPOSITORY;
+	static public var TMP_DIR_NAME(default, never):RelPath = "tmp";
+	static public var TMP_DIR(default, never):AbsPath = Path.join([CWD, TMP_DIR_NAME]);
+	static public var REP_DIR_NAME(default, never):RelPath = Data.REPOSITORY;
 }

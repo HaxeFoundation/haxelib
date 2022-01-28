@@ -59,14 +59,18 @@ class FileStorage {
 		var vars = [
 			Sys.getEnv("HAXELIB_S3BUCKET"),
 			Sys.getEnv("AWS_DEFAULT_REGION"),
+			Sys.getEnv("HAXELIB_S3BUCKET_MOUNTED_PATH"),
 		];
 		switch (vars) {
 			#if neko
-			case [bucket, region] if (vars.foreach(function(v) return v != null && v != "")):
+			case [bucket, region, null] if (bucket != null && region != null):
 				var endpoint = Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT");
 				log('using S3FileStorage with bucket $bucket in ${region} ${endpoint == null ? "" : endpoint}');
 				new S3FileStorage(Paths.CWD, bucket, region, endpoint);
 			#end
+			case [bucket, region, mounted] if (bucket != null && region != null && mounted != null):
+				log('using LocalFileStorage with S3 mounted path');
+				new LocalFileStorage(mounted);
 			case _:
 				log('using LocalFileStorage');
 				new LocalFileStorage(Paths.CWD);
