@@ -8,4 +8,4 @@ CREATE TABLE `auth_permission` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `auth_permission_permission_userID` (`permission`,`userID`),
   UNIQUE KEY `auth_permission_permission_groupID` (`permission`,`groupID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -12,4 +12,4 @@ CREATE TABLE `Project` (
   KEY `Project_version` (`version`),
   CONSTRAINT `Project_ownerObj` FOREIGN KEY (`owner`) REFERENCES `User` (`id`) ON DELETE CASCADE,
   CONSTRAINT `Project_versionObj` FOREIGN KEY (`version`) REFERENCES `Version` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -4,4 +4,4 @@ CREATE TABLE `Tag` (
   `project` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `Tag_project` (`project`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

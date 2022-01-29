@@ -5,4 +5,4 @@ CREATE TABLE `_join_Group_User` (
   `r1` int(10) unsigned NOT NULL,
   `r2` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

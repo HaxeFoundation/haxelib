@@ -8,4 +8,4 @@ CREATE TABLE `DBCacheItem` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `DBCacheItem_namespace_cacheID` (`namespace`,`cacheID`),
   KEY `DBCacheItem_namespace` (`namespace`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

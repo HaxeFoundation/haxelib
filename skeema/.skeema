@@ -1,5 +1,5 @@
-default-character-set=latin1
-default-collation=latin1_swedish_ci
+default-character-set=utf8mb4
+default-collation=utf8mb4_general_ci
 generator=skeema:1.7.0-community
 
 [rds]

@@ -8,4 +8,4 @@ CREATE TABLE `auth_user` (
   `forcePasswordChange` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `auth_user_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

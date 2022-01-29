@@ -5,4 +5,4 @@ CREATE TABLE `User` (
   `email` mediumtext NOT NULL,
   `pass` mediumtext NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
