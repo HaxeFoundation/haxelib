@@ -1,0 +1,9 @@
+default-character-set=latin1
+default-collation=latin1_swedish_ci
+generator=skeema:1.7.0-community
+
+[rds]
+flavor=mysql:5.7
+host=haxe-org.ct0xwjh6v08k.eu-west-1.rds.amazonaws.com
+port=3306
+schema=haxelib

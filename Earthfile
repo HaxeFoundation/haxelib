@@ -8,6 +8,8 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
+ARG --required TARGETARCH
+
 devcontainer-library-scripts:
     RUN curl -fsSLO https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/common-debian.sh
     RUN curl -fsSLO https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/docker-debian.sh
@@ -21,8 +23,6 @@ mysql-public-key:
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
 
 devcontainer-base:
-    ARG TARGETARCH
-
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
@@ -113,7 +113,7 @@ awscli:
 # Usage:
 # COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
 aws-iam-authenticator:
-    RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
+    RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/$TARGETARCH/aws-iam-authenticator \
         && chmod +x ./aws-iam-authenticator \
         && mv ./aws-iam-authenticator /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/aws-iam-authenticator
@@ -237,6 +237,11 @@ devcontainer:
 
     # Install rclone
     COPY +rclone/rclone /usr/local/bin/
+
+    # Install skeema
+    RUN curl -fsSL -o skeema.deb https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_${TARGETARCH}.deb \
+        && apt-get install -y ./skeema.deb \
+        && rm ./skeema.deb
 
     USER $USERNAME
 
