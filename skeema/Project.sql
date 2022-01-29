@@ -9,7 +9,5 @@ CREATE TABLE `Project` (
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `Project_owner` (`owner`),
-  KEY `Project_version` (`version`),
-  CONSTRAINT `Project_ownerObj` FOREIGN KEY (`owner`) REFERENCES `User` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `Project_versionObj` FOREIGN KEY (`version`) REFERENCES `Version` (`id`) ON DELETE SET NULL
+  KEY `Project_version` (`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -11,6 +11,5 @@ CREATE TABLE `Version` (
   `documentation` mediumtext,
   `project` int(11) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `Version_project` (`project`),
-  CONSTRAINT `Version_projectObj` FOREIGN KEY (`project`) REFERENCES `Project` (`id`) ON DELETE CASCADE
+  KEY `Version_project` (`project`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
