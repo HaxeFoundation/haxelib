@@ -187,6 +187,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             "-f",
             "-o", "passwd_file=/haxelib-s3fs-config/passwd",
             "-o", "url=https://${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com",
+            "-o", "use_cache=/var/s3fs-cache",
+            "-o", "ensure_diskfree=100"
           ]
 
           security_context {
@@ -212,6 +214,12 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             mount_propagation = "Bidirectional"
             read_only  = false
           }
+
+          volume_mount {
+            name       = "pod-haxelib-s3fs-cache"
+            mount_path = "/var/s3fs-cache"
+            read_only  = false
+          }
         }
 
         volume {
@@ -229,6 +237,13 @@ resource "kubernetes_deployment" "do-haxelib-server" {
         volume {
           name = "pod-haxelib-s3fs"
           empty_dir {}
+        }
+
+        volume {
+          name = "pod-haxelib-s3fs-cache"
+          empty_dir {
+            size_limit = "25Gi"
+          }
         }
       }
     }
