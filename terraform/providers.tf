@@ -74,12 +74,6 @@ provider "kubernetes" {
   }
 }
 
-provider "mysql" {
-  endpoint = aws_db_instance.haxe-org.endpoint
-  username = var.HAXELIB_DB_USER
-  password = var.HAXELIB_DB_PASS
-}
-
 provider "kubernetes" {
   alias = "do"
 

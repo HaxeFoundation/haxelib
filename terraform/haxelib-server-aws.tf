@@ -19,12 +19,10 @@ output "haxelib_server" {
   value = local.haxelib_server
 }
 
-resource "kubernetes_secret" "haxelib-db" {
+# kubectl create secret generic rds-mysql-haxelib --from-literal=user=FIXME --from-literal=password=FIXME
+data "kubernetes_secret" "aws-rds-mysql-haxelib" {
   metadata {
-    name = "haxelib-db"
-  }
-  data = {
-    HAXELIB_DB_PASS = var.HAXELIB_DB_PASS
+    name = "rds-mysql-haxelib"
   }
 }
 
@@ -98,14 +96,19 @@ resource "kubernetes_deployment" "haxelib-server" {
           }
           env {
             name  = "HAXELIB_DB_USER"
-            value = var.HAXELIB_DB_USER
+            value_from {
+              secret_key_ref {
+                name = data.kubernetes_secret.aws-rds-mysql-haxelib.metadata[0].name
+                key  = "user"
+              }
+            }
           }
           env {
             name = "HAXELIB_DB_PASS"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.haxelib-db.metadata[0].name
-                key  = "HAXELIB_DB_PASS"
+                name = data.kubernetes_secret.aws-rds-mysql-haxelib.metadata[0].name
+                key  = "password"
               }
             }
           }
