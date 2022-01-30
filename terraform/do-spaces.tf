@@ -13,6 +13,7 @@ resource "digitalocean_spaces_bucket" "haxelib" {
 
 resource "digitalocean_cdn" "haxelib" {
   origin = digitalocean_spaces_bucket.haxelib.bucket_domain_name
+  ttl    = 86400 # 1 day
 }
 
 provider "aws" {
