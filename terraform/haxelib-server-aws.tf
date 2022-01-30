@@ -40,7 +40,7 @@ resource "kubernetes_deployment" "haxelib-server" {
   }
 
   spec {
-    replicas = 2
+    replicas = each.key == "prod" ? 2 : 1
 
     selector {
       match_labels = {
@@ -163,7 +163,7 @@ resource "kubernetes_deployment" "haxelib-server" {
 }
 
 resource "kubernetes_pod_disruption_budget" "haxelib-server" {
-  for_each = local.haxelib_server.stage
+  for_each = {for k, v in local.haxelib_server.stage: k => v if k == "prod"}
 
   metadata {
     name = "haxelib-server-${each.key}"
