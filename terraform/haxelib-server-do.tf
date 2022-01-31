@@ -85,7 +85,10 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           resources {
             requests = {
               cpu    = "100m"
-              memory = "200M"
+              memory = "200Mi"
+            }
+            limits = {
+              memory = "2.5Gi"
             }
           }
 
