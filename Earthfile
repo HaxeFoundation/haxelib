@@ -508,3 +508,16 @@ s3fs-image:
     RUN mkdir -p "$MNT_POINT"
     ARG IMAGE_TAG=latest
     SAVE IMAGE --push haxe/s3fs:$IMAGE_TAG
+
+gh-ost-deb:
+    ARG --required GHOST_VERSION
+    RUN curl -fsSL "https://github.com/github/gh-ost/releases/download/v${GHOST_VERSION}/gh-ost_${GHOST_VERSION}_amd64.deb" -o gh-ost.deb
+    SAVE ARTIFACT gh-ost.deb
+
+gh-ost-image:
+    FROM ubuntu:focal
+    ARG GHOST_VERSION=1.1.2
+    COPY (+gh-ost-deb/gh-ost.deb --GHOST_VERSION="$GHOST_VERSION") .
+    RUN apt-get install ./gh-ost.deb \
+        && rm ./gh-ost.deb
+    SAVE IMAGE --push haxe/gh-ost:$GHOST_VERSION
