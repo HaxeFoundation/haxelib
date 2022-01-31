@@ -536,3 +536,7 @@ ghostferry-copydb-image:
     RUN apt-get install ./ghostferry-copydb.deb \
         && rm ./ghostferry-copydb.deb
     SAVE IMAGE --push haxe/ghostferry-copydb:$GHOSTFERRY_COMMIT
+
+rds-pem:
+    RUN curl -fsSLO https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem
+    SAVE ARTIFACT --keep-ts eu-west-1-bundle.pem AS LOCAL rds-eu-west-1-bundle.pem

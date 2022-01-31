@@ -110,6 +110,14 @@ resource "aws_db_parameter_group" "mysql57-haxe-org" {
     name  = "binlog_format"
     value = "ROW"
   }
+  parameter {
+    name  = "binlog_row_image"
+    value = "FULL"
+  }
+  parameter {
+    name  = "binlog_rows_query_log_events"
+    value = 1
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -124,4 +132,12 @@ resource "aws_db_option_group" "mysql57-haxe-org" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+provider "mysql" {
+  alias = "rds"
+
+  endpoint = "${aws_db_instance.haxe-org.address}:${aws_db_instance.haxe-org.port}"
+  username = data.kubernetes_secret.aws-rds-mysql-haxelib.data.user
+  password = data.kubernetes_secret.aws-rds-mysql-haxelib.data.password
 }

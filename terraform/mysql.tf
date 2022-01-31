@@ -1,5 +1,5 @@
 resource "random_password" "haxelib-mysql-root-password" {
-  length  = 64
+  length  = 32
   special = false
   lower   = true
   upper   = true
