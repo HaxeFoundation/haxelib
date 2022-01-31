@@ -521,3 +521,18 @@ gh-ost-image:
     RUN apt-get install ./gh-ost.deb \
         && rm ./gh-ost.deb
     SAVE IMAGE --push haxe/gh-ost:$GHOST_VERSION
+
+curl-file:
+    ARG --required URL
+    ARG --required FILENAME
+    RUN curl -fsSL "$URL" -o "$FILENAME"
+    SAVE ARTIFACT "$FILENAME"
+
+ghostferry-copydb-image:
+    FROM ubuntu:focal
+    ARG GHOSTFERRY_COMMIT="ce94688"
+    ARG GHOSTFERRY_BUILD="1.1.0+20220112142231+ce94688"
+    COPY (+curl-file/* --URL="https://github.com/Shopify/ghostferry/releases/download/release-${GHOSTFERRY_COMMIT}/ghostferry-copydb_${GHOSTFERRY_BUILD}.deb" --FILENAME=ghostferry-copydb.deb) .
+    RUN apt-get install ./ghostferry-copydb.deb \
+        && rm ./ghostferry-copydb.deb
+    SAVE IMAGE --push haxe/ghostferry-copydb:$GHOSTFERRY_COMMIT
