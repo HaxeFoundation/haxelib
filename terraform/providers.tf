@@ -17,12 +17,16 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.4"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.4"
+    }
     mysql = {
       source  = "winebarrel/mysql"
       version = "~> 1.10"
     }
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = "~> 3.1"
     }
   }
@@ -78,4 +82,13 @@ provider "kubernetes" {
   alias = "do"
 
   config_path = "${path.module}/kubeconfig_do"
+}
+
+
+provider "helm" {
+  alias = "do"
+
+  kubernetes {
+    config_path = "${path.module}/kubeconfig_do"
+  }
 }

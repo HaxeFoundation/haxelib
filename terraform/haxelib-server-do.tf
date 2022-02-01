@@ -94,11 +94,11 @@ resource "kubernetes_deployment" "do-haxelib-server" {
 
           env {
             name  = "HAXELIB_DB_HOST"
-            value = aws_db_instance.haxe-org.address
+            value = "haxelib-mysql-57-primary"
           }
           env {
             name  = "HAXELIB_DB_PORT"
-            value = aws_db_instance.haxe-org.port
+            value = "3306"
           }
           env {
             name  = "HAXELIB_DB_NAME"
@@ -106,19 +106,14 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           }
           env {
             name  = "HAXELIB_DB_USER"
-            value_from {
-              secret_key_ref {
-                name = data.kubernetes_secret.do-rds-mysql-haxelib.metadata[0].name
-                key  = "user"
-              }
-            }
+            value = "haxelib"
           }
           env {
             name = "HAXELIB_DB_PASS"
             value_from {
               secret_key_ref {
-                name = data.kubernetes_secret.do-rds-mysql-haxelib.metadata[0].name
-                key  = "password"
+                name = data.kubernetes_secret_v1.haxelib-mysql-57.metadata[0].name
+                key  = "mysql-password"
               }
             }
           }
