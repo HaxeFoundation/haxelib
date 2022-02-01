@@ -81,7 +81,7 @@ resource "kubernetes_secret_v1" "ghostferry-copydb-config" {
   }
 }
 
-resource "kubernetes_pod" "ghostferry-copydb-haxelib-mysql-80" {
+resource "kubernetes_pod_v1" "ghostferry-copydb-haxelib-mysql-80" {
   provider = kubernetes.do
   metadata {
     name = "ghostferry-copydb-haxelib-mysql-80"
@@ -96,7 +96,6 @@ resource "kubernetes_pod" "ghostferry-copydb-haxelib-mysql-80" {
       image = "haxe/ghostferry-copydb:ce94688"
       command = [
         "ghostferry-copydb",
-        "-dryrun",
         "-verbose",
         "/ghostferry-copydb-config/copy.json",
       ]
@@ -104,6 +103,10 @@ resource "kubernetes_pod" "ghostferry-copydb-haxelib-mysql-80" {
       env {
         name  = "GODEBUG"
         value = "x509ignoreCN=0"
+      }
+
+      port {
+        container_port = 8000
       }
 
       volume_mount {
@@ -149,8 +152,10 @@ resource "kubernetes_ingress_v1" "ghostferry-copydb-haxelib-mysql-80" {
   metadata {
     name = "ghostferry-copydb-haxelib-mysql-80"
     annotations = {
-      "kubernetes.io/ingress.class"    = "nginx"
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
+      "kubernetes.io/ingress.class"             = "nginx"
+      "nginx.ingress.kubernetes.io/auth-url"    = "https://do-oauth2-proxy.haxe.org/oauth2/auth"
+      "nginx.ingress.kubernetes.io/auth-signin" = "https://do-oauth2-proxy.haxe.org/oauth2/sign_in?rd=https://$host$request_uri"
+      "cert-manager.io/cluster-issuer"          = "letsencrypt-production"
     }
   }
 
