@@ -1,8 +1,8 @@
-resource "kubernetes_secret" "do-haxelib-s3fs-config" {
+resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
   provider = kubernetes.do
 
   metadata {
-    name = "haxelib-s3fs-config"
+    name = "haxelib-minio-s3fs-config"
   }
 
   data = {
@@ -184,9 +184,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             "s3fs", digitalocean_spaces_bucket.haxelib.name, "/var/s3fs",
             "-f",
             "-o", "passwd_file=/haxelib-s3fs-config/passwd",
-            "-o", "url=https://${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com",
-            "-o", "use_cache=/var/s3fs-cache",
-            "-o", "ensure_diskfree=100"
+            "-o", "url=http://${kubernetes_service_v1.do-haxelib-minio.metadata[0].name}:9000",
+            "-o", "use_path_request_style"
           ]
 
           security_context {
@@ -212,18 +211,12 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             mount_propagation = "Bidirectional"
             read_only  = false
           }
-
-          volume_mount {
-            name       = "pod-haxelib-s3fs-cache"
-            mount_path = "/var/s3fs-cache"
-            read_only  = false
-          }
         }
 
         volume {
           name = "haxelib-s3fs-config"
           secret {
-            secret_name = kubernetes_secret.do-haxelib-s3fs-config.metadata[0].name
+            secret_name = kubernetes_secret_v1.do-haxelib-minio-s3fs-config.metadata[0].name
             items {
               key  = "passwd"
               path = "passwd"
@@ -235,13 +228,6 @@ resource "kubernetes_deployment" "do-haxelib-server" {
         volume {
           name = "pod-haxelib-s3fs"
           empty_dir {}
-        }
-
-        volume {
-          name = "pod-haxelib-s3fs-cache"
-          empty_dir {
-            size_limit = "25Gi"
-          }
         }
       }
     }
