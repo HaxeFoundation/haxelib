@@ -401,9 +401,9 @@ haxelib-server:
 
     WORKDIR /src
 
-    COPY www www
-    COPY +haxelib-server-www-js/* /src/www/js/
-    COPY +haxelib-server-www-css/* /src/www/css/
+    COPY --chown www-data:www-data www www
+    COPY --chown www-data:www-data +haxelib-server-www-js/* /src/www/js/
+    COPY --chown www-data:www-data +haxelib-server-www-css/* /src/www/css/
 
     COPY src/legacyhaxelib/.htaccess /src/www/legacy/
     COPY src/legacyhaxelib/haxelib.css /src/www/legacy/
@@ -411,8 +411,10 @@ haxelib-server:
 
     RUN rm -rf /var/www/html
     RUN ln -s /src/www /var/www/html
+    USER www-data
     RUN mkdir -p /var/www/html/files
     RUN mkdir -p /var/www/html/tmp
+    USER root
 
     COPY +haxelib-server-legacy/index.n www/legacy/index.n
     COPY +haxelib-server-website-highlighter/highlighter.js www/js/highlighter.js
