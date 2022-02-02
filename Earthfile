@@ -393,9 +393,8 @@ haxelib-server:
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
             echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
-            echo 'LoadModule tora_module /usr/lib/x86_64-linux-gnu/neko/mod_tora2.ndll'; \
-            echo 'AddHandler tora-handler .n'; \
-        } > /etc/apache2/mods-enabled/tora.conf \
+            echo 'AddHandler neko-handler .n'; \
+        } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
     COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
@@ -420,7 +419,6 @@ haxelib-server:
     COPY +haxelib-server-website/index.n www/index.n
     COPY +haxelib-server-tasks/tasks.n www/tasks.n
     COPY +haxelib-server-api/index.n www/api/3.0/index.n
-    COPY +tora/run.n tora.n
 
     EXPOSE 80
     VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
@@ -428,10 +426,6 @@ haxelib-server:
     RUN mkdir /etc/service/httpd
     COPY server-daemon-httpd.sh /etc/service/httpd/run
     RUN chmod a+x /etc/service/httpd/run
-
-    RUN mkdir /etc/service/tora
-    COPY server-daemon-tora.sh /etc/service/tora/run
-    RUN chmod a+x /etc/service/tora/run
 
     CMD ["/sbin/my_init"]
 
