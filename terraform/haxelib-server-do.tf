@@ -183,9 +183,10 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           command = [
             "s3fs", digitalocean_spaces_bucket.haxelib.name, "/var/s3fs",
             "-f",
-            "-o", "passwd_file=/haxelib-s3fs-config/passwd",
             "-o", "url=http://${kubernetes_service_v1.do-haxelib-minio.metadata[0].name}:9000",
-            "-o", "use_path_request_style"
+            "-o", "use_path_request_style",
+            "-o", "umask=022,uid=33,gid=33", # 33 = www-data
+            "-o", "allow_other",
           ]
 
           security_context {
@@ -199,10 +200,23 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             }
           }
 
-          volume_mount {
-            name       = "haxelib-s3fs-config"
-            mount_path = "/haxelib-s3fs-config"
-            read_only  = true
+          env {
+            name = "AWSACCESSKEYID"
+            value_from {
+              secret_key_ref {
+                name = "haxelib-server-do-spaces"
+                key  = "SPACES_ACCESS_KEY_ID"
+              }
+            }
+          }
+          env {
+            name = "AWSSECRETACCESSKEY"
+            value_from {
+              secret_key_ref {
+                name = "haxelib-server-do-spaces"
+                key  = "SPACES_SECRET_ACCESS_KEY"
+              }
+            }
           }
 
           volume_mount {
@@ -213,16 +227,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           }
         }
 
-        volume {
-          name = "haxelib-s3fs-config"
-          secret {
-            secret_name = kubernetes_secret_v1.do-haxelib-minio-s3fs-config.metadata[0].name
-            items {
-              key  = "passwd"
-              path = "passwd"
-              mode = "0600"
-            }
-          }
+        security_context {
+          fs_group = 33 # www-data
         }
 
         volume {
