@@ -38,9 +38,9 @@ class Server {
 		// ufApp.addRequestMiddleware( cacheMiddleware, true ).addResponseMiddleware( cacheMiddleware, true );
 
 		// If we're on neko, and using the module cache, next time jump straight to the main request.
-		#if (neko && !debug)
-			neko.Web.cacheModule(run);
-		#end
+		// #if (neko && !debug)
+		// 	neko.Web.cacheModule(run);
+		// #end
 
 		// Execute the main request.
 		run();
