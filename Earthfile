@@ -424,7 +424,6 @@ haxelib-server:
     COPY +haxelib-server-api/index.n www/api/3.0/index.n
 
     EXPOSE 80
-    VOLUME ["/var/www/html/files", "/var/www/html/tmp"]
 
     RUN mkdir /etc/service/httpd
     COPY server-daemon-httpd.sh /etc/service/httpd/run
