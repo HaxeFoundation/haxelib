@@ -402,6 +402,7 @@ haxelib-server:
     WORKDIR /src
 
     COPY --chown www-data:www-data www www
+    RUN rm -rf www/files www/tmp
     COPY --chown www-data:www-data +haxelib-server-www-js/* /src/www/js/
     COPY --chown www-data:www-data +haxelib-server-www-css/* /src/www/css/
 
