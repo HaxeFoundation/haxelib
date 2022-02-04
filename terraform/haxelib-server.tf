@@ -1,3 +1,24 @@
+locals {
+  haxelib_server = {
+    stage = {
+      dev = {
+        host    = "development-lib.haxe.org"
+        host_do = "do-development-lib.haxe.org"
+        image   = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
+      }
+      prod = {
+        host    = "lib.haxe.org"
+        host_do = "do-lib.haxe.org"
+        image   = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
+      }
+    }
+  }
+}
+
+output "haxelib_server" {
+  value = local.haxelib_server
+}
+
 resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
   provider = kubernetes.do
 

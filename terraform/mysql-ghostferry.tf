@@ -1,37 +1,37 @@
-resource "random_password" "rds-ghostferry-password" {
-  length  = 32
-  special = false
-  lower   = true
-  upper   = true
-  number  = true
-}
+# resource "random_password" "rds-ghostferry-password" {
+#   length  = 32
+#   special = false
+#   lower   = true
+#   upper   = true
+#   number  = true
+# }
 
-resource "mysql_user" "rds-ghostferry" {
-  provider = mysql.rds
+# resource "mysql_user" "rds-ghostferry" {
+#   provider = mysql.rds
 
-  user               = "ghostferry"
-  host               = "%"
-  plaintext_password = random_password.rds-ghostferry-password.result
-  tls_option         = "SSL"
-}
+#   user               = "ghostferry"
+#   host               = "%"
+#   plaintext_password = random_password.rds-ghostferry-password.result
+#   tls_option         = "SSL"
+# }
 
-resource "mysql_grant" "rds-ghostferry-haxelib" {
-  provider = mysql.rds
+# resource "mysql_grant" "rds-ghostferry-haxelib" {
+#   provider = mysql.rds
 
-  user       = mysql_user.rds-ghostferry.user
-  host       = mysql_user.rds-ghostferry.host
-  database   = "haxelib"
-  privileges = ["SELECT"]
-}
+#   user       = mysql_user.rds-ghostferry.user
+#   host       = mysql_user.rds-ghostferry.host
+#   database   = "haxelib"
+#   privileges = ["SELECT"]
+# }
 
-resource "mysql_grant" "rds-ghostferry-replication" {
-  provider = mysql.rds
+# resource "mysql_grant" "rds-ghostferry-replication" {
+#   provider = mysql.rds
 
-  user       = mysql_user.rds-ghostferry.user
-  host       = mysql_user.rds-ghostferry.host
-  database   = "*"
-  privileges = ["REPLICATION SLAVE", "REPLICATION CLIENT"]
-}
+#   user       = mysql_user.rds-ghostferry.user
+#   host       = mysql_user.rds-ghostferry.host
+#   database   = "*"
+#   privileges = ["REPLICATION SLAVE", "REPLICATION CLIENT"]
+# }
 
 # resource "kubernetes_secret_v1" "ghostferry-copydb-config" {
 #   provider = kubernetes.do
