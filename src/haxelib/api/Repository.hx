@@ -21,7 +21,7 @@ class CurrentVersionException extends haxe.Exception {}
  **/
 class Repository {
 	/** Name of file used to keep track of current version. **/
-	static final CURRENT = ".current";
+	static final CURRENT_FILE = ".current";
 
 	/** Name of file used to keep track of capitalization. **/
 	static final NAME_FILE = ".name";
@@ -337,18 +337,18 @@ class Repository {
 	}
 
 	inline function getCurrentFilePath(name:ProjectName):String {
-		return addToRepoPath(name, CURRENT);
-	}
-
-	inline function getNameFilePath(name:ProjectName):String {
-		return addToRepoPath(name, NAME);
+		return addToRepoPath(name, CURRENT_FILE);
 	}
 
 	inline function getCurrentFileContent(name:ProjectName):String {
-		return try
-				File.getContent(getCurrentFilePath(name)).trim()
-			catch(e:haxe.Exception)
-				throw new CurrentVersionException('No current version set for library \'$name\'');
+		final currentFile = getCurrentFilePath(name);
+		if (!FileSystem.exists(currentFile))
+			throw new CurrentVersionException('No current version set for library \'$name\'');
+
+		try
+			return File.getContent(currentFile).trim()
+		catch (e)
+			throw new CurrentVersionException('Failed when reading the current version for library \'$name\': $e');
 	}
 
 	inline function getProjectRootPath(name:ProjectName):String {
@@ -356,12 +356,13 @@ class Repository {
 	}
 
 	inline function getProjectVersionPath(name:ProjectName, version:Version):String {
-		final versionDir:String = try {
-			Vcs.getDirectoryFor(Vcs.VcsID.ofString(version));
-		} catch (_) {
-			if (!SemVer.isValid(version)) throw 'Unknown library version $version';
-			version;
-		}
+		final versionDir:String =
+			switch version {
+				case v if (SemVer.isValid(v)): v;
+				case (try Vcs.VcsID.ofString(_) catch(_) null) => vcs if (vcs != null):
+					Vcs.getDirectoryFor(vcs);
+				case _: throw 'Unknown library version: $version'; // we shouldn't get here
+			}
 		return addToRepoPath(name, Data.safe(versionDir).toLowerCase()).addTrailingSlash();
 	}
 
@@ -379,7 +380,7 @@ class Repository {
 	// Not sure about these:
 	// https://github.com/HaxeFoundation/haxe/wiki/Haxe-haxec-haxelib-plan#legacy-haxelib-features
 
-	static final DEV = ".dev";
+	static final DEV_FILE = ".dev";
 	/**
 		Sets the dev path for project `name` to `path`.
 	**/
@@ -394,7 +395,7 @@ class Repository {
 			setCapitalization(name);
 		}
 
-		final devFile = Path.join([root, DEV]);
+		final devFile = Path.join([root, DEV_FILE]);
 
 		File.saveContent(devFile, normalizeDevPath(path));
 	}
@@ -461,6 +462,6 @@ class Repository {
 	}
 
 	function getDevFilePath(name:ProjectName):String {
-		return addToRepoPath(name, DEV);
+		return addToRepoPath(name, DEV_FILE);
 	}
 }
