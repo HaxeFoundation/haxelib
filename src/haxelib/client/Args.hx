@@ -168,7 +168,6 @@ class Args {
 		final repeatedOptions: Map<RepeatedOption, Array<String>> = [];
 		final mainArgs:Array<String> = [];
 
-		var arg:String;
 		var index = 0;
 
 		function requireNext():String {
@@ -180,7 +179,7 @@ class Args {
 		}
 
 		while (index < args.length) {
-			arg = args[index++];
+			final arg = args[index++];
 			switch (parseSwitch(arg)) {
 				case null:
 					mainArgs.push(arg);

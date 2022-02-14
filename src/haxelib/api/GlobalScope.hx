@@ -23,7 +23,8 @@ class GlobalScope extends Scope {
 	}
 
 	public function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void {
-		callData = callData != null ? callData : {};
+		if (callData == null)
+			callData = {};
 		final resolved = resolveVersionAndPath(library, version);
 
 		final info =
@@ -36,14 +37,14 @@ class GlobalScope extends Scope {
 			[for (name => version in info.dependencies)
 				Dependency.fromNameAndVersion(name, version)];
 
-		final libraryRunData = {
+		final libraryRunData:LibraryRunData = {
 			name: ProjectName.getCorrectOrAlias(info.name, library),
 			internalName: info.name,
 			version: resolved.version,
 			dependencies: dependencies,
 			path: resolved.path,
 			main: info.main
-		}
+		};
 
 		ScriptRunner.run(libraryRunData, resolveCompiler(), callData);
 	}

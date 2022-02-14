@@ -84,7 +84,8 @@ private class ConnectionData {
 			case null if (protocol == "https"): 443;
 			case null if (protocol == "http"): 80;
 			case null: throw 'unknown default port for $protocol';
-			case portStr: Std.parseInt(portStr);
+			case Std.parseInt(_) => port if(port != null): port;
+			case invalidPortStr: throw '$invalidPortStr is not a valid port';
 		}
 
 		return {
@@ -345,7 +346,7 @@ class Connection {
 	}
 
 	/** Returns the array of available versions for `library`. **/
-	public static function getVersions(library:ProjectName):Array<SemVer> {
+	static function getVersions(library:ProjectName):Array<SemVer> {
 		final versionsData = retry(data.site.infos.bind(library)).versions;
 		return [for (data in versionsData) data.name];
 	}
@@ -399,7 +400,7 @@ class Connection {
 		// ask user which contributor they are
 		final user = login(infos.contributors);
 		// ensure they are already a contributor for the latest release
-		Connection.checkDeveloper(infos.name, user.name);
+		checkDeveloper(infos.name, user.name);
 
 		checkDependencies(infos.dependencies);
 
@@ -421,9 +422,7 @@ class Connection {
 	}
 
 	static function doesVersionExist(library:ProjectName, version:SemVer):Bool {
-		final versions = try Connection.getVersions(library) catch (_:Dynamic) null;
-		if (versions == null)
-			return false;
+		final versions = try getVersions(library) catch (_:Dynamic) return false;
 		return versions.contains(version);
 	}
 

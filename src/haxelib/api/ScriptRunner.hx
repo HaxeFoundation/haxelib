@@ -37,13 +37,13 @@ typedef Dependencies = Array<Dependency>;
 /** Library data needed in order to run it **/
 typedef LibraryRunData = {
 	/** This may be an alias. **/
-	name:ProjectName,
+	final name:ProjectName;
 	/** This is the actual name found in the `haxelib.json`. **/
-	internalName:ProjectName,
-	version:VersionOrDev,
-	dependencies:Dependencies,
-	main:String,
-	path:String
+	final internalName:ProjectName;
+	final version:VersionOrDev;
+	final dependencies:Dependencies;
+	final main:Null<String>;
+	final path:String;
 }
 
 private enum RunType {
