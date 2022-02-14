@@ -624,7 +624,7 @@ class Main {
 			throw 'Unable to set to $version. Please run a full install command such as:\n'
 				+ '`haxelib $version $library <url>`';
 
-		scope.setVcsVersion(library, version, {url:null, ref:null, branch:null, tag:null, subDir:null});
+		scope.setVcsVersion(library, version);
 
 		Cli.print('Library $library current version is now $version');
 	}
