@@ -67,6 +67,7 @@ resource "helm_release" "haxelib-mysql-57" {
           binlog_format=ROW
           binlog_row_image=FULL
           binlog_rows_query_log_events=1
+          expire_logs_days=1
           pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
           log-error=/opt/bitnami/mysql/logs/mysqld.log
           character-set-server=UTF8
@@ -88,7 +89,7 @@ resource "helm_release" "haxelib-mysql-57" {
       }
       "secondary" : {
         "replicaCount" : 0,
-      }
+      },
     }),
   ]
 
