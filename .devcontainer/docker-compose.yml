@@ -21,7 +21,7 @@ services:
     entrypoint: /usr/local/share/docker-init.sh
     command: sleep infinity
   earthly:
-    image: earthly/buildkitd:v0.6.6
+    image: earthly/buildkitd:v0.6.9
     privileged: true
     environment:
       - BUILDKIT_TCP_TRANSPORT_ENABLED=true

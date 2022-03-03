@@ -19,7 +19,7 @@ jobs:
     container: haxe/haxelib_devcontainer_workspace:development
     services:
       earthly:
-        image: earthly/buildkitd:v0.6.6
+        image: earthly/buildkitd:v0.6.9
         options: --privileged
         env:
           BUILDKIT_TCP_TRANSPORT_ENABLED: "true"
