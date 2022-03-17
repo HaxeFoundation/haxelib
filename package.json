@@ -21,7 +21,7 @@
     "node-fetch": "^2",
     "octokit": "^1.5.0",
     "promise-synchronizer": "^3.0.0",
-    "simple-git": "^2.45.1"
+    "simple-git": "^3.3.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
