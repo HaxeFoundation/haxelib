@@ -1697,6 +1697,37 @@ class Main {
 	}
 	static var __haxeVersion:SemVer;
 
+	function createProcess(command:String, args:Array<String>)
+	{
+		var process = new Process(command, args);
+		
+		var waiting = true;
+
+		while (waiting)
+		{
+			try
+			{
+				Sys.println(process.stdout.readLine());
+			}
+			catch (e:haxe.io.Eof)
+			{
+				waiting = false;
+			}
+		}
+
+		var error = process.stderr.readAll().toString();
+		var result = process.exitCode();
+
+		if (error != "")
+		{
+			Sys.println(error);
+		}
+		
+		process.close();
+
+		return result;
+	}
+
 	function doRun( rep:String, project:String, version:String ) {
 		var pdir = rep + Data.safe(project);
 		if( !FileSystem.exists(pdir) )
@@ -1732,7 +1763,7 @@ class Main {
 		Sys.putEnv("HAXELIB_RUN", "1");
 		Sys.putEnv("HAXELIB_RUN_NAME", project);
 		var cmd = callArgs.shift();
- 		Sys.exit(Sys.command(cmd, callArgs));
+ 		Sys.exit(createProcess(cmd, callArgs));
 	}
 
 	function runScriptArgs(project:String, main:String, dependencies:Dependencies):Array<String> {
