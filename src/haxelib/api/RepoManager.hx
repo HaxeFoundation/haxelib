@@ -137,7 +137,7 @@ class RepoManager {
 			throw new RepoException('Cannot use $path because it is reserved for config file');
 
 		final isNew = safeDir(path);
-		if (isNew)
+		if (isNew || FileSystem.readDirectory(path).length == 0) // if we created the path or if it is empty
 			initRepository(path);
 
 		File.saveContent(configFile, path);
