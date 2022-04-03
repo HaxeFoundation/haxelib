@@ -182,10 +182,11 @@ rclone:
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
-    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
+    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n package.zip .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
     RUN mkdir -p haxelib_global
-    RUN haxelib setup haxelib_global
+    RUN neko run.n setup haxelib_global
+    RUN neko run.n install package.zip
     RUN haxe libs.hxml && rm haxelib_global/*.zip
     COPY github.com/andyli/aws-sdk-neko:0852144508e55c1d28ff7425a59ddf6f1758240a+package-zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
