@@ -187,9 +187,14 @@ rclone:
         && rm rclone.zip
     SAVE ARTIFACT rclone-*/rclone
 
+package-haxelib:
+    LOCALLY
+    RUN if [ ! -e "package.zip" ]; then haxe package.hxml; fi
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
+    BUILD +package-haxelib
     COPY --chown=$USER_UID:$USER_GID libs.hxml run.n package.zip .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
     RUN mkdir -p haxelib_global
