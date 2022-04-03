@@ -57,6 +57,7 @@ devcontainer-base:
             tzdata \
             python3-pip \
             docker-ce \ # install docker engine for running +ci target
+            mercurial \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
