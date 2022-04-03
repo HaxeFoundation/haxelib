@@ -23,7 +23,14 @@ package haxelib.client;
 
 import haxe.Json;
 
+/**
+	Class providing functions for converting the old `haxelib.xml` format
+	into `haxelib.json`.
+**/
 class ConvertXml {
+	/**
+		Returns the `haxelib.json` equivalent for `inXml`, a string in `haxelib.xml` format.
+	 **/
 	public static function convert(inXml:String) {
 		// Set up the default JSON structure
 		var json = {
@@ -71,7 +78,8 @@ class ConvertXml {
 		return json;
 	}
 
-	public static function prettyPrint(json:Dynamic, indent="") {
+	/** Pretty-prints `json`. Uses `indent` for indentation. **/
+	public static function prettyPrint(json:Dynamic, indent=""):String {
 		var sb = new StringBuf();
 		sb.add("{\n");
 
