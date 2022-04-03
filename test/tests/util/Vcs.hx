@@ -13,6 +13,9 @@ function makeGitRepo(libPath:String) {
 	final cmd = "git";
 
 	runCommand(cmd, ["init"]);
+	runCommand(cmd, ["config", "user.email", "you@example.com"]);
+	runCommand(cmd, ["config", "user.name", "Your Name"]);
+
 	runCommand(cmd, ["add", "-A"]);
 	runCommand(cmd, ["commit", "-m", "Create repo"]);
 	// different systems may have different default branch names set
@@ -24,9 +27,14 @@ function makeGitRepo(libPath:String) {
 private function runCommand(cmd:String, args:Array<String>) {
 	final process = new sys.io.Process(cmd, args);
 	final code = process.exitCode();
+	final output = if (code != 0) {
+		final stdout = process.stdout.readAll().toString();
+		final stderr = process.stderr.readAll().toString();
+		'Stdout:\n$stdout\nStderr:\n$stderr';
+	} else '';
 	process.close();
 	if (code != 0)
-		throw 'Process error $code when running: $cmd $args';
+		throw 'Process error $code when running: $cmd $args\n$output';
 }
 
 function resetGitRepo(libPath:String) {
