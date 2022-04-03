@@ -4,8 +4,7 @@ import tests.util.Vcs;
 
 class TestGit extends TestVcs {
 	function new () {
-		super();
-		cmd = "git";
+		super("git");
 	}
 
 	override function setup() {
