@@ -102,7 +102,7 @@ devcontainer-base:
     # Switch back to dialog for any ad-hoc use of apt-get
     ENV DEBIAN_FRONTEND=
 
-    # Setting the ENTRYPOINT to docker-init.sh will configure non-root access 
+    # Setting the ENTRYPOINT to docker-init.sh will configure non-root access
     # to the Docker socket. The script will also execute CMD as needed.
     ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
     CMD [ "sleep", "infinity" ]
@@ -493,7 +493,7 @@ ci-tests:
 ci-images:
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
-    BUILD +devcontainer \ 
+    BUILD +devcontainer \
         --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_REF_NAME" \
         --IMAGE_TAG="$GIT_SHA" \
