@@ -4,8 +4,7 @@ import tests.util.Vcs;
 
 class TestHg extends TestVcs {
 	function new () {
-		super();
-		cmd = "hg";
+		super("hg");
 	}
 
 	override function setup() {

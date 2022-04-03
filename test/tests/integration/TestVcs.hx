@@ -6,6 +6,11 @@ abstract class TestVcs extends IntegrationTests {
 	final vcsLibPath = "libraries/libBar";
 	final vcsLibNoHaxelibJson = "libraries/libNoHaxelibJson";
 
+	function new(cmd:String) {
+		super();
+		this.cmd = cmd;
+	}
+
 	function test() {
 
 		final r = haxelib([cmd, "Bar", vcsLibPath]).result();
