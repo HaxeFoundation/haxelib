@@ -57,6 +57,7 @@ devcontainer-base:
             tzdata \
             python3-pip \
             docker-ce \ # install docker engine for running +ci target
+            mercurial \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
@@ -64,7 +65,7 @@ devcontainer-base:
         # the haxelib server code base is not Haxe 4 ready
         && add-apt-repository ppa:haxe/haxe3.4 \
         && add-apt-repository ppa:haxe/haxe4.2 \
-        && apt-get install -y neko haxe=1:4.2.* \
+        && apt-get install -y haxe=1:4.2.* \
         # Install mysql-client
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
         && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
@@ -86,6 +87,14 @@ devcontainer-base:
         && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/*
 
+    RUN curl https://build.haxe.org/builds/neko/linux64/neko_latest.tar.gz > neko_latest.tar.gz
+    RUN mkdir -p out
+    RUN tar -xf neko_latest.tar.gz -C out
+    RUN mv -f out/neko-*-linux64/neko /usr/bin/neko
+    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so
+    RUN mkdir -p /usr/lib/neko/
+    RUN mv -f out/neko-*-linux64/*.ndll /usr/lib/neko/
+
     ENV YARN_CACHE_FOLDER=/yarn
     RUN mkdir -m 777 "$YARN_CACHE_FOLDER"
     RUN npm install -g yarn
@@ -93,7 +102,7 @@ devcontainer-base:
     # Switch back to dialog for any ad-hoc use of apt-get
     ENV DEBIAN_FRONTEND=
 
-    # Setting the ENTRYPOINT to docker-init.sh will configure non-root access 
+    # Setting the ENTRYPOINT to docker-init.sh will configure non-root access
     # to the Docker socket. The script will also execute CMD as needed.
     ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
     CMD [ "sleep", "infinity" ]
@@ -178,13 +187,19 @@ rclone:
         && rm rclone.zip
     SAVE ARTIFACT rclone-*/rclone
 
+package-haxelib:
+    LOCALLY
+    RUN if [ ! -e "package.zip" ]; then haxe package.hxml; fi
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
-    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
+    BUILD +package-haxelib
+    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n package.zip .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
     RUN mkdir -p haxelib_global
-    RUN haxelib setup haxelib_global
+    RUN neko run.n setup haxelib_global
+    RUN neko run.n install package.zip
     RUN haxe libs.hxml && rm haxelib_global/*.zip
     COPY github.com/andyli/aws-sdk-neko:0852144508e55c1d28ff7425a59ddf6f1758240a+package-zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
@@ -484,7 +499,7 @@ ci-images:
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
     ARG IMAGE_TAG="$(echo "$GIT_REF_NAME" | sed -e 's/[^A-Za-z0-9\.]/-/g')"
-    BUILD +devcontainer \ 
+    BUILD +devcontainer \
         --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$IMAGE_TAG" \
         --IMAGE_TAG="$IMAGE_TAG" \
         --IMAGE_TAG="$GIT_SHA" \
