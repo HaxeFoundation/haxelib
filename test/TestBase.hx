@@ -12,7 +12,7 @@ class TestBase extends TestCase {
 		var stdout = '';
 		var stderr = '';
 		var eofCount = 0;
-		var c:Int;
+		var c;
 		while (eofCount < 2) {
 			eofCount = 0;
 			try {
