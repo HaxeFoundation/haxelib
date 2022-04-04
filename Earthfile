@@ -93,6 +93,7 @@ devcontainer-base:
     RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so.2
     RUN mkdir -p /usr/lib/neko/
     RUN mv -f out/neko-*-linux64/*.ndll /usr/lib/neko/
+    RUN neko -version
 
     # install haxe nightly
     RUN curl https://build.haxe.org/builds/haxe/linux64/haxe_latest.tar.gz > haxe_latest.tar.gz
@@ -102,6 +103,7 @@ devcontainer-base:
     RUN mv -f out/haxe_*/haxelib /usr/bin/haxelib
     RUN mkdir -p /usr/share/haxe/
     RUN mv -f out/haxe_*/std/ /usr/share/haxe/
+    RUN haxe --version
 
     ENV YARN_CACHE_FOLDER=/yarn
     RUN mkdir -m 777 "$YARN_CACHE_FOLDER"
@@ -325,6 +327,7 @@ haxelib-server-builder:
     COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
     COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
     COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
+    RUN haxe -version
     RUN haxelib setup /workspace/haxelib_global
 
 haxelib-server-legacy:
@@ -476,6 +479,7 @@ ci-runner:
     FROM +devcontainer
     COPY test .
     COPY ci.hxml .
+    RUN haxe --version
     RUN haxe ci.hxml
     SAVE ARTIFACT bin/ci.n
 
