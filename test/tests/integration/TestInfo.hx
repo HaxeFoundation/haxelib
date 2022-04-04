@@ -1,23 +1,19 @@
 package tests.integration;
 
-import haxe.io.*;
-import IntegrationTests.*;
-using IntegrationTests;
-
 class TestInfo extends IntegrationTests {
 	function test():Void {
 		{
-			var r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
+			final r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
 			assertSuccess(r);
 		}
 
 		{
-			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
+			final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
 			assertSuccess(r);
 		}
 
 		{
-			var r = haxelib(["info", "Bar"]).result();
+			final r = haxelib(["info", "Bar"]).result();
 			assertSuccess(r);
 
 			assertTrue(r.out.indexOf("Bar") >= 0);
@@ -34,12 +30,12 @@ class TestInfo extends IntegrationTests {
 		}
 
 		{
-			var r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]), bar.pw]).result();
+			final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]), bar.pw]).result();
 			assertSuccess(r);
 		}
 
 		{
-			var r = haxelib(["info", "Bar"]).result();
+			final r = haxelib(["info", "Bar"]).result();
 			assertSuccess(r);
 
 			assertTrue(r.out.indexOf("Bar") >= 0);
@@ -60,7 +56,7 @@ class TestInfo extends IntegrationTests {
 
 	function testNotExist():Void {
 		{
-			var r = haxelib(["info", "Bar"]).result();
+			final r = haxelib(["info", "Bar"]).result();
 			assertTrue(r.code != 0);
 		}
 	}

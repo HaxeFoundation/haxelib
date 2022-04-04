@@ -1,17 +1,16 @@
-import haxe.io.Path;
-import haxelib.client.Vcs.VcsID;
 import haxe.unit.TestRunner;
-import sys.*;
-import sys.io.*;
+import sys.FileSystem;
+import sys.io.Process;
+
 import tests.*;
+
 using StringTools;
 
 class HaxelibTests {
-	public static function runCommand(cmd:String, args:Array<String>):Void
-	{
+	public static function runCommand(cmd:String, args:Array<String>):Void {
 		Sys.println('Command: $cmd $args');
 
-		var exitCode = Sys.command(cmd, args);
+		final exitCode = Sys.command(cmd, args);
 
 		Sys.println('Command exited with $exitCode: $cmd $args');
 
@@ -20,19 +19,19 @@ class HaxelibTests {
 	}
 
 	static function cmdSucceed(cmd:String, ?args:Array<String>):Bool {
-		var p = try {
+		final p = try {
 			new Process(cmd, args);
 		} catch(e:Dynamic) {
 			return false;
 		}
-		var exitCode = p.exitCode();
+		final exitCode = p.exitCode();
 		p.close();
 		return exitCode == 0;
 	}
 
 	static public function deleteDirectory(dir:String) {
 		if (!FileSystem.exists(dir)) return;
-		var exitCode = switch (Sys.systemName()) {
+		final exitCode = switch (Sys.systemName()) {
 			case "Windows":
 				Sys.command("rmdir", ["/S", "/Q", StringTools.replace(FileSystem.fullPath(dir), "/", "\\")]);
 			case _:
@@ -44,14 +43,14 @@ class HaxelibTests {
 	}
 
 	static function main():Void {
-		var r = new TestRunner();
+		final r = new TestRunner();
 
 		r.add(new TestSemVer());
 		r.add(new TestData());
 		r.add(new TestRemoveSymlinks());
 		r.add(new TestRemoveSymlinksBroken());
 
-		var isCI = Sys.getEnv("CI") != null;
+		final isCI = Sys.getEnv("CI") != null;
 
 		// The test repo https://bitbucket.org/fzzr/hx.signal is gone.
 		// if (isCI || cmdSucceed("hg", ["version"])) {
@@ -72,7 +71,7 @@ class HaxelibTests {
 
 		r.add(new TestInstall());
 
-		var success = r.run();
+		final success = r.run();
 		Sys.exit(success ? 0 : 1);
 	}
 }

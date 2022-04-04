@@ -1,77 +1,70 @@
 package tests;
 
-import sys.io.*;
 import sys.FileSystem;
-import haxe.io.*;
-import haxe.unit.TestCase;
+import sys.io.File;
+import haxe.io.Path;
+
 import haxelib.Data;
 
 using StringTools;
 
-class TestInstall extends TestBase
-{
+class TestInstall extends TestBase {
 
-	static inline var REPO = "haxelib-repo";
-	static inline var PROJECT_FOLDER = "UseGitDep";
-	static inline var REPO_ROOT = "test/libraries";
+	static final REPO = "haxelib-repo";
+	static final PROJECT_FOLDER = "UseGitDep";
+	static final REPO_ROOT = "test/libraries";
 	static var CWD:String = null;
 	static var origRepo:String = null;
-	var repo:String = null;
+
+	final repo:String;
 
 
 	//--------------- constructor ---------------//
 
-	public function new()
-	{
+	public function new() {
 		super();
-		this.repo = Path.join([Sys.getCwd(), "test", REPO]);
+		repo = Path.join([Sys.getCwd(), "test", REPO]);
 	}
 
 
 	//--------------- initialize ----------------//
 
-	override public function setup():Void
-	{
-		origRepo = ~/\r?\n/.split(runHaxelib(["config"]).stdout)[0];
-		origRepo = Path.normalize(origRepo);
+	override public function setup():Void {
+		origRepo = Path.normalize(~/\r?\n/.split(runHaxelib(["config"]).stdout)[0]);
 
-		if (runHaxelib(["setup", repo]).exitCode != 0) {
+		if (runHaxelib(["setup", repo]).exitCode != 0)
 			throw "haxelib setup failed";
-		}
 
 		CWD = Sys.getCwd();
-		var dir = Path.join([CWD, REPO_ROOT, PROJECT_FOLDER]);
+		final dir = Path.join([CWD, REPO_ROOT, PROJECT_FOLDER]);
 		Sys.setCwd(dir);
 	}
 
-	override public function tearDown():Void
-	{
+	override public function tearDown():Void {
 		// restore original CWD:
 		Sys.setCwd(CWD);
 
-		if (runHaxelib(["setup", origRepo]).exitCode != 0) {
+		if (runHaxelib(["setup", origRepo]).exitCode != 0)
 			throw "haxelib setup failed";
-		}
+
 		deleteDirectory(repo);
 
 	}
 
 	//----------------- tests -------------------//
 
-	public function testInstallHaxelibParameter():Void
-	{
-		var r = runHaxelib(["install", "haxelib.json"]);
+	public function testInstallHaxelibParameter():Void {
+		final r = runHaxelib(["install", "haxelib.json"]);
 		assertTrue(r.exitCode == 0);
 
 		checkLibrary(getLibraryName());
 	}
 
-	public function testInstallHaxelibDependencyWithTag():Void
-	{
-		var r = runHaxelib(["install", "tag_haxelib.json"]);
+	public function testInstallHaxelibDependencyWithTag():Void {
+		final r = runHaxelib(["install", "tag_haxelib.json"]);
 		assertTrue(r.exitCode == 0);
 
-		var lib = getLibraryName();
+		final lib = getLibraryName();
 		checkLibrary(lib);
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
@@ -94,31 +87,30 @@ class TestInstall extends TestBase
 	}
 
 	public function testReinstallHxml() {
-		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		final r = runHaxelib(["install", "git-deps.hxml", "--always"]);
 		assertEquals(0, r.exitCode);
-		var r = runHaxelib(["install", "git-deps.hxml", "--always"]);
+		final r = runHaxelib(["install", "git-deps.hxml", "--always"]);
 		assertEquals(0, r.exitCode);
-		var r = runHaxelib(["path", "hx.signal"]);
+		final r = runHaxelib(["path", "hx.signal"]);
 		assertEquals(0, r.exitCode);
 	}
 
 	function getLibraryName():String
 	{
-		var haxelibFile = File.read("haxelib.json", false);
-		var details = Data.readData(haxelibFile.readAll().toString(), false );
+		final haxelibFile = File.read("haxelib.json", false);
+		final details = Data.readData(haxelibFile.readAll().toString(), false );
 		haxelibFile.close();
 		return details.dependencies.toArray()[0].name;
 	}
 
-	function checkLibrary(lib:String):Void
-	{
+	function checkLibrary(lib:String):Void {
 		// Library folder exists
-		var libFolder = Path.join([repo, lib]);
+		final libFolder = Path.join([repo, lib]);
 		assertTrue(FileSystem.exists(libFolder));
 		assertTrue(FileSystem.isDirectory(libFolder));
 
 		// Library version is set to git
-		var current = File.read(Path.join([libFolder, ".current"]), false);
+		final current = File.read(Path.join([libFolder, ".current"]), false);
 		assertTrue(current.readAll().toString() == "git");
 		current.close();
 	}

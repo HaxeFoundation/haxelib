@@ -1,29 +1,34 @@
-import haxe.unit.*;
-import haxe.*;
-import haxe.io.*;
-import sys.*;
-import sys.io.*;
-import haxelib.*;
+
+import haxe.Json;
+import sys.FileSystem;
+import sys.io.Process;
+import sys.io.File;
+
+import haxe.unit.TestRunner;
+
+import haxelib.SemVer;
+
 using StringTools;
+using haxe.io.Path;
 using IntegrationTests;
 
 typedef UserRegistration = {
-	user:String,
-	email:String,
-	fullname:String,
-	pw:String
+	final user:String;
+	final email:String;
+	final fullname:String;
+	final pw:String;
 }
 
 class IntegrationTests extends TestBase {
-	static var projectRoot:String = Sys.getCwd();
-	var haxelibBin:String = Path.join([projectRoot, "run.n"]);
-	public var server(default, null):String = switch (Sys.getEnv("HAXELIB_SERVER")) {
+	static final projectRoot:String = Sys.getCwd();
+	final haxelibBin:String = Path.join([projectRoot, "run.n"]);
+	public final server = switch (Sys.getEnv("HAXELIB_SERVER")) {
 		case null:
 			"localhost";
 		case url:
 			url;
 	};
-	public var serverPort(default, null) = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
+	public final serverPort = switch (Sys.getEnv("HAXELIB_SERVER_PORT")) {
 		case null:
 			2000;
 		case port:
@@ -32,35 +37,35 @@ class IntegrationTests extends TestBase {
 	public var serverUrl(get, null):String;
 	function get_serverUrl() return serverUrl != null ? serverUrl : serverUrl = 'http://${server}:${serverPort}/';
 
-	static var originalRepo(default, never) = {
-		var p = new Process("haxelib", ["config"]);
-		var originalRepo = Path.normalize(p.stdout.readLine());
+	static final originalRepo = {
+		final p = new Process("haxelib", ["config"]);
+		final originalRepo = p.stdout.readLine().normalize();
 		p.close();
 		if (repo == originalRepo) {
 			throw "haxelib repo is the same as test repo: " + repo;
 		}
 		originalRepo;
 	};
-	static public var repo(default, never) = "repo_integration_tests";
-	static public var bar(default, never):UserRegistration = {
+	static public final repo = "repo_integration_tests";
+	static public final bar = {
 		user: "Bar",
 		email: "bar@haxe.org",
 		fullname: "Bar",
 		pw: "barpassword",
 	};
-	static public var foo(default, never):UserRegistration = {
+	static public final foo = {
 		user: "Foo",
 		email: "foo@haxe.org",
 		fullname: "Foo",
 		pw: "foopassword",
 	};
-	static public var deepAuthor(default, never):UserRegistration = {
+	static public final deepAuthor = {
 		user: "DeepAuthor",
 		email: "deep@haxe.org",
 		fullname: "Jonny Deep",
 		pw: "deep thought"
 	}
-	static public var anotherGuy(default, never):UserRegistration = {
+	static public final anotherGuy = {
 		user: "AnotherGuy",
 		email: "another@email.com",
 		fullname: "Another Guy",
@@ -73,7 +78,7 @@ class IntegrationTests extends TestBase {
 			clientVer;
 		else {
 			clientVer = {
-				var r = haxelib(["version"]).result();
+				final r = haxelib(["version"]).result();
 				if (r.code == 0)
 					SemVer.ofString(switch(r.out.trim()) {
 						case _.split(" ") => parts: parts[0];
@@ -90,7 +95,7 @@ class IntegrationTests extends TestBase {
 	}
 
 	function haxelib(args:Array<String>, ?input:String):Process {
-		var p = #if system_haxelib
+		final p = #if system_haxelib
 			new Process("haxelib", ["-R", serverUrl].concat(args));
 		#else
 			new Process("neko", [haxelibBin, "-R", serverUrl].concat(args));
@@ -120,20 +125,20 @@ class IntegrationTests extends TestBase {
 		assertTrue(true);
 	}
 
-	var dbConfig:Dynamic = Json.parse(File.getContent("www/dbconfig.json"));
+	final dbConfig:Dynamic = Json.parse(File.getContent("www/dbconfig.json"));
 	var dbCnx:sys.db.Connection;
 	function resetDB():Void {
-		var db = dbConfig.database;
+		final db = dbConfig.database;
 		dbCnx.request('DROP DATABASE IF EXISTS ${db};');
 		dbCnx.request('CREATE DATABASE ${db};');
 
-		var filesPath = "www/files/3.0";
+		final filesPath = "www/files/3.0";
 		for (item in FileSystem.readDirectory(filesPath)) {
 			if (item.endsWith(".zip")) {
 				FileSystem.deleteFile(Path.join([filesPath, item]));
 			}
 		}
-		var tmpPath = "tmp";
+		final tmpPath = "tmp";
 		for (item in FileSystem.readDirectory(filesPath)) {
 			if (item.endsWith(".tmp")) {
 				FileSystem.deleteFile(Path.join([tmpPath, item]));
@@ -173,21 +178,25 @@ class IntegrationTests extends TestBase {
 	}
 
 	static public function result(p:Process):{out:String, err:String, code:Int} {
-		var out = p.stdout.readAll().toString();
-		var err = p.stderr.readAll().toString();
-		var code = p.exitCode();
+		final out = p.stdout.readAll().toString();
+		final err = p.stderr.readAll().toString();
+		final code = p.exitCode();
 		p.close();
 		return {out:out, err:err, code:code};
 	}
 
 	static public function haxelibSetup(path:String):Void {
-		HaxelibTests.runCommand("haxelib", ["setup", path]);
+		final p = new Process("haxelib", ["setup", path]);
+		final exitCode = p.exitCode();
+
+		if (exitCode != 0)
+			Sys.exit(exitCode);
 	}
 
 	static function main():Void {
-		var prevDir = Sys.getCwd();
+		final prevDir = Sys.getCwd();
 
-		var runner = new TestRunner();
+		final runner = new TestRunner();
 		runner.add(new tests.integration.TestEmpty());
 		runner.add(new tests.integration.TestSetup());
 		runner.add(new tests.integration.TestSimple());
@@ -201,7 +210,7 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestDev());
 		runner.add(new tests.integration.TestRun());
 		runner.add(new tests.integration.TestPath());
-		var success = runner.run();
+		final success = runner.run();
 
 		if (!success) {
 			Sys.exit(1);

@@ -1,7 +1,17 @@
 {
-    "haxe.configurations": [
-        ["client_tests.hxml"],
-        ["client.hxml"],
-        ["server_each.hxml", "-neko", "repo.n"]
-    ]
+	"haxe.configurations": [
+		["client.hxml"],
+		["client_tests.hxml"],
+		["integration_tests.hxml"],
+		["prepare_tests.hxml"],
+		["server_each.hxml", "-neko", "repo.n"]
+	],
+	"haxeTestExplorer.testCommand":[
+		"${haxe}",
+		"client_tests.hxml",
+		"--library",
+		"test-adapter",
+		"--cmd",
+		"neko bin/test.n"
+	]
 }
