@@ -64,8 +64,6 @@ devcontainer-base:
         && apt-get install -y nodejs=14.* \
         # the haxelib server code base is not Haxe 4 ready
         && add-apt-repository ppa:haxe/haxe3.4 \
-        && add-apt-repository ppa:haxe/haxe4.2 \
-        && apt-get install -y haxe=1:4.2.* \
         # Install mysql-client
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
         && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
@@ -87,13 +85,23 @@ devcontainer-base:
         && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/*
 
+    # install neko nightly
     RUN curl https://build.haxe.org/builds/neko/linux64/neko_latest.tar.gz > neko_latest.tar.gz
     RUN mkdir -p out
     RUN tar -xf neko_latest.tar.gz -C out
     RUN mv -f out/neko-*-linux64/neko /usr/bin/neko
-    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so
+    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so.2
     RUN mkdir -p /usr/lib/neko/
     RUN mv -f out/neko-*-linux64/*.ndll /usr/lib/neko/
+
+    # install haxe nightly
+    RUN curl https://build.haxe.org/builds/haxe/linux64/haxe_latest.tar.gz > haxe_latest.tar.gz
+    RUN mkdir -p out
+    RUN tar -xf haxe_latest.tar.gz -C out
+    RUN mv -f out/haxe_*/haxe /usr/bin/haxe
+    RUN mv -f out/haxe_*/haxelib /usr/bin/haxelib
+    RUN mkdir -p /usr/share/haxe/
+    RUN mv -f out/haxe_*/std/ /usr/share/haxe/
 
     ENV YARN_CACHE_FOLDER=/yarn
     RUN mkdir -m 777 "$YARN_CACHE_FOLDER"
