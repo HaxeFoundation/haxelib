@@ -31,36 +31,61 @@ import haxelib.Validator;
 
 using StringTools;
 
+/** Information on a `user` in the Haxelib database. **/
 typedef UserInfos = {
+	/** The user's name. **/
 	var name : String;
+	/** The user's full name. **/
 	var fullname : String;
+	/** The user's email address. **/
 	var email : String;
+	/** An array of projects for which the user is a contributor. **/
 	var projects : Array<String>;
 }
 
+/** Information on a specific version of a project in the Haxelib database. **/
 typedef VersionInfos = {
+	/** The release date of the version. **/
 	var date : String;
+	/** The version "name" in SemVer form. **/
 	var name : SemVer;//TODO: this should eventually be called `number`
+	/** The number of downloads this version of the library has had. **/
 	var downloads : Int;
+	/** The release note that came with this release. **/
 	var comments : String;
 }
 
+/** Information on a project in the Haxelib database. **/
 typedef ProjectInfos = {
+	/** The project name. **/
 	var name : String;
+	/** The project's description. **/
 	var desc : String;
+	/** A link to the project's website. **/
 	var website : String;
+	/** The username of the owner of the project. **/
 	var owner : String;
+	/** An array of contributor's user names and full names. **/
 	var contributors : Array<{ name:String, fullname:String }>;
+	/** The license under which the project is released. **/
 	var license : String;
+	/** The current version of the project. **/
 	var curversion : String;
+	/** The total number of downloads the project has. **/
 	var downloads : Int;
+	/** An array of `VersionInfos` for each release of the library. **/
 	var versions : Array<VersionInfos>;
+	/** The project's tags. **/
 	var tags : List<String>;
 }
 
+/** The level of strictness with which a `haxelib.json` check is performed. **/
 @:enum abstract CheckLevel(Int) {
+	/** No check is performed. **/
 	var NoCheck = 0;
+	/** Only the syntax of the file is checked. **/
 	var CheckSyntax = 1;
+	/** The syntax is checked and data in the file is validated. **/
 	var CheckData = 2;
 
 	@:from static inline function fromBool(check:Bool):CheckLevel {
@@ -74,6 +99,7 @@ typedef ProjectInfos = {
 	@:op(A < B) function lt(b:CheckLevel):Bool;
 }
 
+/** The version of a dependency specified in a `haxelib.json`. **/
 abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
@@ -85,14 +111,19 @@ abstract DependencyVersion(String) to String from SemVer {
 			else
 				@:privateAccess new SemVer(this);
 
-	static public function isValid(s:String)
+	/** Returns whether `s` constitutes a valid dependency version string. **/
+	static public function isValid(s:String):Bool
 		return new DependencyVersion(s).toValidatable().validate() == None;
 
+	/** Default empty dependency version. **/
 	static public var DEFAULT(default, null) = new DependencyVersion('');
+	/** Git dependency version. **/
 	static public var GIT(default, null) = new DependencyVersion('git');
 }
 
+/** Dependency names and versions. **/
 abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion> {
+	/** Extracts the dependency data and returns an array of `Dependency` objects. **/
 	@:to public function toArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
@@ -104,8 +135,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 
 			var isGit = value != null && (value + "").startsWith("git:");
 
-			if ( !isGit )
-			{
+			if ( !isGit ){
 				result.push ({
 					name: f,
 					type: (DependencyType.Haxelib : DependencyType),
@@ -114,9 +144,7 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 					subDir: (null : String),
 					branch: (null : String),
 				});
-			}
-			else
-			{
+			} else {
 				value = value.substr(4);
 				var urlParts = value.split("#");
 				var url = urlParts[0];
@@ -131,8 +159,6 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 					branch: (branch : String),
 				});
 			}
-
-
 		}
 
 		return result;
@@ -141,12 +167,14 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 		return toArray().iterator();
 }
 
+/** The type of a dependency version. **/
 @:enum abstract DependencyType(String) {
 	var Haxelib = null;
 	var Git = 'git';
 	var Mercurial = 'hg';
 }
 
+/** Data on a project dependency. **/
 typedef Dependency = {
 	name : String,
 	?version : DependencyVersion,
@@ -156,6 +184,7 @@ typedef Dependency = {
 	?branch: String,
 }
 
+/** Data held in the `haxelib.json` file. **/
 typedef Infos = {
 	// IMPORTANT: if you change this or its fields types,
 	// make sure to update `schema.json` file accordingly,
@@ -174,6 +203,7 @@ typedef Infos = {
 	@:optional var main:String;
 }
 
+/** An abstract enum representing the different Licenses a project can have. **/
 @:enum abstract License(String) to String {
 	var Gpl = 'GPL';
 	var Lgpl = 'LGPL';
@@ -183,6 +213,7 @@ typedef Infos = {
 	var Apache = 'Apache';
 }
 
+/** A valid project name string. **/
 abstract ProjectName(String) to String {
 	static var RESERVED_NAMES = ["haxe", "all"];
 	static var RESERVED_EXTENSIONS = ['.zip', '.hxml'];
@@ -206,7 +237,7 @@ abstract ProjectName(String) to String {
 		function add(m, r)
 			a.push( { msg: m, check: r } );
 
-		add("%VALUE is not a String", 
+		add("%VALUE is not a String",
 			#if (haxe_ver < 4.1)
 				Std.is.bind(_, String)
 			#else
@@ -226,40 +257,71 @@ abstract ProjectName(String) to String {
 		a;
 	}
 
+	/**
+		Validates that the project name is valid.
+
+		If it is invalid, returns `Some(e)` where e is an error
+		detailing why the project name is invalid.
+
+		If it is valid, returns `None`.
+	 **/
 	public function validate()
 		return toValidatable().validate();
 
+	/**
+		Returns `s` as a `ProjectName` if it is valid,
+		otherwise throws an error explaining why it is invalid.
+	 **/
 	static public function ofString(s:String)
 		return switch new ProjectName(s) {
 			case _.toValidatable().validate() => Some(e): throw e;
 			case v: v;
 		}
 
+	/** Default project name **/
 	static public var DEFAULT(default, null) = new ProjectName('unknown');
 }
 
+/** Class providing functions for working with project information. **/
 class Data {
 
+	/** The name of the file containing the project information. **/
 	public static var JSON(default, null) = "haxelib.json";
+	/** The name of the file containing project documentation. **/
 	public static var DOCXML(default, null) = "haxedoc.xml";
+	/** The location of the repository in the haxelib server. **/
 	public static var REPOSITORY(default, null) = "files/3.0";
+	/** Regex matching alphanumeric strings, which can also include periods, dashes, or underscores. **/
 	public static var alphanum(default, null) = ~/^[A-Za-z0-9_.-]+$/;
 
-
+	/**
+		Convert periods in `name` into commas. Throws an error if `name`
+		contains invalid characters.
+	 **/
 	public static function safe( name : String ) {
 		if( !alphanum.match(name) )
 			throw "Invalid parameter : "+name;
 		return name.split(".").join(",");
 	}
 
+	/** Converts commas in `name` into periods. **/
 	public static function unsafe( name : String ) {
 		return name.split(",").join(".");
 	}
 
+	/** Returns the zip file name for version `ver` of `lib`. **/
 	public static function fileName( lib : String, ver : String ) {
 		return safe(lib)+"-"+safe(ver)+".zip";
 	}
 
+	/**
+		Returns the latest version from `info`, or `null` if no releases are found.
+
+		By default preview versions are ignored. If `preview` is passed in,
+		preview versions will be checked first and will only be skipped
+		if calling `preview` with the `Preview` type of the version,
+		and it is only skipped if the call returns `false`.
+	 **/
 	static public function getLatest(info:ProjectInfos, ?preview:SemVer.Preview->Bool):Null<SemVer> {
 		if (info.versions.length == 0) return null;
 		if (preview == null)
@@ -275,7 +337,7 @@ class Data {
 	}
 
 	/**
-		Return the directory that contains *haxelib.json*.
+		Returns the directory that contains *haxelib.json*.
 		If it is at the root, `""`.
 		If it is in a folder, the path including a trailing slash is returned.
 	*/
@@ -313,16 +375,18 @@ class Data {
 				Some(best);
 	}
 
+	/** Returns the documentation file contents within `zip`, or `null` if it none is found. **/
 	public static function readDoc( zip : List<Entry> ) : Null<String>
 		return switch topmost(zip, fileNamed(DOCXML)) {
 			case Some(f): Reader.unzip(f).toString();
 			case None: null;
 		}
 
-
+	/** Retrieves the haxelib.json data from `zip`, validating it according to `check`. **/
 	public static function readInfos( zip : List<Entry>, check : CheckLevel ) : Infos
 		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
+	/** Throws an exception if the classpath in `infos` does not exist in `zip`. **/
 	public static function checkClassPath( zip : List<Entry>, infos : Infos ) {
 		if ( infos.classPath != "" ) {
 			var basePath = Data.locateBasePath(zip);
@@ -336,6 +400,7 @@ class Data {
 		}
 	}
 
+	/** Extracts project information from `jsondata`, validating it according to `check`. **/
 	public static function readData( jsondata: String, check : CheckLevel ) : Infos {
 		var doc:Infos =
 			try Json.parse(jsondata)
@@ -377,8 +442,8 @@ class Data {
 		if (doc.description == null)
 			doc.description = '';
 
-    if (doc.tags == null)
-      doc.tags = [];
+		if (doc.tags == null)
+			doc.tags = [];
 
 		if (doc.url == null)
 			doc.url = '';
