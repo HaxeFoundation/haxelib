@@ -1467,9 +1467,6 @@ class Main {
 		final cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
 			throw "Can't remove current version of library "+prj;
-		final dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
-		if( dev == vdir )
-			throw "Can't remove dev version of library "+prj;
 		deleteRec(vdir);
 		print("Library "+prj+" version "+version+" removed");
 	}
