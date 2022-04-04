@@ -155,7 +155,7 @@ abstract SemVer(String) to String {
 						case 'alpha': ALPHA;
 						case 'beta': BETA;
 						case 'rc': RC;
-						case v if (v == null): null;
+						case null: null;
 						case v: throw 'unrecognized preview tag $v';
 					},
 				previewNum:

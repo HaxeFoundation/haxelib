@@ -141,7 +141,7 @@ class Vcs implements IVcs {
 		switch (commandResult) {
 			case {code: 0}: //pass
 			case {code: code, out:out}:
-				if (!settings.debug)
+				if (!settings.quiet)
 					Sys.stderr().writeString(out);
 				Sys.exit(code);
 		}
@@ -339,7 +339,7 @@ class Mercurial extends Vcs {
 	override public function update(libName:String):Bool {
 		command(executable, ["pull"]);
 		var summary = command(executable, ["summary"]).out;
-		final diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos", "--no-ext-diff"]);
+		final diff = command(executable, ["diff", "-U", "2", "--git", "--subrepos"]);
 		final status = command(executable, ["status"]);
 
 		// get new pulled changesets:

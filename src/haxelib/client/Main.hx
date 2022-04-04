@@ -21,21 +21,23 @@
  */
 package haxelib.client;
 
-import haxelib.client.Util.*;
+import haxe.Http;
+import haxe.Timer;
 import haxe.crypto.Md5;
-import haxe.*;
-import haxe.ds.*;
+import haxe.ds.Option;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Path;
 import haxe.zip.*;
-import sys.io.File;
+
 import sys.FileSystem;
-import sys.io.*;
-import haxe.ds.Option;
-import haxelib.client.Cli.ask;
-import haxelib.client.FsUtils.*;
+import sys.io.File;
+import sys.io.Process;
+
 import haxelib.client.Vcs;
+import haxelib.client.Util.*;
+import haxelib.client.FsUtils.*;
+import haxelib.client.Cli.ask;
 
 using StringTools;
 using Lambda;
@@ -203,7 +205,7 @@ class Main {
 		addCommand("update", update, "update a single library (if given) or all installed libraries", Basic);
 		addCommand("remove", remove, "remove a given library/version", Basic, false);
 		addCommand("list", list, "list all installed libraries", Basic, false);
-		addCommand("set", set, "set the current version for a library", Basic, false);
+		addCommand("set", set, "set the current version for a library", Basic);
 
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
@@ -347,7 +349,7 @@ class Main {
 	static final ABOUT_SETTINGS = {
 		global : "force global repo if a local one exists",
 		debug  : "run in debug mode, imply not --quiet",
-		quiet  : "print less messages, imply not --debug",
+		quiet  : "print fewer messages, imply not --debug",
 		flat   : "do not use --recursive cloning for git",
 		always : "answer all questions with yes",
 		never  : "answer all questions with no",
@@ -520,9 +522,9 @@ class Main {
 					if( e == "std@host_resolve" ) {
 						print("Host "+SERVER.host+" was not found");
 						print("Please ensure that your internet connection is on");
-						print("If you don't have an internet connection or if you are behing a proxy");
+						print("If you don't have an internet connection or if you are behind a proxy");
 						print("please download manually the file from https://lib.haxe.org/files/3.0/");
-						print("and run 'haxelib local <file>' to install the Library.");
+						print("and run 'haxelib install <file>' to install the Library.");
 						print("You can also setup the proxy with 'haxelib proxy'.");
 						print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 						Sys.exit(1);
@@ -741,7 +743,7 @@ class Main {
 	function install() {
 		final rep = getRepository();
 
-		final prj = param("Library name or hxml file:");
+		final prj = param("Library name or hxml file");
 
 		// No library given, install libraries listed in *.hxml in given directory
 		if( prj == "all") {
@@ -1465,9 +1467,6 @@ class Main {
 		final cur = File.getContent(pdir + "/.current").trim(); // set version regardless of dev
 		if( cur == version )
 			throw "Can't remove current version of library "+prj;
-		final dev = try getDev(pdir) catch (_:Dynamic) null; // dev is checked here
-		if( dev == vdir )
-			throw "Can't remove dev version of library "+prj;
 		deleteRec(vdir);
 		print("Library "+prj+" version "+version+" removed");
 	}
@@ -1765,8 +1764,7 @@ class Main {
 		final deps = dependencies.toArray();
 		deps.push( { name: project, version: DependencyVersion.DEFAULT } );
 		final args = [];
-		// TODO: change comparison to '4.0.0' upon Haxe 4.0 release
-		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0-rc.5')) >= 0) {
+		if(settings.global && SemVer.compare(haxeVersion(), SemVer.ofString('4.0.0')) >= 0) {
 			args.push('--haxelib-global');
 		}
 		for (d in deps) {
