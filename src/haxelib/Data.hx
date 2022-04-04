@@ -105,7 +105,7 @@ abstract DependencyVersion(String) to String from SemVer {
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == '' || this == 'git' || (#if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(this, String) && this.startsWith('git:')))
+			if (this == DEFAULT || this == GIT || (#if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(this, String) && this.startsWith('git:')))
 				{ validate: function () return None }
 			else
 				@:privateAccess new SemVer(this);
