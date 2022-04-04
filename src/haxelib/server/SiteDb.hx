@@ -109,6 +109,13 @@ class Version extends Object {
 
 }
 
+@:id(pid,date)
+class Downloads extends Object {
+	public var pid : Int;
+	public var date : SDate;
+	public var num : Int;
+}
+
 @:id(user,project)
 class Developer extends Object {
 
@@ -145,7 +152,8 @@ class SiteDb {
 			Project.manager,
 			Tag.manager,
 			Version.manager,
-			Developer.manager
+			Developer.manager,
+			Downloads.manager
 		];
 		for (m in managers)
 			if (!TableCreate.exists(m))

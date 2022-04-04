@@ -81,6 +81,7 @@ class Repo implements SiteApi {
 			license : p.license,
 			downloads : totalDownloads,
 			tags : Tag.manager.search($project == p.id).map(function(t) return t.tag),
+			downloadsPerWeek: [for (d in sys.db.Manager.cnx.request('SELECT (WEEKOFYEAR(`date` ) + IF( WEEKDAY(  `date` ) > WEEKDAY( DATE_SUB(CURDATE(), INTERVAL 1 DAY) ) , 1, 0 )) weeknumber, SUM( num ) cnum , CONCAT(Date_Format(MIN(`date`),\'%Y-%m-%d\'),\' to \',Date_Format(MAX(`date`),\'%Y-%m-%d\')) weeklydownloads FROM  `Downloads` WHERE pid =${p.id} and `date` < CURDATE() GROUP BY weeknumber ')) { week:d.weeklydownloads, count: d.cnum }],
 		};
 	}
 
@@ -371,6 +372,8 @@ class Repo implements SiteApi {
 		v.update();
 		p.downloads++;
 		p.update();
+		
+		sys.db.Manager.cnx.request("INSERT INTO Downloads ( `pid`, `date`, `num`) VALUES (${p.id}, CURDATE(), 1 ) ON DUPLICATE KEY UPDATE num = num +1;");
 	}
 
 	#if neko

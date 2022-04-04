@@ -77,6 +77,7 @@ typedef ProjectInfos = {
 	var versions : Array<VersionInfos>;
 	/** The project's tags. **/
 	var tags : List<String>;
+	var downloadsPerWeek : Array<{ week:String, count:Int }>;
 }
 
 /** The level of strictness with which a `haxelib.json` check is performed. **/
