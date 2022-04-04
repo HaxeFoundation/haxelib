@@ -21,7 +21,6 @@
  */
 package haxelib;
 
-import haxe.CallStack;
 import haxe.ds.Option;
 import haxe.ds.*;
 import haxe.zip.Reader;
