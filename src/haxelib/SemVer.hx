@@ -168,7 +168,7 @@ abstract SemVer(String) to String {
 				throw '$this is not a valid version string';//TODO: include some URL for reference
 
 	static public function isValid(s:String)
-		return Std.is(s, String) && FORMAT.match(s.toLowerCase());
+		return #if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(s, String) && FORMAT.match(s.toLowerCase());
 
 	static public function ofString(s:String) {
 		var ret = new SemVer(s);

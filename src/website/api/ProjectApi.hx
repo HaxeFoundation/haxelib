@@ -45,7 +45,7 @@ class ProjectApi extends UFApi {
 		}
 		catch ( e:Dynamic )  {
 			var error =
-				if ( Std.is(e,String) && StringTools.startsWith(e,"No such Project") ) HttpError.pageNotFound();
+				if ( #if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(e, String) && StringTools.startsWith(e,"No such Project") ) HttpError.pageNotFound();
 				else Error.withData('Failed to get info for project $projectName',e);
 			return Failure( error );
 		}
