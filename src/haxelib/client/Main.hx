@@ -205,7 +205,7 @@ class Main {
 		addCommand("update", update, "update a single library (if given) or all installed libraries", Basic);
 		addCommand("remove", remove, "remove a given library/version", Basic, false);
 		addCommand("list", list, "list all installed libraries", Basic, false);
-		addCommand("set", set, "set the current version for a library", Basic, false);
+		addCommand("set", set, "set the current version for a library", Basic);
 
 		addCommand("search", search, "list libraries matching a word", Information);
 		addCommand("info", info, "list information on a given library", Information);
