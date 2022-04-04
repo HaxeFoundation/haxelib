@@ -95,8 +95,6 @@ class RepoReformatter {
 	static function updateFrom0(repo:Repository, log:(msg:String)->Void) {
 		final path = repo.path;
 
-		final items = FileSystem.readDirectory(path);
-
 		final filteredItems = [];
 
 		// map of new paths and the old paths that will be moved to them
@@ -104,7 +102,7 @@ class RepoReformatter {
 
 		if (!FsUtils.IS_WINDOWS) log("Checking for conflicts");
 
-		for (subDir in items) {
+		for (subDir in FileSystem.readDirectory(path)) {
 			final oldPath = Path.join([path, subDir]);
 			final lowerCaseVersion = subDir.toLowerCase();
 			if (subDir.startsWith(".") || !FileSystem.isDirectory(oldPath) || lowerCaseVersion == subDir)
@@ -132,7 +130,6 @@ class RepoReformatter {
 				case Left(_): continue; // only one folder, so there are no conflicts
 				case Right(arr): arr;
 			}
-			items.sort(Reflect.compare);
 
 			final pathByItem:Map<String, String> = [];
 
@@ -163,6 +160,9 @@ class RepoReformatter {
 				}
 			}
 		}
+
+		if (!FsUtils.IS_WINDOWS)
+			filteredItems.sort(Reflect.compare);
 
 		for (subDir in filteredItems) {
 			final fullPath = Path.join([repo.path, subDir]);
