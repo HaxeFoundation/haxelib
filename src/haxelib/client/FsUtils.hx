@@ -25,12 +25,15 @@ import haxe.io.Path;
 import sys.FileSystem;
 using StringTools;
 
+/** Class containing useful FileSystem utility functions. **/
+@:noDoc
 class FsUtils {
     static var IS_WINDOWS = (Sys.systemName() == "Windows");
 
     /**
-      recursively follow symlink
-      TODO: this method does not (yet) work on Windows
+        Recursively follow symlink
+
+        TODO: this method does not (yet) work on Windows
     */
     public static function realPath(path:String):String {
         final proc = new sys.io.Process('readlink', [path.endsWith("\n") ? path.substr(0, path.length-1) : path]);

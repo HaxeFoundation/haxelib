@@ -25,31 +25,40 @@ import sys.FileSystem;
 using haxelib.client.Vcs;
 
 interface IVcs {
+	/** The name of the vcs system. **/
 	var name(default, null):String;
+	/** The directory used to install vcs library versions to. **/
 	var directory(default, null):String;
+	/** The vcs executable. **/
 	var executable(default, null):String;
+	/** Whether or not the executable can be accessed successfully. **/
 	var available(get, null):Bool;
 	var settings(default, null):Settings;
 
 	/**
-		Clone repo into `libPath`.
+		Clone repository at `vcsPath` into `libPath`.
+
+		If `branch` is specified, the repository is checked out to that branch.
+
+		`version` can also be specified for tags in git or revisions in mercurial.
 	**/
 	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String):Void;
 
 	/**
-		Update to HEAD repo contains in CWD or CWD/`Vcs.directory`.
-		CWD must be like "...haxelib-repo/lib/git" for Git.
+		Updates repository in CWD or CWD/`Vcs.directory` to HEAD.
+		For git CWD must be in the format "...haxelib-repo/lib/git".
 		Returns `true` if update successful.
 	**/
 	function update(libName:String):Bool;
 }
 
-
+/** Abstract enum representing the types of Vcs systems that are supported. **/
 @:enum abstract VcsID(String) to String {
 	final Hg = "hg";
 	final Git = "git";
 }
 
+/** Enum representing errors that can be thrown during a vcs operation. **/
 enum VcsError {
 	VcsUnavailable(vcs:Vcs);
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
@@ -65,6 +74,7 @@ typedef Settings = {
 }
 
 
+/** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
 class Vcs implements IVcs {
 	static var reg:Map<VcsID, Vcs>;
 
@@ -117,6 +127,7 @@ class Vcs implements IVcs {
 			reg.set(id, vcs);
 	}
 
+	/** Returns the relevant Vcs if a vcs version is installed at `libPath`. **/
 	public static function getVcsForDevLib(libPath:String, settings:Settings):Null<Vcs> {
 		initialize(settings);
 		for (k in reg.keys()) {
@@ -192,7 +203,7 @@ class Vcs implements IVcs {
 	}
 }
 
-
+/** Class wrapping `git` operations. **/
 class Git extends Vcs {
 
 	public function new(settings:Settings)
@@ -302,7 +313,7 @@ class Git extends Vcs {
 	}
 }
 
-
+/** Class wrapping `hg` operations. **/
 class Mercurial extends Vcs {
 
 	public function new(settings:Settings)

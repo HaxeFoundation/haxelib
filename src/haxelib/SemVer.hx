@@ -25,20 +25,31 @@ import haxe.ds.Option;
 
 using Std;
 
+/** Enum representing the types of preview versions. **/
 enum Preview {
 	ALPHA;
 	BETA;
 	RC;
 }
 
+/**
+	An abstract around a String representing a SemVer.
+**/
 abstract SemVer(String) to String {
 
+	/** The major release number. **/
 	public var major(get, never):Int;
+	/** The minor release number. **/
 	public var minor(get, never):Int;
+	/** The patch number. **/
 	public var patch(get, never):Int;
+	/** The preview type. **/
 	public var preview(get, never):Null<Preview>;
+	/** The preview release number. **/
 	public var previewNum(get, never):Null<Int>;
+	/** The SemVer data all in a SemVerData instance. **/
 	public var data(get, never):SemVerData;
+	/** Whether the version is valid. **/
 	public var valid(get, never):Bool;
 
 	inline function new(s) this = s;
