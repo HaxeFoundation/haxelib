@@ -132,6 +132,7 @@ class RepoReformatter {
 				case Left(_): continue; // only one folder, so there are no conflicts
 				case Right(arr): arr;
 			}
+			items.sort(Reflect.compare);
 
 			final pathByItem:Map<String, String> = [];
 
