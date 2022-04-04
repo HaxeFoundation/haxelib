@@ -14,7 +14,7 @@ class TestEmpty extends IntegrationTests {
 		assertSuccess(upgradeResult);
 
 		final updateResult = haxelib(["update", "foo"]).result();
-		// assertTrue(updateResult.code != 0);
+		assertTrue(updateResult.code != 0);
 
 		final removeResult = haxelib(["remove", "foo"]).result();
 		assertTrue(removeResult.code != 0);
