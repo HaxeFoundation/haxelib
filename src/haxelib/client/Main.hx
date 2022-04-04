@@ -182,14 +182,14 @@ class Main {
 	};
 	static final IS_WINDOWS = (Sys.systemName() == "Windows");
 
-	final commands : List<{ name : String, doc : String, f : Void -> Void, net : Bool, cat : CommandCategory }>;
-	final isHaxelibRun : Bool;
+	final commands:List<{name:String, doc:String, f:Void->Void, net:Bool, cat:CommandCategory}>;
+	final isHaxelibRun:Bool;
 	final alreadyUpdatedVcsDependencies:Map<String,String> = new Map<String,String>();
 
-	var argcur:Int;
-	var args:Array<String>;
-	var siteUrl:String;
-	var site:SiteProxy;
+	var argcur : Int;
+	var args : Array<String>;
+	var siteUrl : String;
+	var site : SiteProxy;
 
 	function new() {
 		args = Sys.args();
