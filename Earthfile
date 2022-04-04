@@ -85,11 +85,12 @@ devcontainer-base:
         && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/*
 
+    # install neko nightly
     RUN curl https://build.haxe.org/builds/neko/linux64/neko_latest.tar.gz > neko_latest.tar.gz
     RUN mkdir -p out
     RUN tar -xf neko_latest.tar.gz -C out
     RUN mv -f out/neko-*-linux64/neko /usr/bin/neko
-    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so
+    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so.2
     RUN mkdir -p /usr/lib/neko/
     RUN mv -f out/neko-*-linux64/*.ndll /usr/lib/neko/
 
