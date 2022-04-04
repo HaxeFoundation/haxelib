@@ -59,13 +59,7 @@ class ConvertXml {
 							json.description = node.firstChild().toString();
 						case "depends":
 							final name = node.get("name");
-							final version = {
-								final version = node.get("version");
-								if (version == null)
-									"";
-								else
-									version;
-							}
+							final version = node.get("version") ?? "";
 							Reflect.setField(json.dependencies, name, version);
 						default:
 					}
