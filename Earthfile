@@ -165,7 +165,7 @@ tfk8s:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.9/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.13/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
@@ -483,14 +483,15 @@ ci-tests:
 ci-images:
     ARG --required GIT_REF_NAME
     ARG --required GIT_SHA
+    ARG IMAGE_TAG="$(echo "$GIT_REF_NAME" | sed -e 's/[^A-Za-z0-9\.]/-/g')"
     BUILD +devcontainer \ 
-        --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_REF_NAME" \
+        --IMAGE_CACHE="$DEVCONTAINER_IMAGE_NAME_DEFAULT:$IMAGE_TAG" \
+        --IMAGE_TAG="$IMAGE_TAG" \
         --IMAGE_TAG="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
     BUILD +haxelib-server \
-        --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$GIT_REF_NAME" \
-        --IMAGE_TAG="$GIT_REF_NAME" \
+        --IMAGE_CACHE="$HAXELIB_SERVER_IMAGE_NAME_DEFAULT:$IMAGE_TAG" \
+        --IMAGE_TAG="$IMAGE_TAG" \
         --IMAGE_TAG="$GIT_SHA" \
         --GIT_SHA="$GIT_SHA"
 
