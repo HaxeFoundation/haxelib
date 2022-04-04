@@ -37,8 +37,9 @@ class HaxelibTests {
 			case _:
 				Sys.command("rm", ["-rf", dir]);
 		}
-		if (exitCode != 0)
+		if (exitCode != 0) {
 			throw 'unable to delete $dir';
+		}
 	}
 
 	static function main():Void {

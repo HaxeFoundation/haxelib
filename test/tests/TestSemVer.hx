@@ -63,8 +63,11 @@ class TestSemVer extends TestBase {
 	}
 
 	function parseInvalid( str:String ):String {
-		return try SemVer.ofString(str)
-			catch (e:String) "invalid";
+		return try {
+			SemVer.ofString(str);
+		} catch (e:String) {
+			"invalid";
+		}
 	}
 
 }
