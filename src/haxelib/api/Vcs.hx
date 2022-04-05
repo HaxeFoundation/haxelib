@@ -68,7 +68,7 @@ interface IVcs {
 	final Git = "git";
 
 	/** Returns `true` if `s` constitutes a valid VcsID **/
-	public static function isVcs(s:String) {
+	public static function isValid(s:String) {
 		return s == Hg || s == Git;
 	}
 

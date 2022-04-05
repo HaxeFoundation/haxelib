@@ -26,7 +26,7 @@ abstract Version(String) to String from SemVer from VcsID {
 
 	/** Returns whether `s` constitues a valid library version. **/
 	public static function isValid(s:String):Bool {
-		return s == Git || s == Hg || SemVer.isValid(s);
+		return VcsID.isValid(s) || SemVer.isValid(s);
 	}
 }
 
