@@ -298,8 +298,7 @@ class Installer {
 				case _: library.name;
 			}
 
-			if (library.isLatest || !scope.isLibraryInstalled(libraryName))
-				setVersionAndLog(libraryName, library.installData);
+			setVersionAndLog(libraryName, library.installData);
 
 			userInterface.log("Done");
 

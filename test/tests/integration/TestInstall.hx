@@ -121,6 +121,42 @@ class TestInstall extends IntegrationTests {
 		}
 	}
 
+	public function testFromHxmlUpgrade() {
+		final newHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/build.hxml"]);
+		final oldHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/old_build.hxml"]);
+
+		final r = haxelib(["install", newHxml, "--always"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["install", oldHxml, "--always"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertTrue(r.out.contains("[1.0.0]"));
+		assertTrue(r.out.contains("2.0.0"));
+		assertFalse(r.out.contains("[2.0.0]"));
+		assertSuccess(r);
+	}
+
+	public function testFromHxmlDowngrade() {
+		final newHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/build.hxml"]);
+		final oldHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/old_build.hxml"]);
+
+		final r = haxelib(["install", oldHxml, "--always"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["install", newHxml, "--always"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertTrue(r.out.contains("[2.0.0]"));
+		assertTrue(r.out.contains("1.0.0"));
+		assertFalse(r.out.contains("[1.0.0]"));
+		assertSuccess(r);
+	}
+
 	public function testFromHxmlExistingLibraries() {
 		final newHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/build.hxml"]);
 		final oldHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/old_build.hxml"]);
