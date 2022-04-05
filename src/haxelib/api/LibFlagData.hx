@@ -10,7 +10,8 @@ import haxelib.api.LibraryData.VcsData;
 
 using StringTools;
 
-/** Enum representing the different possible version information
+/**
+	Enum representing the different possible version information
 	that a Haxe `-lib` flag could hold, or a dependency string in a
 	`haxelib.json` file.
  **/
@@ -23,7 +24,8 @@ enum LibFlagData {
 private class LibParsingError extends haxe.Exception {}
 private final libDataEReg = ~/^(.+?)(?::(.*))?$/;
 
-/** Extracts library info from a full flag,
+/**
+	Extracts library info from a full flag,
 	i.e.: `name:1.2.3` or `name:git:url#hash`
 **/
 function extractFull(libFlag:String):{name:ProjectName, libFlagData:LibFlagData} {
@@ -97,7 +99,8 @@ private final targetFlagEReg = {
 
 private final libraryFlagEReg = ~/^-(lib|L|-library)\b/;
 
-/** Extracts the lib information from the hxml file at `path`.
+/**
+	Extracts the lib information from the hxml file at `path`.
 
 	Does not filter out repeated libs.
  **/

@@ -34,11 +34,12 @@ class VcsCommandFailed extends InstallationException {
 enum LogPriority {
 	/** Regular messages **/
 	Default;
-	/** Messages that can be ignored for cleaner output.
-	 **/
+	/** Messages that can be ignored for cleaner output. **/
 	Optional;
-	/** Messages that are only useful for debugging purposes. Often for
-		raw executable output. **/
+	/**
+		Messages that are only useful for debugging purposes. Often for
+		raw executable output.
+	**/
 	Debug;
 }
 
@@ -102,7 +103,8 @@ class UserInterface {
 	}
 }
 
-/** Like `LibFlagData`, but `None` is not an option.
+/**
+	Like `LibFlagData`, but `None` is not an option.
 
 	Always contains enough information to reproduce
 	the same library installation.
@@ -162,13 +164,12 @@ private function getLatest(versions:Array<SemVer>):SemVer {
 /** Class for installing libraries into a scope and setting their versions.
 **/
 class Installer {
-	/** If set to `true` library dependencies will not
-		be installed.
-	**/
+	/** If set to `true` library dependencies will not be installed. **/
 	public static var skipDependencies = false;
 
-	/** If this is set to true, dependency versions will be
-		reinstalled even if already installed.
+	/**
+		If this is set to true, dependency versions will be reinstalled
+		even if already installed.
 	 **/
 	public static var forceInstallDependencies = false;
 
@@ -178,7 +179,8 @@ class Installer {
 
 	final vcsBranchesByLibraryName = new Map<ProjectName, String>();
 
-	/** Creates a new Installer object that installs projects to `scope`.
+	/**
+		Creates a new Installer object that installs projects to `scope`.
 
 		If `userInterface` is passed in, it will be used as the interface
 		for logging information and for operations that require user confirmation.
@@ -212,7 +214,8 @@ class Installer {
 		handleDependencies(library, version, info.dependencies);
 	}
 
-	/** Clears memory on git or hg library branches.
+	/**
+		Clears memory on git or hg library branches.
 
 		An installer instance keeps track of updated vcs dependencies
 		to avoid cloning the same branch twice.
@@ -236,7 +239,8 @@ class Installer {
 			throw new InstallationException('Failed installing dependencies from $path:\n$e');
 	}
 
-	/** Installs the libraries required to build the HXML file at `path`.
+	/**
+		Installs the libraries required to build the HXML file at `path`.
 
 		Throws an error when trying to install a library from the haxelib
 		server if the library has no versions or if the requested
@@ -311,7 +315,8 @@ class Installer {
 		handleDependencies(library, version);
 	}
 
-	/** Installs `version` of `library` from the haxelib server.
+	/**
+		Installs `version` of `library` from the haxelib server.
 
 		If `forceSet` is set to true and the installer is running with
 		a global scope, the new version is always set as the current one.
@@ -363,7 +368,8 @@ class Installer {
 		handleDependenciesVcs(library, id, vcsData.subDir);
 	}
 
-	/** Updates `library` to the newest version on the haxelib server,
+	/**
+		Updates `library` to the newest version on the haxelib server,
 		or pull latest changes with git or hg.
 	**/
 	public function update(library:ProjectName) {
@@ -458,7 +464,8 @@ class Installer {
 		}
 	}
 
-	/** Get the name found in the `haxelib.json` for a vcs library.
+	/**
+		Get the name found in the `haxelib.json` for a vcs library.
 
 		If `givenName` is an alias (it is completely different from the internal name)
 		then `givenName` is returned instead
@@ -626,8 +633,7 @@ class Installer {
 		return installData;
 	}
 
-	/** Returns a map of version information for libraries in `libs` that have empty version information.
-	**/
+	/** Returns a map of version information for libraries in `libs` that have empty version information. **/
 	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:LibFlagData}>):
 		Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>
 	{

@@ -13,7 +13,8 @@ typedef InstallationInfo = {
 	final devPath:Null<String>;
 }
 
-/** Returns scope for directory `dir`. If `dir` is omitted, uses the current
+/**
+	Returns scope for directory `dir`. If `dir` is omitted, uses the current
 	working directory.
 
 	The scope will resolve libraries to the local repository if one exists,
@@ -26,14 +27,14 @@ function getScope(?dir:String):Scope {
 	return new GlobalScope(Repository.get(dir));
 }
 
-/** Returns the global scope.
-**/
+/** Returns the global scope. **/
 function getGlobalScope(?dir:String):GlobalScope {
 	@:privateAccess
 	return new GlobalScope(Repository.get(dir));
 }
 
-/** Returns scope created for directory `dir`, resolving libraries to `repository`
+/**
+	Returns scope created for directory `dir`, resolving libraries to `repository`
 
 	If `dir` is omitted, uses the current working directory.
 **/
@@ -104,7 +105,8 @@ abstract class Scope {
 	/** Returns an array of the libraries in the scope. **/
 	public abstract function getLibraryNames():Array<ProjectName>;
 
-	/** Returns an array of installation information on libraries in the scope.
+	/**
+		Returns an array of installation information on libraries in the scope.
 
 		If `filter` is given, ignores libraries that do not contain it as a substring.
 	 **/
@@ -113,11 +115,11 @@ abstract class Scope {
 	/** Returns the path to the source directory of `version` of `library`. **/
 	public abstract function getPath(library:ProjectName, ?version:Version):String;
 
-	/** Returns the required build arguments for `version` of `library` as an hxml string.
-	 **/
+	/** Returns the required build arguments for `version` of `library` as an hxml string. **/
 	public abstract function getArgsAsHxml(library:ProjectName, ?version:Version):String;
 
-	/** Returns the required build arguments for each library version in `libraries`
+	/**
+		Returns the required build arguments for each library version in `libraries`
 		as one combined hxml string.
 	**/
 	public abstract function getArgsAsHxmlForLibraries(libraries:Array<{library:ProjectName, version:Null<Version>}>):String;

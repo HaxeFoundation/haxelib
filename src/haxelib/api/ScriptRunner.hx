@@ -76,7 +76,8 @@ class ScriptRunner {
 	static final HAXELIB_RUN = "HAXELIB_RUN";
 	static final HAXELIB_RUN_NAME = "HAXELIB_RUN_NAME";
 
-	/** Run `library`, with `callData`.
+	/**
+		Run `library`, with `callData`.
 
 		`compilerData` is used if it is an interpreted script.
 	 **/

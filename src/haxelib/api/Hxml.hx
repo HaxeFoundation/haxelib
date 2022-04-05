@@ -4,7 +4,8 @@ using StringTools;
 
 private final regex = ~/\r?\n/g;
 
-/** Normalizes `hxmlContents` by stripping comments, trimming whitespace
+/**
+	Normalizes `hxmlContents` by stripping comments, trimming whitespace
 	from each line and removing empty lines
 **/
 function normalizeHxml(hxmlContents:String):String {
