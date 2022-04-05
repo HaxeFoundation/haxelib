@@ -84,11 +84,16 @@ private function getVcsData(s:String):{type:VcsID, data:VcsData} {
 
 private final TARGETS = [
 	"java" => ProjectName.ofString('hxjava'),
+	"jvm" => ProjectName.ofString('hxjava'),
 	"cpp" => ProjectName.ofString('hxcpp'),
 	"cs" => ProjectName.ofString('hxcs'),
 	"hl" => ProjectName.ofString('hashlink')
 ];
-private final targetFlagEReg = ~/^--?(java|cpp|cs|hl) /;
+
+private final targetFlagEReg = {
+	final targetNameGroup = [for (target in TARGETS.keys()) target].join("|");
+	new EReg('^--?($targetNameGroup) ', "");
+}
 
 private final libraryFlagEReg = ~/^-(lib|L|-library)\b/;
 
