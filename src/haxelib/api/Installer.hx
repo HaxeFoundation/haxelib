@@ -293,35 +293,21 @@ class Installer {
 		}
 	}
 
-	/** Installs the latest version of `library` from the haxelib server. **/
-	public function installLatestFromHaxelib(library:ProjectName) {
-		final info = Connection.getInfo(library);
-		// get correct name capitalization so that the logged output is correct
-		final library = ProjectName.ofString(info.name);
-
-		final versions = [for (v in info.versions) v.name];
-
-		if (versions.length == 0)
-			throw new InstallationException('The library $library has not yet released a version');
-
-		final version = getLatest(versions);
-		downloadAndInstall(library, version);
-
-		scope.setVersion(library, version);
-
-		userInterface.log('  Current version is now $version');
-		userInterface.log("Done");
-
-		handleDependencies(library, version);
-	}
-
 	/**
 		Installs `version` of `library` from the haxelib server.
 
+		If `version` is omitted, the latest version is installed.
+
 		If `forceSet` is set to true and the installer is running with
 		a global scope, the new version is always set as the current one.
+
+		Otherwise, `version` is set as current if it is the latest version
+		of `library` or if no current version is set for `library`.
+
+		If the `version` specified does not exist on the server,
+		an `InstallationException` is thrown.
 	 **/
-	public function installFromHaxelib(library:ProjectName, version:SemVer, forceSet:Bool = false) {
+	public function installFromHaxelib(library:ProjectName, ?version:SemVer, forceSet:Bool = false) {
 		final info = Connection.getInfo(library);
 		// get correct name capitalization so that the logged output is correct
 		final library = ProjectName.ofString(info.name);
@@ -330,12 +316,17 @@ class Installer {
 
 		if (versions.length == 0)
 			throw new InstallationException('The library $library has not yet released a version');
-		if (!versions.contains(version))
+
+		final versionSpecified = version != null;
+		if (versionSpecified && !versions.contains(version))
 			throw new InstallationException('No such version $version for library $library');
+
+		version = version ?? getLatest(versions);
 
 		downloadAndInstall(library, version);
 
-		if (scope.isLocal || version == getLatest(versions) || !scope.isLibraryInstalled(library) || forceSet) {
+		// if no version was specified, we installed the latest version anyway
+		if (scope.isLocal || forceSet || !versionSpecified || version == getLatest(versions) || !scope.isLibraryInstalled(library)) {
 			scope.setVersion(library, version);
 			userInterface.log('  Current version is now $version');
 		}
