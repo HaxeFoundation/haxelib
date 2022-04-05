@@ -119,7 +119,7 @@ function fromHxml(path:String):List<{name:ProjectName, data:LibFlagData, isTarge
 		if (targetFlagEReg.match(line)) {
 			final target = targetFlagEReg.matched(1);
 			final lib = TARGETS[target];
-			if (lib != null && (target != "hl" || line.endsWith(".c")))
+			if (lib != null)
 				libsData.add({name: lib, data: None, isTargetLib: true});
 		}
 
