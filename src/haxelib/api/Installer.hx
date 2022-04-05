@@ -272,6 +272,20 @@ class Installer {
 			return;
 
 		for (library in installData) {
+			if (library.installData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
+				final version = SemVer.ofString(library.version);
+				if (scope.isLibraryInstalled(library.name) && scope.getVersion(library.name) == version) {
+					userInterface.log('Library ${library.name} version $version is already installed and set as current');
+				} else {
+					userInterface.log('Library ${library.name} version $version is already installed');
+					if (scope.isLocal || userInterface.confirm('Set ${library.name} to version $version')) {
+						scope.setVersion(library.name, version);
+						userInterface.log('Library ${library.name} current version is now $version');
+					}
+				}
+				continue;
+			}
+
 			try
 				installFromInstallData(library.name, library.installData)
 			catch (e) {
@@ -381,6 +395,7 @@ class Installer {
 	public function updateAll():Void {
 		final libraries = scope.getLibraryNames();
 		var updated = false;
+		var failures = 0;
 
 		for (library in libraries) {
 			userInterface.log('Checking $library');
@@ -392,14 +407,19 @@ class Installer {
 			} catch (e:VcsUpdateCancelled) {
 				continue;
 			} catch(e) {
+				++failures;
 				userInterface.log("Failed to update: " + e.toString());
 				userInterface.log(e.stack.toString(), Debug);
 			}
 		}
 
-		if (updated)
-			userInterface.log("All libraries are now up-to-date");
-		else
+		if (updated) {
+			if (failures == 0) {
+				userInterface.log("All libraries are now up-to-date");
+			} else {
+				userInterface.log("All libraries are now up-to-date");
+			}
+		} else
 			userInterface.log("All libraries are already up-to-date");
 	}
 
