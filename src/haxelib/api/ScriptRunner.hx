@@ -106,17 +106,13 @@ class ScriptRunner {
 	}
 
 	static function getType(library:LibraryRunData) {
-		final type = switch (library.main) {
-			case main if (main != null):
-				Script(main, library.name, library.version, library.dependencies);
-			case null if (FileSystem.exists(library.path + 'run.n')):
-				Neko(library.path + 'run.n');
-			case null if (FileSystem.exists(library.path + 'Run.hx')):
-				Script("Run", library.name, library.version, library.dependencies);
-			case _:
-				throw 'Library ${library.name} version ${library.version} does not have a run script';
-		}
-		return type;
+		if (library.main != null)
+			return Script(library.main, library.name, library.version, library.dependencies);
+		if (FileSystem.exists(library.path + 'run.n'))
+			return Neko(library.path + 'run.n');
+		if (FileSystem.exists(library.path + 'Run.hx'))
+			return Script("Run", library.name, library.version, library.dependencies);
+		throw 'Library ${library.name} version ${library.version} does not have a run script';
 	}
 
 	static function getCmd(runType:RunType):String {
