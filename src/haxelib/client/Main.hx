@@ -445,17 +445,18 @@ class Main {
 		final library = ProjectName.ofString(info.name);
 
 		final versionGiven = argsIterator.next();
-		final version = SemVer.ofString(switch versionGiven {
+		final version = switch versionGiven {
 			case null: info.getLatest();
-			case v: v;
-		});
-		// check if exists already
+			case v: SemVer.ofString(v);
+		};
+		// check if the version exists in scope already
 		if (scope.isLibraryInstalled(library) && scope.getVersion(library) == version)
 			return Cli.print('$library version $version is already installed and set as current.');
 
+		// otherwise, check if it exists in the repository
 		if (getRepository().isVersionInstalled(library, version)) {
 			Cli.print('You already have $library version $version installed');
-			if (scope.getVersion(library) != version && Cli.ask('Set $library to version $version'))
+			if (Cli.ask('Set $library to version $version'))
 				scope.setVersion(library, version);
 			return;
 		}
