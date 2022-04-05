@@ -22,14 +22,16 @@ class RepoReformatter {
 	static final REPO_VERSION_FILE = ".repo-version";
 
 
-	/** Returns true if the repository version is lower
+	/**
+		Returns true if the repository version is lower
 		than the version supported by the current version of this library.
 	**/
 	public static function doesRepositoryRequireReformat(repo:Repository):Bool {
 		return getRepositoryVersion(repo) < CURRENT_REPO_VERSION;
 	}
 
-	/** Returns true if the repository version is higher than
+	/**
+		Returns true if the repository version is higher than
 		the version supported by the current version of this library.
 	**/
 	public static function isRepositoryIncompatible(repo:Repository):Bool {

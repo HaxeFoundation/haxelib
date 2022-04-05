@@ -87,7 +87,8 @@ class VcsData {
 	/** Branch **/
 	@:optional
 	public final branch:Null<String>;
-	/** Sub directory in which the root of the project is found.
+	/**
+		Sub directory in which the root of the project is found.
 
 		Relative to project root
 	**/

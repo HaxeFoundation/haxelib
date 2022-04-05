@@ -10,12 +10,14 @@ using Lambda;
 using StringTools;
 using haxe.io.Path;
 
-/** Exception thrown when there is an error with the configured
+/**
+	Exception thrown when there is an error with the configured
 	current version of a library.
  **/
 class CurrentVersionException extends haxe.Exception {}
 
-/** Instance of a repository which can be used to get information on
+/**
+	Instance of a repository which can be used to get information on
 	library versions installed in the repository, as well as
 	directly modifying them.
  **/
@@ -133,7 +135,8 @@ class Repository {
 		return FileSystem.exists(getProjectVersionPath(name, version));
 	}
 
-	/** Removes the project `name` from the repository.
+	/**
+		Removes the project `name` from the repository.
 		Throws an error if `name` is not installed.
 	 **/
 	public function removeProject(name:ProjectName) {

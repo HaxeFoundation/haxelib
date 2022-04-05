@@ -230,7 +230,8 @@ class Connection {
 		return data;
 	}
 
-	/** Downloads the file from `fileUrl` into `outpath`.
+	/**
+		Downloads the file from `fileUrl` into `outpath`.
 
 		`downloadProgress` is the function used to log download information.
 	 **/
@@ -351,7 +352,10 @@ class Connection {
 		return [for (data in versionsData) data.name];
 	}
 
-	/** Returns a map of the library names in `libraries` with their validated names (to ensure correct capitalisation) and available versions. **/
+	/**
+		Returns a map of the library names in `libraries` with their validated names
+		(to ensure correct capitalisation) and available versions.
+	**/
 	public static function getVersionsForLibraries(libraries:Array<ProjectName>):Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}> {
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		final map = new Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>();
@@ -481,8 +485,10 @@ class Connection {
 		Http.PROXY = proxy;
 	}
 
-	/** Makes a connection attempt across the internet, and returns `true`
-		if connection is successful, or `false` if it fails. **/
+	/**
+		Makes a connection attempt across the internet, and returns `true`
+		if connection is successful, or `false` if it fails.
+	**/
 	public static function testConnection():Bool {
 		try {
 			Http.requestUrl(data.server.protocol + "://lib.haxe.org");
