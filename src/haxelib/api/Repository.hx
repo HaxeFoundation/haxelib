@@ -110,7 +110,7 @@ class Repository {
 				final semVer = SemVer.ofString(version);
 				semVers.push(semVer);
 			} catch(e:haxe.Exception) {
-				if (Vcs.VcsID.isVcs(version))
+				if (Vcs.VcsID.isValid(version))
 					others.push(Vcs.VcsID.ofString(version));
 			}
 		}
