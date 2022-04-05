@@ -9,6 +9,8 @@ class TestInstall extends IntegrationTests {
 		assertSuccess(r);
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
 		assertSuccess(r);
+		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]), bar.pw]).result();
+		assertSuccess(r);
 
 		final r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
 		assertSuccess(r);
@@ -45,13 +47,13 @@ class TestInstall extends IntegrationTests {
 
 		{
 			final r = haxelib(["install", "bar"]).result();
-			assertEquals("Bar version 1.0.0 is already installed and set as current.", r.out.trim());
+			assertEquals("Bar version 2.0.0 is already installed and set as current.", r.out.trim());
 			// recognises that we already have the newest version
 		}
 
 		{
 			final r = haxelib(["install", "Bar"]).result();
-			assertEquals("Bar version 1.0.0 is already installed and set as current.", r.out.trim());
+			assertEquals("Bar version 2.0.0 is already installed and set as current.", r.out.trim());
 			// recognises that we already have the newest version
 		}
 	}
@@ -117,6 +119,23 @@ class TestInstall extends IntegrationTests {
 			assertTrue(r.out.indexOf("Bar") >= 0);
 			assertSuccess(r);
 		}
+	}
+
+	public function testFromHxmlExistingLibraries() {
+		final newHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/build.hxml"]);
+		final oldHxml = Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo/old_build.hxml"]);
+
+		// install all versions so they are available
+		final r = haxelib(["install", oldHxml, "--always"]).result();
+		assertSuccess(r);
+		final r = haxelib(["install", newHxml, "--always"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["install", oldHxml, "--always"]).result();
+		// no downloads should have taken place as all libs are already available
+		assertFalse(r.out.contains("Download complete: "));
+		assertTrue(r.out.contains("Library Bar current version is now 1.0.0"));
+		assertSuccess(r);
 	}
 
 	// for issue #529 and #503
