@@ -459,9 +459,6 @@ class Main {
 				scope.setVersion(library, version);
 			return;
 		}
-
-		if (versionGiven == null)
-			return installer.installLatestFromHaxelib(library);
 		installer.installFromHaxelib(library, version);
 	}
 
