@@ -280,7 +280,7 @@ class Installer {
 			}
 
 			final libraryName = switch library.installData {
-				case VcsInstall(version, vcsData): getName(library.name, version, vcsData.subDir);
+				case VcsInstall(version, vcsData): getVcsLibraryName(library.name, version, vcsData.subDir);
 				case _: library.name;
 			}
 
@@ -353,7 +353,7 @@ class Installer {
 	public function installVcsLibrary(library:ProjectName, id:VcsID, vcsData:VcsData) {
 		installVcs(library, id, vcsData);
 
-		library = getName(library, id, vcsData.subDir);
+		library = getVcsLibraryName(library, id, vcsData.subDir);
 
 		scope.setVcsVersion(library, id, vcsData);
 
@@ -470,7 +470,7 @@ class Installer {
 		If `givenName` is an alias (it is completely different from the internal name)
 		then `givenName` is returned instead
 	 **/
-	function getName(givenName:ProjectName, id:VcsID, subDir:Null<String>):ProjectName {
+	function getVcsLibraryName(givenName:ProjectName, id:VcsID, subDir:Null<String>):ProjectName {
 		final jsonPath = scope.getPath(givenName, id) + (if (subDir != null) subDir else "") + Data.JSON;
 		if (!FileSystem.exists(jsonPath))
 			return givenName;
@@ -543,7 +543,7 @@ class Installer {
 			}
 
 			final library = switch lib.installData {
-				case VcsInstall(version, vcsData): getName(lib.name, version, vcsData.subDir);
+				case VcsInstall(version, vcsData): getVcsLibraryName(lib.name, version, vcsData.subDir);
 				case _: lib.name;
 			}
 
