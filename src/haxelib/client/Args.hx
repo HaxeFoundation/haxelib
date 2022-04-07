@@ -21,8 +21,10 @@ enum CommandCategory {
 	Miscellaneous;
 }
 
+@:build(haxelib.client.Util.buildArgType())
 enum abstract Command(String) to String {
 	final Install = "install";
+	@:alias("upgrade")
 	final Update = "update";
 	final Remove = "remove";
 	final List = "list";
@@ -53,28 +55,9 @@ enum abstract Command(String) to String {
 	// deprecated commands
 	final Local = "local";
 	final SelfUpdate = "selfupdate";
-
-	static final ALIASES = [
-		"upgrade" => Update
-	];
-
-	static final COMMANDS = Util.getValues(Command);
-
-	public static function ofString(str:String):Null<Command> {
-		// first check aliases
-		final alias = ALIASES.get(str);
-		if(alias != null)
-			return alias;
-		// then check the rest
-		for (command in COMMANDS) {
-			if (cast(command, String) == str)
-				return command;
-		}
-		return null;
-	}
-
 }
 
+@:build(haxelib.client.Util.buildArgType())
 enum abstract Flag(String) to String {
 	final Global = "global";
 	final Debug = "debug";
@@ -84,7 +67,7 @@ enum abstract Flag(String) to String {
 	final Never = "never";
 	final System = "system";
 	final SkipDependencies = "skip-dependencies";
-	// hidden
+	@:alias("notimeout")
 	final NoTimeout = "no-timeout";
 
 	public static final MUTUALLY_EXCLUSIVE = [[Quiet, Debug], [Always, Never]];
@@ -94,61 +77,31 @@ enum abstract Flag(String) to String {
 		complete argument parsing.
 	**/
 	public static final PRIORITY = [System, Debug, Global];
-
-	static final ALIASES = ["notimeout" => NoTimeout];
-
-	static final FLAGS = Util.getValues(Flag);
-
-	public static function ofString(str:String):Null<Flag> {
-		// first check aliases
-		final alias = ALIASES.get(str);
-		if (alias != null)
-			return alias;
-
-		for (flag in FLAGS) {
-			if ((flag:String) == str)
-				return flag;
-		}
-		return null;
-	}
-
 }
 
+@:build(haxelib.client.Util.buildArgType())
 enum abstract Option(String) to String {
+	@:alias("R")
 	final Remote = "remote";
-
-	static final ALIASES = ["R" => Remote];
-
-	static final OPTIONS = Util.getValues(Option);
-
-	public static function ofString(str:String):Null<Option> {
-		// first check aliases
-		final alias = ALIASES.get(str);
-		if (alias != null)
-			return alias;
-
-		for (option in OPTIONS) {
-			if ((option:String) == str)
-				return option;
-		}
-		return null;
-	}
 }
 
 /** Option that can be put in more than once **/
+@:build(haxelib.client.Util.buildArgType())
 enum abstract RepeatedOption(String) to String {
-	final Cwd = "cwd";
 	// just because this is how --cwd worked before
+	final Cwd = "cwd";
+}
 
-	static final REPEATED_OPTIONS = Util.getValues(RepeatedOption);
-
-	public static function ofString(str:String):Null<RepeatedOption> {
-		for (rOption in REPEATED_OPTIONS) {
-			if (cast(rOption, String) == str)
-				return rOption;
-		}
-		return null;
-	}
+@:structInit
+@:publicFields
+class UsageData {
+	final name:String;
+	final aliases:Array<String> = [];
+	final description:String;
+	@:optional
+	final parameter:Null<String>;
+	@:optional
+	final category:CommandCategory;
 }
 
 class Args {
@@ -241,13 +194,11 @@ class Args {
 	static final singleDash = ~/^-([^-].*)$/; // ~/^-([^-])$/ to only match single characters
 	/** Strips dashes off switch `s`, and gets its alias if one exists **/
 	static function parseSwitch(s:String):Null<String> {
-		return
-			if (twoDash.match(s))
-				twoDash.matched(1)
-			else if (singleDash.match(s))
-				singleDash.matched(1);
-			else
-				null;
+		if (twoDash.match(s))
+			return twoDash.matched(1);
+		if (singleDash.match(s))
+			return singleDash.matched(1);
+		return null;
 	}
 
 	static final splitDash = ~/-([a-z])/g;
@@ -266,8 +217,8 @@ class Args {
 		Returns a list of objects storing the names and
 		descriptions for available switches.
 	**/
-	public static function generateSwitchDocs(): List<{name:Flag, description:String}>{
-		final flags = new List();
+	public static function generateSwitchDocs():List<UsageData> {
+		final flags = new List<UsageData>();
 
 		function addSwitch(name:Flag, desc:String)
 			flags.add({name:name, description:desc});
@@ -281,14 +232,29 @@ class Args {
 		addSwitch(Never, "answer all questions with no");
 		addSwitch(System, "run bundled haxelib version instead of latest update");
 		addSwitch(SkipDependencies, "do not install dependencies");
+		addSwitch(NoTimeout, "disable timeout when connecting to server");
 
 		return flags;
 	}
 
-	public static function generateCommandDocs():List<{name:Command, doc:String, cat:CommandCategory}> {
-		final commands = new List();
+	public static function generateOptionDocs(): List<UsageData> {
+		final options = new List<UsageData>();
+
+		inline function addOption(name:Option, param:String, desc:String)
+			options.add({name: (name:String), aliases: Option.getAliases(name), parameter: param, description: desc});
+		inline function addRepeatedOption(name:RepeatedOption, param:String, desc:String)
+			options.add({name: (name:String), aliases: RepeatedOption.getAliases(name), parameter: param, description: desc});
+
+		addOption(Remote, "<host:port[/dir]>", "set server address to connect to instead of `lib.haxe.org`");
+		addRepeatedOption(Cwd, "<dir>", "set current working directory");
+
+		return options;
+	}
+
+	public static function generateCommandDocs():List<UsageData> {
+		final commands = new List<UsageData>();
 		function addCommand(name, doc, cat)
-			commands.add({name: name, doc: doc, cat: cat});
+			commands.add({name: name, description: doc, category: cat});
 
 		addCommand(Install, "install a given library, or all libraries from a hxml file", Basic);
 		addCommand(Update, "update a single library (if given) or all installed libraries", Basic);

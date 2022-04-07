@@ -139,40 +139,59 @@ class Main {
 		Cli.print(VERSION_LONG);
 	}
 
+	static function combineAliases(name:String, aliases:Array<String>):String {
+		var line = '';
+		for (alias in aliases) {
+			// single character alias only has one dash
+			line += alias.length > 1 ? '--$alias, ' : '-$alias, ';
+		}
+		line += '--$name';
+		return line;
+	}
+
 	static function usage() {
 		var maxLength = 0;
 
-		final switches = Args.generateSwitchDocs();
-		for (option in switches){
-			final length = '--${option.name}'.length;
-			if(length > maxLength)
-				maxLength = length;
-		}
+		inline function checkLength(line:String)
+			if (line.length > maxLength)
+				maxLength = line.length;
 
-		final cats = [];
-		for( c in Args.generateCommandDocs() ) {
-			if ((c.name : String).length > maxLength)
-				maxLength = (c.name : String).length;
-			final i = c.cat.getIndex();
-			if (cats[i] == null) cats[i] = [c];
-			else cats[i].push(c);
+		function generateLines(data:List<UsageData>, generate:(UsageData -> String)):Array<{usage:String, description:String}>
+			return [
+				for (item in data) {
+					final line = generate(item);
+					checkLength(line);
+					{usage: line, description: item.description};
+				}];
+
+		final switchLines = generateLines(Args.generateSwitchDocs(), (flag) -> '--${flag.name}');
+		final optionLines = generateLines(Args.generateOptionDocs(), (flag) -> combineAliases(flag.name, flag.aliases) + ' ${flag.parameter}');
+
+		final categories = new Map<String, Array<{usage:String, description:String}>>();
+		for (command in Args.generateCommandDocs()) {
+			checkLength(command.name);
+			final categoryName = command.category.getName();
+			if (!categories.exists(categoryName))
+				categories[categoryName] = [];
+			categories[categoryName].push({usage: command.name, description: command.description});
 		}
 
 		Cli.print('Haxe Library Manager $VERSION - (c)2006-2019 Haxe Foundation');
 		Cli.print("  Usage: haxelib [command] [options]");
 
-		for (cat in cats) {
-			Cli.print("  " + cat[0].cat.getName());
-			for (cmd in cat) {
-				final paddedCmd = cmd.name.rpad(" ", maxLength);
-				Cli.print('    $paddedCmd: ${cmd.doc}');
+		inline function display(type:String, lines:Array<{usage:String, description:String}>) {
+			Cli.print('  $type');
+			for (line in lines) {
+				final padded = line.usage.rpad(' ', maxLength);
+				Cli.print('    $padded : ${line.description}');
 			}
 		}
-		Cli.print("  Available switches");
-		for (option in switches) {
-			final paddedOption = "--" + option.name.rpad(' ', maxLength - 2);
-			Cli.print('    $paddedOption: ${option.description}');
-		}
+
+		for (name => commands in categories)
+			display(name, commands);
+
+		display("Options", optionLines);
+		display("Switches", switchLines);
 	}
 
 	function mapCommands():Map<Command, CommandInfo> {
