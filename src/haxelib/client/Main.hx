@@ -59,8 +59,6 @@ class Main {
 	final argsIterator:ArrayIterator<String>;
 	final useGlobalRepo:Bool;
 
-	final alreadyUpdatedVcsDependencies = new Map<String,String>();
-
 	function new(args:ArgsInfo) {
 		// argument parsing already took care of mutual exclusivity
 		if (args.flags.contains(Always))

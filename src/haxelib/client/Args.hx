@@ -201,11 +201,6 @@ class Args {
 		return null;
 	}
 
-	static final splitDash = ~/-([a-z])/g;
-	static inline function dashSplitToCamel(s:String) {
-		return splitDash.map(s, (r) -> r.matched(1).toUpperCase());
-	}
-
 	static function validate(flags:Array<Flag>) {
 		// check if both mutually exclusive flags are present
 		for (pair in Flag.MUTUALLY_EXCLUSIVE)
