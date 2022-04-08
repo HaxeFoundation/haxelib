@@ -26,6 +26,7 @@ import sys.io.*;
 import sys.*;
 
 import haxelib.Data;
+import haxelib.MetaData;
 import haxelib.SemVer;
 import haxelib.server.Paths.*;
 import haxelib.server.SiteDb;
