@@ -34,4 +34,17 @@ class TestSubmit extends IntegrationTests {
 			assertTrue(r.out.indexOf("Foo") >= 0);
 		}
 	}
+
+	function testInvalidLicense() {
+		final r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libInvalidLicense.zip"]), bar.pw]).result();
+		assertFail(r);
+		assertEquals("Error: Invalid value Unknown for License", r.err.trim());
+
+		final r = haxelib(["search", "Bar"]).result();
+		// did not get submitted
+		assertFalse(r.out.indexOf("Bar") >= 0);
+	}
 }

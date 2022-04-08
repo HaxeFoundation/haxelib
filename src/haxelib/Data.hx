@@ -39,7 +39,11 @@ using StringTools;
 	var NoCheck = 0;
 	/** Only the syntax of the file is checked. **/
 	var CheckSyntax = 1;
-	/** The syntax is checked and data in the file is validated. **/
+	/**
+		The syntax is checked and data in the file is validated.
+
+		Data must meet the requirements for publishing to the server.
+	**/
 	var CheckData = 2;
 
 	@:op(A > B) function gt(b:CheckLevel):Bool;
@@ -181,6 +185,8 @@ typedef Infos = {
 	var Bsd = 'BSD';
 	var Public = 'Public';
 	var Apache = 'Apache';
+	@:disallowed
+	var Unknown = 'Unknown';
 }
 
 /** Class providing functions for working with project information. **/
@@ -298,16 +304,18 @@ class Data {
 					url : '',
 					version : SemVer.DEFAULT,
 					releasenote: 'No haxelib.json found',
-					license: Mit,
+					license: Unknown,
 					description: 'No haxelib.json found',
 					contributors: [],
 				}
 
-		if (check >= CheckLevel.CheckData)
+		if (check >= CheckLevel.CheckData) {
 			Validator.validate(doc);
-		else {
+		} else {
 			if (!doc.version.valid)
 				doc.version = SemVer.DEFAULT;
+			if (doc.license == null || doc.license == '')
+				doc.license = Unknown;
 		}
 
 		//TODO: we have really weird ways to go about nullability and defaults
