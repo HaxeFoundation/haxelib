@@ -262,7 +262,7 @@ class Data {
 		}
 
 	/** Retrieves the haxelib.json data from `zip`, validating it according to `check`. **/
-	public static function readInfos( zip : List<Entry>, check : CheckLevel ) : Infos
+	public static function readDataFromZip( zip : List<Entry>, check : CheckLevel ) : Infos
 		return readData(Reader.unzip(getJson(zip)).toString(), check);
 
 	/** Throws an exception if the classpath in `infos` does not exist in `zip`. **/
