@@ -11,6 +11,7 @@ import sys.FileSystem;
 import sys.io.File;
 
 import haxelib.Data;
+import haxelib.MetaData;
 
 using StringTools;
 

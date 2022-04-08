@@ -21,7 +21,7 @@
  */
 package haxelib;
 
-import haxelib.Data;
+import haxelib.MetaData;
 import haxe.ds.*;
 
 interface SiteApi {

@@ -3,6 +3,7 @@ package haxelib.api;
 import sys.FileSystem;
 import sys.io.File;
 
+import haxelib.Data;
 import haxelib.api.Repository;
 import haxelib.api.Vcs;
 import haxelib.api.LibraryData;
@@ -10,7 +11,7 @@ import haxelib.api.LibFlagData;
 
 using StringTools;
 using Lambda;
-using haxelib.Data;
+using haxelib.MetaData;
 
 /** Exception thrown when an error occurs during installation. **/
 class InstallationException extends haxe.Exception {}

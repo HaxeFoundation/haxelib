@@ -36,7 +36,7 @@ import haxelib.Util.rethrow;
 
 using StringTools;
 using Lambda;
-using haxelib.Data;
+using haxelib.MetaData;
 using haxelib.api.RepoReformatter;
 
 @:structInit
@@ -719,7 +719,7 @@ class Main {
 				if (!FileSystem.exists(jsonPath))
 					project;
 				else {
-					final internalName = Data.readData(File.getContent(jsonPath), false).name;
+					final internalName = Data.readData(File.getContent(jsonPath), NoCheck).name;
 					ProjectName.getCorrectOrAlias(internalName, project);
 				}
 			}

@@ -4,6 +4,7 @@ import haxe.io.Bytes;
 import haxe.zip.Entry;
 import haxe.zip.Reader;
 import haxelib.Data;
+import haxelib.MetaData;
 import haxelib.server.FileStorage;
 import haxelib.server.Repo;
 import haxelib.server.Paths.*;
