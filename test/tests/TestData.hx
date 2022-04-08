@@ -64,14 +64,14 @@ class TestData extends TestBase {
 		//TODO
 	}
 
-	public function testReadInfos() {
+	public function testReadDataFromZip() {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
-		var info = Data.readInfos(zip, CheckData);
+		var info = Data.readDataFromZip(zip, CheckData);
 		assertEquals( "haxelib", info.name );
 		assertEquals( "MIT", info.license );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
-		var info = Data.readInfos(zip, CheckData);
+		var info = Data.readDataFromZip(zip, CheckData);
 		assertEquals( "Deep", info.name );
 		assertEquals( "http://example.org", info.url );
 		assertEquals( "Public", info.license );
@@ -84,7 +84,7 @@ class TestData extends TestBase {
 
 	public function testCheckClassPath() {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
-		var info = Data.readInfos(zip, CheckData);
+		var info = Data.readDataFromZip(zip, CheckData);
 		var ok:Dynamic = try {
 			Data.checkClassPath(zip,info);
 			true;
@@ -94,7 +94,7 @@ class TestData extends TestBase {
 		assertEquals( ok, true );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
-		var info = Data.readInfos(zip, CheckData);
+		var info = Data.readDataFromZip(zip, CheckData);
 		var ok:Dynamic = try {
 			Data.checkClassPath(zip,info);
 			true;

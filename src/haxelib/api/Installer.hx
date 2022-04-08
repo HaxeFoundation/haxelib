@@ -200,7 +200,7 @@ class Installer {
 		// read zip content
 		final zip = FsUtils.unzip(path);
 
-		final info = Data.readInfos(zip, NoCheck);
+		final info = Data.readDataFromZip(zip, NoCheck);
 		final library = info.name;
 		final version = info.version;
 
