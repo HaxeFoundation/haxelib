@@ -104,7 +104,7 @@ class TestData extends TestBase {
 		assertEquals( ok, true );
 	}
 
-	public function testReadDataWithCheck() {
+	public function testReadDataWithDataCheck() {
 		assertFalse( readDataOkay("bad json") );
 
 		assertTrue( readDataOkay(getJsonInfos()) );
@@ -133,6 +133,7 @@ class TestData extends TestBase {
 		assertFalse( readDataOkay(getJsonInfos({ license: null })) );
 		assertFalse( readDataOkay(getJsonInfos({ license: '' })) );
 		assertFalse( readDataOkay(getJsonInfos({ license: 'CustomLicence' })) );
+		assertFalse(readDataOkay(getJsonInfos({license: 'Unknown'})));
 		assertFalse( readDataOkay(getJsonInfos([ "license" ])) ); // remove the field altogether
 
 		// Contibutors
@@ -198,14 +199,14 @@ class TestData extends TestBase {
 		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).description );
 		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).description );
 		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).description ); // remove the field altogether
-
+		*/
 		// Licence
-		assertEquals( "BSD", Data.readData(getJsonInfos({ license: 'BSD' }),false).license );
-		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: null }),false).license );
-		assertEquals( "Unknown", Data.readData(getJsonInfos({ license: '' }),false).license );
-		assertEquals( "CustomLicence", Data.readData(getJsonInfos({ license: 'CustomLicence' }),false).license );
-		assertEquals( "Unknown", Data.readData(getJsonInfos([ "license" ]),false).license ); // remove the field altogether
-
+		assertEquals("BSD", Data.readData(getJsonInfos({license: 'BSD'}), NoCheck).license);
+		assertEquals("Unknown", Data.readData(getJsonInfos({license: null}), NoCheck).license);
+		assertEquals("Unknown", Data.readData(getJsonInfos({license: ''}), NoCheck).license);
+		assertEquals("CustomLicence", Data.readData(getJsonInfos({license: 'CustomLicence'}), NoCheck).license);
+		assertEquals("Unknown", Data.readData(getJsonInfos(["license"]), NoCheck).license); // remove the field altogether
+		/*
 		// Contibutors
 		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).contributors.length );
 		assertEquals( 0, Data.readData(getJsonInfos({ contributors: null }),false).contributors.length );

@@ -144,7 +144,7 @@ class Validator {
 					var name = a.module + '.' + a.name;
 					var options:Array<Expr> = [
 						for (f in a.impl.get().statics.get())
-						if (f.kind.match(FVar(_, _)))
+						if (f.kind.match(FVar(_, _)) && !f.meta.has(':disallowed'))
 						macro @:pos(pos) $p{(name+'.'+f.name).split('.')}
 					];
 
