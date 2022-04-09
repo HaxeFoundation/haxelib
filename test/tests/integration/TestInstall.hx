@@ -1,6 +1,10 @@
 package tests.integration;
 
+import tests.util.Vcs;
+
 class TestInstall extends IntegrationTests {
+
+	final gitLibPath = "libraries/libBar";
 
 	override function setup(){
 		super.setup();
@@ -16,6 +20,11 @@ class TestInstall extends IntegrationTests {
 		assertSuccess(r);
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo.zip"]), foo.pw]).result();
 		assertSuccess(r);
+	}
+
+	override function tearDown() {
+		resetGitRepo(gitLibPath);
+		super.tearDown();
 	}
 
 	function testNormal():Void {
@@ -197,6 +206,24 @@ class TestInstall extends IntegrationTests {
 
 		final r = haxelib(["list", "Bar"]).result();
 		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertSuccess(r);
+	}
+
+	function testLocalWithGitDependency() {
+		// prepare git dependency
+		makeGitRepo(gitLibPath);
+
+		final r = haxelib(["install", "libraries/libFooGitDep.zip"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Foo"]).result();
+		assertTrue(r.out.indexOf("Foo") >= 0);
+		assertTrue(r.out.indexOf("[1.0.0]") >= 0);
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertTrue(r.out.indexOf("[git]") >= 0);
 		assertSuccess(r);
 	}
 }
