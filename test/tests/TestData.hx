@@ -66,12 +66,12 @@ class TestData extends TestBase {
 
 	public function testReadInfos() {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
-		var info = Data.readInfos(zip, true);
+		var info = Data.readInfos(zip, CheckData);
 		assertEquals( "haxelib", info.name );
 		assertEquals( "MIT", info.license );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
-		var info = Data.readInfos(zip, true);
+		var info = Data.readInfos(zip, CheckData);
 		assertEquals( "Deep", info.name );
 		assertEquals( "http://example.org", info.url );
 		assertEquals( "Public", info.license );
@@ -84,7 +84,7 @@ class TestData extends TestBase {
 
 	public function testCheckClassPath() {
 		var zip = Reader.readZip(new BytesInput(File.getBytes("package.zip")));
-		var info = Data.readInfos(zip, true);
+		var info = Data.readInfos(zip, CheckData);
 		var ok:Dynamic = try {
 			Data.checkClassPath(zip,info);
 			true;
@@ -94,7 +94,7 @@ class TestData extends TestBase {
 		assertEquals( ok, true );
 
 		var zip = Reader.readZip(new BytesInput(File.getBytes("test/libraries/libDeep.zip")));
-		var info = Data.readInfos(zip, true);
+		var info = Data.readInfos(zip, CheckData);
 		var ok:Dynamic = try {
 			Data.checkClassPath(zip,info);
 			true;
@@ -179,18 +179,18 @@ class TestData extends TestBase {
 	}
 
 	public function testReadDataWithoutCheck() {
-		assertEquals( ProjectName.DEFAULT, Data.readData("bad json",false).name );
-		assertEquals( "0.0.0", Data.readData("bad json",false).version );
+		assertEquals(ProjectName.DEFAULT, Data.readData("bad json", NoCheck).name);
+		assertEquals("0.0.0", Data.readData("bad json", NoCheck).version);
 
-		assertEquals( "mylib", Data.readData(getJsonInfos(),false).name );
-		assertEquals( "0.1.2", Data.readData(getJsonInfos(),false).version );
+		assertEquals("mylib", Data.readData(getJsonInfos(), NoCheck).name);
+		assertEquals("0.1.2", Data.readData(getJsonInfos(), NoCheck).version);
 
 		// Names
-		assertEquals( ProjectName.DEFAULT, Data.readData("{}",false).name );
-		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: null }),false).name );
-		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos({ name: '' }),false).name );
-		assertEquals( "mylib", Data.readData(getJsonInfos({ name: 'mylib' }),false).name );
-		assertEquals( ProjectName.DEFAULT, Data.readData(getJsonInfos([ "name" ]), false).name ); // remove the field altogether
+		assertEquals(ProjectName.DEFAULT, Data.readData("{}", NoCheck).name);
+		assertEquals(ProjectName.DEFAULT, Data.readData(getJsonInfos({name: null}), NoCheck).name);
+		assertEquals(ProjectName.DEFAULT, Data.readData(getJsonInfos({name: ''}), NoCheck).name);
+		assertEquals("mylib", Data.readData(getJsonInfos({name: 'mylib'}), NoCheck).name);
+		assertEquals(ProjectName.DEFAULT, Data.readData(getJsonInfos(["name"]), NoCheck).name); // remove the field altogether
 
 		/*
 		// Description (optional)
@@ -215,11 +215,11 @@ class TestData extends TestBase {
 		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).contributors.length ); // remove the field altogether
 		*/
 		// Version
-		assertEquals( "0.1.2-rc.0", Data.readData(getJsonInfos({ version: "0.1.2-rc.0" }),false).version );
-		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: "non-semver" }),false).version );
-		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: 0 }),false).version );
-		assertEquals( "0.0.0", Data.readData(getJsonInfos({ version: null }),false).version );
-		assertEquals( "0.0.0", Data.readData(getJsonInfos([ "version" ]),false).version ); // remove the field altogether
+		assertEquals("0.1.2-rc.0", Data.readData(getJsonInfos({version: "0.1.2-rc.0"}), NoCheck).version);
+		assertEquals("0.0.0", Data.readData(getJsonInfos({version: "non-semver"}), NoCheck).version);
+		assertEquals("0.0.0", Data.readData(getJsonInfos({version: 0}), NoCheck).version);
+		assertEquals("0.0.0", Data.readData(getJsonInfos({version: null}), NoCheck).version);
+		assertEquals("0.0.0", Data.readData(getJsonInfos(["version"]), NoCheck).version); // remove the field altogether
 
 		/*
 		// Tags (optional)
@@ -229,13 +229,13 @@ class TestData extends TestBase {
 		*/
 
 		// Dependencies (optional)
-		assertEquals( 0, Data.readData(getJsonInfos({ dependencies: null }),false).dependencies.toArray().length );
-		assertEquals( "somelib", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.toArray()[0].name );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"" } }),false).dependencies.toArray()[0].version );
-		assertEquals( "1.3.0", Data.readData(getJsonInfos({ dependencies: { somelib:"1.3.0" } }),false).dependencies.toArray()[0].version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:"nonsemver" } }),false).dependencies.toArray()[0].version );
-		assertEquals( "", Data.readData(getJsonInfos({ dependencies: { somelib:null } }),false).dependencies.toArray()[0].version );
-		assertEquals( "", Data.readData(getJsonInfos( { dependencies: { somelib:0 } } ), false).dependencies.toArray()[0].version );
+		assertEquals(0, Data.readData(getJsonInfos({dependencies: null}), NoCheck).dependencies.toArray().length);
+		assertEquals("somelib", Data.readData(getJsonInfos({dependencies: {somelib: ""}}), NoCheck).dependencies.toArray()[0].name);
+		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: ""}}), NoCheck).dependencies.toArray()[0].version);
+		assertEquals("1.3.0", Data.readData(getJsonInfos({dependencies: {somelib: "1.3.0"}}), NoCheck).dependencies.toArray()[0].version);
+		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: "nonsemver"}}), NoCheck).dependencies.toArray()[0].version);
+		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: null}}), NoCheck).dependencies.toArray()[0].version);
+		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: 0}}), NoCheck).dependencies.toArray()[0].version);
 
 		/*
 		// ReleaseNote
@@ -244,9 +244,9 @@ class TestData extends TestBase {
 		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).releasenote ); // remove the field altogether
 		*/
 		// ClassPath
-		assertEquals( "src", Data.readData(getJsonInfos({ classPath: 'src' }), false).classPath );
-		assertEquals( "", Data.readData(getJsonInfos({ classPath: '' }), false).classPath );
-		assertEquals( "", Data.readData(getJsonInfos({ classPath: null }), false).classPath );
+		assertEquals("src", Data.readData(getJsonInfos({classPath: 'src'}), NoCheck).classPath);
+		assertEquals("", Data.readData(getJsonInfos({classPath: ''}), NoCheck).classPath);
+		assertEquals("", Data.readData(getJsonInfos({classPath: null}), NoCheck).classPath);
 	}
 
 	function testAliasCheck() {
@@ -267,7 +267,7 @@ class TestData extends TestBase {
 
 	function readDataOkay( json ) {
 		try {
-			Data.readData( json,true );
+			Data.readData(json, CheckData);
 			return true;
 		}
 		catch (e:String) {

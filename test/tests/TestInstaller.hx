@@ -97,7 +97,7 @@ class TestInstaller extends TestBase {
 
 	function getLibraryName():String {
 		final haxelibFile = File.read("haxelib.json", false);
-		final details = Data.readData(haxelibFile.readAll().toString(), false );
+		final details = Data.readData(haxelibFile.readAll().toString(), NoCheck);
 		haxelibFile.close();
 		return details.dependencies.toArray()[0].name;
 	}
