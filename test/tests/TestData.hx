@@ -195,28 +195,27 @@ class TestData extends TestBase {
 		assertEquals("mylib", Data.readData(getJsonInfos({name: 'mylib'}), NoCheck).name);
 		assertEquals(ProjectName.DEFAULT, Data.readData(getJsonInfos(["name"]), NoCheck).name); // remove the field altogether
 
-		/*
 		// Description (optional)
-		assertEquals( "Some Description", Data.readData(getJsonInfos({ description: 'Some Description' }),false).description );
-		assertEquals( "", Data.readData(getJsonInfos({ description: '' }),false).description );
-		assertEquals( "", Data.readData(getJsonInfos({ description: null }),false).description );
-		assertEquals( "", Data.readData(getJsonInfos([ "description" ]),false).description ); // remove the field altogether
-		*/
+		assertEquals("Some Description", Data.readData(getJsonInfos({description: 'Some Description'}), NoCheck).description);
+		assertEquals("", Data.readData(getJsonInfos({description: ''}), NoCheck).description);
+		assertEquals("", Data.readData(getJsonInfos({description: null}), NoCheck).description);
+		assertEquals("", Data.readData(getJsonInfos(["description"]), NoCheck).description); // remove the field altogether
+
 		// Licence
 		assertEquals("BSD", Data.readData(getJsonInfos({license: 'BSD'}), NoCheck).license);
 		assertEquals("Unknown", Data.readData(getJsonInfos({license: null}), NoCheck).license);
 		assertEquals("Unknown", Data.readData(getJsonInfos({license: ''}), NoCheck).license);
 		assertEquals("CustomLicence", Data.readData(getJsonInfos({license: 'CustomLicence'}), NoCheck).license);
 		assertEquals("Unknown", Data.readData(getJsonInfos(["license"]), NoCheck).license); // remove the field altogether
-		/*
+
 		// Contibutors
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: [] }),false).contributors.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: null }),false).contributors.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ contributors: "jason" }),false).contributors.length );
-		assertEquals( 1, Data.readData(getJsonInfos({ contributors: ["jason"] }),false).contributors.length );
-		assertEquals( 2, Data.readData(getJsonInfos({ contributors: ["jason","juraj"] }),false).contributors.length );
-		assertEquals( 0, Data.readData(getJsonInfos([ "contributors" ]),false).contributors.length ); // remove the field altogether
-		*/
+		assertEquals(0, Data.readData(getJsonInfos({contributors: []}), NoCheck).contributors.length);
+		assertEquals(0, Data.readData(getJsonInfos({contributors: null}), NoCheck).contributors.length);
+		assertEquals(0, Data.readData(getJsonInfos({contributors: "jason"}), NoCheck).contributors.length);
+		assertEquals(1, Data.readData(getJsonInfos({contributors: ["jason"]}), NoCheck).contributors.length);
+		assertEquals(2, Data.readData(getJsonInfos({contributors: ["jason", "juraj"]}), NoCheck).contributors.length);
+		assertEquals(0, Data.readData(getJsonInfos(["contributors"]), NoCheck).contributors.length); // remove the field altogether
+
 		// Version
 		assertEquals("0.1.2-rc.0", Data.readData(getJsonInfos({version: "0.1.2-rc.0"}), NoCheck).version);
 		assertEquals("0.0.0", Data.readData(getJsonInfos({version: "non-semver"}), NoCheck).version);
@@ -224,12 +223,10 @@ class TestData extends TestBase {
 		assertEquals("0.0.0", Data.readData(getJsonInfos({version: null}), NoCheck).version);
 		assertEquals("0.0.0", Data.readData(getJsonInfos(["version"]), NoCheck).version); // remove the field altogether
 
-		/*
 		// Tags (optional)
-		assertEquals( 2, Data.readData(getJsonInfos({ tags: ["tag1","tag2"] }),false).tags.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ tags: null }),false).tags.length );
-		assertEquals( 0, Data.readData(getJsonInfos({ tags: "mytag" }),false).tags.length );
-		*/
+		assertEquals(2, Data.readData(getJsonInfos({tags: ["tag1", "tag2"]}), NoCheck).tags.length);
+		assertEquals(0, Data.readData(getJsonInfos({tags: null}), NoCheck).tags.length);
+		assertEquals(0, Data.readData(getJsonInfos({tags: "mytag"}), NoCheck).tags.length);
 
 		// Dependencies (optional)
 		inline function getFirstDependency(dependencies:Dynamic)
@@ -249,12 +246,11 @@ class TestData extends TestBase {
 		assertEquals("https://some.url", gitDependency.url);
 		assertEquals("branch", gitDependency.branch);
 
-		/*
 		// ReleaseNote
-		assertEquals( "release", Data.readData(getJsonInfos({ releasenote: "release" }),false).releasenote );
-		assertEquals( "", Data.readData(getJsonInfos({ releasenote: null }),false).releasenote );
-		assertEquals( "", Data.readData(getJsonInfos([ "releasenote" ]),false).releasenote ); // remove the field altogether
-		*/
+		assertEquals("release", Data.readData(getJsonInfos({releasenote: "release"}), NoCheck).releasenote);
+		assertEquals("", Data.readData(getJsonInfos({releasenote: null}), NoCheck).releasenote);
+		assertEquals("", Data.readData(getJsonInfos(["releasenote"]), NoCheck).releasenote); // remove the field altogether
+
 		// ClassPath
 		assertEquals("src", Data.readData(getJsonInfos({classPath: 'src'}), NoCheck).classPath);
 		assertEquals("", Data.readData(getJsonInfos({classPath: ''}), NoCheck).classPath);
