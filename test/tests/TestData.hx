@@ -162,6 +162,8 @@ class TestData extends TestBase {
 
 		assertTrue( readDataOkay(getJsonInfos({ dependencies: { somelib:"1.3.0" } }) ));
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib: "nonsemver" }})) );
+		assertFalse(readDataOkay(getJsonInfos({dependencies: {somelib: "git"}})));
+		assertFalse(readDataOkay(getJsonInfos({dependencies: {somelib: "git:https://some.url"}})));
 
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: { somelib: 0 } })) );
 		assertFalse( readDataOkay(getJsonInfos({ dependencies: "somelib" })) );
@@ -230,13 +232,22 @@ class TestData extends TestBase {
 		*/
 
 		// Dependencies (optional)
+		inline function getFirstDependency(dependencies:Dynamic)
+			return Data.readData(getJsonInfos({dependencies: dependencies}), NoCheck).dependencies.toArray()[0];
+
 		assertEquals(0, Data.readData(getJsonInfos({dependencies: null}), NoCheck).dependencies.toArray().length);
-		assertEquals("somelib", Data.readData(getJsonInfos({dependencies: {somelib: ""}}), NoCheck).dependencies.toArray()[0].name);
-		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: ""}}), NoCheck).dependencies.toArray()[0].version);
-		assertEquals("1.3.0", Data.readData(getJsonInfos({dependencies: {somelib: "1.3.0"}}), NoCheck).dependencies.toArray()[0].version);
-		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: "nonsemver"}}), NoCheck).dependencies.toArray()[0].version);
-		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: null}}), NoCheck).dependencies.toArray()[0].version);
-		assertEquals("", Data.readData(getJsonInfos({dependencies: {somelib: 0}}), NoCheck).dependencies.toArray()[0].version);
+		assertEquals("somelib", getFirstDependency({somelib: ""}).name);
+		assertEquals("", getFirstDependency({somelib: ""}).version);
+		assertEquals("1.3.0", getFirstDependency({somelib: "1.3.0"}).version);
+		assertEquals("", getFirstDependency({somelib: "nonsemver"}).version);
+		assertEquals("", getFirstDependency({somelib: null}).version);
+		assertEquals("", getFirstDependency({somelib: 0}).version);
+		assertEquals("git", getFirstDependency({somelib: "git"}).version);
+
+		final gitDependency = getFirstDependency({somelib: "git:https://some.url#branch"});
+		assertEquals(Git, gitDependency.type);
+		assertEquals("https://some.url", gitDependency.url);
+		assertEquals("branch", gitDependency.branch);
 
 		/*
 		// ReleaseNote

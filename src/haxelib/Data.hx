@@ -60,14 +60,25 @@ abstract DependencyVersion(String) to String from SemVer {
 
 	@:to function toValidatable():Validatable
 		return
-			if (this == DEFAULT || this == GIT || (#if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(this, String) && this.startsWith('git:')))
+			if (this == DEFAULT)
 				{ validate: function () return None }
+			else if (this == GIT || #if (haxe_ver < 4.1) Std.is(this, String) #else this is String #end && this.startsWith('git:'))
+				{validate: function() return Some("Git dependency is not allowed in a library release")}
 			else
 				@:privateAccess new SemVer(this);
 
 	/** Returns whether `s` constitutes a valid dependency version string. **/
 	static public function isValid(s:String):Bool
-		return new DependencyVersion(s).toValidatable().validate() == None;
+		return s == DEFAULT || s == GIT || SemVer.isValid(s);
+
+	/**
+		Returns whether `s` constitutes dependency version string that can be used locally.
+
+		The requirements for this are not as strict as `isValid()`, as vcs
+		dependencies are allowed.
+	 **/
+	static public function isUsable(s:String):Bool
+		return #if (haxe_ver < 4.1) Std.is(s, String) #else (s is String) #end && s.startsWith('git:') || isValid(s);
 
 	/** Default empty dependency version. **/
 	static public var DEFAULT(default, null) = new DependencyVersion('');
@@ -285,6 +296,22 @@ class Data {
 		}
 	}
 
+	static function cleanDependencies(dependencies:Null<Dependencies>):Void {
+		if (dependencies == null)
+			return;
+		#if haxe4
+		for (name => version in dependencies) {
+			if (!DependencyVersion.isUsable(version))
+				Reflect.setField(dependencies, name, DependencyVersion.DEFAULT); // TODO: this is pure evil
+		}
+		#else
+		for (name in dependencies.getNames()) {
+			if (!DependencyVersion.isUsable(Reflect.field(dependencies, name)))
+				Reflect.setField(dependencies, name, DependencyVersion.DEFAULT); // TODO: this is pure evil
+		}
+		#end
+	}
+
 	/**
 		Extracts project information from `jsondata`, validating it according to `check`.
 
@@ -316,16 +343,13 @@ class Data {
 				doc.version = SemVer.DEFAULT;
 			if (doc.license == null || doc.license == '')
 				doc.license = Unknown;
+			cleanDependencies(doc.dependencies);
 		}
 
 		//TODO: we have really weird ways to go about nullability and defaults
 
 		if (doc.dependencies == null)
 			doc.dependencies = {};
-
-		for (dep in doc.dependencies)
-			if (!DependencyVersion.isValid(dep.version))
-				Reflect.setField(doc.dependencies, dep.name, DependencyVersion.DEFAULT);//TODO: this is pure evil
 
 		if (doc.classPath == null)
 			doc.classPath = '';
