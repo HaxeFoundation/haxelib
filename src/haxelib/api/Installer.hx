@@ -200,7 +200,7 @@ class Installer {
 		// read zip content
 		final zip = FsUtils.unzip(path);
 
-		final info = Data.readInfos(zip, false);
+		final info = Data.readInfos(zip, NoCheck);
 		final library = info.name;
 		final version = info.version;
 
@@ -232,7 +232,7 @@ class Installer {
 		final path = FileSystem.fullPath(path);
 		userInterface.log('Installing libraries from $path');
 
-		final dependencies = Data.readData(File.getContent(path), false).dependencies;
+		final dependencies = Data.readData(File.getContent(path), NoCheck).dependencies;
 
 		try
 			installFromDependencies(dependencies)
@@ -469,7 +469,7 @@ class Installer {
 		if (!FileSystem.exists(jsonPath))
 			return {};
 
-		return switch (Data.readData(File.getContent(jsonPath), false).dependencies) {
+		return switch (Data.readData(File.getContent(jsonPath), NoCheck).dependencies) {
 			case null: {};
 			case dependencies: dependencies;
 		}
@@ -485,7 +485,7 @@ class Installer {
 		final jsonPath = scope.getPath(givenName, id) + (if (subDir != null) subDir else "") + Data.JSON;
 		if (!FileSystem.exists(jsonPath))
 			return givenName;
-		final internalName = Data.readData(File.getContent(jsonPath), false).name;
+		final internalName = Data.readData(File.getContent(jsonPath), NoCheck).name;
 		return ProjectName.getCorrectOrAlias(internalName, givenName);
 	}
 

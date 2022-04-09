@@ -28,7 +28,7 @@ class GlobalScope extends Scope {
 		final resolved = resolveVersionAndPath(library, version);
 
 		final info =
-			try Data.readData(File.getContent(resolved.path + Data.JSON), false)
+			try Data.readData(File.getContent(resolved.path + Data.JSON), NoCheck)
 			catch (e:Dynamic)
 				throw 'Failed when trying to parse haxelib.json for $library@${resolved.version}: $e';
 

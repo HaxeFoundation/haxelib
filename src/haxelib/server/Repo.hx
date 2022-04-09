@@ -162,7 +162,7 @@ class Repo implements SiteApi {
 				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); #if neko neko.Lib.rethrow(e); #else throw e; #end };
 				file.close();
 
-				var infos = Data.readInfos(zip,true);
+				var infos = Data.readInfos(zip,CheckData);
 				var u = User.manager.search({ name : user }).first();
 				if( u == null || u.pass != pass )
 					throw "Invalid username or password";

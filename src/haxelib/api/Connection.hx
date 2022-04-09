@@ -399,7 +399,7 @@ class Connection {
 			zip = Reader.readZip(new haxe.io.BytesInput(data));
 		}
 
-		final infos = Data.readInfos(zip, true);
+		final infos = Data.readInfos(zip, CheckData);
 		Data.checkClassPath(zip, infos);
 
 		// ask user which contributor they are

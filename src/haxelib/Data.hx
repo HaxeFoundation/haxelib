@@ -42,10 +42,6 @@ using StringTools;
 	/** The syntax is checked and data in the file is validated. **/
 	var CheckData = 2;
 
-	@:from static inline function fromBool(check:Bool):CheckLevel {
-		return check ? CheckData : NoCheck;
-	}
-
 	@:op(A > B) function gt(b:CheckLevel):Bool;
 	@:op(A >= B) function gte(b:CheckLevel):Bool;
 	@:op(A == B) function eq(b:CheckLevel):Bool;
