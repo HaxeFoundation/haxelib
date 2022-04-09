@@ -25,13 +25,14 @@ package haxelib;
 **/
 
 import haxe.ds.Option;
-import haxe.ds.*;
 import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
 import haxelib.Validator;
+import haxelib.Util;
 
 using StringTools;
+using Lambda;
 
 /** The level of strictness with which a `haxelib.json` check is performed. **/
 @:enum abstract CheckLevel(Int) {
@@ -312,6 +313,12 @@ class Data {
 		#end
 	}
 
+	static inline function isStringArray(array:Array<String>) {
+		return #if (haxe_ver < 4.1) Std.is(array, Array) && array.foreach(function(item) { return Std.is(item, String);});
+		#else (array is Array) && array.foreach((item) -> item is String);
+		#end
+	}
+
 	/**
 		Extracts project information from `jsondata`, validating it according to `check`.
 
@@ -339,32 +346,23 @@ class Data {
 		if (check >= CheckLevel.CheckData) {
 			Validator.validate(doc);
 		} else {
-			if (!doc.version.valid)
-				doc.version = SemVer.DEFAULT;
-			if (doc.license == null || doc.license == '')
-				doc.license = Unknown;
+			Util.replaceIf(doc.name, defaultName, doc.name.validate() != None);
+			Util.replaceIf(doc.version, SemVer.DEFAULT, !doc.version.valid);
+			Util.replaceIf(doc.license, Unknown, doc.license == null || doc.license == '');
+			Util.replaceIf(doc.contributors, [], !isStringArray(doc.contributors));
+			Util.replaceIfNull(doc.releasenote, '');
 			cleanDependencies(doc.dependencies);
 		}
 
 		//TODO: we have really weird ways to go about nullability and defaults
 
-		if (doc.dependencies == null)
-			doc.dependencies = {};
+		// these may have been ommitted even in a valid file
+		Util.replaceIfNull(doc.dependencies, {});
+		Util.replaceIfNull(doc.classPath, '');
+		Util.replaceIfNull(doc.description, '');
+		Util.replaceIfNull(doc.url, '');
 
-		if (doc.classPath == null)
-			doc.classPath = '';
-
-		if (doc.name.validate() != None)
-			doc.name = defaultName;
-
-		if (doc.description == null)
-			doc.description = '';
-
-		if (doc.tags == null)
-			doc.tags = [];
-
-		if (doc.url == null)
-			doc.url = '';
+		Util.replaceIf(doc.tags, [], !isStringArray(doc.tags));
 
 		return doc;
 	}
