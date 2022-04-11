@@ -346,23 +346,32 @@ class Data {
 		if (check >= CheckLevel.CheckData) {
 			Validator.validate(doc);
 		} else {
-			Util.replaceIf(doc.name, defaultName, doc.name.validate() != None);
-			Util.replaceIf(doc.version, SemVer.DEFAULT, !doc.version.valid);
-			Util.replaceIf(doc.license, Unknown, doc.license == null || doc.license == '');
-			Util.replaceIf(doc.contributors, [], !isStringArray(doc.contributors));
-			Util.replaceIfNull(doc.releasenote, '');
+			if (doc.name.validate() != None)
+				doc.name = defaultName;
+			if (!doc.version.valid)
+				doc.version = SemVer.DEFAULT;
+			if (doc.license == null || doc.license == '')
+				doc.license = Unknown;
+			if (!isStringArray(doc.contributors))
+				doc.contributors = [];
+			if (doc.releasenote == null)
+				doc.releasenote = '';
 			cleanDependencies(doc.dependencies);
 		}
 
 		//TODO: we have really weird ways to go about nullability and defaults
 
 		// these may have been ommitted even in a valid file
-		Util.replaceIfNull(doc.dependencies, {});
-		Util.replaceIfNull(doc.classPath, '');
-		Util.replaceIfNull(doc.description, '');
-		Util.replaceIfNull(doc.url, '');
-
-		Util.replaceIf(doc.tags, [], !isStringArray(doc.tags));
+		if (doc.dependencies == null)
+			doc.dependencies = {};
+		if (doc.classPath == null)
+			doc.classPath = '';
+		if (doc.description == null)
+			doc.description = '';
+		if (doc.url == null)
+			doc.url = '';
+		if (!isStringArray(doc.tags))
+			doc.tags = [];
 
 		return doc;
 	}
