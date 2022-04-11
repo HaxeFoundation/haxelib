@@ -858,6 +858,10 @@ class Main {
 		if (repository != null && !isHaxelibRun && !priorityFlags.contains(System) && repository.isInstalled(HAXELIB_LIBNAME) ){
 			try {
 				final scope = Scope.getScopeForRepository(repository);
+				if (priorityFlags.contains(Debug)) {
+					final path = scope.getPath(HAXELIB_LIBNAME);
+					Cli.print('[debug] Using $HAXELIB_LIBNAME from "$path"');
+				}
 				scope.runScript(HAXELIB_LIBNAME, {
 					args: args,
 					useGlobalRepo: priorityFlags.contains(Global)
