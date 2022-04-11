@@ -57,12 +57,4 @@ class Util {
 			return macro $v{version};
 		}
 	}
-
-	public static macro function replaceIfNull(toReplace:Expr, with:Expr)
-		return macro if ($toReplace == null)
-			$toReplace = $with;
-
-	public static macro function replaceIf(toReplace:Expr, with:Expr, condition:Expr)
-		return macro if ($condition)
-			$toReplace = $with;
 }
