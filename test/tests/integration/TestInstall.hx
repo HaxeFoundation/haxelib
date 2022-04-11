@@ -189,4 +189,14 @@ class TestInstall extends IntegrationTests {
 			assertSuccess(r);
 		}
 	}
+
+	function testLocalWithInvalidLicense() {
+		// unknown license should not prevent install
+		final r = haxelib(["install", "libraries/libInvalidLicense.zip"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertSuccess(r);
+	}
 }

@@ -16,6 +16,17 @@ class TestPath extends IntegrationTests {
 		assertFail(r);
 	}
 #end
+	function testInvalidLicense() {
+		// invalid license should not prevent usage
+		final r = haxelib(["dev", "InvalidLicense", "libraries/libInvalidLicense"]).result();
+		assertSuccess(r);
+		final r = haxelib(["path", "InvalidLicense"]).result();
+		assertSuccess(r);
+		assertOutputEquals([
+			Path.join([IntegrationTests.projectRoot, "test/libraries/libInvalidLicense"]).addTrailingSlash(),
+			"-D Bar=1.0.0"
+		], r.out);
+	}
 
 	function testMultipleLibraries():Void {
 		final r = haxelib(["install", "libraries/libBar.zip"]).result();
