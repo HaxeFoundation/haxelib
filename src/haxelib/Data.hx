@@ -63,14 +63,14 @@ abstract DependencyVersion(String) to String from SemVer {
 		return
 			if (this == DEFAULT)
 				{ validate: function () return None }
-			else if (this == GIT || #if (haxe_ver < 4.1) Std.is(this, String) #else this is String #end && this.startsWith('git:'))
+			else if (#if (haxe_ver < 4.1) Std.is(this, String) #else this is String #end && this.split(":")[0] == GIT )
 				{validate: function() return Some("Git dependency is not allowed in a library release")}
 			else
 				@:privateAccess new SemVer(this);
 
 	/** Returns whether `s` constitutes a valid dependency version string. **/
 	static public function isValid(s:String):Bool
-		return s == DEFAULT || s == GIT || SemVer.isValid(s);
+		return s == DEFAULT || SemVer.isValid(s);
 
 	/**
 		Returns whether `s` constitutes dependency version string that can be used locally.
@@ -79,7 +79,7 @@ abstract DependencyVersion(String) to String from SemVer {
 		dependencies are allowed.
 	 **/
 	static public function isUsable(s:String):Bool
-		return #if (haxe_ver < 4.1) Std.is(s, String) #else (s is String) #end && s.startsWith('git:') || isValid(s);
+		return #if (haxe_ver < 4.1) Std.is(s, String) #else (s is String) #end && s.split(":")[0] == GIT  || isValid(s);
 
 	/** Default empty dependency version. **/
 	static public var DEFAULT(default, null) = new DependencyVersion('');
