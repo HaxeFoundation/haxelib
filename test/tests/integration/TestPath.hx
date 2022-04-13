@@ -121,4 +121,21 @@ class TestPath extends IntegrationTests {
 		assertFail(r);
 		assertEquals('Error: Cannot process `bar:1.0.0`: Library Bar has two versions included : 2.0.0 and 1.0.0', r.err.trim());
 	}
+
+	function testInvalidCurrentVersion():Void {
+		// for now, Shiro Games needs this to work
+		final r = haxelib(["install", "libraries/libBar.zip"]).result();
+		assertSuccess(r);
+
+		final customVersion = "custom";
+		final projectPath = barPath.directory().directory();
+		final customPath = Path.join([projectPath, customVersion]).addTrailingSlash();
+
+		sys.FileSystem.rename(barPath, customPath);
+		sys.io.File.saveContent(Path.join([projectPath, ".current"]), customVersion);
+
+		final r = haxelib(["path", "Bar"]).result();
+		assertSuccess(r);
+		assertOutputEquals([customPath, '-D Bar=1.0.0'], r.out.trim());
+	}
 }
