@@ -5,6 +5,7 @@ import tests.util.Vcs;
 class TestInstall extends IntegrationTests {
 
 	final gitLibPath = "libraries/libBar";
+	final hgLibPath = "libraries/libBar";
 
 	override function setup(){
 		super.setup();
@@ -24,6 +25,7 @@ class TestInstall extends IntegrationTests {
 
 	override function tearDown() {
 		resetGitRepo(gitLibPath);
+		resetHgRepo(hgLibPath);
 		super.tearDown();
 	}
 
@@ -224,6 +226,24 @@ class TestInstall extends IntegrationTests {
 		final r = haxelib(["list", "Bar"]).result();
 		assertTrue(r.out.indexOf("Bar") >= 0);
 		assertTrue(r.out.indexOf("[git]") >= 0);
+		assertSuccess(r);
+	}
+
+	function testLocalWithHgDependency() {
+		// prepare hg dependency
+		makeHgRepo(hgLibPath);
+
+		final r = haxelib(["install", "libraries/libFooHgDep.zip"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Foo"]).result();
+		assertTrue(r.out.indexOf("Foo") >= 0);
+		assertTrue(r.out.indexOf("[1.0.0]") >= 0);
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertTrue(r.out.indexOf("[hg]") >= 0);
 		assertSuccess(r);
 	}
 }
