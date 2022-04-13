@@ -5,6 +5,7 @@ import sys.FileSystem;
 import haxe.io.*;
 import haxe.unit.TestCase;
 
+import haxelib.VersionData.VcsID;
 import haxelib.api.Vcs;
 
 class TestVcs extends TestBase

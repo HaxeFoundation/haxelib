@@ -6,7 +6,7 @@ import tests.util.DirectoryState;
 
 import haxelib.ProjectName;
 import haxelib.SemVer;
-import haxelib.api.Vcs;
+import haxelib.VersionData.VcsID;
 
 using haxe.io.Path;
 
