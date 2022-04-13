@@ -417,12 +417,12 @@ class Connection {
 	}
 
 	static function checkDependencies(dependencies:Dependencies) {
-		for (d in dependencies) {
-			final versions:Array<String> = getVersions(ProjectName.ofString(d.name));
-			if (d.version == "")
+		for (name => versionString in dependencies) {
+			final versions:Array<String> = getVersions(ProjectName.ofString(name));
+			if (versionString == "")
 				continue;
-			if (!versions.contains(d.version))
-				throw "Library " + d.name + " does not have version " + d.version;
+			if (!versions.contains(versionString))
+				throw "Library " + name + " does not have version " + versionString;
 		}
 	}
 

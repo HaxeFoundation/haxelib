@@ -28,7 +28,7 @@ import sys.FileSystem;
 import sys.io.File;
 
 import haxelib.api.*;
-import haxelib.api.Vcs;
+import haxelib.VersionData.VcsID;
 import haxelib.api.LibraryData;
 
 import haxelib.client.Args;

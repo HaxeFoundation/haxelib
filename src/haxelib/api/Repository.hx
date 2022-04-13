@@ -3,6 +3,7 @@ package haxelib.api;
 import sys.FileSystem;
 import sys.io.File;
 
+import haxelib.VersionData.VcsID;
 import haxelib.api.RepoManager;
 import haxelib.api.LibraryData;
 
@@ -97,7 +98,7 @@ class Repository {
 	/** Returns information on currently installed versions for project `name` **/
 	public function getProjectInstallationInfo(name:ProjectName):{versions: Array<Version>, devPath:String} {
 		final semVers:Array<SemVer> = [];
-		final others:Array<Vcs.VcsID> = [];
+		final others:Array<VcsID> = [];
 		final root = getProjectRootPath(name);
 
 		for (sub in FileSystem.readDirectory(root)) {
@@ -110,8 +111,8 @@ class Repository {
 				final semVer = SemVer.ofString(version);
 				semVers.push(semVer);
 			} catch(e:haxe.Exception) {
-				if (Vcs.VcsID.isValid(version))
-					others.push(Vcs.VcsID.ofString(version));
+				if (VcsID.isValid(version))
+					others.push(VcsID.ofString(version));
 			}
 		}
 		if (semVers.length != 0)
@@ -363,7 +364,7 @@ class Repository {
 		final versionDir:String =
 			switch version {
 				case v if (SemVer.isValid(v)): v;
-				case (try Vcs.VcsID.ofString(_) catch(_) null) => vcs if (vcs != null):
+				case (try VcsID.ofString(_) catch(_) null) => vcs if (vcs != null):
 					Vcs.getDirectoryFor(vcs);
 				//case _: throw 'Unknown library version: $version'; // we shouldn't get here
 				case custom: custom;

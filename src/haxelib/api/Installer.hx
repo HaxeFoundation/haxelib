@@ -2,8 +2,10 @@ package haxelib.api;
 
 import sys.FileSystem;
 import sys.io.File;
+import haxe.ds.Option;
 
 import haxelib.Data;
+import haxelib.VersionData;
 import haxelib.api.Repository;
 import haxelib.api.Vcs;
 import haxelib.api.LibraryData;
@@ -104,31 +106,20 @@ class UserInterface {
 	}
 }
 
-/**
-	Like `LibFlagData`, but `None` is not an option.
-
-	Always contains enough information to reproduce
-	the same library installation.
-**/
-enum InstallData {
-	Haxelib(version:SemVer);
-	VcsInstall(version:VcsID, vcsData:VcsData);
-}
-
 private class AllInstallData {
 	public final name:ProjectName;
 	public final version:Version;
 	public final isLatest:Bool;
-	public final installData:InstallData;
+	public final versionData:VersionData;
 
-	function new(name:ProjectName, version:Version, installData:InstallData, isLatest:Bool) {
+	function new(name:ProjectName, version:Version, installData:VersionData, isLatest:Bool) {
 		this.name = name;
 		this.version = version;
-		this.installData = installData;
+		this.versionData = installData;
 		this.isLatest = isLatest;
 	}
 
-	public static function create(name:ProjectName, libFlagData:LibFlagData, versionData:Null<Array<SemVer>>):AllInstallData {
+	public static function create(name:ProjectName, libFlagData:Option<VersionData>, versionData:Null<Array<SemVer>>):AllInstallData {
 		if (versionData != null && versionData.length == 0)
 			throw new InstallationException('The library $name has not yet released a version');
 
@@ -136,11 +127,11 @@ private class AllInstallData {
 			case None:
 				final semVer = getLatest(versionData);
 				new AllInstallData(name, semVer, Haxelib(semVer), true);
-			case Haxelib(version) if (!versionData.contains(version)):
+			case Some(Haxelib(version)) if (!versionData.contains(version)):
 				throw new InstallationException('No such version $version for library $name');
-			case Haxelib(version):
+			case Some(Haxelib(version)):
 				new AllInstallData(name, version, Haxelib(version), version == getLatest(versionData));
-			case VcsInstall(version, vcsData):
+			case Some(VcsInstall(version, vcsData)):
 				new AllInstallData(name, version, VcsInstall(version, vcsData), false);
 		}
 	}
@@ -262,18 +253,18 @@ class Installer {
 		// Check the version numbers are all good
 		userInterface.log("Loading info about the required libraries");
 
-		final installData = getFilteredInstallData(libsToInstall);
+		final versionData = getFilteredVersionData(libsToInstall);
 
 		final libVersions = [
-			for (library in installData)
+			for (library in versionData)
 				{name:library.name, version:library.version}
 		];
 		// Abort if not confirmed
 		if (confirmHxmlInstall != null && !confirmHxmlInstall(libVersions))
 			return;
 
-		for (library in installData) {
-			if (library.installData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
+		for (library in versionData) {
+			if (library.versionData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
 				final version = SemVer.ofString(library.version);
 				if (scope.isLibraryInstalled(library.name) && scope.getVersion(library.name) == version) {
 					userInterface.log('Library ${library.name} version $version is already installed and set as current');
@@ -288,22 +279,22 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(library.name, library.installData)
+				installFromInstallData(library.name, library.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
 			}
 
-			final libraryName = switch library.installData {
+			final libraryName = switch library.versionData {
 				case VcsInstall(version, vcsData): getVcsLibraryName(library.name, version, vcsData.subDir);
 				case _: library.name;
 			}
 
-			setVersionAndLog(libraryName, library.installData);
+			setVersionAndLog(libraryName, library.versionData);
 
 			userInterface.log("Done");
 
-			handleDependenciesGeneral(libraryName, library.installData);
+			handleDependenciesGeneral(libraryName, library.versionData);
 		}
 	}
 
@@ -489,7 +480,7 @@ class Installer {
 		return ProjectName.getCorrectOrAlias(internalName, givenName);
 	}
 
-	function handleDependenciesGeneral(library:ProjectName, installData:InstallData) {
+	function handleDependenciesGeneral(library:ProjectName, installData:VersionData) {
 		if (skipDependencies)
 			return;
 
@@ -539,7 +530,7 @@ class Installer {
 			final version = lib.version;
 			userInterface.log('Installing dependency ${lib.name} $version');
 
-			switch lib.installData {
+			switch lib.versionData {
 				case Haxelib(v) if (!forceInstallDependencies && repository.isVersionInstalled(lib.name, v)):
 					userInterface.log('Library ${lib.name} version $v is already installed');
 					continue;
@@ -547,29 +538,29 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(lib.name, lib.installData)
+				installFromInstallData(lib.name, lib.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
 			}
 
-			final library = switch lib.installData {
+			final library = switch lib.versionData {
 				case VcsInstall(version, vcsData): getVcsLibraryName(lib.name, version, vcsData.subDir);
 				case _: lib.name;
 			}
 
 			// vcs versions always get set
-			if (!scope.isLibraryInstalled(library) || lib.installData.match(VcsInstall(_))) {
-				setVersionAndLog(library, lib.installData);
+			if (!scope.isLibraryInstalled(library) || lib.versionData.match(VcsInstall(_))) {
+				setVersionAndLog(library, lib.versionData);
 			}
 
 			userInterface.log("Done");
-			handleDependenciesGeneral(library, lib.installData);
+			handleDependenciesGeneral(library, lib.versionData);
 		}
 	}
 
-	function getLibFlagDataFromDependencies(dependencies:Dependencies):List<{name:ProjectName, data:LibFlagData}> {
-		final list = new List<{name:ProjectName, data:LibFlagData}>();
+	function getLibFlagDataFromDependencies(dependencies:Dependencies):List<{name:ProjectName, data:Option<VersionData>}> {
+		final list = new List<{name:ProjectName, data:Option<VersionData>}>();
 		for (library => versionStr in dependencies)
 			// no version specified and dev set, no need to install dependency
 			if (forceInstallDependencies || !(versionStr == '' && scope.isOverridden(library)))
@@ -578,7 +569,7 @@ class Installer {
 		return list;
 	}
 
-	function setVersionAndLog(library:ProjectName, installData:InstallData) {
+	function setVersionAndLog(library:ProjectName, installData:VersionData) {
 		switch installData {
 			case VcsInstall(version, vcsData):
 				scope.setVcsVersion(library, version, vcsData);
@@ -594,7 +585,7 @@ class Installer {
 		}
 	}
 
-	static function getInstallData(libs:List<{name:ProjectName, data:LibFlagData}>):List<AllInstallData> {
+	static function getInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<AllInstallData> {
 		final installData = new List<AllInstallData>();
 
 		final versionsData = getVersionsForEmptyLibs(libs);
@@ -613,9 +604,9 @@ class Installer {
 	}
 
 	/** Returns a list of all require install data for the `libs`, and also filters out repeated libs. **/
-	static function getFilteredInstallData(libs:List<{name:ProjectName, data:LibFlagData, isTargetLib:Bool}>):List<AllInstallData> {
+	static function getFilteredVersionData(libs:List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>):List<AllInstallData> {
 		final installData = new List<AllInstallData>();
-		final includedLibs = new Map<ProjectName, Array<InstallData>>();
+		final includedLibs = new Map<ProjectName, Array<VersionData>>();
 
 		final versionsData = getVersionsForEmptyLibs(libs);
 
@@ -633,11 +624,11 @@ class Installer {
 			final lowerCaseName = ProjectName.ofString(allInstallData.name.toLowerCase());
 
 			final includedVersions = includedLibs[lowerCaseName];
-			if (includedVersions != null && (lib.isTargetLib || isVersionIncluded(allInstallData.installData, includedVersions)))
+			if (includedVersions != null && (lib.isTargetLib || isVersionIncluded(allInstallData.versionData, includedVersions)))
 				continue; // do not include twice
 			if (includedVersions == null)
 				includedLibs[lowerCaseName] = [];
-			includedLibs[lowerCaseName].push(allInstallData.installData);
+			includedLibs[lowerCaseName].push(allInstallData.versionData);
 			installData.add(allInstallData);
 		}
 
@@ -645,18 +636,18 @@ class Installer {
 	}
 
 	/** Returns a map of version information for libraries in `libs` that have empty version information. **/
-	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:LibFlagData}>):
+	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:Option<VersionData>}>):
 		Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>
 	{
 		final toCheck:Array<ProjectName> = [];
 		for (lib in libs)
-			if (lib.data.match(None | Haxelib(_))) // Do not check vcs info
+			if (lib.data.match(None | Some(Haxelib(_)))) // Do not check vcs info
 				toCheck.push(lib.name);
 
 		return Connection.getVersionsForLibraries(toCheck);
 	}
 
-	static function isVersionIncluded(toCheck:InstallData, versions:Array<InstallData>):Bool {
+	static function isVersionIncluded(toCheck:VersionData, versions:Array<VersionData>):Bool {
 		for (version in versions) {
 			switch ([toCheck, version]) {
 				case [Haxelib(a), Haxelib(b)] if(a == b): return true;
@@ -675,7 +666,7 @@ class Installer {
 		return false;
 	}
 
-	function installFromInstallData(library:ProjectName, data:InstallData) {
+	function installFromInstallData(library:ProjectName, data:VersionData) {
 		switch data {
 			case Haxelib(version):
 				downloadAndInstall(library, version);

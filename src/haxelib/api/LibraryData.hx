@@ -2,7 +2,7 @@ package haxelib.api;
 
 import haxe.DynamicAccess;
 
-import haxelib.api.Vcs.VcsID;
+import haxelib.VersionData;
 
 /** Exception thrown upon errors regarding library data, such as invalid versions. **/
 class LibraryDataException extends haxe.Exception {}
@@ -76,28 +76,5 @@ class VcsLibraryData implements ILibraryData {
 private final hashRegex = ~/^([a-f0-9]{7,40})$/;
 function isCommitHash(str:String)
 	return hashRegex.match(str);
-
-/** Class containing repoducible git or hg library data. **/
-@:structInit
-class VcsData {
-	/** url from which to install **/
-	public final url:String;
-	/** Commit hash **/
-	@:optional
-	public final ref:Null<String>;
-	/** The git tag or mercurial revision **/
-	@:optional
-	public final tag:Null<String>;
-	/** Branch **/
-	@:optional
-	public final branch:Null<String>;
-	/**
-		Sub directory in which the root of the project is found.
-
-		Relative to project root
-	**/
-	@:optional
-	public final subDir:Null<String>;
-}
 
 typedef LockFormat = DynamicAccess<LibraryData>;

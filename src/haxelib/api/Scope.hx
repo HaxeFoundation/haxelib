@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import haxelib.VersionData;
 import haxelib.api.LibraryData;
 import haxelib.api.ScriptRunner;
 
@@ -94,7 +95,7 @@ abstract class Scope {
 
 		Requires that the library is already installed.
 	**/
-	public abstract function setVcsVersion(library:ProjectName, vcsVersion:Vcs.VcsID, ?data:VcsData):Void;
+	public abstract function setVcsVersion(library:ProjectName, vcsVersion:VcsID, ?data:VcsData):Void;
 
 	/** Returns whether `library` is currently installed in this scope (ignoring overrides). **/
 	public abstract function isLibraryInstalled(library:ProjectName):Bool;
