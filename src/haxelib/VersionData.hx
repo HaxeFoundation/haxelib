@@ -2,8 +2,8 @@ package haxelib;
 
 /** Abstract enum representing the types of Vcs systems that are supported. **/
 @:enum abstract VcsID(String) to String {
-	final Hg = "hg";
-	final Git = "git";
+	var Hg = "hg";
+	var Git = "git";
 
 	/** Returns `true` if `s` constitutes a valid VcsID **/
 	public static function isValid(s:String) {
@@ -25,23 +25,23 @@ package haxelib;
 @:structInit @:publicFields
 class VcsData {
 	/** url from which to install **/
-	final url:String;
+	var url:String;
 	/** Commit hash **/
 	@:optional
-	final ref:Null<String>;
+	var ref:Null<String>;
 	/** The git tag or mercurial revision **/
 	@:optional
-	final tag:Null<String>;
+	var tag:Null<String>;
 	/** Branch **/
 	@:optional
-	final branch:Null<String>;
+	var branch:Null<String>;
 	/**
 		Sub directory in which the root of the project is found.
 
 		Relative to project root
 	**/
 	@:optional
-	final subDir:Null<String>;
+	var subDir:Null<String>;
 }
 
 /** Data required to reproduce a library version **/
@@ -54,22 +54,22 @@ class VersionDataHelper {
 	public static function extractVersion(versionInfo:String):VersionData {
 		try {
 			return Haxelib(SemVer.ofString(versionInfo));
-		} catch (_) {}
+		} catch (_:String) {}
 
 		try {
-			final data = getVcsData(versionInfo);
+			var data = getVcsData(versionInfo);
 			return VcsInstall(data.type, data.data);
-		} catch (e) {
+		} catch (e:String) {
 			throw '$versionInfo is not a valid library version';
 		}
 	}
 
-	static final vcsRegex = ~/^(git|hg)(?::(.+?)(?:#(?:([a-f0-9]{7,40})|(.+)))?)?$/;
+	static var vcsRegex = ~/^(git|hg)(?::(.+?)(?:#(?:([a-f0-9]{7,40})|(.+)))?)?$/;
 
 	static function getVcsData(s:String):{type:VcsID, data:VcsData} {
 		if (!vcsRegex.match(s))
 			throw '$s is not valid';
-		final type = switch (vcsRegex.matched(1)) {
+		var type = switch (vcsRegex.matched(1)) {
 			case Git:
 				Git;
 			case _:
