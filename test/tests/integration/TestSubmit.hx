@@ -4,9 +4,11 @@ import tests.util.Vcs;
 
 class TestSubmit extends IntegrationTests {
 	final gitLibPath = "libraries/libBar";
+	final hgLibPath = "libraries/libBar";
 
 	override function tearDown() {
 		resetGitRepo(gitLibPath);
+		resetHgRepo(gitLibPath);
 		super.tearDown();
 	}
 
@@ -51,38 +53,36 @@ class TestSubmit extends IntegrationTests {
 		// first prepare the dependency
 		makeGitRepo(gitLibPath);
 
-		{
-			final r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
-			assertSuccess(r);
-		}
+		final r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
+		assertSuccess(r);
 
-		{
-			final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]), bar.pw]).result();
-			assertSuccess(r);
-		}
+		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFooGitDep.zip"]), foo.pw]).result();
+		assertFail(r);
+		assertEquals("Error: git dependency is not allowed in a library release", r.err.trim());
 
-		{
-			final r = haxelib(["search", "Bar"]).result();
-			assertSuccess(r);
-			assertTrue(r.out.indexOf("Bar") >= 0);
-		}
+		final r = haxelib(["search", "Foo"]).result();
+		// did not get submitted
+		assertFalse(r.out.indexOf("Foo") >= 0);
+	}
 
-		{
-			final r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
-			assertSuccess(r);
-		}
+	function testLibraryWithHgDep() {
+		// hg deps should not be allowed either
+		makeHgRepo(hgLibPath);
 
-		{
-			final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFooGitDep.zip"]), foo.pw]).result();
-			assertFail(r);
-			assertEquals("Error: Git dependency is not allowed in a library release", r.err.trim());
-		}
+		final r = haxelib(["register", foo.user, foo.email, foo.fullname, foo.pw, foo.pw]).result();
+		assertSuccess(r);
 
-		{
-			final r = haxelib(["search", "Foo"]).result();
-			// did not get submitted
-			assertFalse(r.out.indexOf("Foo") >= 0);
-		}
+		final r = haxelib([
+			"submit",
+			Path.join([IntegrationTests.projectRoot, "test/libraries/libFooHgDep.zip"]),
+			foo.pw
+		]).result();
+		assertFail(r);
+		assertEquals("Error: hg dependency is not allowed in a library release", r.err.trim());
+
+		final r = haxelib(["search", "Foo"]).result();
+		// did not get submitted
+		assertFalse(r.out.indexOf("Foo") >= 0);
 	}
 
 	function testInvalidLicense() {

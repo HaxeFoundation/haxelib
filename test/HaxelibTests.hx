@@ -66,6 +66,7 @@ class HaxelibTests {
 		r.add(new TestVcsNotFound());
 		r.add(new TestSemVer());
 		r.add(new TestData());
+		r.add(new TestVersionData());
 		r.add(new TestRemoveSymlinks());
 		r.add(new TestRemoveSymlinksBroken());
 		r.add(new TestInstaller());

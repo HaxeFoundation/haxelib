@@ -5,6 +5,8 @@ import sys.FileSystem;
 import tests.util.Vcs;
 
 class TestSet extends IntegrationTests {
+	final gitLibPath = "libraries/libBar";
+	final hgLibPath = "libraries/libBar";
 
 	override function setup() {
 		super.setup();
@@ -20,7 +22,8 @@ class TestSet extends IntegrationTests {
 	}
 
 	override function tearDown() {
-		resetGitRepo('libraries/libBar');
+		resetGitRepo(gitLibPath);
+		resetHgRepo(hgLibPath);
 
 		super.tearDown();
 	}
@@ -157,16 +160,22 @@ class TestSet extends IntegrationTests {
 	}
 
 	function testGit() {
-		final gitPath = '${projectRoot}test/libraries/libBar';
+		makeGitRepo(gitLibPath);
+		templateVcs("git", gitLibPath);
+	}
 
-		makeGitRepo(gitPath);
+	function testHg() {
+		makeHgRepo(hgLibPath);
+		templateVcs("hg", hgLibPath);
+	}
 
-		final r = haxelib(["git", "Bar", gitPath]).result();
+	function templateVcs(type:String, repoPath:String) {
+		final r = haxelib([type, "Bar", repoPath]).result();
 		assertSuccess(r);
 
 		final r = haxelib(["list", "Bar"]).result();
 		assertSuccess(r);
-		assertTrue(r.out.indexOf("[git]") >= 0);
+		assertTrue(r.out.indexOf('[$type]') >= 0);
 
 		final r = haxelib(["install", "Bar"]).result();
 		assertSuccess(r);
@@ -174,15 +183,15 @@ class TestSet extends IntegrationTests {
 		final r = haxelib(["list", "Bar"]).result();
 		assertSuccess(r);
 		assertTrue(r.out.indexOf("[2.0.0]") >= 0);
-		assertTrue(r.out.indexOf("git") >= 0);
+		assertTrue(r.out.indexOf(type) >= 0);
 
-		final r = haxelib(["set", "Bar", "git"]).result();
+		final r = haxelib(["set", "Bar", type]).result();
 		assertSuccess(r);
 
 		final r = haxelib(["list", "Bar"]).result();
 		assertSuccess(r);
 		assertTrue(r.out.indexOf("2.0.0") >= 0);
-		assertTrue(r.out.indexOf("[git]") >= 0);
+		assertTrue(r.out.indexOf('[$type]') >= 0);
 	}
 
 	function testInvalidVersion() {
