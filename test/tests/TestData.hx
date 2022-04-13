@@ -229,10 +229,14 @@ class TestData extends TestBase {
 		assertEquals(0, Data.readData(getJsonInfos({tags: "mytag"}), NoCheck).tags.length);
 
 		// Dependencies (optional)
-		inline function getFirstDependency(dependencies:Dynamic)
-			return Data.readData(getJsonInfos({dependencies: dependencies}), NoCheck).dependencies.toArray()[0];
+		function getFirstDependency(dependencies:Dynamic) {
+			final dependencies = Data.readData(getJsonInfos({dependencies: dependencies}), NoCheck).dependencies;
+			for (name => version in dependencies)
+				return {name: name, version:version};
+			return null;
+		}
 
-		assertEquals(0, Data.readData(getJsonInfos({dependencies: null}), NoCheck).dependencies.toArray().length);
+		assertEquals(0, Lambda.count(Data.readData(getJsonInfos({dependencies: null}), NoCheck).dependencies));
 		assertEquals("somelib", getFirstDependency({somelib: ""}).name);
 		assertEquals("", getFirstDependency({somelib: ""}).version);
 		assertEquals("1.3.0", getFirstDependency({somelib: "1.3.0"}).version);
@@ -240,11 +244,7 @@ class TestData extends TestBase {
 		assertEquals("", getFirstDependency({somelib: null}).version);
 		assertEquals("", getFirstDependency({somelib: 0}).version);
 		assertEquals("git", getFirstDependency({somelib: "git"}).version);
-
-		final gitDependency = getFirstDependency({somelib: "git:https://some.url#branch"});
-		assertEquals(Git, gitDependency.type);
-		assertEquals("https://some.url", gitDependency.url);
-		assertEquals("branch", gitDependency.branch);
+		assertEquals("git:https://some.url#branch", getFirstDependency({somelib: "git:https://some.url#branch"}).version);
 
 		// ReleaseNote
 		assertEquals("release", Data.readData(getJsonInfos({releasenote: "release"}), NoCheck).releasenote);

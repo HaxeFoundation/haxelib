@@ -7,8 +7,8 @@ import tests.util.DirectoryState;
 
 import haxelib.ProjectName;
 import haxelib.SemVer;
+import haxelib.VersionData.VcsID;
 
-import haxelib.api.Vcs;
 import haxelib.api.LibraryData;
 import haxelib.api.Scope;
 import haxelib.api.RepoManager;
