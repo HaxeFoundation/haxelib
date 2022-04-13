@@ -5,6 +5,7 @@ import haxe.ds.GenericStack;
 import haxe.io.Path;
 
 import haxelib.Data;
+import haxelib.VersionData;
 
 import haxelib.api.LibraryData;
 import haxelib.api.ScriptRunner;
@@ -57,7 +58,7 @@ class GlobalScope extends Scope {
 		repository.setCurrentVersion(library, version);
 	}
 
-	public function setVcsVersion(library:ProjectName, vcsVersion:Vcs.VcsID, ?data:VcsData):Void {
+	public function setVcsVersion(library:ProjectName, vcsVersion:VcsID, ?data:VcsData):Void {
 		if (data == null) data = {url: "unknown"};
 
 		if (data.subDir != null) {
@@ -186,15 +187,18 @@ class GlobalScope extends Scope {
 			addLine('-D ${info.name}=${info.version}');
 
 			// add dependencies to stack
-			final dependencies = info.dependencies.toArray();
+			final dependencies = info.dependencies.extractDataArray();
 
 			while (dependencies.length > 0) {
 				final dependency = dependencies.pop();
 				stack.add({
 					library: ProjectName.ofString(dependency.name),
 					version: // TODO: maybe check the git/hg commit hash here if it's given?
-						if (dependency.version == DependencyVersion.DEFAULT) null
-						else Version.ofString(dependency.version)
+						switch dependency.versionData {
+							case None: null;
+							case Some(Haxelib(version)): version;
+							case Some(VcsInstall(version, _)): version;
+						}
 				});
 			}
 		}

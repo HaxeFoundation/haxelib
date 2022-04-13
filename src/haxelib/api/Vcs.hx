@@ -22,6 +22,7 @@
 package haxelib.api;
 
 import sys.FileSystem;
+import haxelib.VersionData.VcsID;
 using haxelib.api.Vcs;
 
 interface IVcs {
@@ -60,27 +61,6 @@ interface IVcs {
 		Returns `true` if update successful.
 	**/
 	function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?summaryLog:(msg:String)->Void):Bool;
-}
-
-/** Abstract enum representing the types of Vcs systems that are supported. **/
-@:enum abstract VcsID(String) to String {
-	final Hg = "hg";
-	final Git = "git";
-
-	/** Returns `true` if `s` constitutes a valid VcsID **/
-	public static function isValid(s:String) {
-		return s == Hg || s == Git;
-	}
-
-	/** Returns `s` as a VcsID if it is valid, otherwise throws an error. **/
-	public static function ofString(s:String):VcsID {
-		if (s == Git)
-			return Git;
-		else if (s == Hg)
-			return Hg;
-		else
-			throw 'Invalid VscID $s';
-	}
 }
 
 /** Enum representing errors that can be thrown during a vcs operation. **/

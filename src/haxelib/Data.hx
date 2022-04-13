@@ -29,7 +29,7 @@ import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.Json;
 import haxelib.Validator;
-import haxelib.Util;
+import haxelib.VersionData;
 
 using StringTools;
 using Lambda;
@@ -59,14 +59,22 @@ abstract DependencyVersion(String) to String from SemVer {
 	inline function new(s:String)
 		this = s;
 
-	@:to function toValidatable():Validatable
-		return
-			if (this == DEFAULT)
-				{ validate: function () return None }
-			else if (#if (haxe_ver < 4.1) Std.is(this, String) #else this is String #end && this.split(":")[0] == GIT )
-				{validate: function() return Some("Git dependency is not allowed in a library release")}
-			else
-				@:privateAccess new SemVer(this);
+	@:to function toValidatable():Validatable {
+		if (this == DEFAULT)
+			return { validate: function () return None }
+		if (#if (haxe_ver < 4.1) Std.is(this, String) #else this is String #end) {
+			var type = try VcsID.ofString(this.split(":")[0]) catch (e:String) null;
+			if (type != null)
+				return {validate: function() return Some('$type dependency is not allowed in a library release')};
+		}
+		return @:privateAccess new SemVer(this);
+	}
+
+	public function toVersionData():Option<VersionData> {
+		if (this == DEFAULT)
+			return None;
+		return Some(VersionDataHelper.extractVersion(this));
+	}
 
 	/** Returns whether `s` constitutes a valid dependency version string. **/
 	static public function isValid(s:String):Bool
@@ -79,59 +87,28 @@ abstract DependencyVersion(String) to String from SemVer {
 		dependencies are allowed.
 	 **/
 	static public function isUsable(s:String):Bool
-		return #if (haxe_ver < 4.1) Std.is(s, String) #else (s is String) #end && s.split(":")[0] == GIT  || isValid(s);
+		return #if (haxe_ver < 4.1) Std.is(s, String) #else (s is String) #end && VcsID.isValid(s.split(":")[0]) || isValid(s);
 
 	/** Default empty dependency version. **/
 	static public var DEFAULT(default, null) = new DependencyVersion('');
-	/** Git dependency version. **/
-	static public var GIT(default, null) = new DependencyVersion('git');
 }
 
 /** Dependency names and versions. **/
 abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion> {
 	/** Extracts the dependency data and returns an array of `Dependency` objects. **/
-	@:to public function toArray():Array<Dependency> {
+	@:to public function extractDataArray():Array<Dependency> {
 		var fields = Reflect.fields(this);
 		fields.sort(Reflect.compare);
 
 		var result:Array<Dependency> = new Array<Dependency>();
 
 		for (f in fields) {
-			var value:String = Reflect.field(this, f);
-			// TODO: Also do mercurial
-			var isGit = value != null && (value + "").startsWith("git:");
-
-			if ( !isGit ){
-				result.push ({
-					name: f,
-					type: (DependencyType.Haxelib : DependencyType),
-					version: (cast value : DependencyVersion),
-					url: (null : String),
-					subDir: (null : String),
-					branch: (null : String),
-				});
-			} else {
-				value = value.substr(4);
-				var urlParts = value.split("#");
-				var url = urlParts[0];
-				var branch = urlParts.length > 1 ? urlParts[1] : null;
-
-				result.push ({
-					name: f,
-					type: (DependencyType.Git : DependencyType),
-					version: (DependencyVersion.DEFAULT : DependencyVersion),
-					url: (url : String),
-					subDir: (null : String),
-					branch: (branch : String),
-				});
-			}
+			var value:DependencyVersion = Reflect.field(this, f);
+			result.push({name: f, versionData: value.toVersionData()});
 		}
 
 		return result;
 	}
-
-	public inline function iterator()
-		return toArray().iterator();
 
 	#if (haxe_ver >= 4.0)
 	public inline function keyValueIterator():KeyValueIterator<ProjectName, DependencyVersion> {
@@ -153,21 +130,10 @@ abstract Dependencies(Dynamic<DependencyVersion>) from Dynamic<DependencyVersion
 
 }
 
-/** The type of a dependency version. **/
-@:enum abstract DependencyType(String) {
-	var Haxelib = null;
-	var Git = 'git';
-	var Mercurial = 'hg';
-}
-
 /** Data on a project dependency. **/
 typedef Dependency = {
-	name : String,
-	?version : DependencyVersion,
-	?type: DependencyType,
-	?url: String,
-	?subDir: String,
-	?branch: String,
+	name:String,
+	versionData:Option<VersionData>
 }
 
 /** Data held in the `haxelib.json` file. **/
