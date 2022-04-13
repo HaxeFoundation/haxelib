@@ -227,10 +227,11 @@ class Repository {
 			throw new CurrentVersionException('Library $name is not installed');
 
 		final content = getCurrentFileContent(name);
-		return try
-				Version.ofString(content)
-			catch (e:LibraryDataException)
-				throw new CurrentVersionException('Current set version of $name is invalid.');
+		// return try
+		// 		Version.ofString(content)
+		// 	catch (e:LibraryDataException)
+		// 		throw new CurrentVersionException('Current set version of $name is invalid.');
+		return @:privateAccess Version.ofStringUnsafe(content);
 	}
 
 	/**
@@ -364,7 +365,8 @@ class Repository {
 				case v if (SemVer.isValid(v)): v;
 				case (try Vcs.VcsID.ofString(_) catch(_) null) => vcs if (vcs != null):
 					Vcs.getDirectoryFor(vcs);
-				case _: throw 'Unknown library version: $version'; // we shouldn't get here
+				//case _: throw 'Unknown library version: $version'; // we shouldn't get here
+				case custom: custom;
 			}
 		return addToRepoPath(name, Data.safe(versionDir).toLowerCase()).addTrailingSlash();
 	}

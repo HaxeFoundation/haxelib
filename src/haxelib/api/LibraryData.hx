@@ -24,6 +24,10 @@ abstract Version(String) to String from SemVer from VcsID {
 		return new Version(s);
 	}
 
+	static function ofStringUnsafe(s:String):Version {
+		return new Version(s);
+	}
+
 	/** Returns whether `s` constitues a valid library version. **/
 	public static function isValid(s:String):Bool {
 		return VcsID.isValid(s) || SemVer.isValid(s);
