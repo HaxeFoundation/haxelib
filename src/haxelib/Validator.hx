@@ -148,7 +148,11 @@ class Validator {
 						macro @:pos(pos) $p{(name+'.'+f.name).split('.')}
 					];
 
-					macro if (!Lambda.has($a { options }, $IARG)) throw 'Invalid value ' + $IARG + ' for ' + $v { a.name };
+					macro {
+						var allowed = $a { options };
+						if (!Lambda.has(allowed, $IARG))
+							throw 'Invalid value `' + $IARG + '` for ' + $v { a.name } + '. Allowed values: ' + allowed.join(', ');
+					};
 
 				case TAbstract(_.get() => a, _):
 
