@@ -126,4 +126,12 @@ class TestFixRepo extends IntegrationTests {
 		attemptFix(MockRepositories.generate(fullRepoPath, ConflictingCurrent), "There are two conflicting current versions set:");
 		attemptFix(MockRepositories.generate(fullRepoPath, ConflictingInvalid), "There are two conflicting unrecognized files/folders:");
 	}
+
+	function testCustomVersions() {
+		MockRepositories.generate(fullRepoPath, CustomVersions).build();
+		final result = haxelib(["fixrepo"]).result();
+		assertSuccess(result);
+
+		this.assertRepoMatchesReality(MockRepositories.generate(fullRepoPath, CustomVersionsReformatted));
+	}
 }

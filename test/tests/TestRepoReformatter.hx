@@ -164,4 +164,11 @@ class TestRepoReformatter extends TestBase {
 		attemptReformat(MockRepositories.generate(repoPath, ConflictingCurrent), "There are two conflicting current versions set:");
 		attemptReformat(MockRepositories.generate(repoPath, ConflictingInvalid), "There are two conflicting unrecognized files/folders:");
 	}
+
+	function testCustomVersions() {
+		MockRepositories.generate(repoPath, CustomVersions).build();
+		assertSuccess(repo.reformat.bind(null));
+
+		this.assertRepoMatchesReality(MockRepositories.generate(repoPath, CustomVersionsReformatted));
+	}
 }

@@ -17,6 +17,11 @@ enum RepositoryState {
 	/** Unrecognized folders in multiple places. **/
 	ConflictingInvalid;
 
+	/** Version 0 repository with non-conflicting custom versions set **/
+	CustomVersions;
+	/** Reformatted repository with custom versions set **/
+	CustomVersionsReformatted;
+
 	/** A repository with a version higher than what is supported. **/
 	Incompatible;
 	/** A repository with a version 1 lower than what is supported. **/
@@ -69,6 +74,17 @@ class MockRepositories{
 				);
 			case ConflictingInvalid:
 				new DirectoryState(repoPath, ['library/invalid', 'LIBRARY/invalid'], []);
+			case CustomVersions:
+				new DirectoryState(repoPath, ['library/invalid', 'OTHER/invalid'], ['library/.current' => 'invalid', 'OTHER/.current' => 'invalid']);
+			case CustomVersionsReformatted:
+				new DirectoryState(repoPath, ['library/invalid', 'other/invalid'],
+					[
+						'library/.current' => 'invalid',
+						'other/.current' => 'invalid',
+						'other/.name' => 'OTHER',
+						'.repo-version' => '$CURRENT_REPO_VERSION\n',
+					]
+				);
 			case Incompatible:
 				new DirectoryState(repoPath, [], ['.repo-version' => '${CURRENT_REPO_VERSION + 1}\n']);
 			case OutOfDate:
