@@ -56,19 +56,17 @@ class VersionDataHelper {
 			return Haxelib(SemVer.ofString(versionInfo));
 		} catch (_:String) {}
 
-		try {
-			var data = getVcsData(versionInfo);
-			return VcsInstall(data.type, data.data);
-		} catch (e:String) {
+		var data = getVcsData(versionInfo);
+		if (data == null)
 			throw '$versionInfo is not a valid library version';
-		}
+		return VcsInstall(data.type, data.data);
 	}
 
 	static var vcsRegex = ~/^(git|hg)(?::(.+?)(?:#(?:([a-f0-9]{7,40})|(.+)))?)?$/;
 
-	static function getVcsData(s:String):{type:VcsID, data:VcsData} {
+	static function getVcsData(s:String):Null<{type:VcsID, data:VcsData}> {
 		if (!vcsRegex.match(s))
-			throw '$s is not valid';
+			return null;
 		var type = switch (vcsRegex.matched(1)) {
 			case Git:
 				Git;
