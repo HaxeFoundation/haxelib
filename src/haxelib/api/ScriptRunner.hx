@@ -173,8 +173,16 @@ class ScriptRunner {
 
 	static function setState(state:State):Void {
 		Sys.setCwd(state.dir);
-		Sys.putEnv(HAXELIB_RUN, state.run);
-		Sys.putEnv(HAXELIB_RUN_NAME, state.runName);
+		putEnv(HAXELIB_RUN, state.run);
+		putEnv(HAXELIB_RUN_NAME, state.runName);
+	}
+
+	static inline function putEnv(name:String, value:Null<String>) {
+		// Std.putEnv(_, null) causes a crash on neko 2.3.0 and earlier
+		#if neko if (value != null || (untyped __dollar__version()) > 230) #end
+		{
+			Sys.putEnv(name, value);
+		}
 	}
 
 }
