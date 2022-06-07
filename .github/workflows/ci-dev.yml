@@ -8,7 +8,6 @@ on:
   workflow_dispatch:
 
 env:
-  EARTHLY_BUILDKIT_HOST: tcp://earthly:8372
   EARTHLY_USE_INLINE_CACHE: "true"
   EARTHLY_SAVE_INLINE_CACHE: "true"
   FORCE_COLOR: 1
@@ -16,21 +15,13 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: haxe/haxelib_devcontainer_workspace:development
-    services:
-      earthly:
-        image: earthly/buildkitd:v0.6.15
-        options: --privileged
-        env:
-          BUILDKIT_TCP_TRANSPORT_ENABLED: "true"
-        ports:
-          - 8372
-        volumes:
-          - /tmp/earthly
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
+      - uses: earthly/actions-setup@v1
+        with:
+          version: "v0.6.15"
       - name: Login to DockerHub
         if: success() && github.repository_owner == 'HaxeFoundation' && github.event_name == 'push'
         uses: docker/login-action@v1
