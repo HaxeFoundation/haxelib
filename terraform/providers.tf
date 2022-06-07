@@ -3,23 +3,23 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.45"
+      version = "~> 4.17"
     }
     digitalocean = {
       source  = "digitalocean/digitalocean"
-      version = "~> 2.17"
+      version = "~> 2.20"
     }
     github = {
       source  = "integrations/github"
-      version = "~> 4.11"
+      version = "~> 4.26"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.4"
+      version = "~> 2.11"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.4"
+      version = "~> 2.5"
     }
     mysql = {
       source  = "winebarrel/mysql"
@@ -27,7 +27,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.1"
+      version = "~> 3.3"
     }
   }
   backend "s3" {
