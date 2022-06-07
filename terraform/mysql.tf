@@ -39,6 +39,7 @@ resource "helm_release" "haxelib-mysql-57" {
   name       = "haxelib-mysql-57"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "mysql"
+  version    = "8.8.23"
 
   values = [
     yamlencode({
