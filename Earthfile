@@ -22,6 +22,24 @@ mysql-public-key:
     RUN gpg --batch --armor --export "$KEY" > mysql-public-key
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
 
+neko-latest:
+    RUN haxeArch=$(case "$TARGETARCH" in \
+        amd64) echo "linux64";; \
+        arm64) echo "linux-arm64";; \
+    esac); curl -fsSLO https://build.haxe.org/builds/neko/$haxeArch/neko_latest.tar.gz
+    RUN mkdir -p neko_latest
+    RUN tar --strip-components=1 -xf neko_latest.tar.gz -C neko_latest
+    SAVE ARTIFACT neko_latest/*
+
+haxe-latest:
+    RUN haxeArch=$(case "$TARGETARCH" in \
+        amd64) echo "linux64";; \
+        arm64) echo "linux-arm64";; \
+    esac); curl -fsSLO https://build.haxe.org/builds/haxe/$haxeArch/haxe_latest.tar.gz
+    RUN mkdir -p haxe_latest
+    RUN tar --strip-components=1 -xf haxe_latest.tar.gz -C haxe_latest
+    SAVE ARTIFACT haxe_latest/*
+
 devcontainer-base:
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
@@ -86,23 +104,17 @@ devcontainer-base:
         && rm -rf /var/lib/apt/lists/*
 
     # install neko nightly
-    RUN curl https://build.haxe.org/builds/neko/linux64/neko_latest.tar.gz > neko_latest.tar.gz
-    RUN mkdir -p out
-    RUN tar -xf neko_latest.tar.gz -C out
-    RUN mv -f out/neko-*-linux64/neko /usr/bin/neko
-    RUN mv -f out/neko-*-linux64/libneko.so.*.*.* /usr/lib/libneko.so.2
+    COPY +neko-latest/neko /usr/bin/neko
+    COPY +neko-latest/libneko.so* /usr/lib/
     RUN mkdir -p /usr/lib/neko/
-    RUN mv -f out/neko-*-linux64/*.ndll /usr/lib/neko/
+    COPY +neko-latest/*.ndll /usr/lib/neko/
     RUN neko -version
 
     # install haxe nightly
-    RUN curl https://build.haxe.org/builds/haxe/linux64/haxe_latest.tar.gz > haxe_latest.tar.gz
-    RUN mkdir -p out
-    RUN tar -xf haxe_latest.tar.gz -C out
-    RUN mv -f out/haxe_*/haxe /usr/bin/haxe
-    RUN mv -f out/haxe_*/haxelib /usr/bin/haxelib
+    COPY +haxe-latest/haxe /usr/bin/haxe
+    COPY +haxe-latest/haxelib /usr/bin/haxelib
     RUN mkdir -p /usr/share/haxe/
-    RUN mv -f out/haxe_*/std/ /usr/share/haxe/
+    COPY +haxe-latest/std /usr/share/haxe/std
     RUN haxe --version
 
     ENV YARN_CACHE_FOLDER=/yarn
