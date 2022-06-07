@@ -88,7 +88,9 @@ class Package {
 
         if (runVersion.indexOf("dirty") >= 0) {
             Sys.println('Error: run.n was compiled with dirty source');
+            #if !debug
             Sys.exit(1);
+            #end
         }
     }
 }

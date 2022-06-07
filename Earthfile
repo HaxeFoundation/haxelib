@@ -197,19 +197,31 @@ rclone:
         && rm rclone.zip
     SAVE ARTIFACT rclone-*/rclone
 
+run.n:
+    FROM +devcontainer
+    COPY .git .git
+    COPY src src
+    COPY hx3compat hx3compat
+    COPY client.hxml haxelib.json .
+    RUN haxe client.hxml
+    SAVE ARTIFACT run.n AS LOCAL run.n
+
 package-haxelib:
-    LOCALLY
-    RUN if [ ! -e "package.zip" ]; then haxe package.hxml; fi
+    FROM +devcontainer-base
+    COPY src src
+    COPY hx3compat hx3compat
+    COPY package.hxml haxelib.json README.md .
+    COPY +run.n/run.n .
+    RUN haxe package.hxml
+    SAVE ARTIFACT package.zip AS LOCAL package.zip
 
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
-    BUILD +package-haxelib
-    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n package.zip .
+    COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
-    RUN neko run.n install package.zip
     RUN haxe libs.hxml && rm haxelib_global/*.zip
     COPY github.com/andyli/aws-sdk-neko:0852144508e55c1d28ff7425a59ddf6f1758240a+package-zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
@@ -327,6 +339,9 @@ haxelib-server-builder:
     COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
     COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
     COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
+    # haxelib from haxe 3.4 is case-sensitive
+    RUN mv haxelib_global/pbkdf2 haxelib_global/PBKDF2
+
     RUN haxe -version
     RUN haxelib setup /workspace/haxelib_global
 
@@ -492,7 +507,11 @@ ci-tests:
     COPY www www
     COPY test test
     COPY *.hxml .
-    COPY haxelib.json run.n README.md . # for package.hxml
+
+    # for package.hxml
+    COPY haxelib.json README.md . 
+    COPY +run.n/run.n .
+
     COPY +ci-runner/ci.n bin/ci.n
     ENV HAXELIB_SERVER=localhost
     ENV HAXELIB_SERVER_PORT=80

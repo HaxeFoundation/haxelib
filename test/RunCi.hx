@@ -472,7 +472,7 @@ Listen 2000
 
 	static function main():Void {
 		// Note that package.zip output is also used by client tests, so it has to be run before that.
-		runCommand("haxe", ["package.hxml"]);
+		runCommand("haxe", ["--debug", "package.hxml"]);
 		runCommand("haxe", ["prepare_tests.hxml"]);
 
 		#if (haxe_ver < 4)
