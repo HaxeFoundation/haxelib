@@ -34,3 +34,10 @@ resource "aws_s3_bucket_website_configuration" "lib-haxe-org" {
     suffix = "index.html"
   }
 }
+
+resource "aws_s3_bucket_versioning" "lib-haxe-org" {
+  bucket = aws_s3_bucket.lib-haxe-org.bucket
+  versioning_configuration {
+    status = "Enabled"
+  }
+}

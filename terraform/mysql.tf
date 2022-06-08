@@ -3,7 +3,7 @@ resource "random_password" "haxelib-mysql-57-root-password" {
   special = false
   lower   = true
   upper   = true
-  numeric  = true
+  numeric = true
 }
 
 resource "random_password" "haxelib-mysql-57-haxelib-password" {
@@ -11,7 +11,7 @@ resource "random_password" "haxelib-mysql-57-haxelib-password" {
   special = false
   lower   = true
   upper   = true
-  numeric  = true
+  numeric = true
 }
 
 resource "random_password" "haxelib-mysql-57-replicator-password" {
@@ -19,7 +19,7 @@ resource "random_password" "haxelib-mysql-57-replicator-password" {
   special = false
   lower   = true
   upper   = true
-  numeric  = true
+  numeric = true
 }
 
 data "kubernetes_secret_v1" "haxelib-mysql-57" {
