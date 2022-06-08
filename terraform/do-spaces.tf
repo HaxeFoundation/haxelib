@@ -9,6 +9,9 @@ resource "digitalocean_spaces_bucket" "haxelib" {
   name   = "haxelib-${random_string.do-haxelib-bucket-suffix.result}"
   region = "fra1"
   acl    = "public-read"
+  versioning {
+    enabled = true
+  }
 }
 
 resource "digitalocean_cdn" "haxelib" {
