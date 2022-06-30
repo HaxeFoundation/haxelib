@@ -153,7 +153,7 @@ aws-iam-authenticator:
 # COPY +doctl/doctl /usr/local/bin/
 doctl:
     ARG TARGETARCH
-    ARG DOCTL_VERSION=1.66.0
+    ARG DOCTL_VERSION=1.77.0
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
@@ -169,7 +169,7 @@ tfenv:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
     ARG --required TARGETARCH
-    ARG TERRAFORM_LS_VERSION=0.28.0
+    ARG TERRAFORM_LS_VERSION=0.28.1
     RUN curl -fsSL -o terraform-ls.zip https://github.com/hashicorp/terraform-ls/releases/download/v${TERRAFORM_LS_VERSION}/terraform-ls_${TERRAFORM_LS_VERSION}_linux_${TARGETARCH}.zip \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
@@ -203,8 +203,8 @@ earthly:
 rclone:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    ARG RCLONE_VERSION=1.57.0
-    RUN curl -fsSL "https://downloads.rclone.org/v1.57.0/rclone-v1.57.0-linux-${TARGETARCH}.zip" -o rclone.zip \
+    ARG RCLONE_VERSION=1.58.1
+    RUN curl -fsSL "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-${TARGETARCH}.zip" -o rclone.zip \
         && unzip -qq rclone.zip \
         && rm rclone.zip
     SAVE ARTIFACT rclone-*/rclone
