@@ -91,7 +91,7 @@ devcontainer-base:
         && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
         && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl \
+        && apt-get -y install --no-install-recommends kubectl=1.21.* \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
