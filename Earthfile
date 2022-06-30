@@ -235,7 +235,8 @@ haxelib-deps:
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
-    COPY github.com/andyli/aws-sdk-neko:0852144508e55c1d28ff7425a59ddf6f1758240a+package-zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
+    ARG AWS_SDK_NEKO_COMMIT=c614b20f1302a92095865690b5649269f3eb3171
+    COPY (github.com/andyli/aws-sdk-neko:${AWS_SDK_NEKO_COMMIT}+package-zip/aws-sdk-neko.zip --IMAGE_TAG="$AWS_SDK_NEKO_COMMIT") /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
     SAVE ARTIFACT haxelib_global
 
