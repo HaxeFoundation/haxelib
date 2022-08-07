@@ -246,4 +246,12 @@ class TestInstall extends IntegrationTests {
 		assertTrue(r.out.indexOf("[hg]") >= 0);
 		assertSuccess(r);
 	}
+
+	function testLocalWithBrokenDependency() {
+
+		final r = haxelib(["install", "libraries/libBrokenDep.zip"]).result();
+		assertFail(r);
+		assertOutputEquals(["Error: Failed installing dependencies for Foo:", "Could not clone Git repository."], r.err.trim());
+
+	}
 }

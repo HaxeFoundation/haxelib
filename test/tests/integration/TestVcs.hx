@@ -5,6 +5,7 @@ abstract class TestVcs extends IntegrationTests {
 
 	final vcsLibPath = "libraries/libBar";
 	final vcsLibNoHaxelibJson = "libraries/libNoHaxelibJson";
+	final vcsBrokenDependency = "libraries/libBrokenDep";
 
 	function new(cmd:String) {
 		super();
@@ -122,4 +123,16 @@ abstract class TestVcs extends IntegrationTests {
 		assertSuccess(r);
 		assertTrue(r.out.indexOf("lib//") < 0);
 	}
+
+	function testBrokenDependency() {
+
+		final r = haxelib([cmd, "Foo", vcsBrokenDependency]).result();
+		assertFail(r);
+		assertOutputEquals([
+			"Error: Failed installing dependencies for Foo:",
+			"Could not clone Git repository."
+		], r.err.trim());
+
+	}
+
 }

@@ -12,11 +12,13 @@ class TestGit extends TestVcs {
 
 		makeGitRepo(vcsLibPath);
 		makeGitRepo(vcsLibNoHaxelibJson);
+		makeGitRepo(vcsBrokenDependency);
 	}
 
 	override function tearDown() {
 		resetGitRepo(vcsLibPath);
 		resetGitRepo(vcsLibNoHaxelibJson);
+		resetGitRepo(vcsBrokenDependency);
 
 		super.tearDown();
 	}

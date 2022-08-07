@@ -12,11 +12,13 @@ class TestHg extends TestVcs {
 
 		makeHgRepo(vcsLibPath);
 		makeHgRepo(vcsLibNoHaxelibJson);
+		makeHgRepo(vcsBrokenDependency);
 	}
 
 	override function tearDown() {
 		resetHgRepo(vcsLibPath);
 		resetHgRepo(vcsLibNoHaxelibJson);
+		resetHgRepo(vcsBrokenDependency);
 
 		super.tearDown();
 	}

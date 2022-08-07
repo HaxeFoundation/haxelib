@@ -1,0 +1,12 @@
+{
+	"name": "Foo",
+	"url" : "http://example.org",
+	"license": "GPL",
+	"tags": ["foo", "test"],
+	"description": "This project has a git dependency with a non-existent url",
+	"version": "1.0.0",
+	"dependencies": {
+		"Bar": "git:./libraries/broken-git-dep"
+	},
+	"contributors": ["Foo"]
+}
