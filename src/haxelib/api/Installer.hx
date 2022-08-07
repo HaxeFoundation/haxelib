@@ -537,12 +537,7 @@ class Installer {
 				default:
 			}
 
-			try
-				installFromVersionData(lib.name, lib.versionData)
-			catch (e) {
-				userInterface.log(e.toString());
-				continue;
-			}
+			installFromVersionData(lib.name, lib.versionData);
 
 			final library = switch lib.versionData {
 				case VcsInstall(version, vcsData): getVcsLibraryName(lib.name, version, vcsData.subDir);
