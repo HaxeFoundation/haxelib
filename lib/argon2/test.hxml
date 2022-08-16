@@ -1,0 +1,4 @@
+--main Test
+-p test
+-lib argon2
+--neko bin/test.n
