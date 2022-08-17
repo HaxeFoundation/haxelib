@@ -23,22 +23,24 @@ mysql-public-key:
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
 
 neko-latest:
+    ARG FILENAME=neko_2022-07-19_master_81c4dce.tar.gz
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
         arm64) echo "linux-arm64";; \
-    esac); curl -fsSLO https://build.haxe.org/builds/neko/$haxeArch/neko_latest.tar.gz
-    RUN mkdir -p neko_latest
-    RUN tar --strip-components=1 -xf neko_latest.tar.gz -C neko_latest
-    SAVE ARTIFACT neko_latest/*
+    esac); curl -fsSLO "https://build.haxe.org/builds/neko/$haxeArch/$FILENAME"
+    RUN mkdir -p neko
+    RUN tar --strip-components=1 -xf "$FILENAME" -C neko
+    SAVE ARTIFACT neko/*
 
 haxe-latest:
+    ARG FILENAME=haxe_2022-08-09_development_779b005.tar.gz
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
         arm64) echo "linux-arm64";; \
-    esac); curl -fsSLO https://build.haxe.org/builds/haxe/$haxeArch/haxe_latest.tar.gz
-    RUN mkdir -p haxe_latest
-    RUN tar --strip-components=1 -xf haxe_latest.tar.gz -C haxe_latest
-    SAVE ARTIFACT haxe_latest/*
+    esac); curl -fsSLO "https://build.haxe.org/builds/haxe/$haxeArch/$FILENAME"
+    RUN mkdir -p haxe
+    RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
+    SAVE ARTIFACT haxe/*
 
 devcontainer-base:
     # Avoid warnings by switching to noninteractive
