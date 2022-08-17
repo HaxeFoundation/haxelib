@@ -196,7 +196,7 @@ tfk8s:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.15/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.21/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
