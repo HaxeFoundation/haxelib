@@ -80,8 +80,8 @@ devcontainer-base:
             mercurial \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
-        && curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-        && apt-get install -y nodejs=14.* \
+        && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+        && apt-get install -y nodejs=16.* \
         # the haxelib server code base is not Haxe 4 ready
         && add-apt-repository ppa:haxe/haxe3.4 \
         # Install mysql-client
