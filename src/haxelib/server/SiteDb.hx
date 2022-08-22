@@ -24,6 +24,7 @@ package haxelib.server;
 import sys.db.*;
 import sys.db.Types;
 import haxelib.server.Paths.*;
+import haxelib.server.Hashing.HashMethod;
 
 class User extends Object {
 
@@ -32,6 +33,8 @@ class User extends Object {
 	public var fullname : String;
 	public var email : String;
 	public var pass : String;
+	public var salt : haxe.io.Bytes;
+	public var hashmethod : HashMethod;
 
 }
 

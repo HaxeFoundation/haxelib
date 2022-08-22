@@ -4,5 +4,7 @@ CREATE TABLE `User` (
   `fullname` mediumtext NOT NULL,
   `email` mediumtext NOT NULL,
   `pass` mediumtext NOT NULL,
+  `salt` binary(32) NOT NULL,
+  `hashmethod` mediumtext NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

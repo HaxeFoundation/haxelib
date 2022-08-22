@@ -9,6 +9,7 @@
 -lib aws-sdk-neko
 -lib record-macros
 -lib html-haxe-code-highlighter:0.1.2
+-lib argon2
 -D server
 -D getter_support
 # https://github.com/HaxeFoundation/haxe/issues/4903
