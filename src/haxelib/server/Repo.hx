@@ -157,7 +157,14 @@ class Repo implements SiteApi {
 	}
 
 	static inline function verifyPassword(user:User, password:String):Bool {
-		return Hashing.verify(user.pass, password, user.hashmethod);
+		var matched = Hashing.verify(user.pass, password, user.hashmethod);
+		if (matched && user.hashmethod == Md5) {
+			// update to argon2id properly
+			user.pass = Hashing.hash(password, user.salt);
+			user.hashmethod = Argon2id;
+			user.update();
+		}
+		return matched;
 	}
 
 	public function checkPassword( user : String, pass : String ) : Bool {
