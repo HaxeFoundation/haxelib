@@ -201,6 +201,15 @@ class Data {
 	public static var JSON(default, null) = "haxelib.json";
 	/** The name of the file containing project documentation. **/
 	public static var DOCXML(default, null) = "haxedoc.xml";
+	/** The current haxelib server api version number. **/
+	public static var API_VERSION(default, null) =
+		#if (!haxelib_api_version || haxelib_api_version == "4.0")
+			"4.0";
+		#elseif (haxelib_api_version == "3.0")
+			"3.0";
+		#elseif haxelib_api_version
+			#error "`-D haxelib-api-version` has been set to an invalid value"
+		#end
 	/** The location of the repository in the haxelib server. **/
 	public static var REPOSITORY(default, null) = "files/3.0";
 	/** Regex matching alphanumeric strings, which can also include periods, dashes, or underscores. **/

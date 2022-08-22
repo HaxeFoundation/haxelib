@@ -379,13 +379,21 @@ haxelib-server-tasks:
     RUN haxe server_tasks.hxml
     SAVE ARTIFACT www/tasks.n
 
+haxelib-server-api-3.0:
+    FROM +haxelib-server-builder
+    COPY server_api_3.0.hxml server_each.hxml .
+    COPY src src
+    COPY hx3compat hx3compat
+    RUN haxe server_api_3.0.hxml
+    SAVE ARTIFACT www/api/3.0/index.n
+
 haxelib-server-api:
     FROM +haxelib-server-builder
     COPY server_api.hxml server_each.hxml .
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_api.hxml
-    SAVE ARTIFACT www/api/3.0/index.n
+    SAVE ARTIFACT www/api/4.0/index.n
 
 haxelib-server-www-js:
     FROM +devcontainer-base
@@ -469,7 +477,8 @@ haxelib-server:
     COPY +haxelib-server-website-highlighter/highlighter.js www/js/highlighter.js
     COPY +haxelib-server-website/index.n www/index.n
     COPY +haxelib-server-tasks/tasks.n www/tasks.n
-    COPY +haxelib-server-api/index.n www/api/3.0/index.n
+    COPY +haxelib-server-api-3.0/index.n www/api/3.0/index.n
+    COPY +haxelib-server-api/index.n www/api/4.0/index.n
 
     EXPOSE 80
 
