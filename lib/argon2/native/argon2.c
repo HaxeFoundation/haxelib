@@ -41,7 +41,8 @@ value generate_argon2id_hash(value time_cost, value memory_cost, value paralleli
 	size_t password_len = val_strlen(password);
 	size_t encoded_len = argon2_encodedlen(val_int(time_cost), val_int(memory_cost), val_int(parallelism), salt_len, HASHLEN, Argon2_id);
 
-	value hash_string = alloc_empty_string(encoded_len);
+	// encoded_len takes into account null terminator, however, alloc_empty_string adds an extra byte for that anyway
+	value hash_string = alloc_empty_string(encoded_len - 1);
 
 	int rc = argon2id_hash_encoded(val_int(time_cost), val_int(memory_cost), val_int(parallelism), val_string(password), password_len, val_string(salt), salt_len, HASHLEN, val_string(hash_string), encoded_len);
 	if (rc != ARGON2_OK) {
