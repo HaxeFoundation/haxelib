@@ -523,9 +523,9 @@ class Connection {
 	public static function getUserData(userName:String)
 		return retry(data.site.user.bind(userName));
 
-	/** Registers user with `name`, `encodedPassword`, `email`, and `fullname`. **/
-	public static function register(name:String, encodedPassword:String, email:String, fullname:String)
-		return retry(data.site.register.bind(name, encodedPassword, email, fullname));
+	/** Registers user with `name`, `password`, `email`, and `fullname`. **/
+	public static function register(name:String, password:String, email:String, fullname:String)
+		return retry(data.site.register.bind(name, password, email, fullname));
 
 	/** Returns `true` if no user with `userName` exists yet. **/
 	public static function isNewUser(userName:String)

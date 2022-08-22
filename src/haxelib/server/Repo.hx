@@ -110,6 +110,12 @@ class Repo implements SiteApi {
 		};
 	}
 
+	static inline function setPassword(user:User, password:String) {
+		user.salt = Hashing.generateSalt();
+		user.pass = Hashing.hash(password, user.salt);
+		user.hashmethod = Argon2id;
+	}
+
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Void {
 		#if (haxelib_api_version == "3.0")
 		throw "Outdated client\n\n"
@@ -130,9 +136,9 @@ class Repo implements SiteApi {
 
 		var u = new User();
 		u.name = name;
-		u.pass = pass;
 		u.email = mail;
 		u.fullname = fullname;
+		setPassword(u,pass);
 		u.insert();
 	}
 
@@ -150,6 +156,10 @@ class Repo implements SiteApi {
 		throw "User '"+user+"' is not a developer of project '"+prj+"'";
 	}
 
+	static inline function verifyPassword(user:User, password:String):Bool {
+		return Hashing.verify(user.pass, password, user.hashmethod);
+	}
+
 	public function checkPassword( user : String, pass : String ) : Bool {
 		#if (haxelib_api_version == "3.0")
 		// this is used only when submitting
@@ -159,7 +169,7 @@ class Repo implements SiteApi {
 			+ "\thaxelib install haxelib\n";
 		#end
 		var u = User.manager.search({ name : user }).first();
-		return u != null && u.pass == pass;
+		return u != null && verifyPassword(u,pass);
 	}
 
 	public function getSubmitId() : String {
@@ -183,7 +193,7 @@ class Repo implements SiteApi {
 
 				var infos = Data.readDataFromZip(zip,CheckData);
 				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass )
+				if( u == null || !verifyPassword(u,pass) )
 					throw "Invalid username or password";
 
 				// spam filter
