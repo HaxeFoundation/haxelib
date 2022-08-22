@@ -69,7 +69,7 @@ private class ConnectionData {
 			port: useSsl ? 443 : 80,
 			dir: "",
 			url: "index.n",
-			apiVersion: "3.0",
+			apiVersion: Data.API_VERSION,
 			useSsl: useSsl
 		};
 	}
@@ -95,7 +95,7 @@ private class ConnectionData {
 			port: port,
 			dir: haxe.io.Path.addTrailingSlash(r.matched(4)),
 			url: "index.n",
-			apiVersion: "3.0",
+			apiVersion: Data.API_VERSION,
 			useSsl: useSsl
 		};
 	}
