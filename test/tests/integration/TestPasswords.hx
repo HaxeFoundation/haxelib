@@ -48,4 +48,23 @@ class TestPasswords extends IntegrationTests {
 		assertEquals(Hashing.hash(bar.pw, user.salt), user.pass);
 	}
 
+	public function testFailedSubmit() {
+		createOldUserAccount(bar);
+
+		// attempting to submit with incorrect password should make no difference
+		final r = haxelib([
+			"submit",
+			Path.join([IntegrationTests.projectRoot, "test/libraries/libBar.zip"]),
+		],"incorrect password\nincorrect password\nincorrect password\nincorrect password\nincorrect password\n").result();
+		assertFail(r);
+		assertEquals("Error: Failed to input correct password", r.err.trim());
+
+		// after failed submission, the account should not have changed
+		final user = getUser(bar.user);
+
+		// hash method and hash should remain the same
+		assertEquals(Md5, user.hashmethod);
+		assertEquals(Hashing.hash(haxe.crypto.Md5.encode(bar.pw), user.salt), user.pass);
+	}
+
 }
