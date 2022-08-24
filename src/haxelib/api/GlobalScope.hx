@@ -172,6 +172,7 @@ class GlobalScope extends Scope {
 
 			final info = {
 				final jsonContent = try File.getContent(resolved.path + Data.JSON) catch (_) null;
+				// `library` (i.e. the .name value) will be used as the name if haxelib.json has no "name" field
 				Data.readData(jsonContent, jsonContent != null ? CheckSyntax : NoCheck, library);
 			}
 
@@ -182,8 +183,6 @@ class GlobalScope extends Scope {
 				else
 					resolved.path
 			);
-			// if info.name is not the placeholder for an empty name (i.e. unknown), use it, otherwise
-			// fall back to the value in the .name file
 			addLine('-D ${info.name}=${info.version}');
 
 			// add dependencies to stack
