@@ -14,6 +14,8 @@ typedef InstallationInfo = {
 	final devPath:Null<String>;
 }
 
+class ScopeException extends haxe.Exception {}
+
 /**
 	Returns scope for directory `dir`. If `dir` is omitted, uses the current
 	working directory.

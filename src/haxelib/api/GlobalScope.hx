@@ -87,7 +87,11 @@ class GlobalScope extends Scope {
 		if (devPath != null)
 			return devPath;
 
-		final current = repository.getCurrentVersion(library);
+		final current = try {
+			repository.getCurrentVersion(library);
+		} catch (e:Repository.CurrentVersionException) {
+			throw new ScopeException('Library `$library` has no version set in the global scope');
+		};
 		return repository.getValidVersionPath(library, current);
 	}
 
