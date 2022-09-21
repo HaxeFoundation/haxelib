@@ -250,6 +250,7 @@ class IntegrationTests extends TestBase {
 		runner.add(new tests.integration.TestHg());
 		runner.add(new tests.integration.TestMisc());
 		runner.add(new tests.integration.TestFixRepo());
+		runner.add(new tests.integration.TestServerDatabaseUpdate());
 
 		final success = runner.run();
 
