@@ -120,6 +120,11 @@ class Developer extends Object {
 
 }
 
+class Meta extends Object {
+	var id:SString<1>;
+	public var dbVersion:SUInt;
+}
+
 class SiteDb {
 	static var db : Connection;
 	//TODO: this whole configuration business is rather messy to say the least
@@ -148,7 +153,8 @@ class SiteDb {
 			Project.manager,
 			Tag.manager,
 			Version.manager,
-			Developer.manager
+			Developer.manager,
+			Meta.manager
 		];
 		for (m in managers)
 			if (!TableCreate.exists(m))
