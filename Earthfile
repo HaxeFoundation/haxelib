@@ -540,6 +540,8 @@ ci-tests:
     COPY hx3compat hx3compat
     COPY lib/node-sys-db lib/node-sys-db
     COPY lib/record-macros lib/record-macros
+    COPY lib/argon2 lib/argon2
+    COPY +argon2-ndll/argon2.ndll argon2.ndll
     COPY src src
     COPY www www
     COPY test test
