@@ -115,7 +115,7 @@ class GlobalScope extends Scope {
 	}
 
 	public function getArgsAsHxml(library:ProjectName, ?version:Version):String {
-		final stack = new GenericStack();
+		final stack = new GenericStack<{library:ProjectName, version:Null<Version>}>();
 		stack.add({library: library, version: version});
 
 		return getArgsAsHxmlWithDependencies(stack);
