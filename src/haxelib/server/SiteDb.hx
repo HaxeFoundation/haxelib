@@ -157,6 +157,8 @@ class SiteDb {
 		for (m in managers)
 			if (!TableCreate.exists(m))
 				TableCreate.create(m);
+
+		Update.runNeededUpdates();
 	}
 
 	static public function cleanup() {
