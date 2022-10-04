@@ -46,6 +46,14 @@ class TestPasswords extends IntegrationTests {
 		// hash method should be updated, as well as the hash itself
 		assertEquals(Argon2id, user.hashmethod);
 		assertEquals(Hashing.hash(bar.pw, user.salt), user.pass);
+
+		// submitting should continue to work with the same password
+		final r = haxelib([
+			"submit",
+			Path.join([IntegrationTests.projectRoot, "test/libraries/libBar2.zip"]),
+			bar.pw
+		]).result();
+		assertSuccess(r);
 	}
 
 	public function testFailedSubmit() {
