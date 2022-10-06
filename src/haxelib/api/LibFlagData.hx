@@ -63,9 +63,13 @@ private final libraryFlagEReg = ~/^-(lib|L|-library)\b/;
 	Extracts the lib information from the hxml file at `path`.
 
 	Does not filter out repeated libs.
+
+	Target libraries (e.g. hxcpp) are also added if they are not explicitly
+	included via a -lib flag.
  **/
-function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}> {
-	final libsData = new List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>();
+function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>}> {
+	final libsData = new List<{name:ProjectName, data:Option<VersionData>}>();
+	final targetLibraries = [for (_ => lib in TARGETS) lib => null];
 
 	final lines = [path];
 
@@ -82,8 +86,8 @@ function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>,
 		if (targetFlagEReg.match(line)) {
 			final target = targetFlagEReg.matched(1);
 			final lib = TARGETS[target];
-			if (lib != null)
-				libsData.add({name: lib, data: None, isTargetLib: true});
+			if (lib != null && targetLibraries[lib] == null)
+				targetLibraries[lib] = true;
 		}
 
 		if (libraryFlagEReg.match(line)) {
@@ -98,10 +102,24 @@ function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>,
 				data: switch (libDataEReg.matched(2)) {
 					case null: None;
 					case v: Some(extractVersion(v));
-				},
-				isTargetLib: false
+				}
+			});
+			if (targetLibraries.exists(name)) {
+				// it is included explicitly, so ignore whether the target flag was used
+				targetLibraries[name] = false;
+			}
+		}
+	}
+
+	// add target libraries required for the hxml that weren't added explicitly
+	for (targetLib => shouldInstall in targetLibraries) {
+		if (shouldInstall) {
+			libsData.add({
+				name: targetLib,
+				data: None
 			});
 		}
 	}
+
 	return libsData;
 }

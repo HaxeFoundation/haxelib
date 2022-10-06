@@ -604,7 +604,7 @@ class Installer {
 	}
 
 	/** Returns a list of all require install data for the `libs`, and also filters out repeated libs. **/
-	static function getFilteredInstallData(libs:List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>):List<InstallData> {
+	static function getFilteredInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<InstallData> {
 		final installDataList = new List<InstallData>();
 		final includedLibs = new Map<ProjectName, Array<VersionData>>();
 
@@ -624,7 +624,7 @@ class Installer {
 			final lowerCaseName = ProjectName.ofString(installData.name.toLowerCase());
 
 			final includedVersions = includedLibs[lowerCaseName];
-			if (includedVersions != null && (lib.isTargetLib || isVersionIncluded(installData.versionData, includedVersions)))
+			if (includedVersions != null && isVersionIncluded(installData.versionData, includedVersions))
 				continue; // do not include twice
 			if (includedVersions == null)
 				includedLibs[lowerCaseName] = [];
