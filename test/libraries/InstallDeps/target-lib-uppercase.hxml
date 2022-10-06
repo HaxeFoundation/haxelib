@@ -1,0 +1,4 @@
+-lib HXCPP:git:https://github.com/HaxeFoundation/hxcpp.git
+
+cpp.hxml
+# this file contains a --cpp flag

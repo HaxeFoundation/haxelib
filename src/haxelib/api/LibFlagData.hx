@@ -104,9 +104,10 @@ function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>}
 					case v: Some(extractVersion(v));
 				}
 			});
-			if (targetLibraries.exists(name)) {
+			final normalizedName = name.toLowerCase();
+			if (targetLibraries.exists(normalizedName)) {
 				// it is included explicitly, so ignore whether the target flag was used
-				targetLibraries[name] = false;
+				targetLibraries[normalizedName] = false;
 			}
 		}
 	}
