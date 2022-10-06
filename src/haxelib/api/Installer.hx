@@ -588,7 +588,7 @@ class Installer {
 	static function getInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<InstallData> {
 		final installData = new List<InstallData>();
 
-		final versionsData = getVersionsForEmptyLibs(libs);
+		final versionsData = getDataForServerLibraries(libs);
 
 		for (lib in libs) {
 			final data = versionsData[lib.name];
@@ -608,11 +608,11 @@ class Installer {
 		final installDataList = new List<InstallData>();
 		final includedLibs = new Map<ProjectName, Array<VersionData>>();
 
-		final versionsData = getVersionsForEmptyLibs(libs);
+		final serverData = getDataForServerLibraries(libs);
 
 		for (lib in libs) {
 			final installData = {
-				final data = versionsData[lib.name];
+				final data = serverData[lib.name];
 				if (data == null) {
 					InstallData.create(lib.name, lib.data, null);
 				} else {
@@ -635,8 +635,11 @@ class Installer {
 		return installDataList;
 	}
 
-	/** Returns a map of version information for libraries in `libs` that have empty version information. **/
-	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:Option<VersionData>}>):
+	/**
+		Returns a map of name and version information for libraries in `libs` that
+		would be installed from the haxelib server.
+	**/
+	static function getDataForServerLibraries(libs:List<{name:ProjectName, data:Option<VersionData>}>):
 		Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>
 	{
 		final toCheck:Array<ProjectName> = [];
@@ -644,7 +647,7 @@ class Installer {
 			if (lib.data.match(None | Some(Haxelib(_)))) // Do not check vcs info
 				toCheck.push(lib.name);
 
-		return Connection.getVersionsForLibraries(toCheck);
+		return Connection.getLibraryNamesAndVersions(toCheck);
 	}
 
 	static function isVersionIncluded(toCheck:VersionData, versions:Array<VersionData>):Bool {

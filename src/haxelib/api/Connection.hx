@@ -354,10 +354,12 @@ class Connection {
 	}
 
 	/**
-		Returns a map of the library names in `libraries` with their validated names
-		(to ensure correct capitalisation) and available versions.
+		Returns a map of the library names in `libraries` with their correctly
+		capitalized names and available versions.
 	**/
-	public static function getVersionsForLibraries(libraries:Array<ProjectName>):Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}> {
+	public static function getLibraryNamesAndVersions(libraries:Array<ProjectName>):
+		Map<ProjectName,{confirmedName:ProjectName, versions:Array<SemVer>}>
+	{
 		// TODO: can we collapse this into a single API call?  It's getting too slow otherwise.
 		final map = new Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>();
 
