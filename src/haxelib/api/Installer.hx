@@ -279,7 +279,7 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(library.name, library.versionData)
+				installFromVersionData(library.name, library.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
@@ -538,7 +538,7 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(lib.name, lib.versionData)
+				installFromVersionData(lib.name, lib.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
@@ -666,7 +666,7 @@ class Installer {
 		return false;
 	}
 
-	function installFromInstallData(library:ProjectName, data:VersionData) {
+	function installFromVersionData(library:ProjectName, data:VersionData) {
 		switch data {
 			case Haxelib(version):
 				downloadAndInstall(library, version);
