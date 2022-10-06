@@ -366,8 +366,7 @@ class Connection {
 		for (lib in libraries) {
 			final info = retry(data.site.infos.bind(lib));
 			final versionsData = info.versions;
-			// TODO with stricter capitalisation we won't have to use info.name maybe
-			map[lib] = {confirmedName: ProjectName.ofString(info.name), versions:[for(data in versionsData) data.name]};
+			map[lib] = {confirmedName: ProjectName.ofString(info.name), versions: [for (data in versionsData) data.name]};
 		}
 		return map;
 	}
