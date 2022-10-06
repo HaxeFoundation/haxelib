@@ -253,17 +253,17 @@ class Installer {
 		// Check the version numbers are all good
 		userInterface.log("Loading info about the required libraries");
 
-		final versionData = getFilteredVersionData(libsToInstall);
+		final installData = getFilteredInstallData(libsToInstall);
 
 		final libVersions = [
-			for (library in versionData)
+			for (library in installData)
 				{name:library.name, version:library.version}
 		];
 		// Abort if not confirmed
 		if (confirmHxmlInstall != null && !confirmHxmlInstall(libVersions))
 			return;
 
-		for (library in versionData) {
+		for (library in installData) {
 			if (library.versionData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
 				final version = SemVer.ofString(library.version);
 				if (scope.isLibraryInstalled(library.name) && scope.getVersion(library.name) == version) {
@@ -604,7 +604,7 @@ class Installer {
 	}
 
 	/** Returns a list of all require install data for the `libs`, and also filters out repeated libs. **/
-	static function getFilteredVersionData(libs:List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>):List<InstallData> {
+	static function getFilteredInstallData(libs:List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>):List<InstallData> {
 		final installDataList = new List<InstallData>();
 		final includedLibs = new Map<ProjectName, Array<VersionData>>();
 
