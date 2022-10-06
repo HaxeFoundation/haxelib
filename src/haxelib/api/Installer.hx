@@ -624,10 +624,10 @@ class Installer {
 			final lowerCaseName = ProjectName.ofString(installData.name.toLowerCase());
 
 			final includedVersions = includedLibs[lowerCaseName];
-			if (includedVersions != null && isVersionIncluded(installData.versionData, includedVersions))
-				continue; // do not include twice
 			if (includedVersions == null)
 				includedLibs[lowerCaseName] = [];
+			else if (isVersionIncluded(installData.versionData, includedVersions))
+				continue; // do not include twice
 			includedLibs[lowerCaseName].push(installData.versionData);
 			installDataList.add(installData);
 		}
