@@ -76,13 +76,23 @@ class TestInstaller extends TestBase {
 	}
 
 	public function testInstallHxmlWithBackend() {
+		// inferred from -cpp/--cpp flags
+		installer.installFromHxml("cpp.hxml", (libs) -> {
+			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
+			return false;
+		});
+
+		// specified explicitly
 		// test for issue #511
 		installer.installFromHxml("target-lib.hxml", (libs) -> {
-			var count = 0;
-			for (lib in libs)
-				if (lib.name == "hxcpp")
-					count++;
-			assertEquals(1, count);
+			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
+			return false;
+		});
+
+		// specified explicitly with non-standard capitalisation
+		installer.installFromHxml("target-lib-uppercase.hxml", (libs) -> {
+			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "HXCPP"));
+			assertEquals(0, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
 			return false;
 		});
 	}

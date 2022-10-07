@@ -106,7 +106,7 @@ class UserInterface {
 	}
 }
 
-private class AllInstallData {
+private class InstallData {
 	public final name:ProjectName;
 	public final version:Version;
 	public final isLatest:Bool;
@@ -119,20 +119,20 @@ private class AllInstallData {
 		this.isLatest = isLatest;
 	}
 
-	public static function create(name:ProjectName, libFlagData:Option<VersionData>, versionData:Null<Array<SemVer>>):AllInstallData {
+	public static function create(name:ProjectName, libFlagData:Option<VersionData>, versionData:Null<Array<SemVer>>):InstallData {
 		if (versionData != null && versionData.length == 0)
 			throw new InstallationException('The library $name has not yet released a version');
 
 		return switch libFlagData {
 			case None:
 				final semVer = getLatest(versionData);
-				new AllInstallData(name, semVer, Haxelib(semVer), true);
+				new InstallData(name, semVer, Haxelib(semVer), true);
 			case Some(Haxelib(version)) if (!versionData.contains(version)):
 				throw new InstallationException('No such version $version for library $name');
 			case Some(Haxelib(version)):
-				new AllInstallData(name, version, Haxelib(version), version == getLatest(versionData));
+				new InstallData(name, version, Haxelib(version), version == getLatest(versionData));
 			case Some(VcsInstall(version, vcsData)):
-				new AllInstallData(name, version, VcsInstall(version, vcsData), false);
+				new InstallData(name, version, VcsInstall(version, vcsData), false);
 		}
 	}
 }
@@ -253,17 +253,17 @@ class Installer {
 		// Check the version numbers are all good
 		userInterface.log("Loading info about the required libraries");
 
-		final versionData = getFilteredVersionData(libsToInstall);
+		final installData = getFilteredInstallData(libsToInstall);
 
 		final libVersions = [
-			for (library in versionData)
+			for (library in installData)
 				{name:library.name, version:library.version}
 		];
 		// Abort if not confirmed
 		if (confirmHxmlInstall != null && !confirmHxmlInstall(libVersions))
 			return;
 
-		for (library in versionData) {
+		for (library in installData) {
 			if (library.versionData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
 				final version = SemVer.ofString(library.version);
 				if (scope.isLibraryInstalled(library.name) && scope.getVersion(library.name) == version) {
@@ -279,7 +279,7 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(library.name, library.versionData)
+				installFromVersionData(library.name, library.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
@@ -538,7 +538,7 @@ class Installer {
 			}
 
 			try
-				installFromInstallData(lib.name, lib.versionData)
+				installFromVersionData(lib.name, lib.versionData)
 			catch (e) {
 				userInterface.log(e.toString());
 				continue;
@@ -585,58 +585,61 @@ class Installer {
 		}
 	}
 
-	static function getInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<AllInstallData> {
-		final installData = new List<AllInstallData>();
+	static function getInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<InstallData> {
+		final installData = new List<InstallData>();
 
-		final versionsData = getVersionsForEmptyLibs(libs);
+		final versionsData = getDataForServerLibraries(libs);
 
 		for (lib in libs) {
 			final data = versionsData[lib.name];
 			if (data == null) {
-				installData.add(AllInstallData.create(lib.name, lib.data, null));
+				installData.add(InstallData.create(lib.name, lib.data, null));
 				continue;
 			}
 			final libName = data.confirmedName;
-			installData.add(AllInstallData.create(libName, lib.data, data.versions));
+			installData.add(InstallData.create(libName, lib.data, data.versions));
 		}
 
 		return installData;
 	}
 
-	/** Returns a list of all require install data for the `libs`, and also filters out repeated libs. **/
-	static function getFilteredVersionData(libs:List<{name:ProjectName, data:Option<VersionData>, isTargetLib:Bool}>):List<AllInstallData> {
-		final installData = new List<AllInstallData>();
+	/** Returns a list of all required install data for `libs`, and also filters out repeated libs. **/
+	static function getFilteredInstallData(libs:List<{name:ProjectName, data:Option<VersionData>}>):List<InstallData> {
+		final installDataList = new List<InstallData>();
 		final includedLibs = new Map<ProjectName, Array<VersionData>>();
 
-		final versionsData = getVersionsForEmptyLibs(libs);
+		final serverData = getDataForServerLibraries(libs);
 
 		for (lib in libs) {
-			final allInstallData = {
-				final data = versionsData[lib.name];
+			final installData = {
+				final data = serverData[lib.name];
 				if (data == null) {
-					AllInstallData.create(lib.name, lib.data, null);
+					InstallData.create(lib.name, lib.data, null);
 				} else {
 					final libName = data.confirmedName;
-					AllInstallData.create(libName, lib.data, data.versions);
+					InstallData.create(libName, lib.data, data.versions);
 				}
 			}
 
-			final lowerCaseName = ProjectName.ofString(allInstallData.name.toLowerCase());
+			final lowerCaseName = ProjectName.ofString(installData.name.toLowerCase());
 
 			final includedVersions = includedLibs[lowerCaseName];
-			if (includedVersions != null && (lib.isTargetLib || isVersionIncluded(allInstallData.versionData, includedVersions)))
-				continue; // do not include twice
 			if (includedVersions == null)
 				includedLibs[lowerCaseName] = [];
-			includedLibs[lowerCaseName].push(allInstallData.versionData);
-			installData.add(allInstallData);
+			else if (isVersionIncluded(installData.versionData, includedVersions))
+				continue; // do not include twice
+			includedLibs[lowerCaseName].push(installData.versionData);
+			installDataList.add(installData);
 		}
 
-		return installData;
+		return installDataList;
 	}
 
-	/** Returns a map of version information for libraries in `libs` that have empty version information. **/
-	static function getVersionsForEmptyLibs(libs:List<{name:ProjectName, data:Option<VersionData>}>):
+	/**
+		Returns a map of name and version information for libraries in `libs` that
+		would be installed from the haxelib server.
+	**/
+	static function getDataForServerLibraries(libs:List<{name:ProjectName, data:Option<VersionData>}>):
 		Map<ProjectName, {confirmedName:ProjectName, versions:Array<SemVer>}>
 	{
 		final toCheck:Array<ProjectName> = [];
@@ -644,7 +647,7 @@ class Installer {
 			if (lib.data.match(None | Some(Haxelib(_)))) // Do not check vcs info
 				toCheck.push(lib.name);
 
-		return Connection.getVersionsForLibraries(toCheck);
+		return Connection.getLibraryNamesAndVersions(toCheck);
 	}
 
 	static function isVersionIncluded(toCheck:VersionData, versions:Array<VersionData>):Bool {
@@ -666,7 +669,7 @@ class Installer {
 		return false;
 	}
 
-	function installFromInstallData(library:ProjectName, data:VersionData) {
+	function installFromVersionData(library:ProjectName, data:VersionData) {
 		switch data {
 			case Haxelib(version):
 				downloadAndInstall(library, version);
