@@ -66,15 +66,15 @@ The following commands are available:
     <li><a href="#never">--never</a></li>
     <li><a href="#global">--global</a></li>
     <li><a href="#skip-dependencies">--skip-dependencies</a></li>
-    <li><a href="#no-timeout">--no-timeout</a></li>
+    <li><a href="#no-timeout">-notimeout</a></li>
   </ul>
 </div>
 
 <div class="span3">
   <h4><a href="#parameters">Parameters</a></h4>
   <ul>
-    <li><a href="#cwd">--cwd</a></li>
-    <li><a href="#remote">--remote</a></li>
+    <li><a href="#cwd">-cwd</a></li>
+    <li><a href="#remote">-R</a></li>
   </ul>
 </div>
 </div>
@@ -527,6 +527,7 @@ haxelib run openfl create DisplayingABitmap
 > Libraries with either a `run.n` helper, a `Run.hx` module, or another main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
 > You can specify the version to run by appending `:version`. If no version is specified, the [development](#dev) version is used if one has been set, otherwise the set version is used.
+> NOTE: Before Haxelib 5.0.0, due to a bug, development versions will always take priority over a version specified this way.
 >
 > The environment within which the library is run will have the `HAXELIB_RUN` environment variable set to `"1"`, and `HAXELIB_RUN_NAME` set to the name of the library.
 
@@ -551,12 +552,10 @@ haxelib proxy [host port [username password]]
 
 ## Flags
 
-
-
 **Warning**: when using the [run](#run) command you need to specify the flags before `run`,
 otherwise they'll be passed as arguments to the library.
 
-
+From Haxelib 5.0.0, all flags can be used with either one or two dashes (e.g., `-debug` or `--debug`). However, with older versions, the [`-notimeout`](#no-timeout) flag is only recognized when one dash is used.
 
 <a name="flat" class="anch"></a>
 
@@ -658,13 +657,16 @@ haxelib --skip-dependencies
 
 <a name="no-timeout" class="anch"></a>
 
-### haxelib --no-timeout
+### haxelib -notimeout
 
-```
-haxelib --no-timeout
+```sh
+haxelib -notimeout
+haxelib --no-timeout # alias available from Haxelib 5.0.0
 ```
 
 > Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
+>
+> NOTE: In Haxelib versions older than 5.0.0, `--notimeout` is not recognized so only `-notimeout` can be used. This is a bug affects this flag as well as [-cwd](#cwd)
 
 
 
@@ -672,32 +674,33 @@ haxelib --no-timeout
 
 # Parameters
 
-
-
 **Warning**: when using the [run](#run) command you need to specify the parameters before `run`,
 otherwise they'll be passed as arguments to the library.
 
-
+From Haxelib 5.0.0, all parameters can be used with either one or two dashes (e.g., `-cwd` or `--cwd`), with the exception of single character aliases like [`-R`](#remote). However, with older versions, the [`-cwd`](#cwd) parameter is only recognized when one dash is used.
 
 <a name="cwd" class="anch"></a>
 
-### haxelib --cwd
+### haxelib -cwd
 
-```
-haxelib --cwd [dir]
+```sh
+haxelib -cwd [dir]
+haxelib --cwd [dir] # also recognized from Haxelib 5.0.0
 ```
 
 > Act like the Haxelib command was run from another repository. Affect all commands that use the "current directory".
+>
+> NOTE: In Haxelib versions older than 5.0.0, `--cwd` is not recognized so only `-cwd` can be used. This is a bug affects this parameter as well as [-notimeout](#no-timeout)
 
 
 
 <a name="remote" class="anch"></a>
 
-### haxelib --remote
+### haxelib -R
 
-```
-haxelib --remote [host:port[/dir]]
+```sh
 haxelib -R [host:port[/dir]]
+haxelib --remote [host:port[/dir]] # alias available from Haxelib 5.0.0
 ```
 
 > Allow the usage of a custom Haxelib server instead of `lib.haxe.org`.
@@ -717,7 +720,7 @@ If `HAXELIB_NO_SSL` is set to `1` or `true`, then haxelib client will use http i
 ## HAXELIB_REMOTE
 
 `HAXELIB_REMOTE` may contain a url to a custom Haxelib server instead of `https://lib.haxe.org/`.
-However, if <a href="#remote">--remote</a> command line argument is provided, then `HAXELIB_REMOTE` is ignored.
+However, if the [-R](#remote) command line argument is provided, then `HAXELIB_REMOTE` is ignored.
 
 <a name="HAXELIB_DEV_FILTER" class="anch"></a>
 
