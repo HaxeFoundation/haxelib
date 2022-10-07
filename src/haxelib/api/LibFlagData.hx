@@ -69,7 +69,7 @@ private final libraryFlagEReg = ~/^-(lib|L|-library)\b/;
  **/
 function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>}> {
 	final libsData = new List<{name:ProjectName, data:Option<VersionData>}>();
-	final targetLibraries = [for (_ => lib in TARGETS) lib => null];
+	final targetLibraries:Map<ProjectName, Null<Bool>> = [for (_ => lib in TARGETS) lib => null];
 
 	final lines = [path];
 
