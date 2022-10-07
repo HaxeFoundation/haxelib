@@ -13,7 +13,8 @@ class TestUser extends IntegrationTests {
 
 			assertTrue(r.out.indexOf("Bar") >= 0);
 
-			assertTrue(r.out.indexOf(bar.email) >= 0);
+			assertTrue(r.out.indexOf(bar.email) == -1);
+			assertTrue(r.out.indexOf("(private)") >= 0);
 			assertTrue(r.out.indexOf(bar.fullname) >= 0);
 			assertTrue(r.out.indexOf(bar.pw) == -1);
 		}
@@ -29,7 +30,8 @@ class TestUser extends IntegrationTests {
 
 			assertTrue(r.out.indexOf("Bar") >= 0);
 
-			assertTrue(r.out.indexOf(bar.email) >= 0);
+			assertTrue(r.out.indexOf(bar.email) == -1);
+			assertTrue(r.out.indexOf("(private)") >= 0);
 			assertTrue(r.out.indexOf(bar.fullname) >= 0);
 			assertTrue(r.out.indexOf(bar.pw) == -1);
 
