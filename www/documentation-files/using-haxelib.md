@@ -565,7 +565,7 @@ From Haxelib 5.0.0, all flags can be used with either one or two dashes (e.g., `
 haxelib --flat
 ```
 
-> Used by <code>haxelib [git](#git)</code>, do not add the `--recursive` flag when cloning a git repository.
+> When installing a library via [git](#git), do not add the `--recursive` flag when cloning its repository.
 
 
 
