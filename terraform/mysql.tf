@@ -107,3 +107,9 @@ resource "helm_release" "haxelib-mysql-57" {
     value = random_password.haxelib-mysql-57-replicator-password.result
   }
 }
+
+output "mysql-root-password" {
+  value = random_password.haxelib-mysql-57-root-password.result
+
+  sensitive = true
+}
