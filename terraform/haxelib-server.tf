@@ -301,7 +301,7 @@ resource "kubernetes_service" "do-haxelib-server" {
   }
 }
 
-resource "kubernetes_ingress" "do-haxelib-server" {
+resource "kubernetes_ingress_v1" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
   provider = kubernetes.do
@@ -339,8 +339,12 @@ resource "kubernetes_ingress" "do-haxelib-server" {
       http {
         path {
           backend {
-            service_name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
-            service_port = 80
+            service {
+              name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
+              port {
+                number = 80
+              }
+            }
           }
           path = "/"
         }
@@ -351,8 +355,12 @@ resource "kubernetes_ingress" "do-haxelib-server" {
       http {
         path {
           backend {
-            service_name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
-            service_port = 80
+            service {
+              name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
+              port {
+                number = 80
+              }
+            }
           }
           path = "/"
         }
