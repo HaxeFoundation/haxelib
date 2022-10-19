@@ -118,7 +118,7 @@ class RunCi {
 			pass: dbConfig.pass,
 			host: "localhost",
 			database: dbConfig.database,
-		}));
+		}, "\t"));
 		function writeApacheConf(confPath:String):Void {
 			var hasModNeko = switch (systemName()) {
 				case "Windows":
@@ -390,7 +390,7 @@ Listen 2000
 			host: Sys.getEnv("HAXELIB_DB_HOST"),
 			port: Std.parseInt(Sys.getEnv("HAXELIB_DB_PORT")),
 			database: Sys.getEnv("HAXELIB_DB_NAME"),
-		}));
+		}, "\t"));
 		test();
 	}
 
