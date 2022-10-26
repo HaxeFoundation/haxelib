@@ -657,7 +657,7 @@ class Installer {
 				case [VcsInstall(a, vcsData1), VcsInstall(b, vcsData2)]
 					if ((a == b)
 						&& (vcsData1.url == vcsData2.url)
-						&& (vcsData1.ref == vcsData2.ref)
+						&& (vcsData1.commit == vcsData2.commit)
 						&& (vcsData1.branch == vcsData2.branch)
 						&& (vcsData1.tag == vcsData2.tag)
 						&& (vcsData1.subDir == vcsData2.subDir)
@@ -760,7 +760,7 @@ class Installer {
 
 		final libPath = repository.getVersionPath(library, id);
 
-		final branch = vcsData.ref != null ? vcsData.ref : vcsData.branch;
+		final branch = vcsData.commit != null ? vcsData.commit : vcsData.branch;
 		final url:String = vcsData.url;
 
 		function doVcsClone() {

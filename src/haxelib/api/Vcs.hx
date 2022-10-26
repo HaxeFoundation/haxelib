@@ -374,7 +374,7 @@ class Git extends Vcs {
 		final ret: VcsData = {
 			// could the remote's name not be "origin"?
 			url: run(["remote", "get-url", "origin"], true).out.trim(),
-			ref: run(["rev-parse", "HEAD"], true).out.trim(),
+			commit: run(["rev-parse", "HEAD"], true).out.trim(),
 		};
 
 		Sys.setCwd(oldCwd);
@@ -464,7 +464,7 @@ class Mercurial extends Vcs {
 
 		final ret: VcsData = {
 			url: run(["paths", "default"], true).out.trim(),
-			ref: run(["identify", "-i", "--debug"], true).out.trim(),
+			commit: run(["identify", "-i", "--debug"], true).out.trim(),
 		};
 
 		Sys.setCwd(oldCwd);
