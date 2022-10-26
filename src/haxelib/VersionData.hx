@@ -28,7 +28,7 @@ class VcsData {
 	var url:String;
 	/** Commit hash **/
 	@:optional
-	var ref:Null<String>;
+	var commit:Null<String>;
 	/** The git tag or mercurial revision **/
 	@:optional
 	var tag:Null<String>;
@@ -45,7 +45,7 @@ class VcsData {
 
 	public function toString(): String {
 		var qualifier =
-			if (ref != null) ref
+			if (commit != null) commit
 			else if (tag != null) tag
 			else if (branch != null) branch
 			else null;
@@ -89,7 +89,7 @@ class VersionDataHelper {
 			type: type,
 			data: {
 				url: vcsRegex.matched(2),
-				ref: vcsRegex.matched(3),
+				commit: vcsRegex.matched(3),
 				branch: vcsRegex.matched(4),
 				subDir: null,
 				tag: null

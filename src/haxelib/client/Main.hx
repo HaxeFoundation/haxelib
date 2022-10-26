@@ -746,14 +746,14 @@ class Main {
 		final ref = argsIterator.next();
 
 		final isRefHash = ref == null || LibraryData.isCommitHash(ref);
-		final hash = isRefHash ? ref : null;
+		final commit = isRefHash ? ref : null;
 		final branch = isRefHash ? null : ref;
 
 		final installer = setupAndGetInstaller();
 
 		installer.installVcsLibrary(library, id, {
 			url: url,
-			ref: hash,
+			commit: commit,
 			branch: branch,
 			subDir: argsIterator.next(),
 			tag: argsIterator.next()
