@@ -216,4 +216,21 @@ class FsUtils {
 		seek(root);
 		return ret;
 	}
+
+    /**
+        Switches to directory found at `path`, executes `f()` in this directory,
+        before switching back to the previous directory.
+    **/
+    public static function runInDirectory<T>(path:String, f:() -> T):T {
+        final oldCwd = Sys.getCwd();
+        try {
+            Sys.setCwd(path);
+            final value = f();
+            Sys.setCwd(oldCwd);
+            return value;
+        } catch (e) {
+            Sys.setCwd(oldCwd);
+            throw e;
+        }
+    }
 }
