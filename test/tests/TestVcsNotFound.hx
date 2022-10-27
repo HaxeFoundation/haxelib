@@ -55,7 +55,7 @@ class TestVcsNotFound extends TestBase
 	public function testCloneHg():Void {
 		final vcs = getHg();
 		try {
-			vcs.clone(vcs.directory, "https://bitbucket.org/fzzr/hx.signal");
+			vcs.clone("no-hg", {url: "https://bitbucket.org/fzzr/hx.signal"});
 			assertFalse(true);
 		}
 		catch(error:VcsError) {
@@ -69,7 +69,7 @@ class TestVcsNotFound extends TestBase
 	public function testCloneGit():Void {
 		final vcs = getGit();
 		try {
-			vcs.clone(vcs.directory, "https://github.com/fzzr-/hx.signal.git");
+			vcs.clone("no-git", {url: "https://github.com/fzzr-/hx.signal.git"});
 			assertFalse(true);
 		}
 		catch(error:VcsError) {
@@ -95,16 +95,11 @@ class TestVcsNotFound extends TestBase
 class WrongHg extends Mercurial {
 
 	public function new() {
-		super("no-hg", "no-hg", "Mercurial-not-found");
+		super("no-hg");
 	}
 
 	// copy of Mercurial.searchExecutablebut have a one change - regexp.
-	override private function searchExecutable():Void {
-		super.searchExecutable();
-
-		if (available)
-			return;
-
+	override private function searchExecutable():Bool {
 		// if we have already msys git/cmd in our PATH
 		final match = ~/(.*)no-hg-no([\\|\/])cmd$/;
 		for(path in Sys.getEnv("PATH").split(";")) {
@@ -113,22 +108,17 @@ class WrongHg extends Mercurial {
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + newPath);
 			}
 		}
-		checkExecutable();
+		return checkExecutable();
 	}
 }
 
 class WrongGit extends Git {
 	public function new() {
-		super("no-git", "no-git", "Git-not-found");
+		super("no-git");
 	}
 
 	// copy of Mercurial.searchExecutablebut have a one change - regexp.
-	override private function searchExecutable():Void {
-		super.searchExecutable();
-
-		if(available)
-			return;
-
+	override private function searchExecutable():Bool {
 		// if we have already msys git/cmd in our PATH
 		final match = ~/(.*)no-git-no([\\|\/])cmd$/;
 		for(path in Sys.getEnv("PATH").split(";")) {
@@ -138,13 +128,14 @@ class WrongGit extends Git {
 			}
 		}
 		if(checkExecutable())
-			return;
+			return true;
 		// look at a few default paths
 		for(path in ["C:\\Program Files (x86)\\Git\\bin", "C:\\Progra~1\\Git\\bin"])
 			if(FileSystem.exists(path)) {
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + path);
 				if(checkExecutable())
-					return;
+					return true;
 			}
+		return false;
 	}
 }

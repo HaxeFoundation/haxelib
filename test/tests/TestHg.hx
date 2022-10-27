@@ -12,6 +12,6 @@ class TestHg extends TestVcs {
 	}
 
 	public function new():Void {
-		super(VcsID.Hg, "Mercurial", FileSystem.fullPath(REPO_PATH), "default", "b022617bccfb");
+		super(VcsID.Hg, "hg", FileSystem.fullPath(REPO_PATH), "default", "b022617bccfb");
 	}
 }
