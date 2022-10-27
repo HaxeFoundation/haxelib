@@ -17,7 +17,7 @@ class TestVcs extends TestBase
 	static var CWD:String = null;
 
 	final id:VcsID = null;
-	final vcsName:String = null;
+	final vcsExecutable:String = null;
 	final url:String = null;
 	final branch:String = null;
 	final rev:String = null;
@@ -25,13 +25,13 @@ class TestVcs extends TestBase
 
 	//--------------- constructor ---------------//
 
-	public function new(id:VcsID, vcsName:String, url:String, ?branch:String, ?rev:String) {
+	public function new(id:VcsID, vcsExecutable:String, url:String, ?branch:String, ?rev:String) {
 		super();
 		this.id = id;
 		this.url = url;
 		this.branch = branch;
 		this.rev = rev;
-		this.vcsName = vcsName;
+		this.vcsExecutable = vcsExecutable;
 
 		CWD = Sys.getCwd();
 		counter = 0;
@@ -61,79 +61,84 @@ class TestVcs extends TestBase
 	//----------------- tests -------------------//
 
 
-	public function testGetVcs():Void {
-		assertTrue(Vcs.get(id) != null);
-		assertTrue(Vcs.get(id).name == vcsName);
+	public function testCreateVcs():Void {
+		assertTrue(Vcs.create(id) != null);
+		assertTrue(Vcs.create(id).executable == vcsExecutable);
 	}
 
 	public function testAvailable():Void {
-		assertTrue(getVcs().available);
+		assertTrue(createVcs().available);
 	}
 
 	// --------------- clone --------------- //
 
-	public function testGetVcsByDir():Void {
-		final vcs = getVcs();
-		testCloneSimple();
-
-		assertEquals(vcs, Vcs.get(id));
-	}
-
 	public function testCloneSimple():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url);
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url});
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
 
-		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
-		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
+		assertTrue(FileSystem.isDirectory('$dir/.${Vcs.getDirectoryFor(id)}'));
 	}
 
 	public function testCloneBranch():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, branch);
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url, branch: branch});
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
 
-		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
-		assertTrue(FileSystem.isDirectory('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
+		assertTrue(FileSystem.isDirectory('$dir/.${Vcs.getDirectoryFor(id)}'));
 	}
 
-	public function testCloneBranchTag_0_9_2():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, branch, "0.9.2");
+	public function testCloneTag_0_9_2():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url, tag: "0.9.2"});
 		Sys.sleep(3);
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(dir + "/README.md"));
 	}
 
-	public function testCloneBranchTag_0_9_3():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, branch, "0.9.3");
+	public function testCloneTag_0_9_3():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url, tag: "0.9.3"});
 
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertTrue(FileSystem.exists(dir + "/README.md"));
 	}
 
-	public function testCloneBranchRev():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, branch, rev);
+	public function testCloneBranchCommit():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url, branch: branch, commit: rev});
 
 		assertTrue(FileSystem.exists(dir));
-		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
+
+		// if that repo "README.md" was added in tag/rev.: "0.9.3"
+		assertFalse(FileSystem.exists(dir + "/README.md"));
+	}
+
+	public function testCloneCommit():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter++;
+		vcs.clone(dir, {url: url, commit: rev});
+
+		assertTrue(FileSystem.exists(dir));
+		assertTrue(FileSystem.exists('$dir/.${Vcs.getDirectoryFor(id)}'));
 
 		// if that repo "README.md" was added in tag/rev.: "0.9.3"
 		assertFalse(FileSystem.exists(dir + "/README.md"));
@@ -142,86 +147,110 @@ class TestVcs extends TestBase
 
 	// --------------- update --------------- //
 
-	public function testUpdateBranchTag_0_9_2__toLatest():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
+	public function testUpdateTag_0_9_2():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter; // increment will do in `testCloneBranchTag_0_9_2`
 
-		testCloneBranchTag_0_9_2();
+		testCloneTag_0_9_2();
 		assertFalse(FileSystem.exists("README.md"));
 
 		// save CWD:
 		final cwd = Sys.getCwd();
 		Sys.setCwd(cwd + dir);
-		assertTrue(FileSystem.exists("." + vcs.directory));
+		assertTrue(FileSystem.exists("." + Vcs.getDirectoryFor(id)));
 
-		// in this case `libName` can get any value:
-		vcs.update(()-> {
-			assertTrue(false);
-			// we are not expecting to be asked for confirmation
-			return false;
-		} );
-
-		// Now we get actual version (0.9.3 or newer) with README.md.
-		assertTrue(FileSystem.exists("README.md"));
-
-		// restore CWD:
-		Sys.setCwd(cwd);
-	}
-
-
-	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withReset():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
-
-		testCloneBranchTag_0_9_2();
-		assertFalse(FileSystem.exists("README.md"));
-
-		// save CWD:
-		final cwd = Sys.getCwd();
-		Sys.setCwd(cwd + dir);
-
-		// creating user-changes:
-		FileSystem.deleteFile("build.hxml");
-		File.saveContent("file", "new file \"file\" with content");
-
-		// update to HEAD:
-		vcs.update(() -> true);
-
-		// Now we get actual version (0.9.3 or newer) with README.md.
-		assertTrue(FileSystem.exists("README.md"));
-
-		// restore CWD:
-		Sys.setCwd(cwd);
-	}
-
-	public function testUpdateBranchTag_0_9_2__toLatest__afterUserChanges_withoutReset():Void {
-		final vcs = getVcs();
-		final dir = vcs.directory + counter;// increment will do in `testCloneBranchTag_0_9_2`
-
-		testCloneBranchTag_0_9_2();
-		assertFalse(FileSystem.exists("README.md"));
-
-		// save CWD:
-		final cwd = Sys.getCwd();
-		Sys.setCwd(cwd + dir);
-
-		// creating user-changes:
-		FileSystem.deleteFile("build.hxml");
-		File.saveContent("file", "new file \"file\" with content");
-
-		// update to HEAD:
-
+		assertFalse(vcs.checkRemoteChanges());
 		try {
-			vcs.update(() -> false);
-			assertTrue(false);
-		} catch (e:VcsUpdateCancelled) {
-			assertTrue(true);
+			vcs.mergeRemoteChanges();
+			assertFalse(true);
+		} catch (e:VcsError) {
+			assertTrue(e.match(CommandFailed(_)));
 		}
 
-		// We get no reset and update:
-		assertTrue(FileSystem.exists("file"));
-		assertFalse(FileSystem.exists("build.hxml"));
+		// Since originally we installed 0.9.2, we are locked down to that so still no README.md.
 		assertFalse(FileSystem.exists("README.md"));
+
+		// restore CWD:
+		Sys.setCwd(cwd);
+	}
+
+	public function testUpdateCommit():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter; // increment will do in `testCloneCommit`
+
+		testCloneCommit();
+		assertFalse(FileSystem.exists("README.md"));
+
+		// save CWD:
+		final cwd = Sys.getCwd();
+		Sys.setCwd(cwd + dir);
+		assertTrue(FileSystem.exists("." + Vcs.getDirectoryFor(id)));
+
+		assertFalse(vcs.checkRemoteChanges());
+		try {
+			vcs.mergeRemoteChanges();
+			assertFalse(true);
+		} catch (e:VcsError) {
+			assertTrue(e.match(CommandFailed(_)));
+		}
+
+		// Since originally we installed 0.9.2, we are locked down to that so still no README.md.
+		assertFalse(FileSystem.exists("README.md"));
+
+		// restore CWD:
+		Sys.setCwd(cwd);
+	}
+
+	public function testUpdateBranch():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter;
+		// clone old commit from branch
+		testCloneBranchCommit();
+		assertFalse(FileSystem.exists("README.md"));
+
+		// save CWD:
+		final cwd = Sys.getCwd();
+		Sys.setCwd(cwd + dir);
+		assertTrue(FileSystem.exists("." + Vcs.getDirectoryFor(id)));
+
+		assertTrue(vcs.checkRemoteChanges());
+		vcs.mergeRemoteChanges();
+
+		// Now we have the current version of develop with README.md.
+		assertTrue(FileSystem.exists("README.md"));
+
+		// restore CWD:
+		Sys.setCwd(cwd);
+	}
+
+	public function testUpdateBranch__afterUserChanges():Void {
+		final vcs = createVcs();
+		final dir = id.getName() + counter;
+
+		testCloneBranchCommit();
+		assertFalse(FileSystem.exists("README.md"));
+
+		// save CWD:
+		final cwd = Sys.getCwd();
+		Sys.setCwd(cwd + dir);
+		assertTrue(FileSystem.exists("." + Vcs.getDirectoryFor(id)));
+
+		// creating user-changes:
+		FileSystem.deleteFile("build.hxml");
+		File.saveContent("file", "new file \"file\" with content");
+
+		assertTrue(vcs.hasLocalChanges());
+
+		// update to HEAD:
+		vcs.resetLocalChanges();
+		assertTrue(FileSystem.exists("build.hxml"));
+
+		assertFalse(vcs.hasLocalChanges());
+		assertTrue(vcs.checkRemoteChanges());
+		vcs.mergeRemoteChanges();
+
+		// Now we have the current version of develop with README.md.
+		assertTrue(FileSystem.exists("README.md"));
 
 		// restore CWD:
 		Sys.setCwd(cwd);
@@ -229,7 +258,7 @@ class TestVcs extends TestBase
 
 	//----------------- tools -------------------//
 
-	inline function getVcs():Vcs {
-		return Vcs.get(id);
+	inline function createVcs():Vcs {
+		return Vcs.create(id);
 	}
 }
