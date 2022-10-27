@@ -12,6 +12,6 @@ class TestGit extends TestVcs {
 	}
 
 	public function new():Void {
-		super(VcsID.Git, "Git", FileSystem.fullPath(REPO_PATH), "develop", "0.9.2");
+		super(VcsID.Git, "git", FileSystem.fullPath(REPO_PATH), "develop", "0.9.2");
 	}
 }
