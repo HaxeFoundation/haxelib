@@ -185,6 +185,18 @@ class GlobalScope extends Scope {
 			);
 			addLine('-D ${info.name}=${info.version}');
 
+			// custom defines if defined
+			if (info.customDefines != null && info.customDefines != "") {
+				var path = Path.join([resolved.path, info.customDefines]);
+				addLine('--macro addDefinesDescriptionFile(\'$path\')');
+			}
+
+			// custom metadatas if defined
+			if (info.customMetas != null && info.customMetas != "") {
+				var path = Path.join([resolved.path, info.customMetas]);
+				addLine('--macro addMetadataDescriptionFile(\'$path\')');
+			}
+
 			// add dependencies to stack
 			final dependencies = info.dependencies.extractDataArray();
 

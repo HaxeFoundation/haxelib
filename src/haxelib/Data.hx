@@ -153,6 +153,8 @@ typedef Infos = {
 	@:optional var tags : Array<String>;
 	@:optional var dependencies : Dependencies;
 	@:optional var main:String;
+	@:optional var customDefines:String;
+	@:optional var customMetas:String;
 }
 
 /** An abstract enum representing the different Licenses a project can have. **/
