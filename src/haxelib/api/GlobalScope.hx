@@ -193,13 +193,13 @@ class GlobalScope extends Scope {
 					// custom defines if defined
 					if (doc.defines != null && doc.defines != "") {
 						var path = Path.join([resolved.path, doc.defines]);
-						addLine('--macro addDefinesDescriptionFile(\'$path\')');
+						addLine('--macro addDefinesDescriptionFile(\'$path\', \'${info.name}\')');
 					}
 
 					// custom metadatas if defined
 					if (doc.metadata != null && doc.metadata != "") {
 						var path = Path.join([resolved.path, doc.metadata]);
-						addLine('--macro addMetadataDescriptionFile(\'$path\')');
+						addLine('--macro addMetadataDescriptionFile(\'$path\', \'${info.name}\')');
 					}
 				}
 			}
