@@ -47,6 +47,21 @@
 			},
 			"additionalProperties": false
 		},
+		"documentation": {
+			"type": "object",
+			"description": "Project's documentation resources",
+			"properties": {
+				"defines": {
+					"type": "string",
+					"description": "Relative path to json file describing this project's custom defines"
+				},
+				"metadata": {
+					"type": "string",
+					"description": "Relative path to json file describing this project's custom metadata"
+				}
+			},
+			"additionalProperties": false
+		},
 		"releasenote": {
 			"description": "Short description of changes made in this version",
 			"type": "string"
