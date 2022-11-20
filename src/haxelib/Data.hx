@@ -152,9 +152,14 @@ typedef Infos = {
 	var contributors : Array<String>;
 	@:optional var tags : Array<String>;
 	@:optional var dependencies : Dependencies;
-	@:optional var main:String;
-	@:optional var customDefines:String;
-	@:optional var customMetas:String;
+	@:optional var main : String;
+	@:optional var documentation : LibraryDocumentation;
+}
+
+/** Documentation data held in the `documentation` field of the `haxelib.json` file. **/
+typedef LibraryDocumentation = {
+	@:optional var defines : String;
+	@:optional var metadata : String;
 }
 
 /** An abstract enum representing the different Licenses a project can have. **/
