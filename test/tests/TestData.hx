@@ -104,6 +104,27 @@ class TestData extends TestBase {
 		assertEquals( ok, true );
 	}
 
+	public function testCheckDocumentation() {
+		var results = [
+			"DocumentationFiles" => true,
+			"BadMetaJson" => false,
+			"BadMetaJson2" => false,
+			"BadDefineJson" => false
+		];
+
+		for (r in results.keys()) {
+			var zip = Reader.readZip(new BytesInput(File.getBytes('test/libraries/lib$r.zip')));
+			var info = Data.readDataFromZip(zip, CheckData);
+
+			try {
+				Data.checkDocumentation(zip,info);
+				assertTrue(results.get(r));
+			} catch (e:Dynamic) {
+				assertFalse(results.get(r));
+			}
+		}
+	}
+
 	public function testReadDataWithDataCheck() {
 		assertFalse( readDataOkay("bad json") );
 
