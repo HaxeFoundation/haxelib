@@ -41,14 +41,14 @@ class Site {
 	}
 
 	static function initDatabase() {
-		var path = "legacy/haxelib.db";
-		FileStorage.instance.readFile(path, function(file) {
-			if (Path.normalize(DB_FILE) != Path.normalize(file))
-				throw '$file should be the same as $DB_FILE';
-			db = neko.db.Sqlite.open(DB_FILE);
-			neko.db.Manager.cnx = db;
-			neko.db.Manager.initialize();
-		});
+		var alreadyExists = sys.FileSystem.exists(DB_FILE);
+		db = neko.db.Sqlite.open(DB_FILE);
+		neko.db.Manager.cnx = db;
+		neko.db.Manager.initialize();
+
+		if (!alreadyExists) {
+			setup();
+		}
 	}
 
 	static function run() {
@@ -111,7 +111,7 @@ class Site {
 			act = uri.shift();
 			ctx.basehref = domain + "/legacy/";
 		}
-		else 
+		else
 			ctx.basehref = domain + "/";
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
