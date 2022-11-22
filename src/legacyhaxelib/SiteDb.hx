@@ -141,7 +141,7 @@ class TagManager extends neko.db.Manager<Tag> {
 
 class SiteDb {
 
-	public static function delete( db : sys.db.Connection ) {
+	public static function dropAll( db : sys.db.Connection ) {
 		db.request("DROP TABLE IF EXISTS User");
 		db.request("DROP TABLE IF EXISTS Project");
 		db.request("DROP TABLE IF EXISTS Version");

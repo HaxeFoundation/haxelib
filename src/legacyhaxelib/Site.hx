@@ -58,7 +58,7 @@ class Site {
 		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
 			return;
 		if( Sys.args()[0] == "setup" ) {
-			SiteDb.delete(db);
+			SiteDb.dropAll(db);
 			SiteDb.create(db);
 			neko.Lib.print("Setup done\n");
 			return;
