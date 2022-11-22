@@ -60,7 +60,7 @@
 					"description": "Relative path to json file describing this project's custom metadata"
 				}
 			},
-			"additionalProperties": false
+			"additionalProperties": true
 		},
 		"releasenote": {
 			"description": "Short description of changes made in this version",
