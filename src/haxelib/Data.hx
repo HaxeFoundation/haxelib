@@ -291,7 +291,7 @@ class Data {
 		}
 	}
 
-	/** Throws an exception if files referenced in `documentation` field of an `infos` does not exist or is invalid **/
+	/** Throws an exception if files referenced in `documentation` field of an `infos` do not exist or are invalid **/
 	public static function checkDocumentation( zip : List<Entry>, infos : Infos ) {
 		if (infos.documentation == null) return;
 
