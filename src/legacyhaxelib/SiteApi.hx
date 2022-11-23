@@ -68,7 +68,7 @@ class SiteApi {
 		return {
 			name : u.name,
 			fullname : u.fullname,
-			email : u.email,
+			email : "(private)",
 			projects : projects,
 		};
 	}

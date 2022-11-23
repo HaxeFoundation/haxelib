@@ -36,19 +36,15 @@ class Site {
 	public static var TMP_DIR = CWD+"../tmp";
 	public static var REP_DIR = CWD+"../"+Data.REPOSITORY;
 
-	static function setup() {
-		SiteDb.create(db);
-	}
-
 	static function initDatabase() {
-		var path = "legacy/haxelib.db";
-		FileStorage.instance.readFile(path, function(file) {
-			if (Path.normalize(DB_FILE) != Path.normalize(file))
-				throw '$file should be the same as $DB_FILE';
-			db = neko.db.Sqlite.open(DB_FILE);
-			neko.db.Manager.cnx = db;
-			neko.db.Manager.initialize();
-		});
+		var alreadyExists = sys.FileSystem.exists(DB_FILE);
+		db = neko.db.Sqlite.open(DB_FILE);
+		neko.db.Manager.cnx = db;
+		neko.db.Manager.initialize();
+
+		if (!alreadyExists) {
+			SiteDb.create(db);
+		}
 	}
 
 	static function run() {
@@ -62,7 +58,8 @@ class Site {
 		if( haxe.remoting.HttpConnection.handleRequest(ctx) )
 			return;
 		if( Sys.args()[0] == "setup" ) {
-			setup();
+			SiteDb.dropAll(db);
+			SiteDb.create(db);
 			neko.Lib.print("Setup done\n");
 			return;
 		}
@@ -111,7 +108,7 @@ class Site {
 			act = uri.shift();
 			ctx.basehref = domain + "/legacy/";
 		}
-		else 
+		else
 			ctx.basehref = domain + "/";
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
