@@ -185,6 +185,25 @@ class GlobalScope extends Scope {
 			);
 			addLine('-D ${info.name}=${info.version}');
 
+			if (info.documentation != null) {
+				var doc = info.documentation;
+
+				// we'll have to change this to "4.3.0" after the release
+				if (resolveCompiler().version >= SemVer.ofString("4.3.0-rc.1")) {
+					// custom defines if defined
+					if (doc.defines != null && doc.defines != "") {
+						var path = Path.join([resolved.path, doc.defines]);
+						addLine('--macro registerDefinesDescriptionFile(\'$path\', \'${info.name}\')');
+					}
+
+					// custom metadatas if defined
+					if (doc.metadata != null && doc.metadata != "") {
+						var path = Path.join([resolved.path, doc.metadata]);
+						addLine('--macro registerMetadataDescriptionFile(\'$path\', \'${info.name}\')');
+					}
+				}
+			}
+
 			// add dependencies to stack
 			final dependencies = info.dependencies.extractDataArray();
 

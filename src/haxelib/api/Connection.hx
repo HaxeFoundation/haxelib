@@ -402,6 +402,7 @@ class Connection {
 
 		final infos = Data.readDataFromZip(zip, CheckData);
 		Data.checkClassPath(zip, infos);
+		Data.checkDocumentation(zip, infos);
 
 		// ask user which contributor they are
 		final user = login(infos.contributors);

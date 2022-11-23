@@ -1,0 +1,13 @@
+[
+	{
+		"define": "test",
+		"doc": "Test define"
+	},
+	{
+		"define": "test2",
+		"doc": "Test define 2",
+		"platforms": ["eval"],
+		"params": ["foo"],
+		"links": ["https://example.com"]
+	}
+]
