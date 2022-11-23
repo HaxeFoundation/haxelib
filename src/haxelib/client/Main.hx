@@ -634,6 +634,7 @@ class Main {
 
 		var infos = Data.readInfos(zip,true);
 		Data.checkClassPath(zip, infos);
+		Data.checkDocumentation(zip, infos);
 
 		var user:String = infos.contributors[0];
 
@@ -1502,6 +1503,25 @@ class Main {
 			Sys.println(dir);
 
 			Sys.println("-D " + d.project + "="+d.info.version);
+
+			if (d.info.documentation != null) {
+				var doc = d.info.documentation;
+
+				// we'll have to change this to "4.3.0" after the release
+				if (haxeVersion() >= SemVer.ofString("4.3.0-rc.1")) {
+					// custom defines if defined
+					if (doc.defines != null && doc.defines != "") {
+						var path = Path.join([d.dir, doc.defines]);
+						Sys.println('--macro registerDefinesDescriptionFile(\'$path\', \'${d.info.name}\')');
+					}
+
+					// custom metadatas if defined
+					if (doc.metadata != null && doc.metadata != "") {
+						var path = Path.join([d.dir, doc.metadata]);
+						Sys.println('--macro registerMetadataDescriptionFile(\'$path\', \'${d.info.name}\')');
+					}
+				}
+			}
 		}
 	}
 

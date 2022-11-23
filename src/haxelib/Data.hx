@@ -171,7 +171,35 @@ typedef Infos = {
 	var contributors : Array<String>;
 	@:optional var tags : Array<String>;
 	@:optional var dependencies : Dependencies;
-	@:optional var main:String;
+	@:optional var main : String;
+	@:optional var documentation : LibraryDocumentation;
+}
+
+/** Documentation data held in the `documentation` field of the `haxelib.json` file. **/
+typedef LibraryDocumentation = {
+	@:optional var defines : String;
+	@:optional var metadata : String;
+}
+
+/** Metadata documentation data as should be declared in the json linked in the
+ * `documentation.metadata` field of the `haxelib.json` file. **/
+typedef MetadataDocumentation = {
+	var metadata : String;
+	var doc : String;
+	@:optional var platforms : Array<String>;
+	@:optional var params : Array<String>;
+	@:optional var targets : Array<String>;
+	@:optional var links : Array<String>;
+}
+
+/** Define documentation data as should be declared in the json linked in the
+ * `documentation.defines` field of the `haxelib.json` file. **/
+typedef DefineDocumentation = {
+	var define : String;
+	var doc : String;
+	@:optional var platforms : Array<String>;
+	@:optional var params : Array<String>;
+	@:optional var links : Array<String>;
 }
 
 @:enum abstract License(String) to String {
@@ -328,6 +356,48 @@ class Data {
 			}
 			throw 'Class path `${infos.classPath}` not found';
 		}
+	}
+
+	/** Throws an exception if files referenced in `documentation` field of an `infos` do not exist or are invalid **/
+	public static function checkDocumentation( zip : List<Entry>, infos : Infos ) {
+		if (infos.documentation == null) return;
+
+		var hasDefines = infos.documentation.defines == null;
+		var hasMetadata = infos.documentation.metadata == null;
+		if (!hasDefines && !hasMetadata) return;
+
+		var basePath = Data.locateBasePath(zip);
+		var definesPath = hasDefines ? null : basePath + infos.documentation.defines;
+		var metadataPath = hasMetadata ? null : basePath + infos.documentation.metadata;
+		var definesFound = false;
+		var metadataFound = false;
+
+		for (f in zip) {
+			if (hasDefines && StringTools.startsWith(f.fileName, definesPath)) {
+				definesFound = true;
+				try {
+					var jsondata = Reader.unzip(f).toString();
+					var defines:Array<DefineDocumentation> = Json.parse(jsondata);
+					Validator.validate(defines);
+				} catch (_:Dynamic) {
+					throw 'Defines documentation json file does not match expected format';
+				}
+			} else if (hasMetadata && StringTools.startsWith(f.fileName, metadataPath)) {
+				metadataFound = true;
+				try {
+					var jsondata = Reader.unzip(f).toString();
+					var metas:Array<MetadataDocumentation> = Json.parse(jsondata);
+					Validator.validate(metas);
+				} catch (_:Dynamic) {
+					throw 'Metadata documentation json file does not match expected format';
+				}
+			}
+
+			if ((!hasDefines || definesFound) && (!hasMetadata || metadataFound)) break;
+		}
+
+		if (hasDefines && !definesFound) throw 'Json file `${infos.documentation.defines}` not found';
+		if (hasMetadata && !metadataFound) throw 'Json file `${infos.documentation.metadata}` not found';
 	}
 
 	public static function readData( jsondata: String, check : CheckLevel ) : Infos {
