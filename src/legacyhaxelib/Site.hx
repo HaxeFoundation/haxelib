@@ -37,14 +37,14 @@ class Site {
 	public static var REP_DIR = CWD+"../"+Data.REPOSITORY;
 
 	static function initDatabase() {
-		var alreadyExists = sys.FileSystem.exists(DB_FILE);
-		db = neko.db.Sqlite.open(DB_FILE);
-		neko.db.Manager.cnx = db;
-		neko.db.Manager.initialize();
-
-		if (!alreadyExists) {
-			SiteDb.create(db);
-		}
+		var path = "legacy/haxelib.db";
+		FileStorage.instance.readFile(path, function(file) {
+			// if (Path.normalize(DB_FILE) != Path.normalize(file))
+			// 	throw '$file should be the same as $DB_FILE';
+			db = neko.db.Sqlite.open(file);
+			neko.db.Manager.cnx = db;
+			neko.db.Manager.initialize();
+		});
 	}
 
 	static function run() {
