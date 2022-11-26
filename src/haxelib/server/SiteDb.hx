@@ -156,11 +156,22 @@ class SiteDb {
 			Developer.manager,
 			Meta.manager
 		];
-		for (m in managers)
-			if (!TableCreate.exists(m))
-				TableCreate.create(m);
 
-		Update.runNeededUpdates();
+		var hasOldTables = false;
+
+		for (m in managers) {
+			if (TableCreate.exists(m)) {
+				hasOldTables = true;
+			} else {
+				TableCreate.create(m);
+			}
+		}
+
+		if (hasOldTables) {
+			Update.runNeededUpdates();
+		} else {
+			Update.setupFresh();
+		}
 	}
 
 	static public function cleanup() {

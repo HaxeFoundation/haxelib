@@ -30,6 +30,15 @@ class Update {
 		meta.update();
 	}
 
+	/**
+		Sets up a fresh database
+	**/
+	public static function setupFresh() {
+		var meta = new Meta();
+		meta.dbVersion = CURRENT_VERSION;
+		meta.insert();
+	}
+
 	static function rehashPasswords() {
 		// add missing columns first
 		sys.db.Manager.cnx.request("
