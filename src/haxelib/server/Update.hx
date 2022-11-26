@@ -1,6 +1,5 @@
 package haxelib.server;
 
-import sys.db.TableCreate;
 import haxelib.server.SiteDb;
 
 /**
@@ -32,6 +31,12 @@ class Update {
 	}
 
 	static function rehashPasswords() {
+		// add missing columns first
+		sys.db.Manager.cnx.request("
+			ALTER TABLE User
+			ADD COLUMN salt binary(32) NOT NULL;
+		");
+
 		// script used to update password hashes from md5 to md5 rehashed with argon2id
 		var users = User.manager.all();
 
