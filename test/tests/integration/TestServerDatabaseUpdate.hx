@@ -39,6 +39,10 @@ class TestServerDatabaseUpdate extends IntegrationTests {
 			// ignore salt
 			user.insert();
 		}
+		sys.db.Manager.cnx.request("
+			ALTER TABLE User
+			DROP COLUMN salt;
+		");
 	}
 
 	function testUpdate() {
