@@ -1,6 +1,5 @@
 package tests.integration;
 
-import haxe.io.Bytes;
 import haxelib.server.Update;
 import haxelib.server.Hashing;
 import haxelib.server.SiteDb;
@@ -39,6 +38,11 @@ class TestServerDatabaseUpdate extends IntegrationTests {
 			// ignore salt and hashmethod
 			user.insert();
 		}
+		sys.db.Manager.cnx.request("
+			ALTER TABLE User
+			DROP COLUMN salt,
+			DROP COLUMN hashmethod;
+		");
 	}
 
 	function testUpdate() {
