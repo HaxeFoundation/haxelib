@@ -14,7 +14,9 @@ class Hashing {
 	public static function generateSalt():haxe.io.Bytes {
 		// currently only works on Linux
 		var randomFile = sys.io.File.read("/dev/random");
-		return randomFile.read(32);
+		var salt = randomFile.read(32);
+		randomFile.close();
+		return salt;
 	}
 
 	/**
@@ -36,6 +38,6 @@ class Hashing {
 				argon2.Argon2id.verify(hash, md5);
 			case Argon2id:
 				argon2.Argon2id.verify(hash, password);
-		}
+		};
 	}
 }
