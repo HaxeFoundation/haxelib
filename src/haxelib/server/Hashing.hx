@@ -13,7 +13,7 @@ class Hashing {
 	**/
 	public static function generateSalt():haxe.io.Bytes {
 		// currently only works on Linux
-		var randomFile = sys.io.File.read("/dev/random");
+		var randomFile = sys.io.File.read("/dev/urandom");
 		var salt = randomFile.read(32);
 		randomFile.close();
 		return salt;
