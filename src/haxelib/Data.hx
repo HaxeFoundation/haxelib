@@ -139,8 +139,7 @@ typedef Dependency = {
 /** Data held in the `haxelib.json` file. **/
 typedef Infos = {
 	// IMPORTANT: if you change this or its fields types,
-	// make sure to update `schema.json` file accordingly,
-	// and make an update PR to https://github.com/SchemaStore/schemastore
+	// make sure to update `schema.json` file accordingly
 	var name : ProjectName;
 	@:optional var url : String;
 	@:optional var description : String;
