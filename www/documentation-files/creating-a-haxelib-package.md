@@ -110,4 +110,6 @@ If you add a file named `extraParams.hxml` to your library root (at the same lev
 
 * During development: Use `haxelib dev my_test_haxelib /path/to/my_test_haxelib/` to test the library.
 * Ready to test: Zip the current directory, and use `haxelib install my_test_haxelib.zip` to try the final version.
-- Submit: You can run `haxelib submit my_test_haxelib.zip` to submit the zip file to haxelib. Alternatively you can run `haxelib submit` without a zip file to have haxelib zip and submit the current directory.
+* Submit:
+  1. You need to [register an account with haxelib](https://lib.haxe.org/documentation/using-haxelib/#register). **Please use a strong unique password for security reasons!**
+  2. You can run `haxelib submit my_test_haxelib.zip` to submit the zip file to haxelib. Alternatively you can run `haxelib submit` without a zip file to have haxelib zip and submit the current directory.
