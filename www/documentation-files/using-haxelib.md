@@ -530,6 +530,8 @@ haxelib run openfl create DisplayingABitmap
 > NOTE: Before Haxelib 5.0.0, due to a bug, development versions will always take priority over a version specified this way.
 >
 > The environment within which the library is run will have the `HAXELIB_RUN` environment variable set to `"1"`, and `HAXELIB_RUN_NAME` set to the name of the library.
+>
+> When running a library script, the current working directory is set to the library directory (eg. /usr/share/haxe/lib/somelib/1,0,0/). The actual current working directory where `haxelib run` was called can be retrieved as the final command line argument to the library script.
 
 
 <a name="proxy" class="anch"></a>
