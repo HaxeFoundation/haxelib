@@ -1,5 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "Haxelib project configuration",
 	"description": "A haxelib project",
 	"type": "object",
 	"properties": {
