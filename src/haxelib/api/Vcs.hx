@@ -187,6 +187,9 @@ abstract class Vcs implements IVcs {
 				err: Std.string(e)
 			}
 		};
+		// just in case process hangs waiting for stdin
+		p.stdin.close();
+
 		var done = false;
 		function readFrom(stream:haxe.io.Input, to: {value: String}) {
 			while (true) {
