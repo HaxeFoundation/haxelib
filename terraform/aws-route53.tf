@@ -33,13 +33,3 @@ resource "aws_route53_record" "do-development-lib" {
   ttl     = "86400"
   records = ["do-k8s.haxe.org"]
 }
-
-# Verify domain for the "haxelib" GitHub org
-# https://github.com/haxelib/
-resource "aws_route53_record" "_github-challenge-haxelib" {
-  zone_id = local.haxe_org_zoneid
-  name    = "_github-challenge-haxelib.lib.haxe.org"
-  type    = "TXT"
-  ttl     = "300"
-  records = ["6ea186783d"]
-}
