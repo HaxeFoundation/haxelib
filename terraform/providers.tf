@@ -1,6 +1,10 @@
 terraform {
   required_version = ">= 1.0"
   required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 3.34"
+    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 4.17"
@@ -91,4 +95,8 @@ provider "helm" {
   kubernetes {
     config_path = "${path.module}/kubeconfig_do"
   }
+}
+
+provider "cloudflare" {
+  api_token = data.aws_ssm_parameter.cloudflare_api_token.value
 }
