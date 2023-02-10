@@ -6,24 +6,15 @@
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
-	"settings": {
-		"terminal.integrated.profiles.linux": {
-			"bash": {
-				"path": "/bin/bash",
-				"args": [
-					"-l"
-				]
-			}
-		},
-		"terraform.languageServer": {
-			"pathToBinary": "/usr/local/bin/terraform-ls"
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"nadako.vshaxe",
+				"hashicorp.terraform",
+				"earthly.earthfile-syntax-highlighting"
+			]
 		}
 	},
-	"extensions": [
-		"ms-azuretools.vscode-docker",
-		"nadako.vshaxe",
-		"hashicorp.terraform",
-		"earthly.earthfile-syntax-highlighting",
-	],
 	"remoteUser": "vscode"
 }
