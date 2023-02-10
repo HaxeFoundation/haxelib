@@ -216,7 +216,9 @@ abstract class Vcs implements IVcs {
 		// should finish other threads
 		done = true;
 
-		while (!(out.complete && err.complete)) {}
+		while (!(out.complete && err.complete)) {
+			Sys.sleep(0.001);
+		}
 
 		final ret = {
 			code: code,
