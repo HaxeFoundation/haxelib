@@ -107,9 +107,9 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
           }
 
           volume_mount {
-            name              = "pod-haxelib-s3fs-cache"
-            mount_path        = "/var/pod-haxelib-s3fs-cache"
-            read_only         = false
+            name       = "pod-haxelib-s3fs-cache"
+            mount_path = "/var/pod-haxelib-s3fs-cache"
+            read_only  = false
           }
         }
 
@@ -196,4 +196,12 @@ resource "aws_route53_record" "do-haxelib-minio-console" {
   type    = "CNAME"
   ttl     = "60"
   records = ["do-k8s.haxe.org"]
+}
+
+resource "cloudflare_record" "do-haxelib-minio-console" {
+  zone_id = local.cloudflare.zones.haxe-org.zone_id
+  name    = "do-haxelib-minio-console"
+  type    = "CNAME"
+  ttl     = "60"
+  value   = "do-k8s.haxe.org"
 }
