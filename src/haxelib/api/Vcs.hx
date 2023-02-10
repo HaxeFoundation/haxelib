@@ -25,6 +25,7 @@ import sys.FileSystem;
 import sys.thread.Thread;
 import haxelib.VersionData.VcsID;
 using haxelib.api.Vcs;
+using StringTools;
 
 interface IVcs {
 	/** The name of the vcs system. **/
@@ -191,12 +192,13 @@ abstract class Vcs implements IVcs {
 		p.stdin.close();
 
 		var done = false;
-		function readFrom(stream:haxe.io.Input, to: {value: String}) {
+		function readFrom(stream:haxe.io.Input, to: {value: String, complete:Bool}) {
 			while (true) {
 				final byte = try {
 					stream.readByte();
 				} catch (_:haxe.io.Eof) {
 					if (done) {
+						to.complete = true;
 						return;
 					}
 					continue;
@@ -205,14 +207,17 @@ abstract class Vcs implements IVcs {
 				to.value += char;
 			}
 		}
-		final out = {value: ""};
-		final err = {value: ""};
+		final out = {value: "", complete: false};
+		final err = {value: "", complete: false};
 		Thread.create(readFrom.bind(p.stdout, out));
 		Thread.create(readFrom.bind(p.stderr, err));
 
 		final code = p.exitCode();
 		// should finish other threads
 		done = true;
+
+		while (!(out.complete && err.complete)) {}
+
 		final ret = {
 			code: code,
 			out: out.value,
