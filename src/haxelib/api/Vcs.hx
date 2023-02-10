@@ -22,6 +22,7 @@
 package haxelib.api;
 
 import sys.FileSystem;
+import sys.thread.Thread;
 import haxelib.VersionData.VcsID;
 using haxelib.api.Vcs;
 
@@ -185,14 +186,34 @@ abstract class Vcs implements IVcs {
 				out: "",
 				err: Std.string(e)
 			}
+		};
+		var done = false;
+		function readFrom(stream:haxe.io.Input, to: {value: String}) {
+			while (true) {
+				final byte = try {
+					stream.readByte();
+				} catch (_:haxe.io.Eof) {
+					if (done) {
+						return;
+					}
+					continue;
+				};
+				final char = String.fromCharCode(byte);
+				to.value += char;
+			}
 		}
-		final out = p.stdout.readAll().toString();
-		final err = p.stderr.readAll().toString();
+		final out = {value: ""};
+		final err = {value: ""};
+		Thread.create(readFrom.bind(p.stdout, out));
+		Thread.create(readFrom.bind(p.stderr, err));
+
 		final code = p.exitCode();
+		// should finish other threads
+		done = true;
 		final ret = {
 			code: code,
-			out: out,
-			err: err
+			out: out.value,
+			err: err.value
 		};
 		p.close();
 		return ret;
