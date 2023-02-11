@@ -1,5 +1,9 @@
+# This is a proxy/cache to the bucket for performance improvement as well as cost reduction.
+# MinIO gateway is deprecated https://blog.min.io/deprecation-of-the-minio-gateway/
+# Consider migrating to something else, e.g.
+# https://github.com/seaweedfs/seaweedfs/wiki/Gateway-to-Remote-Object-Storage
+
 resource "kubernetes_deployment_v1" "do-haxelib-minio" {
-  provider = kubernetes.do
   metadata {
     name = "haxelib-minio"
     labels = {
@@ -130,7 +134,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
 }
 
 resource "kubernetes_service_v1" "do-haxelib-minio" {
-  provider = kubernetes.do
   metadata {
     name = "haxelib-minio"
   }
@@ -155,7 +158,6 @@ resource "kubernetes_service_v1" "do-haxelib-minio" {
 }
 
 resource "kubernetes_ingress_v1" "do-haxelib-minio" {
-  provider = kubernetes.do
   metadata {
     name = "do-haxelib-minio"
     annotations = {

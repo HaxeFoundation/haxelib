@@ -39,16 +39,12 @@ resource "digitalocean_spaces_bucket_policy" "haxelib" {
 }
 
 data "kubernetes_secret" "haxelib-server-do-spaces" {
-  provider = kubernetes.do
-
   metadata {
     name = "haxelib-server-do-spaces"
   }
 }
 
 resource "kubernetes_secret" "rclone-haxelib-s3-to-spaces-config" {
-  provider = kubernetes.do
-
   metadata {
     name = "rclone-haxelib-s3-to-spaces-config"
   }

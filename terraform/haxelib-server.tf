@@ -20,8 +20,6 @@ output "haxelib_server" {
 }
 
 resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
-  provider = kubernetes.do
-
   metadata {
     name = "haxelib-minio-s3fs-config"
   }
@@ -33,7 +31,6 @@ resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
 
 # kubectl create secret generic rds-mysql-haxelib --from-literal=user=FIXME --from-literal=password=FIXME
 data "kubernetes_secret" "do-rds-mysql-haxelib" {
-  provider = kubernetes.do
   metadata {
     name = "rds-mysql-haxelib"
   }
@@ -42,7 +39,6 @@ data "kubernetes_secret" "do-rds-mysql-haxelib" {
 resource "kubernetes_deployment" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
-  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
     labels = {
@@ -264,7 +260,6 @@ resource "kubernetes_deployment" "do-haxelib-server" {
 resource "kubernetes_pod_disruption_budget" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
-  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
   }
@@ -282,7 +277,6 @@ resource "kubernetes_pod_disruption_budget" "do-haxelib-server" {
 resource "kubernetes_service" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
-  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
   }
@@ -304,7 +298,6 @@ resource "kubernetes_service" "do-haxelib-server" {
 resource "kubernetes_ingress_v1" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
-  provider = kubernetes.do
   metadata {
     name = "haxelib-server-${each.key}"
     annotations = {

@@ -75,23 +75,11 @@ provider "digitalocean" {
 }
 
 provider "kubernetes" {
-  config_path = "${path.module}/kubeconfig_haxe2021"
-
-  experiments {
-    manifest_resource = true
-  }
-}
-
-provider "kubernetes" {
-  alias = "do"
-
   config_path = "${path.module}/kubeconfig_do"
 }
 
 
 provider "helm" {
-  alias = "do"
-
   kubernetes {
     config_path = "${path.module}/kubeconfig_do"
   }

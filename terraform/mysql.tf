@@ -23,7 +23,6 @@ resource "random_password" "haxelib-mysql-57-replicator-password" {
 }
 
 data "kubernetes_secret_v1" "haxelib-mysql-57" {
-  provider = kubernetes.do
   metadata {
     name = "haxelib-mysql-57"
   }
@@ -34,8 +33,6 @@ data "kubernetes_secret_v1" "haxelib-mysql-57" {
 }
 
 resource "helm_release" "haxelib-mysql-57" {
-  provider = helm.do
-
   name       = "haxelib-mysql-57"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "mysql"
