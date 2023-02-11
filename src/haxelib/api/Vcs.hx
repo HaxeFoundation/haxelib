@@ -192,22 +192,10 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		var done = false;
 		final streamsLock = new sys.thread.Lock();
 		function readFrom(stream:haxe.io.Input, to: {value: String}) {
-			while (true) {
-				final byte = try {
-					stream.readByte();
-				} catch (_:haxe.io.Eof) {
-					if (done) {
-						streamsLock.release();
-						return;
-					}
-					continue;
-				};
-				final char = String.fromCharCode(byte);
-				to.value += char;
-			}
+			to.value = stream.readAll().toString();
+			streamsLock.release();
 		}
 
 		final out = {value: ""};
@@ -216,7 +204,6 @@ abstract class Vcs implements IVcs {
 		Thread.create(readFrom.bind(p.stderr, err));
 
 		final code = p.exitCode();
-		done = true;
 		for (_ in 0...2) {
 			// wait until we finish reading from both streams
 			streamsLock.wait();
