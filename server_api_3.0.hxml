@@ -1,9 +1,9 @@
 -cp src
--neko www/api/4.0/index.n
+-neko www/api/3.0/index.n
 -main haxelib.server.Repo
 -lib aws-sdk-neko
 -lib record-macros
 -lib argon2
 -dce no
 -D haxelib-api
--D haxelib-api-version=4.0
+-D haxelib-api-version=3.0

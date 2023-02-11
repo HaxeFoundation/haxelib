@@ -30,3 +30,4 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/utest-1,9,6.zip -o haxelib_global/utest.zip && neko run.n install --always --skip-dependencies haxelib_global/utest.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/hxnodejs-12,1,0.zip -o haxelib_global/hxnodejs.zip && neko run.n install --always --skip-dependencies haxelib_global/hxnodejs.zip
 -cmd neko run.n dev record-macros lib/record-macros
+-cmd neko run.n dev argon2 lib/argon2

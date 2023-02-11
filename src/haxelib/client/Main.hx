@@ -21,7 +21,6 @@
  */
 package haxelib.client;
 
-import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
 
 import sys.FileSystem;
@@ -358,9 +357,8 @@ class Main {
 		final pass2 = getSecretArgument("Confirm");
 		if( pass != pass2 )
 			throw "Password does not match";
-		final encodedPassword = Md5.encode(pass);
-		Connection.register(name, encodedPassword, email, fullname);
-		return encodedPassword;
+		Connection.register(name, pass, email, fullname);
+		return pass;
 	}
 
 	#if neko
@@ -396,13 +394,13 @@ class Main {
 	#end
 
 	function readPassword(user:String, prompt = "Password"):String {
-		var password = Md5.encode(getSecretArgument(prompt));
+		var password = getSecretArgument(prompt);
 		var attempts = 5;
 		while (!Connection.checkPassword(user, password)) {
 			Cli.print('Invalid password for $user');
 			if (--attempts == 0)
 				throw 'Failed to input correct password';
-			password = Md5.encode(getSecretArgument('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})'));
+			password = getSecretArgument('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})');
 		}
 		return password;
 	}

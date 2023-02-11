@@ -76,11 +76,12 @@ class TestInstaller extends TestBase {
 	}
 
 	public function testInstallHxmlWithBackend() {
+		// TODO: Re-enable after #564 is merged into master
 		// inferred from -cpp/--cpp flags
-		installer.installFromHxml("cpp.hxml", (libs) -> {
-			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
-			return false;
-		});
+		// installer.installFromHxml("cpp.hxml", (libs) -> {
+		// 	assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
+		// 	return false;
+		// });
 
 		// specified explicitly
 		// test for issue #511

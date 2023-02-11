@@ -110,7 +110,19 @@ class Repo implements SiteApi {
 		};
 	}
 
+	static inline function setPassword(user:User, password:String) {
+		user.salt = Hashing.generateSalt();
+		user.pass = Hashing.hash(password, user.salt);
+		user.hashmethod = Argon2id;
+	}
+
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Void {
+		#if (haxelib_api_version == "3.0")
+		throw "Outdated client\n\n"
+			+ "Due to security improvements to Haxelib, account registrations from old haxelib clients\n"
+			+ "have been disabled. To register an account, please first update your client, using:\n\n"
+			+ "\thaxelib install haxelib\n";
+		#end
 		if( name.length < 3 )
 			throw "User name must be at least 3 characters";
 		if( !Data.alphanum.match(name) )
@@ -124,9 +136,9 @@ class Repo implements SiteApi {
 
 		var u = new User();
 		u.name = name;
-		u.pass = pass;
 		u.email = mail;
 		u.fullname = fullname;
+		setPassword(u,pass);
 		u.insert();
 	}
 
@@ -144,9 +156,27 @@ class Repo implements SiteApi {
 		throw "User '"+user+"' is not a developer of project '"+prj+"'";
 	}
 
+	static inline function verifyPassword(user:User, password:String):Bool {
+		var matched = Hashing.verify(user.pass, password, user.hashmethod);
+		if (matched && user.hashmethod == Md5) {
+			// update to argon2id properly
+			user.pass = Hashing.hash(password, user.salt);
+			user.hashmethod = Argon2id;
+			user.update();
+		}
+		return matched;
+	}
+
 	public function checkPassword( user : String, pass : String ) : Bool {
+		#if (haxelib_api_version == "3.0")
+		// this is used only when submitting
+		throw "Outdated client\n\n"
+			+ "Due to security improvements to Haxelib's api, library submissions from old Haxelib clients\n"
+			+ "have been disabled. To submit a library, please first update your Haxelib client, using:\n\n"
+			+ "\thaxelib install haxelib\n";
+		#end
 		var u = User.manager.search({ name : user }).first();
-		return u != null && u.pass == pass;
+		return u != null && verifyPassword(u,pass);
 	}
 
 	public function getSubmitId() : String {
@@ -154,6 +184,12 @@ class Repo implements SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
+		#if (haxelib_api_version == "3.0")
+		throw "Outdated client\n\n"
+			+ "Due to security improvements to Haxelib's api, library submissions from old Haxelib clients\n"
+			+ "have been disabled. To submit a library, please first update your Haxelib client, using:\n\n"
+			+ "\thaxelib install haxelib\n";
+		#end
 		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
 		return FileStorage.instance.readFile(
 			tmpFile,
@@ -164,7 +200,7 @@ class Repo implements SiteApi {
 
 				var infos = Data.readDataFromZip(zip,CheckData);
 				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass )
+				if( u == null || !verifyPassword(u,pass) )
 					throw "Invalid username or password";
 
 				// spam filter

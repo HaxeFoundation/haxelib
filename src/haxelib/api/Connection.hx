@@ -69,7 +69,7 @@ private class ConnectionData {
 			port: useSsl ? 443 : 80,
 			dir: "",
 			url: "index.n",
-			apiVersion: "3.0",
+			apiVersion: Data.API_VERSION,
 			useSsl: useSsl
 		};
 	}
@@ -95,7 +95,7 @@ private class ConnectionData {
 			port: port,
 			dir: haxe.io.Path.addTrailingSlash(r.matched(4)),
 			url: "index.n",
-			apiVersion: "3.0",
+			apiVersion: Data.API_VERSION,
 			useSsl: useSsl
 		};
 	}
@@ -524,9 +524,9 @@ class Connection {
 	public static function getUserData(userName:String)
 		return retry(data.site.user.bind(userName));
 
-	/** Registers user with `name`, `encodedPassword`, `email`, and `fullname`. **/
-	public static function register(name:String, encodedPassword:String, email:String, fullname:String)
-		return retry(data.site.register.bind(name, encodedPassword, email, fullname));
+	/** Registers user with `name`, `password`, `email`, and `fullname`. **/
+	public static function register(name:String, password:String, email:String, fullname:String)
+		return retry(data.site.register.bind(name, password, email, fullname));
 
 	/** Returns `true` if no user with `userName` exists yet. **/
 	public static function isNewUser(userName:String)
