@@ -23,6 +23,7 @@ package haxelib.api;
 
 import sys.FileSystem;
 import sys.thread.Thread;
+import sys.thread.Lock;
 import haxelib.VersionData.VcsID;
 using haxelib.api.Vcs;
 using StringTools;
@@ -192,13 +193,14 @@ abstract class Vcs implements IVcs {
 		p.stdin.close();
 
 		var done = false;
-		function readFrom(stream:haxe.io.Input, to: {value: String, complete:Bool}) {
+		final streamsLock = new sys.thread.Lock();
+		function readFrom(stream:haxe.io.Input, to: {value: String}) {
 			while (true) {
 				final byte = try {
 					stream.readByte();
 				} catch (_:haxe.io.Eof) {
 					if (done) {
-						to.complete = true;
+						streamsLock.release();
 						return;
 					}
 					continue;
@@ -207,17 +209,17 @@ abstract class Vcs implements IVcs {
 				to.value += char;
 			}
 		}
-		final out = {value: "", complete: false};
-		final err = {value: "", complete: false};
+
+		final out = {value: ""};
+		final err = {value: ""};
 		Thread.create(readFrom.bind(p.stdout, out));
 		Thread.create(readFrom.bind(p.stderr, err));
 
 		final code = p.exitCode();
-		// should finish other threads
 		done = true;
-
-		while (!(out.complete && err.complete)) {
-			Sys.sleep(0.001);
+		for (_ in 0...2) {
+			// wait until we finish reading from both streams
+			streamsLock.wait();
 		}
 
 		final ret = {
