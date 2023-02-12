@@ -24,9 +24,9 @@ resource "kubernetes_secret_v1" "haxelib-server-r2" {
   }
 }
 
-resource "kubernetes_config_map_v1" "copy-do-spaces-to-r2" {
+resource "kubernetes_config_map_v1" "rclone-config" {
   metadata {
-    name = "copy-do-spaces-to-r2"
+    name = "rclone-config"
   }
   data = {
     "rclone.conf" = <<-EOF
@@ -45,29 +45,29 @@ resource "kubernetes_config_map_v1" "copy-do-spaces-to-r2" {
   }
 }
 
-resource "kubernetes_cron_job_v1" "copy-do-spaces-to-r2" {
+resource "kubernetes_cron_job_v1" "copy-r2-to-do-spaces" {
   metadata {
-    name = "copy-do-spaces-to-r2"
+    name = "copy-r2-to-do-spaces"
   }
   spec {
     concurrency_policy = "Forbid"
     schedule           = "0 3 * * *" # at 03:00 daily
     job_template {
       metadata {
-        name = "copy-do-spaces-to-r2"
+        name = "copy-r2-to-do-spaces"
       }
       spec {
         backoff_limit              = 0
         ttl_seconds_after_finished = 60
         template {
           metadata {
-            name = "copy-do-spaces-to-r2"
+            name = "copy-r2-to-do-spaces"
           }
           spec {
             container {
               name  = "rclone"
               image = "rclone/rclone:1.61.1"
-              args  = ["copy", "--verbose", "do:${digitalocean_spaces_bucket.haxelib.name}", "r2:${local.r2.bucket}"]
+              args  = ["copy", "--verbose", "r2:${local.r2.bucket}/files/3.0", "do:${digitalocean_spaces_bucket.haxelib.name}/files/3.0"]
 
               volume_mount {
                 name       = "config"
@@ -115,7 +115,7 @@ resource "kubernetes_cron_job_v1" "copy-do-spaces-to-r2" {
             volume {
               name = "config"
               config_map {
-                name = kubernetes_config_map_v1.copy-do-spaces-to-r2.metadata[0].name
+                name = kubernetes_config_map_v1.rclone-config.metadata[0].name
               }
             }
           }
