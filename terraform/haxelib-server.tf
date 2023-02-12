@@ -51,18 +51,18 @@ resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
   }
 
   data = {
-    "passwd" = "${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_ACCESS_KEY_ID}:${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_SECRET_ACCESS_KEY}"
+    "passwd" = "${data.kubernetes_secret_v1.haxelib-server-do-spaces.data.SPACES_ACCESS_KEY_ID}:${data.kubernetes_secret_v1.haxelib-server-do-spaces.data.SPACES_SECRET_ACCESS_KEY}"
   }
 }
 
 # kubectl create secret generic rds-mysql-haxelib --from-literal=user=FIXME --from-literal=password=FIXME
-data "kubernetes_secret" "do-rds-mysql-haxelib" {
+data "kubernetes_secret_v1" "do-rds-mysql-haxelib" {
   metadata {
     name = "rds-mysql-haxelib"
   }
 }
 
-resource "kubernetes_deployment" "do-haxelib-server" {
+resource "kubernetes_deployment_v1" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
   metadata {
@@ -283,7 +283,7 @@ resource "kubernetes_deployment" "do-haxelib-server" {
   }
 }
 
-resource "kubernetes_pod_disruption_budget" "do-haxelib-server" {
+resource "kubernetes_pod_disruption_budget_v1" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
   metadata {
@@ -300,7 +300,7 @@ resource "kubernetes_pod_disruption_budget" "do-haxelib-server" {
   }
 }
 
-resource "kubernetes_service" "do-haxelib-server" {
+resource "kubernetes_service_v1" "do-haxelib-server" {
   for_each = local.haxelib_server.stage
 
   metadata {
@@ -359,7 +359,7 @@ resource "kubernetes_ingress_v1" "do-haxelib-server" {
         path {
           backend {
             service {
-              name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
+              name = kubernetes_service_v1.do-haxelib-server[each.key].metadata[0].name
               port {
                 number = 80
               }
@@ -375,7 +375,7 @@ resource "kubernetes_ingress_v1" "do-haxelib-server" {
         path {
           backend {
             service {
-              name = kubernetes_service.do-haxelib-server[each.key].metadata[0].name
+              name = kubernetes_service_v1.do-haxelib-server[each.key].metadata[0].name
               port {
                 number = 80
               }

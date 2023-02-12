@@ -38,13 +38,13 @@ resource "digitalocean_spaces_bucket_policy" "haxelib" {
   })
 }
 
-data "kubernetes_secret" "haxelib-server-do-spaces" {
+data "kubernetes_secret_v1" "haxelib-server-do-spaces" {
   metadata {
     name = "haxelib-server-do-spaces"
   }
 }
 
-resource "kubernetes_secret" "rclone-haxelib-s3-to-spaces-config" {
+resource "kubernetes_secret_v1" "rclone-haxelib-s3-to-spaces-config" {
   metadata {
     name = "rclone-haxelib-s3-to-spaces-config"
   }
@@ -60,8 +60,8 @@ resource "kubernetes_secret" "rclone-haxelib-s3-to-spaces-config" {
       [spaces]
       type = s3
       env_auth = false
-      access_key_id = ${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_ACCESS_KEY_ID}
-      secret_access_key = ${data.kubernetes_secret.haxelib-server-do-spaces.data.SPACES_SECRET_ACCESS_KEY}
+      access_key_id = ${data.kubernetes_secret_v1.haxelib-server-do-spaces.data.SPACES_ACCESS_KEY_ID}
+      secret_access_key = ${data.kubernetes_secret_v1.haxelib-server-do-spaces.data.SPACES_SECRET_ACCESS_KEY}
       endpoint = ${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com
       acl = private
     EOT
