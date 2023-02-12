@@ -3,12 +3,12 @@
 # Consider migrating to something else, e.g.
 # https://github.com/seaweedfs/seaweedfs/wiki/Gateway-to-Remote-Object-Storage
 
-resource "kubernetes_deployment_v1" "do-haxelib-minio" {
+resource "kubernetes_deployment_v1" "do-haxelib-minio-r2" {
   metadata {
-    name = "haxelib-minio"
+    name = "haxelib-minio-r2"
     labels = {
       "app.kubernetes.io/name"     = "minio"
-      "app.kubernetes.io/instance" = "haxelib-minio"
+      "app.kubernetes.io/instance" = "haxelib-minio-r2"
     }
   }
 
@@ -18,7 +18,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
     selector {
       match_labels = {
         "app.kubernetes.io/name"     = "minio"
-        "app.kubernetes.io/instance" = "haxelib-minio"
+        "app.kubernetes.io/instance" = "haxelib-minio-r2"
       }
     }
 
@@ -26,7 +26,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
       metadata {
         labels = {
           "app.kubernetes.io/name"     = "minio"
-          "app.kubernetes.io/instance" = "haxelib-minio"
+          "app.kubernetes.io/instance" = "haxelib-minio-r2"
         }
       }
 
@@ -39,7 +39,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
             "minio",
             "gateway",
             "s3",
-            "https://${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com",
+            "https://${local.r2.endpoint}",
             "--console-address", ":9001",
           ]
 
@@ -64,8 +64,8 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
             name = "MINIO_ROOT_USER"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_ACCESS_KEY_ID"
+                name = kubernetes_secret_v1.haxelib-server-r2.metadata[0].name
+                key  = "haxelib_r2_access_key_id"
               }
             }
           }
@@ -73,8 +73,8 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
             name = "MINIO_ROOT_PASSWORD"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_SECRET_ACCESS_KEY"
+                name = kubernetes_secret_v1.haxelib-server-r2.metadata[0].name
+                key  = "haxelib_r2_secret_access_key"
               }
             }
           }
@@ -133,15 +133,15 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio" {
   }
 }
 
-resource "kubernetes_service_v1" "do-haxelib-minio" {
+resource "kubernetes_service_v1" "do-haxelib-minio-r2" {
   metadata {
-    name = "haxelib-minio"
+    name = "haxelib-minio-r2"
   }
 
   spec {
     selector = {
       "app.kubernetes.io/name"     = "minio"
-      "app.kubernetes.io/instance" = "haxelib-minio"
+      "app.kubernetes.io/instance" = "haxelib-minio-r2"
     }
 
     port {
@@ -157,9 +157,9 @@ resource "kubernetes_service_v1" "do-haxelib-minio" {
   }
 }
 
-resource "kubernetes_ingress_v1" "do-haxelib-minio" {
+resource "kubernetes_ingress_v1" "do-haxelib-minio-r2" {
   metadata {
-    name = "do-haxelib-minio"
+    name = "do-haxelib-minio-r2"
     annotations = {
       "nginx.ingress.kubernetes.io/auth-url"    = "https://do-oauth2-proxy.haxe.org/oauth2/auth"
       "nginx.ingress.kubernetes.io/auth-signin" = "https://do-oauth2-proxy.haxe.org/oauth2/sign_in?rd=https://$host$request_uri"
@@ -170,16 +170,16 @@ resource "kubernetes_ingress_v1" "do-haxelib-minio" {
   spec {
     ingress_class_name = "nginx"
     tls {
-      hosts       = ["do-haxelib-minio-console.haxe.org"]
-      secret_name = "do-haxelib-minio-console-tls"
+      hosts       = ["do-haxelib-minio-r2-console.haxe.org"]
+      secret_name = "do-haxelib-minio-r2-console-tls"
     }
     rule {
-      host = "do-haxelib-minio-console.haxe.org"
+      host = "do-haxelib-minio-r2-console.haxe.org"
       http {
         path {
           backend {
             service {
-              name = kubernetes_service_v1.do-haxelib-minio.metadata[0].name
+              name = kubernetes_service_v1.do-haxelib-minio-r2.metadata[0].name
               port {
                 number = 9001
               }
@@ -192,17 +192,17 @@ resource "kubernetes_ingress_v1" "do-haxelib-minio" {
   }
 }
 
-resource "aws_route53_record" "do-haxelib-minio-console" {
+resource "aws_route53_record" "do-haxelib-minio-r2-console" {
   zone_id = local.haxe_org_zoneid
-  name    = "do-haxelib-minio-console.haxe.org"
+  name    = "do-haxelib-minio-r2-console.haxe.org"
   type    = "CNAME"
   ttl     = "60"
   records = ["do-k8s.haxe.org"]
 }
 
-resource "cloudflare_record" "do-haxelib-minio-console" {
+resource "cloudflare_record" "do-haxelib-minio-r2-console" {
   zone_id = local.cloudflare.zones.haxe-org.zone_id
-  name    = "do-haxelib-minio-console"
+  name    = "do-haxelib-minio-r2-console"
   type    = "CNAME"
   ttl     = "60"
   value   = "do-k8s.haxe.org"

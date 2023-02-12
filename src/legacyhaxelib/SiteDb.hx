@@ -141,8 +141,16 @@ class TagManager extends neko.db.Manager<Tag> {
 
 class SiteDb {
 
-	public static function create( db : sys.db.Connection ) {
+	public static function dropAll( db : sys.db.Connection ) {
 		db.request("DROP TABLE IF EXISTS User");
+		db.request("DROP TABLE IF EXISTS Project");
+		db.request("DROP TABLE IF EXISTS Version");
+		db.request("DROP TABLE IF EXISTS Developer");
+		db.request("DROP TABLE IF EXISTS Tag");
+		db.request("DROP INDEX IF EXISTS TagSearch");
+	}
+
+	public static function create( db : sys.db.Connection ) {
 		db.request("
 			CREATE TABLE User (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -152,7 +160,6 @@ class SiteDb {
 				email VARCHAR(50) NOT NULL
 			)
 		");
-		db.request("DROP TABLE IF EXISTS Project");
 		db.request("
 			CREATE TABLE Project (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -165,7 +172,6 @@ class SiteDb {
 				downloads INT NOT NULL
 			)
 		");
-		db.request("DROP TABLE IF EXISTS Version");
 		db.request("
 			CREATE TABLE Version (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -177,14 +183,12 @@ class SiteDb {
 				documentation TEXT NULL
 			)
 		");
-		db.request("DROP TABLE IF EXISTS Developer");
 		db.request("
 			CREATE TABLE Developer (
 				user INTEGER NOT NULL,
 				project INTEGER NOT NULL
 			)
 		");
-		db.request("DROP TABLE IF EXISTS Tag");
 		db.request("
 			CREATE TABLE Tag (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -192,7 +196,6 @@ class SiteDb {
 				project INTEGER NOT NULL
 			)
 		");
-		db.request("DROP INDEX IF EXISTS TagSearch");
 		db.request("CREATE INDEX TagSearch ON Tag(tag)");
 	}
 }

@@ -1,5 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "Haxelib project configuration",
 	"description": "A haxelib project",
 	"type": "object",
 	"properties": {
@@ -44,6 +45,21 @@
 			"description": "Project's dependencies",
 			"patternProperties": {
 				"^[A-Za-z0-9_.-]{3,}$": { "$ref": "#/definitions/dependencyVersion" }
+			},
+			"additionalProperties": false
+		},
+		"documentation": {
+			"type": "object",
+			"description": "Project's documentation resources",
+			"properties": {
+				"defines": {
+					"type": "string",
+					"description": "Relative path to json file describing this project's custom defines"
+				},
+				"metadata": {
+					"type": "string",
+					"description": "Relative path to json file describing this project's custom metadata"
+				}
 			},
 			"additionalProperties": false
 		},

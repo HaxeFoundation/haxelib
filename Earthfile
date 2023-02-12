@@ -93,7 +93,7 @@ devcontainer-base:
         && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
         && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl=1.21.* \
+        && apt-get -y install --no-install-recommends kubectl=1.23.* \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
@@ -144,18 +144,10 @@ awscli:
     SAVE ARTIFACT /aws
 
 # Usage:
-# COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
-aws-iam-authenticator:
-    RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/$TARGETARCH/aws-iam-authenticator \
-        && chmod +x ./aws-iam-authenticator \
-        && mv ./aws-iam-authenticator /usr/local/bin/
-    SAVE ARTIFACT /usr/local/bin/aws-iam-authenticator
-
-# Usage:
 # COPY +doctl/doctl /usr/local/bin/
 doctl:
     ARG TARGETARCH
-    ARG DOCTL_VERSION=1.77.0
+    ARG DOCTL_VERSION=1.92.1
     RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
@@ -171,7 +163,7 @@ tfenv:
 # COPY +terraform-ls/terraform-ls /usr/local/bin/
 terraform-ls:
     ARG --required TARGETARCH
-    ARG TERRAFORM_LS_VERSION=0.28.1
+    ARG TERRAFORM_LS_VERSION=0.30.1
     RUN curl -fsSL -o terraform-ls.zip https://github.com/hashicorp/terraform-ls/releases/download/v${TERRAFORM_LS_VERSION}/terraform-ls_${TERRAFORM_LS_VERSION}_linux_${TARGETARCH}.zip \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
@@ -198,18 +190,20 @@ tfk8s:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.21/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
 rclone:
     FROM +devcontainer-base
-    ARG --required TARGETARCH
-    ARG RCLONE_VERSION=1.58.1
-    RUN curl -fsSL "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-${TARGETARCH}.zip" -o rclone.zip \
+    ARG TARGETARCH
+    ARG VERSION=1.61.1
+    RUN curl -fsSL "https://downloads.rclone.org/v${VERSION}/rclone-v${VERSION}-linux-${TARGETARCH}.zip" -o rclone.zip \
         && unzip -qq rclone.zip \
         && rm rclone.zip
+    RUN rclone-*/rclone completion bash > bash_completion
     SAVE ARTIFACT rclone-*/rclone
+    SAVE ARTIFACT bash_completion
 
 run.n:
     FROM +devcontainer
@@ -268,8 +262,6 @@ devcontainer:
     COPY +awscli/aws /aws
     RUN /aws/install
 
-    COPY +aws-iam-authenticator/aws-iam-authenticator /usr/local/bin/
-
     # doctl
     COPY +doctl/doctl /usr/local/bin/
 
@@ -289,6 +281,7 @@ devcontainer:
 
     # Install rclone
     COPY +rclone/rclone /usr/local/bin/
+    COPY +rclone/bash_completion /etc/bash_completion.d/rclone
 
     # Install skeema
     RUN curl -fsSL -o skeema.deb https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_${TARGETARCH}.deb \

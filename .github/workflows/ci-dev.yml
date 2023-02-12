@@ -21,7 +21,7 @@ jobs:
           submodules: recursive
       - uses: earthly/actions-setup@v1
         with:
-          version: "v0.6.21"
+          version: "v0.6.30"
       - name: Login to DockerHub
         if: success() && github.repository_owner == 'HaxeFoundation' && github.event_name == 'push'
         uses: docker/login-action@v1

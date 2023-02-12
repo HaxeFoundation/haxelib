@@ -1,6 +1,10 @@
 terraform {
   required_version = ">= 1.0"
   required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 3.34"
+    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 4.17"
@@ -71,24 +75,16 @@ provider "digitalocean" {
 }
 
 provider "kubernetes" {
-  config_path = "${path.module}/kubeconfig_haxe2021"
-
-  experiments {
-    manifest_resource = true
-  }
-}
-
-provider "kubernetes" {
-  alias = "do"
-
   config_path = "${path.module}/kubeconfig_do"
 }
 
 
 provider "helm" {
-  alias = "do"
-
   kubernetes {
     config_path = "${path.module}/kubeconfig_do"
   }
+}
+
+provider "cloudflare" {
+  api_token = data.aws_ssm_parameter.cloudflare_api_token.value
 }
