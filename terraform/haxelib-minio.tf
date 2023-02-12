@@ -161,7 +161,6 @@ resource "kubernetes_ingress_v1" "do-haxelib-minio" {
   metadata {
     name = "do-haxelib-minio"
     annotations = {
-      "kubernetes.io/ingress.class"             = "nginx"
       "nginx.ingress.kubernetes.io/auth-url"    = "https://do-oauth2-proxy.haxe.org/oauth2/auth"
       "nginx.ingress.kubernetes.io/auth-signin" = "https://do-oauth2-proxy.haxe.org/oauth2/sign_in?rd=https://$host$request_uri"
       "cert-manager.io/cluster-issuer"          = "letsencrypt-production"
@@ -169,6 +168,7 @@ resource "kubernetes_ingress_v1" "do-haxelib-minio" {
   }
 
   spec {
+    ingress_class_name = "nginx"
     tls {
       hosts       = ["do-haxelib-minio-console.haxe.org"]
       secret_name = "do-haxelib-minio-console-tls"
