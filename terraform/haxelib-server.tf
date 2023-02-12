@@ -5,11 +5,37 @@ locals {
         host    = "development-lib.haxe.org"
         host_do = "do-development-lib.haxe.org"
         image   = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
+
+        bucket_gateway_url        = "http://${kubernetes_service_v1.do-haxelib-minio-r2.metadata[0].name}:9000"
+        HAXELIB_CDN               = local.r2.domain_access
+        HAXELIB_S3BUCKET          = local.r2.bucket
+        HAXELIB_S3BUCKET_ENDPOINT = local.r2.endpoint
+        AWS_ACCESS_KEY_ID = {
+          name = kubernetes_secret_v1.haxelib-server-r2.metadata[0].name
+          key  = "haxelib_r2_access_key_id"
+        }
+        AWS_SECRET_ACCESS_KEY = {
+          name = kubernetes_secret_v1.haxelib-server-r2.metadata[0].name
+          key  = "haxelib_r2_secret_access_key"
+        }
       }
       prod = {
         host    = "lib.haxe.org"
         host_do = "do-lib.haxe.org"
         image   = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
+
+        bucket_gateway_url        = "http://${kubernetes_service_v1.do-haxelib-minio.metadata[0].name}:9000"
+        HAXELIB_CDN               = digitalocean_cdn.haxelib.endpoint
+        HAXELIB_S3BUCKET          = digitalocean_spaces_bucket.haxelib.name
+        HAXELIB_S3BUCKET_ENDPOINT = "${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com"
+        AWS_ACCESS_KEY_ID = {
+          name = "haxelib-server-do-spaces"
+          key  = "SPACES_ACCESS_KEY_ID"
+        }
+        AWS_SECRET_ACCESS_KEY = {
+          name = "haxelib-server-do-spaces"
+          key  = "SPACES_SECRET_ACCESS_KEY"
+        }
       }
     }
   }
@@ -137,19 +163,19 @@ resource "kubernetes_deployment" "do-haxelib-server" {
 
           env {
             name  = "HAXELIB_CDN"
-            value = digitalocean_cdn.haxelib.endpoint
+            value = each.value.HAXELIB_CDN
           }
 
           env {
             name  = "HAXELIB_S3BUCKET"
-            value = digitalocean_spaces_bucket.haxelib.name
+            value = each.value.HAXELIB_S3BUCKET
           }
           env {
             name  = "HAXELIB_S3BUCKET_ENDPOINT"
-            value = "${digitalocean_spaces_bucket.haxelib.region}.digitaloceanspaces.com"
+            value = each.value.HAXELIB_S3BUCKET_ENDPOINT
           }
           env {
-            name = "HAXELIB_S3BUCKET_MOUNTED_PATH"
+            name  = "HAXELIB_S3BUCKET_MOUNTED_PATH"
             value = "/var/haxelib-s3fs"
           }
 
@@ -157,8 +183,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             name = "AWS_ACCESS_KEY_ID"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_ACCESS_KEY_ID"
+                name = each.value.AWS_ACCESS_KEY_ID.name
+                key  = each.value.AWS_ACCESS_KEY_ID.key
               }
             }
           }
@@ -166,8 +192,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             name = "AWS_SECRET_ACCESS_KEY"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_SECRET_ACCESS_KEY"
+                name = each.value.AWS_SECRET_ACCESS_KEY.name
+                key  = each.value.AWS_SECRET_ACCESS_KEY.key
               }
             }
           }
@@ -177,10 +203,10 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           }
 
           volume_mount {
-            name       = "pod-haxelib-s3fs"
-            mount_path = "/var/haxelib-s3fs"
+            name              = "pod-haxelib-s3fs"
+            mount_path        = "/var/haxelib-s3fs"
             mount_propagation = "HostToContainer"
-            read_only  = false
+            read_only         = false
           }
 
           liveness_probe {
@@ -198,9 +224,9 @@ resource "kubernetes_deployment" "do-haxelib-server" {
           image = "haxe/s3fs:latest"
           name  = "s3fs"
           command = [
-            "s3fs", digitalocean_spaces_bucket.haxelib.name, "/var/s3fs",
+            "s3fs", each.value.HAXELIB_S3BUCKET, "/var/s3fs",
             "-f",
-            "-o", "url=http://${kubernetes_service_v1.do-haxelib-minio.metadata[0].name}:9000",
+            "-o", "url=${each.value.bucket_gateway_url}",
             "-o", "use_path_request_style",
             "-o", "umask=022,uid=33,gid=33", # 33 = www-data
             "-o", "allow_other",
@@ -221,8 +247,8 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             name = "AWSACCESSKEYID"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_ACCESS_KEY_ID"
+                name = each.value.AWS_ACCESS_KEY_ID.name
+                key  = each.value.AWS_ACCESS_KEY_ID.key
               }
             }
           }
@@ -230,17 +256,17 @@ resource "kubernetes_deployment" "do-haxelib-server" {
             name = "AWSSECRETACCESSKEY"
             value_from {
               secret_key_ref {
-                name = "haxelib-server-do-spaces"
-                key  = "SPACES_SECRET_ACCESS_KEY"
+                name = each.value.AWS_SECRET_ACCESS_KEY.name
+                key  = each.value.AWS_SECRET_ACCESS_KEY.key
               }
             }
           }
 
           volume_mount {
-            name       = "pod-haxelib-s3fs"
-            mount_path = "/var/s3fs"
+            name              = "pod-haxelib-s3fs"
+            mount_path        = "/var/s3fs"
             mount_propagation = "Bidirectional"
-            read_only  = false
+            read_only         = false
           }
         }
 
