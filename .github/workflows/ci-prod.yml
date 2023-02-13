@@ -29,7 +29,7 @@ jobs:
         run: terraform init
         working-directory: terraform
       - name: Ensure no pending infra changes
-        run: terraform plan -refresh=false
+        run: terraform plan -refresh=false -detailed-exitcode
         working-directory: terraform
       - name: Set haxelib-server image
         run: terraform apply -auto-approve -refresh=false
