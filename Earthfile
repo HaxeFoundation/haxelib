@@ -430,6 +430,7 @@ haxelib-server:
         && mkdir -p /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
         && chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/log/apache2 /var/www/html \
         && a2enmod rewrite \
+        && a2enmod ssl \
         && a2enmod proxy \
         && a2enmod proxy_http \
         && a2enmod headers \

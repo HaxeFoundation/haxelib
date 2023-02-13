@@ -32,7 +32,7 @@ RewriteCond %{HTTPS} !on
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{ENV:HAXELIB_CDN} !^$
-RewriteRule "^files/(.*)$" "http://%{ENV:HAXELIB_CDN}/files/$1" [P]
+RewriteRule "^files/(.*)$" "https://%{ENV:HAXELIB_CDN}/files/$1" [P]
 
 # Rewrite rules to send Haxe remoting calls on "/" to "haxelib1/".  If it matches, that's [L], the last rule - go their immediately.
 
