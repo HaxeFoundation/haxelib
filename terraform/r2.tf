@@ -1,6 +1,6 @@
 locals {
   r2 = {
-    bucket        = "haxelib"
+    bucket        = "haxelib-mipsgux5"
     endpoint      = "09c8df40903546d43dba5a1924ee4b43.r2.cloudflarestorage.com"
     domain_access = "haxelib-files.haxe.org"
   }

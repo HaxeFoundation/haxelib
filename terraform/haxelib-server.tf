@@ -111,7 +111,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
 
           resources {
             requests = {
-              cpu    = "100m"
+              cpu    = "50m"
               memory = "200Mi"
             }
             limits = {
@@ -222,7 +222,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
 
           resources {
             requests = {
-              cpu    = "0.1"
+              cpu    = "50m"
               memory = "50Mi"
             }
           }
@@ -429,7 +429,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-api" {
 
           resources {
             requests = {
-              cpu    = "0.1"
+              cpu    = "50m"
               memory = "50Mi"
             }
           }
@@ -636,7 +636,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
 
           resources {
             requests = {
-              cpu    = "0.1"
+              cpu    = "50m"
               memory = "50Mi"
             }
           }

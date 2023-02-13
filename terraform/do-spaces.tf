@@ -8,7 +8,7 @@ resource "random_string" "do-haxelib-bucket-suffix" {
 resource "digitalocean_spaces_bucket" "haxelib" {
   name   = "haxelib-${random_string.do-haxelib-bucket-suffix.result}"
   region = "fra1"
-  acl    = "public-read"
+  acl    = "private"
   versioning {
     enabled = true
   }
@@ -31,7 +31,7 @@ resource "digitalocean_spaces_bucket_policy" "haxelib" {
         "Principal" : "*",
         "Action" : "s3:GetObject",
         "Resource" : [
-          "arn:aws:s3:::${digitalocean_spaces_bucket.haxelib.name}/*"
+          "arn:aws:s3:::${digitalocean_spaces_bucket.haxelib.name}/files/*"
         ],
       }
     ]
