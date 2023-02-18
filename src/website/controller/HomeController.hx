@@ -98,19 +98,11 @@ class HomeController extends Controller {
 
 	/**
 		`/files` is backed by a `FileStorage`.
-		This function only handles https traffic.
-		Non-https traffic is handled by httpd with mod_rewrite and mod_proxy. See `www/.htaccess`.
+		This function is for local dev only.
+		Production traffic is handled by httpd with mod_rewrite and mod_proxy. See `www/.htaccess`.
 	*/
 	@:route("/files/3.0/$fileName")
 	public function downloadFile( fileName:String ):ActionResult {
-		var r = ~/^([A-Za-z0-9_.,-]{3,})-([0-9]+,.+).zip$/;
-		if (r.match(fileName)) {
-			var project = Data.unsafe(r.matched(1));
-			var version = SemVer.ofString(Data.unsafe(r.matched(2)));
-			if (project == "lime" && version.valid && version <= SemVer.ofString("7.9.0")) {
-				return new RedirectResult('https://github.com/haxelib/${project}/archive/refs/tags/${version}.zip');
-			}
-		}
 		return switch (Sys.getEnv("HAXELIB_CDN")) {
 			case null:
 				FileStorage.instance.readFile(
