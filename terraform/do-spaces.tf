@@ -12,6 +12,13 @@ resource "digitalocean_spaces_bucket" "haxelib" {
   versioning {
     enabled = true
   }
+  lifecycle_rule {
+    enabled = true
+    prefix  = "mysqldump/"
+    expiration {
+      days = 30
+    }
+  }
 }
 
 resource "digitalocean_cdn" "haxelib" {
