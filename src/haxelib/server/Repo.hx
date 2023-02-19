@@ -24,6 +24,7 @@ package haxelib.server;
 import haxe.io.*;
 import sys.io.*;
 import sys.*;
+import sys.db.*;
 
 import haxelib.Data;
 import haxelib.MetaData;
@@ -163,18 +164,27 @@ class Repo implements SiteApi {
 				file.close();
 
 				var infos = Data.readDataFromZip(zip,CheckData);
+
+				Manager.cnx.startTransaction();
+
 				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass )
+				if( u == null || u.pass != pass ) {
+					Manager.cnx.rollback();
 					throw "Invalid username or password";
+				}
 
 				// spam filter
-				if( infos.url.endsWith(".eu.org") )
+				if( infos.url.endsWith(".eu.org") ) {
+					Manager.cnx.rollback();
 					throw "Leave us alone";
+				}
 
 				var devs = infos.contributors.map(function(user) {
 					var u = User.manager.search({ name : user }).first();
-					if( u == null )
+					if( u == null ) {
+						Manager.cnx.rollback();
 						throw "Unknown user '"+user+"'";
+					}
 					return u;
 				});
 
@@ -186,6 +196,7 @@ class Repo implements SiteApi {
 				// create project if needed
 				if( p == null ) {
 					if( devs[0].name != user ) {
+						Manager.cnx.rollback();
 						throw 'A new project should be submitted by its owner, which is the first user in the contributors field (${devs[0].name})';
 					}
 
@@ -218,8 +229,10 @@ class Repo implements SiteApi {
 						isdev = true;
 						break;
 					}
-				if( !isdev )
+				if( !isdev ) {
+					Manager.cnx.rollback();
 					throw "You are not a developer of this project";
+				}
 
 				var otags = Tag.manager.search({ project : p.id });
 				var curtags = otags.map(function(t) return t.tag).join(":");
@@ -238,8 +251,10 @@ class Repo implements SiteApi {
 
 				// update public infos
 				if( ownerChanged || devsChanged || infos.description != p.description || p.website != infos.url || p.license != infos.license || tags.join(":") != curtags ) {
-					if( u.id != p.ownerObj.id )
+					if( u.id != p.ownerObj.id ) {
+						Manager.cnx.rollback();
 						throw "Only project owner can modify project infos";
+					}
 					p.description = infos.description;
 					p.website = infos.url;
 					p.license = infos.license;
@@ -319,6 +334,7 @@ class Repo implements SiteApi {
 					current.documentation = doc;
 					current.comments = infos.releasenote;
 					current.update();
+					Manager.cnx.commit();
 					return "Version "+current.name+" (id#"+current.id+") updated";
 				}
 
@@ -343,6 +359,7 @@ class Repo implements SiteApi {
 				}
 
 				p.update();
+				Manager.cnx.commit();
 				return "Version " + v.toSemver() + " (id#" + v.id + ") added";
 			}
 		);
