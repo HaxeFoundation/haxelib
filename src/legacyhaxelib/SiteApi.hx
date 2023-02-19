@@ -74,6 +74,8 @@ class SiteApi {
 	}
 
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Bool {
+		throw "legacy site is read-only";
+
 		if( !Data.alphanum.match(name) )
 			throw "Invalid user name, please use alphanumeric characters";
 		if( name.length < 3 )
@@ -111,6 +113,8 @@ class SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
+		throw "legacy site is read-only";
+
 		var path = Site.TMP_DIR+"/"+Std.parseInt(id)+".tmp";
 
 		var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
@@ -278,10 +282,12 @@ class SiteApi {
 		var v = Version.manager.search({ project : p.id, name : version }).first();
 		if( v == null )
 			throw "No such Version : "+version;
-		v.downloads++;
-		v.update();
-		p.downloads++;
-		p.update();
+
+		// legacy site is in read-only mode
+		// v.downloads++;
+		// v.update();
+		// p.downloads++;
+		// p.update();
 	}
 
 }
