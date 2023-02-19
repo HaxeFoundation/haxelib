@@ -102,14 +102,13 @@ class Site {
 		var error = function(msg) { ctx.error = StringTools.htmlEscape(msg); return true; }
 		if( uri[0] == "" )
 			uri.shift();
-		var domain = "http://" + neko.Web.getHostName();
 		var act = uri.shift();
 		if( act == "legacy" ) {
 			act = uri.shift();
-			ctx.basehref = domain + "/legacy/";
+			ctx.basehref = "/legacy/";
 		}
 		else
-			ctx.basehref = domain + "/";
+			ctx.basehref = "/";
 		if( act == null || act == "" || act == "index.n" )
 			act = "index";
 		ctx.menuTags = Tag.manager.topTags(10);

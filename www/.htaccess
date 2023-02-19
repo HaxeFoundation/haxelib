@@ -14,6 +14,7 @@ RewriteCond %{HTTP_HOST} !^[0-9]+.[0-9]+.[0-9]+.[0-9]+(:[0-9]+)?$
 RewriteCond %{REQUEST_URI} !index\.n/?$
 RewriteCond %{REQUEST_URI} !^/api/
 RewriteCond %{REQUEST_URI} !^/files/
+RewriteCond %{REQUEST_URI} !^/legacy/
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,QSA]
 
 # /files are stored in S3
