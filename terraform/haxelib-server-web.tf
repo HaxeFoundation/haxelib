@@ -131,6 +131,13 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
             read_only         = false
           }
 
+          volume_mount {
+            name       = "legacy"
+            mount_path = "/src/www/legacy/haxelib.db"
+            sub_path   = "haxelib.db"
+            read_only  = true
+          }
+
           liveness_probe {
             http_get {
               path = "/httpd-status?auto"
@@ -192,6 +199,45 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           }
         }
 
+        init_container {
+          name  = "rclone"
+          image = "rclone/rclone:1.61"
+          args = [
+            "copyto", "--verbose", "do:${digitalocean_spaces_bucket.haxelib.name}/legacy/haxelib.db", "/legacy/haxelib.db"
+          ]
+
+          env {
+            name = "RCLONE_CONFIG_DO_ACCESS_KEY_ID"
+            value_from {
+              secret_key_ref {
+                name = data.kubernetes_secret_v1.haxelib-server-do-spaces.metadata[0].name
+                key  = "SPACES_ACCESS_KEY_ID"
+              }
+            }
+          }
+          env {
+            name = "RCLONE_CONFIG_DO_SECRET_ACCESS_KEY"
+            value_from {
+              secret_key_ref {
+                name = data.kubernetes_secret_v1.haxelib-server-do-spaces.metadata[0].name
+                key  = "SPACES_SECRET_ACCESS_KEY"
+              }
+            }
+          }
+
+          volume_mount {
+            name       = "rclone-config"
+            mount_path = "/config/rclone"
+            read_only  = true
+          }
+
+          volume_mount {
+            name       = "legacy"
+            mount_path = "/legacy"
+            read_only  = false
+          }
+        }
+
         security_context {
           fs_group = 33 # www-data
         }
@@ -199,6 +245,18 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
         volume {
           name = "pod-haxelib-s3fs"
           empty_dir {}
+        }
+
+        volume {
+          name = "legacy"
+          empty_dir {}
+        }
+
+        volume {
+          name = "rclone-config"
+          config_map {
+            name = kubernetes_config_map_v1.rclone-config.metadata[0].name
+          }
         }
       }
     }
