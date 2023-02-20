@@ -275,7 +275,8 @@ resource "kubernetes_ingress_v1" "do-haxelib-server-files" {
               }
             }
           }
-          path = "/files/3.0"
+          path      = "/files/3.0"
+          path_type = "Prefix"
         }
       }
     }

@@ -275,7 +275,8 @@ resource "kubernetes_ingress_v1" "do-haxelib-server-api" {
               }
             }
           }
-          path = "/api/3.0/index.n"
+          path      = "/api/3.0/index.n"
+          path_type = "Prefix"
         }
       }
     }

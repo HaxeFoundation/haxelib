@@ -288,7 +288,8 @@ resource "kubernetes_ingress_v1" "do-haxelib-server" {
               }
             }
           }
-          path = "/"
+          path      = "/"
+          path_type = "Prefix"
         }
       }
     }

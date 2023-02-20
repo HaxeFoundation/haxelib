@@ -223,6 +223,23 @@ resource "kubernetes_ingress_v1" "do-haxelib-server-legacy" {
       hosts       = [each.value.host]
       secret_name = "haxelib-server-${each.key}-tls"
     }
+    # rule {
+    #   host = each.value.host
+    #   http {
+    #     path {
+    #       backend {
+    #         service {
+    #           name = kubernetes_service_v1.do-haxelib-server-legacy[each.key].metadata[0].name
+    #           port {
+    #             number = 80
+    #           }
+    #         }
+    #       }
+    #       path      = "/index.n"
+    #       path_type = "Prefix"
+    #     }
+    #   }
+    # }
     rule {
       host = each.value.host
       http {
@@ -235,19 +252,8 @@ resource "kubernetes_ingress_v1" "do-haxelib-server-legacy" {
               }
             }
           }
-          path = "/index.n"
-        }
-
-        path {
-          backend {
-            service {
-              name = kubernetes_service_v1.do-haxelib-server-legacy[each.key].metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-          path = "/legacy"
+          path      = "/legacy"
+          path_type = "Prefix"
         }
       }
     }
