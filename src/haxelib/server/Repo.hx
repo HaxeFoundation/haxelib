@@ -155,15 +155,20 @@ class Repo implements SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
+		neko.Web.logMessage("processSubmit " + id);
 		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
 		return FileStorage.instance.readFile(
 			tmpFile,
 			function(path):String {
+				var fileStat = try sys.FileSystem.stat(path) catch ( e :Dynamic ) throw "Invalid file id #"+id;
+				neko.Web.logMessage("processSubmit " + id + " " + path + " " + fileStat.size);
 				var file = try sys.io.File.read(path,true) catch( e : Dynamic ) throw "Invalid file id #"+id;
 				var zip = try haxe.zip.Reader.readZip(file) catch( e : Dynamic ) { file.close(); #if neko neko.Lib.rethrow(e); #else throw e; #end };
 				file.close();
+				neko.Web.logMessage("processSubmit " + id + " readZip completed");
 
 				var infos = Data.readDataFromZip(zip,CheckData);
+				neko.Web.logMessage("processSubmit " + id + " readDataFromZip completed");
 
 				Manager.cnx.startTransaction();
 
