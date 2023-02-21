@@ -75,8 +75,17 @@ class Server {
 		});
 		if( tmpFile != null ) {
 			tmpFile.close();
-			FileStorage.instance
-				.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
+
+			// directly upload the file to bucket with s3 api instead of going through s3fs and minio
+			// https://community.cloudflare.com/t/r2-multipart-uploads-not-working-with-minio-client/396536/1
+			var storage = switch [Sys.getEnv("HAXELIB_S3BUCKET"), Sys.getEnv("AWS_DEFAULT_REGION"), Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT")] {
+				case [null, _, _] | [_, null, _] | [_, _, null]:
+					FileStorage.instance;
+				case [bucket, region, endpoint]:
+					new haxelib.server.FileStorage.S3FileStorage(Paths.CWD, bucket, region, endpoint);
+			}
+			storage.importFile(tmpFilePath, Path.join([TMP_DIR_NAME, tmpFileName]), true);
+
 			neko.Lib.print("File #"+sid+" accepted : "+bytes+" bytes written");
 			return true;
 		}
