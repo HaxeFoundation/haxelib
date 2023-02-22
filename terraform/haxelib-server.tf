@@ -59,3 +59,19 @@ data "kubernetes_secret_v1" "do-rds-mysql-haxelib" {
     name = "rds-mysql-haxelib"
   }
 }
+
+
+resource "kubernetes_config_map_v1" "haxelib-rclone-config" {
+  metadata {
+    name = "haxelib-rclone-config"
+  }
+  data = {
+    "rclone.conf" = <<-EOF
+        [s3]
+        type = s3
+        provider = Cloudflare
+        env_auth = false
+        endpoint = https://${local.r2.endpoint}
+    EOF
+  }
+}

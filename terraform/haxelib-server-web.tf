@@ -124,11 +124,37 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
             value = "us-east-1"
           }
 
+          env {
+            name = "RCLONE_CONFIG_S3_ACCESS_KEY_ID"
+            value_from {
+              secret_key_ref {
+                name = each.value.AWS_ACCESS_KEY_ID.name
+                key  = each.value.AWS_ACCESS_KEY_ID.key
+              }
+            }
+          }
+          env {
+            name = "RCLONE_CONFIG_S3_SECRET_ACCESS_KEY"
+            value_from {
+              secret_key_ref {
+                name = each.value.AWS_SECRET_ACCESS_KEY.name
+                key  = each.value.AWS_SECRET_ACCESS_KEY.key
+              }
+            }
+          }
+
           volume_mount {
             name              = "pod-haxelib-s3fs"
             mount_path        = "/var/haxelib-s3fs"
             mount_propagation = "HostToContainer"
             read_only         = false
+          }
+
+          volume_mount {
+            name       = "haxelib-rclone-config"
+            mount_path = "/var/www/.rclone.conf"
+            sub_path   = "rclone.conf"
+            read_only  = true
           }
 
           volume_mount {
@@ -256,6 +282,12 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           name = "rclone-config"
           config_map {
             name = kubernetes_config_map_v1.rclone-config.metadata[0].name
+          }
+        }
+        volume {
+          name = "haxelib-rclone-config"
+          config_map {
+            name = kubernetes_config_map_v1.haxelib-rclone-config.metadata[0].name
           }
         }
       }
