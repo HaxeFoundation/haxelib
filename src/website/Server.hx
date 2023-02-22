@@ -76,8 +76,8 @@ class Server {
 		if( tmpFile != null ) {
 			tmpFile.close();
 
-			// directly upload the file to bucket with s3 api instead of going through s3fs and minio
-			// https://community.cloudflare.com/t/r2-multipart-uploads-not-working-with-minio-client/396536/1
+			// directly upload the file to bucket with rclone instead of going through s3fs and minio
+			// https://github.com/HaxeFoundation/haxelib/issues/589
 			var storage = switch [Sys.getEnv("HAXELIB_S3BUCKET"), Sys.getEnv("AWS_DEFAULT_REGION"), Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT")] {
 				case [null, _, _] | [_, null, _] | [_, _, null]:
 					neko.Web.logMessage('using FileStorage.instance');
