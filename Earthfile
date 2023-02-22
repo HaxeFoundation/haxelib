@@ -449,6 +449,9 @@ haxelib-server:
 
     COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
 
+    # Need rclone to do the upload to R2
+    COPY +rclone/rclone /usr/local/bin/
+
     WORKDIR /src
 
     COPY --chown www-data:www-data www www

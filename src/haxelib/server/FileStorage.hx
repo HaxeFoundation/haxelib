@@ -245,15 +245,27 @@ class S3FileStorage extends FileStorage {
 
 	function uploadToS3(localFile:AbsPath, file:RelPath, contentType = "application/octet-stream") {
 		var s3Path = Path.join(['s3://${bucketName}', file]);
-		var request = transferClient.uploadFile(localFile, bucketName, file, contentType);
-		while (!request.isDone()) {
-			Sys.sleep(0.01);
-		}
-		switch (request.getFailure()) {
-			case null:
+
+		// somehow R2 doesn't process the multipart upload from transferClient
+		// var request = transferClient.uploadFile(localFile, bucketName, file, contentType);
+		// while (!request.isDone()) {
+		// 	Sys.sleep(0.01);
+		// }
+		// switch (request.getFailure()) {
+		// 	case null:
+		// 		//pass
+		// 	case failure:
+		// 		throw 'failed to upload ${localFile} to ${s3Path}\n${failure}';
+		// }
+		var p = new sys.io.Process("rclone", ["copyto", localFile, s3Path]);
+		var stderr = p.stderr.readAll().toString();
+		var exitCode = p.exitCode();
+		p.close();
+		switch (exitCode) {
+			case 0:
 				//pass
-			case failure:
-				throw 'failed to upload ${localFile} to ${s3Path}\n${failure}';
+			case _:
+				throw 'failed to upload ${localFile} to ${s3Path} (rclone exit code: ${exitCode}, err: ${stderr})';
 		}
 	}
 
