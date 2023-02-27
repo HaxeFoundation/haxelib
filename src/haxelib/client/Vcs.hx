@@ -22,8 +22,13 @@
 package haxelib.client;
 
 import sys.FileSystem;
+#if haxe4
+import sys.thread.Thread;
+import sys.thread.Lock;
+#else
 import neko.vm.Thread;
 import neko.vm.Lock;
+#end
 using haxelib.client.Vcs;
 
 interface IVcs {
