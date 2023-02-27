@@ -19,7 +19,7 @@ class Package {
             case 'Windows':
                 zipWindows();
             case _:
-                final exitCode = Sys.command('zip', ['-r', outPath, 'src/haxelib', 'haxelib.json', 'run.n', 'README.md']);
+                final exitCode = Sys.command('zip', ['-r', outPath, 'src/haxelib', 'haxelib.json', 'run.n', 'README.md', '-x', 'src/haxelib/server/*']);
                 Sys.exit(exitCode);
         }
     }
