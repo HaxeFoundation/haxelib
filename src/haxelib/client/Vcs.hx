@@ -22,6 +22,8 @@
 package haxelib.client;
 
 import sys.FileSystem;
+import neko.vm.Thread;
+import neko.vm.Lock;
 using haxelib.client.Vcs;
 
 interface IVcs {
@@ -152,17 +154,32 @@ class Vcs implements IVcs {
         		out: Std.string(e)
         	}
         }
-        var out = p.stdout.readAll().toString();
-        var err = p.stderr.readAll().toString();
-        if (settings.debug && out != "")
-        	Sys.println(out);
-        if (settings.debug && err != "")
-        	Sys.stderr().writeString(err);
-        var code = p.exitCode();
-        var ret = {
-            code: code,
-            out: code == 0 ? out : err
-        };
+		var streamsLock = new sys.thread.Lock();
+		function readFrom(stream:haxe.io.Input, to: {value: String}) {
+			to.value = stream.readAll().toString();
+			streamsLock.release();
+		}
+
+		var out = {value: ""};
+		var err = {value: ""};
+		Thread.create(readFrom.bind(p.stdout, out));
+		Thread.create(readFrom.bind(p.stderr, err));
+
+		var code = p.exitCode();
+		for (_ in 0...2) {
+			// wait until we finish reading from both streams
+			streamsLock.wait();
+		}
+
+		if (settings.debug && out.value != "")
+			Sys.println(out.value);
+		if (settings.debug && err.value != "")
+			Sys.stderr().writeString(err.value);
+
+		var ret = {
+			code: code,
+			out: code == 0 ? out.value : err.value
+		};
         p.close();
         return ret;
     }
