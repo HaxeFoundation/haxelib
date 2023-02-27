@@ -62,7 +62,7 @@ devcontainer-base:
     RUN apt-key add /tmp/mysql-public-key
 
     # Configure apt and install packages
-    RUN apt-get update \
+    RUN set -ex; apt-get update \
         && apt-get install -y --no-install-recommends apt-utils dialog 2>&1 \
         && apt-get install -y \
             iproute2 \
@@ -82,15 +82,13 @@ devcontainer-base:
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
         && apt-get install -y nodejs=16.* \
-        # the haxelib server code base is not Haxe 4 ready
-        && add-apt-repository ppa:haxe/haxe3.4 \
         # Install mysql-client
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
         && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
         && apt-get update \
         && apt-get -y install mysql-client=5.7.* \
         # install kubectl
-        && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+        && curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | apt-key add - \
         && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends kubectl=1.23.* \
