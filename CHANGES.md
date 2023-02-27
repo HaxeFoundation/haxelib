@@ -1,3 +1,7 @@
+## 4.0.3 (2023-02-27)
+ - Fixed large git installations hanging on windows ([#585](https://github.com/HaxeFoundation/haxelib/pull/585))
+ - Corrected license in haxelib.json ([#535](https://github.com/HaxeFoundation/haxelib/pull/535))
+
 ## 4.0.2 (2019-11-11)
  - Fixed too strict requirements to haxelib.json data for private libs ([#484](https://github.com/HaxeFoundation/haxelib/issues/484))
 
