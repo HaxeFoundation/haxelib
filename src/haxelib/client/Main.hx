@@ -860,7 +860,7 @@ class Main {
 				final scope = Scope.getScopeForRepository(repository);
 				if (priorityFlags.contains(Debug)) {
 					final path = scope.getPath(HAXELIB_LIBNAME);
-					Cli.print('[debug] Using $HAXELIB_LIBNAME from "$path"');
+					Cli.printError('[debug] Using $HAXELIB_LIBNAME from "$path"');
 				}
 				scope.runScript(HAXELIB_LIBNAME, {
 					args: args,
