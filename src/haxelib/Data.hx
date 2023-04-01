@@ -294,13 +294,13 @@ class Data {
 	public static function checkDocumentation( zip : List<Entry>, infos : Infos ) {
 		if (infos.documentation == null) return;
 
-		var hasDefines = infos.documentation.defines == null;
-		var hasMetadata = infos.documentation.metadata == null;
+		var hasDefines = infos.documentation.defines != null;
+		var hasMetadata = infos.documentation.metadata != null;
 		if (!hasDefines && !hasMetadata) return;
 
 		var basePath = Data.locateBasePath(zip);
-		var definesPath = hasDefines ? null : basePath + infos.documentation.defines;
-		var metadataPath = hasMetadata ? null : basePath + infos.documentation.metadata;
+		var definesPath = hasDefines ? basePath + infos.documentation.defines : null;
+		var metadataPath = hasMetadata ? basePath + infos.documentation.metadata : null;
 		var definesFound = false;
 		var metadataFound = false;
 
