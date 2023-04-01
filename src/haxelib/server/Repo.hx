@@ -154,6 +154,27 @@ class Repo implements SiteApi {
 		return Std.string(Std.random(100000000));
 	}
 
+	public function checkDependencies(dependencies:Dependencies) : Void {
+		for (dependency in dependencies.getNames()) {
+			var project = Project.manager.select($name == dependency);
+			if (project == null) {
+				throw 'Library $dependency does not exist';
+			}
+			var version = Reflect.field(dependencies, dependency);
+			if (version == '')
+				continue;
+			var hasVersion = false;
+			for (versionObject in Version.manager.search($project == project.id)) {
+				if (versionObject.name == version) {
+					hasVersion = true;
+				}
+			}
+			if (!hasVersion) {
+				throw 'Library $dependency does not have version $version';
+			}
+		}
+	}
+
 	public function processSubmit( id : String, user : String, pass : String ) : String {
 		neko.Web.logMessage("processSubmit " + id);
 		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
@@ -169,6 +190,13 @@ class Repo implements SiteApi {
 
 				var infos = Data.readDataFromZip(zip,CheckData);
 				neko.Web.logMessage("processSubmit " + id + " readDataFromZip completed");
+
+				Data.checkClassPath(zip, infos);
+				Data.checkDocumentation(zip, infos);
+
+				neko.Web.logMessage("processSubmit " + id + " metadata validation completed");
+
+				checkDependencies(infos.dependencies);
 
 				Manager.cnx.startTransaction();
 

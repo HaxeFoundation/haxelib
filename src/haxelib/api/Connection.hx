@@ -418,16 +418,6 @@ class Connection {
 		uploadAndSubmit(user, data, logUploadStatus);
 	}
 
-	static function checkDependencies(dependencies:Dependencies) {
-		for (name => versionString in dependencies) {
-			final versions:Array<String> = getVersions(ProjectName.ofString(name));
-			if (versionString == "")
-				continue;
-			if (!versions.contains(versionString))
-				throw "Library " + name + " does not have version " + versionString;
-		}
-	}
-
 	static function doesVersionExist(library:ProjectName, version:SemVer):Bool {
 		final versions = try getVersions(library) catch (_:Dynamic) return false;
 		return versions.contains(version);
@@ -544,4 +534,7 @@ class Connection {
 
 	static function processSubmit(id:String, userName:String, password:String)
 		return retry(data.site.processSubmit.bind(id, userName, password));
+
+	static function checkDependencies(dependencies:Dependencies)
+		return retry(data.site.checkDependencies.bind(dependencies));
 }

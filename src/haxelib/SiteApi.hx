@@ -22,6 +22,7 @@
 package haxelib;
 
 import haxelib.MetaData;
+import haxelib.Data.Dependencies;
 import haxe.ds.*;
 
 interface SiteApi {
@@ -34,6 +35,7 @@ interface SiteApi {
 	public function checkDeveloper( prj : String, user : String ) : Void;
 	public function checkPassword( user : String, pass : String ) : Bool;
 	public function getSubmitId() : String;
+	public function checkDependencies( dependencies : Dependencies) : Void;
 
 	public function processSubmit( id : String, user : String, pass : String ) : String;
 
