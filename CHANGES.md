@@ -1,3 +1,8 @@
+## 4.1.0 (2023-04-06)
+
+ - Added support for documenting custom defines and metadata ([#573](https://github.com/HaxeFoundation/haxelib/pull/573))
+ - Fixed a segmentation fault on Linux systems
+
 ## 4.0.3 (2023-02-27)
  - Fixed large git installations hanging on windows ([#585](https://github.com/HaxeFoundation/haxelib/pull/585))
  - Corrected license in haxelib.json ([#535](https://github.com/HaxeFoundation/haxelib/pull/535))

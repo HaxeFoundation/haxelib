@@ -6,6 +6,6 @@
 	"description": "The haxelib client",
 	"classPath": "src",
 	"version": "4.1.0",
-	"releasenote": "Added support for custom define and metadata documentation (#573)",
+	"releasenote": "Added support for documenting custom defines and metadata (#573)",
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"]
 }
