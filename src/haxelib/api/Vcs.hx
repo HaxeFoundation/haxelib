@@ -192,28 +192,39 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		final streamsLock = new sys.thread.Lock();
-		function readFrom(stream:haxe.io.Input, to: {value: String}) {
-			to.value = stream.readAll().toString();
-			streamsLock.release();
-		}
+		final ret = if (Sys.systemName() == "Windows") {
+			final streamsLock = new sys.thread.Lock();
+			function readFrom(stream:haxe.io.Input, to:{value:String}) {
+				to.value = stream.readAll().toString();
+				streamsLock.release();
+			}
 
-		final out = {value: ""};
-		final err = {value: ""};
-		Thread.create(readFrom.bind(p.stdout, out));
-		Thread.create(readFrom.bind(p.stderr, err));
+			final out = {value: ""};
+			final err = {value: ""};
+			Thread.create(readFrom.bind(p.stdout, out));
+			Thread.create(readFrom.bind(p.stderr, err));
 
-		final code = p.exitCode();
-		for (_ in 0...2) {
-			// wait until we finish reading from both streams
-			streamsLock.wait();
-		}
-
-		final ret = {
-			code: code,
-			out: out.value,
-			err: err.value
+			final code = p.exitCode();
+			for (_ in 0...2) {
+				// wait until we finish reading from both streams
+				streamsLock.wait();
+			}
+			{
+				code: code,
+				out: out.value,
+				err: err.value
+			};
+		} else {
+			final out = p.stdout.readAll().toString();
+			final err = p.stderr.readAll().toString();
+			final code = p.exitCode();
+			{
+				code: code,
+				out: out,
+				err: err
+			};
 		};
+
 		p.close();
 		return ret;
 	}
