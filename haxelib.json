@@ -5,8 +5,8 @@
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
-	"version": "4.0.3",
-	"releasenote": "Fixed large git installations hanging on windows (#585)",
+	"version": "4.1.0",
+	"releasenote": "Added support for documenting custom defines and metadata (#573)",
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"],
 	"dependencies":{
 		"hx3compat": ""
