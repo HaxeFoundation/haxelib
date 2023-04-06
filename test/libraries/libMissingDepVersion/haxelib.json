@@ -1,0 +1,13 @@
+{
+	"name": "Foo",
+	"url" : "http://example.org",
+	"license": "GPL",
+	"tags": ["foo", "test"],
+	"description": "This project depends on a version of Bar that doesn't exist on the server",
+	"version": "1.0.0",
+	"releasenote": "",
+	"dependencies": {
+		"Bar": "2.0.0"
+	},
+	"contributors": ["Foo"]
+}
