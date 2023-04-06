@@ -323,7 +323,7 @@ class Connection {
 	}
 	#end
 
-	static function retry<R>(func:Void->R) {
+	static function retry<R>(func:Void->R, errorPrefix = "Failed with error: ") {
 		var hasRetried = false;
 		var numTries = retries;
 
@@ -339,7 +339,7 @@ class Connection {
 				if (e == "std@host_resolve")
 					Util.rethrow(e);
 				if (e != "Blocked")
-					throw 'Failed with error: $e';
+					throw errorPrefix + e;
 				log("Failed. Triggering retry due to HTTP timeout");
 				hasRetried = true;
 			}
@@ -527,7 +527,7 @@ class Connection {
 		return retry(data.site.checkPassword.bind(userName, password));
 
 	static function checkDeveloper(library:ProjectName, userName:String)
-		return retry(data.site.checkDeveloper.bind(library, userName));
+		return retry(data.site.checkDeveloper.bind(library, userName), "");
 
 	static function getSubmitId()
 		return retry(data.site.getSubmitId.bind());
@@ -536,5 +536,5 @@ class Connection {
 		return retry(data.site.processSubmit.bind(id, userName, password));
 
 	static function checkDependencies(dependencies:Dependencies)
-		return retry(data.site.checkDependencies.bind(dependencies));
+		return retry(data.site.checkDependencies.bind(dependencies), "");
 }
