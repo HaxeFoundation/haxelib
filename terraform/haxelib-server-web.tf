@@ -39,6 +39,22 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           }
         }
 
+        affinity {
+          pod_anti_affinity {
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 100
+              pod_affinity_term {
+                label_selector {
+                  match_labels = {
+                    "app.kubernetes.io/name" : "mysql"
+                  }
+                }
+                topology_key = "kubernetes.io/hostname"
+              }
+            }
+          }
+        }
+
         container {
           image = each.value.image
           name  = "haxelib-server"
