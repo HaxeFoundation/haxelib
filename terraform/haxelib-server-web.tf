@@ -69,7 +69,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
               memory = "200Mi"
             }
             limits = {
-              memory = "2.5Gi"
+              memory = "1.5Gi"
             }
           }
 
