@@ -10,7 +10,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
   }
 
   spec {
-    replicas = 2
+    replicas = each.value.replicas
 
     selector {
       match_labels = {
@@ -66,10 +66,10 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           resources {
             requests = {
               cpu    = "50m"
-              memory = "200Mi"
+              memory = each.key == "prod" ? "1Gi" : "200Mi"
             }
             limits = {
-              memory = "1.5Gi"
+              memory = "1Gi"
             }
           }
 

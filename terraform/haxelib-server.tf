@@ -5,6 +5,8 @@ locals {
         host  = "development-lib.haxe.org"
         image = var.HAXELIB_SERVER_IMAGE_DEVELOPMENT != null ? var.HAXELIB_SERVER_IMAGE_DEVELOPMENT : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.dev.image, null)
 
+        replicas = 1
+
         bucket_gateway_url        = "http://${kubernetes_service_v1.do-haxelib-minio-r2.metadata[0].name}:9000"
         HAXELIB_CDN               = local.r2.domain_access
         HAXELIB_S3BUCKET          = local.r2.bucket
@@ -21,6 +23,8 @@ locals {
       prod = {
         host  = "lib.haxe.org"
         image = var.HAXELIB_SERVER_IMAGE_MASTER != null ? var.HAXELIB_SERVER_IMAGE_MASTER : try(data.terraform_remote_state.previous.outputs.haxelib_server.stage.prod.image, null)
+
+        replicas = 2
 
         bucket_gateway_url        = "http://${kubernetes_service_v1.do-haxelib-minio-r2.metadata[0].name}:9000"
         HAXELIB_CDN               = local.r2.domain_access

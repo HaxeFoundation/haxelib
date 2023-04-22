@@ -10,7 +10,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
   }
 
   spec {
-    replicas = 2
+    replicas = each.value.replicas
 
     selector {
       match_labels = {
