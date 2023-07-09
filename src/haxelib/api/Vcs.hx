@@ -267,9 +267,6 @@ class Git extends Vcs {
 	public function clone(libPath:String, data:VcsData, flat = false):Void {
 		final vcsArgs = ["clone", data.url, libPath];
 
-		if (!flat)
-			vcsArgs.push('--recursive');
-
 		if (data.branch != null) {
 			vcsArgs.push('--single-branch');
 			vcsArgs.push('--branch');
@@ -302,6 +299,12 @@ class Git extends Vcs {
 				final tagRef = 'tags/${data.tag}';
 				runCheckoutRelatedCommand(tagRef, ["fetch", "--depth=1", getRemoteName(), '$tagRef:$tagRef']);
 				checkout('tags/${data.tag}', false);
+			});
+		}
+
+		if (!flat) {
+			FsUtils.runInDirectory(libPath, () -> {
+				run(["submodule", "update", "--init", "--depth=1", "--single-branch"], true);
 			});
 		}
 	}
