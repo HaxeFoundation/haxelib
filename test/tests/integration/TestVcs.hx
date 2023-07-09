@@ -6,11 +6,16 @@ abstract class TestVcs extends IntegrationTests {
 	final vcsLibPath = "libraries/libBar";
 	final vcsLibNoHaxelibJson = "libraries/libNoHaxelibJson";
 	final vcsBrokenDependency = "libraries/libBrokenDep";
+	final vcsTag = "v1.0.0";
 
 	function new(cmd:String) {
 		super();
 		this.cmd = cmd;
 	}
+
+	abstract function updateVcsRepo():Void;
+
+	abstract function getVcsCommit():String;
 
 	function test() {
 
@@ -132,6 +137,61 @@ abstract class TestVcs extends IntegrationTests {
 			"Error: Failed installing dependencies for Foo:",
 			"Could not clone Git repository."
 		], r.err.trim());
+
+	}
+
+
+	function testVcsUpdateBranch() {
+
+		final r = haxelib([cmd, "Bar", vcsLibPath, "main"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["update", "Bar"]).result();
+		assertSuccess(r);
+		assertOutputEquals(["Library Bar is already up to date"], r.out.trim());
+
+		updateVcsRepo();
+
+		final r = haxelib(["update", "Bar"]).result();
+		assertSuccess(r);
+		assertOutputEquals([
+			"Bar was updated",
+  			'  Current version is now $cmd'
+		], r.out.trim());
+
+	}
+
+	function testVcsUpdateCommit() {
+
+		final r = haxelib([cmd, "Bar", vcsLibPath, getVcsCommit()]).result();
+		assertSuccess(r);
+
+		updateVcsRepo();
+
+		// TODO: Doesn't work with hg
+		if (cmd == "hg")
+			return;
+
+		final r = haxelib(["update", "Bar"]).result();
+		assertSuccess(r);
+		assertOutputEquals(["Library Bar is already up to date"], r.out.trim());
+
+	}
+
+	function testVcsUpdateTag() {
+
+		final r = haxelib([cmd, "Bar", vcsLibPath, "main", "", "v1.0.0"]).result();
+		assertSuccess(r);
+
+		updateVcsRepo();
+
+		// TODO: Doesn't work with hg
+		if (cmd == "hg")
+			return;
+
+		final r = haxelib(["update", "Bar"]).result();
+		assertSuccess(r);
+		assertOutputEquals(["Library Bar is already up to date"], r.out.trim());
 
 	}
 
