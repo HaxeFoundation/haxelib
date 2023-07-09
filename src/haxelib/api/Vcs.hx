@@ -42,14 +42,19 @@ private interface IVcs {
 	function clone(libPath:String, data:VcsData, flat:Bool = false):Void;
 
 	/**
-		Updates repository.
+		Checks out the repository based on the data provided
 	**/
-	function update():Void;
+	function updateWithData(data:{?branch:String, ?tag:String, ?commit:String}):Void;
 
 	/**
-		Fetches possible remote changes, and returns whether there are any available.
+		Merges remote changes into repository.
 	**/
-	function checkUpdate():Bool;
+	function mergeRemoteChanges():Void;
+
+	/**
+		Checks for possible remote changes, and returns whether there are any available.
+	**/
+	function checkRemoteChanges():Bool;
 
 	/**
 		Returns whether any uncommited local changes exist.
@@ -60,14 +65,19 @@ private interface IVcs {
 		Resets all local changes present in the working tree.
 	**/
 	function resetLocalChanges():Void;
+
+	function getRef():String;
+
+	function getOriginUrl():String;
+
+	function getBranchName():Null<String>;
 }
 
 /** Enum representing errors that can be thrown during a vcs operation. **/
 enum VcsError {
 	VcsUnavailable(vcs:Vcs);
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
-	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
-	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
+	CantCheckout(vcs:Vcs, ref:String, stderr:String);
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 }
 
@@ -239,64 +249,123 @@ class Git extends Vcs {
 		return false;
 	}
 
-	public function checkUpdate():Bool {
-		run(["fetch"], true);
+	public function checkRemoteChanges():Bool {
+		run(["fetch", "--depth=1"], true);
 
 		// `git rev-parse @{u}` will fail if detached
 		final checkUpstream = run(["rev-parse", "@{u}"]);
-
+		if (checkUpstream.code != 0) {
+			return false;
+		}
 		return checkUpstream.out != run(["rev-parse", "HEAD"], true).out;
 	}
 
-	public function update() {
-		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
-		if (run(["rev-parse", "@{u}"]).code != 0) {
-			// get parent-branch:
-			final branch = {
-				final raw = run(["show-branch"]).out;
-				final regx = ~/\[([^]]*)\]/;
-				if (regx.match(raw))
-					regx.matched(1);
-				else
-					raw;
-			}
-
-			run(["checkout", branch, "--force"], true);
-		}
-		run(["merge"], true);
+	public function mergeRemoteChanges() {
+		run(["reset", "--hard", "@{u}"], true);
 	}
 
 	public function clone(libPath:String, data:VcsData, flat = false):Void {
-		final oldCwd = Sys.getCwd();
-
 		final vcsArgs = ["clone", data.url, libPath];
 
 		if (!flat)
 			vcsArgs.push('--recursive');
 
+		if (data.branch != null) {
+			vcsArgs.push('--single-branch');
+			vcsArgs.push('--branch');
+			vcsArgs.push(data.branch);
+		} else if (data.commit == null) {
+			vcsArgs.push('--single-branch');
+		}
+
+		final cloneDepth1 = data.commit == null || data.commit.length == 40;
+		// we cannot clone like this if the commit hash is short,
+		// as fetch requires full hash
+		if (cloneDepth1) {
+			vcsArgs.push('--depth=1');
+		}
+
 		if (run(vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
 
-		Sys.setCwd(libPath);
+		if (data.branch != null && data.commit != null) {
+			FsUtils.runInDirectory(libPath, () -> {
+				if (cloneDepth1) {
+					runCheckoutRelatedCommand(data.commit, ["fetch", "--depth=1", getRemoteName(), data.commit]);
+				}
+				run(["reset", "--hard", data.commit], true);
+			});
+		} else if (data.commit != null) {
+			FsUtils.runInDirectory(libPath, checkout.bind(data.commit, cloneDepth1));
+		} else if (data.tag != null) {
+			FsUtils.runInDirectory(libPath, () -> {
+				final tagRef = 'tags/${data.tag}';
+				runCheckoutRelatedCommand(tagRef, ["fetch", "--depth=1", getRemoteName(), '$tagRef:$tagRef']);
+				checkout('tags/${data.tag}', false);
+			});
+		}
+	}
 
-		final branch = data.commit ?? data.branch;
+	public function updateWithData(data:{?commit:String, ?branch:Null<String>, ?tag:Null<String>}) {
+		if (data.commit != null && data.commit.length == 40) {
+			// full commit hash
+			checkout(data.commit, true);
+		} else if (data.branch != null) {
+			// short commit hash, but branch was provided
+			// we have to fetch the entire branch
+			runCheckoutRelatedCommand(data.branch, ["fetch", getRemoteName(), data.branch]);
+			checkout(data.commit, false);
+		} else if (data.tag != null) {
+			// short commit hash, but tag was provided
+			runCheckoutRelatedCommand(data.tag, ["fetch", "--depth=1", getRemoteName(), data.tag]);
+			if (!run(["rev-parse", data.tag], true).out.trim().startsWith(data.commit)) {
+				// the tag commit has changed from the one we expected...
+				// last resort: fetch entire remote repo
+				runCheckoutRelatedCommand(data.tag, ["fetch", getRemoteName()]);
+			}
+			checkout(data.commit, false);
+		} else {
+			// last resort: fetch entire remote repo
+			runCheckoutRelatedCommand(data.tag, ["fetch", getRemoteName()]);
+			checkout(data.commit, false);
+		}
+	}
 
-		if (data.tag != null) {
-			final ret = run(["checkout", "tags/" + data.tag]);
-			if (ret.code != 0) {
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutVersion(this, data.tag, ret.out);
-			}
-		} else if (branch != null) {
-			final ret = run(["checkout", branch]);
-			if (ret.code != 0){
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-			}
+	inline function runCheckoutRelatedCommand(ref, args:Array<String>) {
+		final ret = run(args);
+		if (ret.code != 0) {
+			throw VcsError.CantCheckout(this, ref, ret.out);
+		}
+	}
+
+	function checkout(ref:String, fetch:Bool) {
+		if (fetch) {
+			runCheckoutRelatedCommand(ref, ["fetch", "--depth=1", getRemoteName(), ref]);
 		}
 
-		// return prev. cwd:
-		Sys.setCwd(oldCwd);
+		runCheckoutRelatedCommand(ref, ["checkout", ref]);
+
+		// clean up excess branch
+		run(["branch", "-D", "@{-1}"]);
+	}
+
+	function getRemoteName() {
+		return run(["remote"], true).out.split("\n")[0].trim();
+	}
+
+	public function getRef():String {
+		return run(["rev-parse", "--verify", "HEAD"], true).out.trim();
+	}
+
+	public function getOriginUrl():String {
+		return run(["ls-remote", "--get-url", getRemoteName()], true).out.trim();
+	}
+
+	public function getBranchName():Null<String> {
+		final ret = run(["symbolic-ref", "--short", "HEAD"]);
+		if (ret.code != 0)
+			return null;
+		return ret.out.trim();
 	}
 
 	public function hasLocalChanges():Bool {
@@ -329,7 +398,7 @@ class Mercurial extends Vcs {
 		return checkExecutable();
 	}
 
-	public function checkUpdate():Bool {
+	public function checkRemoteChanges():Bool {
 		run(["pull"]);
 
 		// get new pulled changesets:
@@ -342,7 +411,7 @@ class Mercurial extends Vcs {
 		return ~/(\d)/.match(summary);
 	}
 
-	public function update() {
+	public function mergeRemoteChanges() {
 		run(["update"], true);
 	}
 
@@ -361,6 +430,34 @@ class Mercurial extends Vcs {
 
 		if (run(vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
+	}
+
+	inline function runCheckoutRelatedCommand(ref, args:Array<String>) {
+		final ret = run(args);
+		if (ret.code != 0) {
+			throw VcsError.CantCheckout(this, ref, ret.out);
+		}
+	}
+
+	public function updateWithData(data:{?commit:String, ?branch:Null<String>, ?tag:Null<String>}) {
+		runCheckoutRelatedCommand(data.commit, ["pull", "--rev", data.commit]);
+		runCheckoutRelatedCommand(data.commit, ["checkout", data.commit]);
+	}
+
+	public function getRef():String {
+		final out = run(["id", "-i"], true).out.trim();
+		// if the hash ends with +, there are edits
+		if (StringTools.endsWith(out, "+"))
+			return out.substr(0, out.length - 2);
+		return out;
+	}
+
+	public function getOriginUrl():String {
+		return run(["paths", "default"], true).out.trim();
+	}
+
+	public function getBranchName():Null<String> {
+		return run(["id", "-b"], true).out.trim();
 	}
 
 	public function hasLocalChanges():Bool {

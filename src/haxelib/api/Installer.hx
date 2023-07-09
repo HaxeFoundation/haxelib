@@ -181,7 +181,7 @@ class Installer {
 	final repository:Repository;
 	final userInterface:UserInterface;
 
-	final vcsBranchesByLibraryName = new Map<ProjectName, String>();
+	final vcsDataByName = new Map<ProjectName, VcsData>();
 
 	/**
 		Creates a new Installer object that installs projects to `scope`.
@@ -219,15 +219,15 @@ class Installer {
 	}
 
 	/**
-		Clears memory on git or hg library branches.
+		Clears cached data for git or hg libraries.
 
 		An installer instance keeps track of updated vcs dependencies
-		to avoid cloning the same branch twice.
+		to avoid cloning the same version twice.
 
 		This function can be used to clear that memory.
 	**/
-	public function forgetVcsBranches():Void {
-		vcsBranchesByLibraryName.clear();
+	public function forgetVcsDataCache():Void {
+		vcsDataByName.clear();
 	}
 
 	/** Installs libraries from the `haxelib.json` file at `path`. **/
@@ -406,7 +406,7 @@ class Installer {
 				version == Connection.getLatestVersion(library);
 			case VcsInstall(version, _):
 				final vcs = getVcs(version);
-				vcs.checkUpdate();
+				!FsUtils.runInDirectory(repository.getVersionPath(library, version), vcs.checkRemoteChanges);
 		};
 	}
 
@@ -415,8 +415,26 @@ class Installer {
 			case VcsInstall(version, vcsData):
 				final vcs = getVcs(version);
 				// with version locking we'll be able to be smarter with this
-				updateVcs(library, version, vcs);
+				final libPath = repository.getVersionPath(library, version);
 
+				final repoVcsData = if (scope.isLocal) repository.getVcsData(library, version) else vcsData;
+				FsUtils.runInDirectory(
+					libPath,
+					function() {
+						if (vcs.getRef() != repoVcsData.commit) {
+							throw 'Cannot update ${version.getName()} version of $library. There are local changes.';
+						}
+						if (vcs.hasLocalChanges()) {
+							if (!userInterface.confirm('Reset changes to $library $version repository in order to update to latest version')) {
+								userInterface.log('$library repository has not been modified', Optional);
+								throw new UpdateCancelled('${version.getName()} update in ${Sys.getCwd()} was cancelled');
+							}
+							vcs.resetLocalChanges();
+						}
+				});
+
+				updateVcs(library, libPath, vcs);
+				vcsData.commit = FsUtils.runInDirectory(libPath, vcs.getRef);
 				setVcsVersion(library, version, vcsData);
 
 				// TODO: Properly handle sub directories
@@ -596,7 +614,32 @@ class Installer {
 		}
 	}
 
+	function getReproducibleVcsData(library:ProjectName, version:VcsID, data:VcsData):VcsData {
+		final vcs = getVcs(version);
+		final libPath = repository.getVersionPath(library, version);
+		return FsUtils.runInDirectory(libPath, function():VcsData {
+			return {
+				url: data.url,
+				commit: data.commit ?? vcs.getRef(),
+				branch: if (data.branch == null && data.tag == null) vcs.getBranchName() else data.branch,
+				tag: data.tag,
+				subDir: if (data.subDir != null) haxe.io.Path.normalize(data.subDir) else null
+			};
+		});
+	}
+
+	/**
+		Retrieves fully reproducible vcs data if necessary,
+		and then uses it to lock down the current version.
+	**/
 	function setVcsVersion(library:ProjectName, version:VcsID, data:VcsData) {
+		// save here prior to modification
+		vcsDataByName[library] = data;
+		if (!data.isReproducible()) {
+			// always get reproducible data for local scope
+			data = getReproducibleVcsData(library, version, data);
+		}
+
 		scope.setVcsVersion(library, version, data);
 		if (data.subDir == null) {
 			userInterface.log('  Current version is now $version');
@@ -786,12 +829,13 @@ class Installer {
 
 		final libPath = repository.getVersionPath(library, id);
 
-		final branch = vcsData.commit != null ? vcsData.commit : vcsData.branch;
-		final url:String = vcsData.url;
-
 		function doVcsClone() {
-			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
-			final tag = vcsData.tag;
+			FsUtils.safeDir(libPath);
+			userInterface.log('Installing $library from ${vcsData.url}'
+				+ (vcsData.branch != null ? " branch: " + vcsData.branch : "")
+				+ (vcsData.tag != null ? " tag: " + vcsData.tag : "")
+				+ (vcsData.commit != null ? " commit: " + vcsData.commit : "")
+			);
 			try {
 				vcs.clone(libPath, vcsData, noVcsSubmodules);
 			} catch (error:VcsError) {
@@ -799,12 +843,10 @@ class Installer {
 				switch (error) {
 					case VcsUnavailable(vcs):
 						throw 'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
-					case CantCloneRepo(vcs, _, stderr):
+					case CantCloneRepo(_, _, stderr):
 						throw 'Could not clone ${id.getName()} repository' + (stderr != null ? ":\n" + stderr : ".");
-					case CantCheckoutBranch(_, branch, stderr):
-						throw 'Could not checkout branch, tag or path "$branch": ' + stderr;
-					case CantCheckoutVersion(_, version, stderr):
-						throw 'Could not checkout tag "$version": ' + stderr;
+					case CantCheckout(_, ref, stderr):
+						throw 'Could not checkout commit or tag "$ref": ' + stderr;
 					case CommandFailed(_, code, stdout, stderr):
 						throw new VcsCommandFailed(id, code, stdout, stderr);
 				};
@@ -814,48 +856,44 @@ class Installer {
 		if (repository.isVersionInstalled(library, id)) {
 			userInterface.log('You already have $library version $id installed.');
 
-			final wasUpdated = vcsBranchesByLibraryName.exists(library);
-			// difference between a key not having a value and the value being null
-
-			final currentBranch = vcsBranchesByLibraryName[library];
-
-			// TODO check different urls as well
-			if (branch != null && (!wasUpdated || currentBranch != branch)) {
-				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
-				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
-					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');
-					return;
+			final currentData = vcsDataByName[library] ?? repository.getVcsData(library, id);
+			FsUtils.runInDirectory(libPath, function() {
+				if (vcs.hasLocalChanges() || vcs.getRef() != currentData.commit) {
+					throw 'Cannot overwrite currently installed $id version of $library. There are local changes.';
 				}
+			});
+
+			final wasUpdated = vcsDataByName.exists(library);
+
+			final requiresNewClone = !(vcsData.url == currentData.url
+				&& vcsData.branch == currentData.branch
+				&& vcsData.tag == currentData.tag);
+			final sameCommit = vcsData.commit == currentData.commit;
+
+			if (requiresNewClone) {
 				FsUtils.deleteRec(libPath);
 				doVcsClone();
-			} else if (wasUpdated || !FsUtils.runInDirectory(libPath, vcs.checkUpdate)) {
+			} else if (!sameCommit && vcsData.commit != null) {
+				// update to given commit
+				FsUtils.runInDirectory(libPath, function() {
+					vcs.updateWithData(vcsData);
+				});
+			} else if (wasUpdated || sameCommit || !FsUtils.runInDirectory(libPath, vcs.checkRemoteChanges)) {
 				userInterface.log('Library $library version $id already up to date');
-				if (wasUpdated) {
-					return;
-				}
 			} else {
+				// the data is identical (apart from commit) so we just update instead of reinstalling
 				userInterface.log('Updating $library version $id...');
 				updateVcs(library, libPath, vcs);
 			}
 		} else {
-			FsUtils.safeDir(libPath);
 			doVcsClone();
 		}
-
-		vcsBranchesByLibraryName[library] = branch;
+		vcsData.commit = FsUtils.runInDirectory(libPath, vcs.getRef);
 	}
 
-	function updateVcs(library:ProjectName, id:VcsID, vcs:Vcs)
-		FsUtils.runInDirectory(repository.getVersionPath(library, id), function() {
-			if (vcs.hasLocalChanges()) {
-				if (!userInterface.confirm('Reset changes to $library $id repository in order to update to latest version')) {
-					userInterface.log('$library repository has not been modified', Optional);
-					throw new UpdateCancelled('${id.getName()} update in ${Sys.getCwd()} was cancelled');
-				}
-				vcs.resetLocalChanges();
-			}
-
-			vcs.update();
+	function updateVcs(library:ProjectName, path:String, vcs:Vcs)
+		FsUtils.runInDirectory(path, function() {
+			vcs.mergeRemoteChanges();
 			userInterface.log('$library was updated');
 		});
 }

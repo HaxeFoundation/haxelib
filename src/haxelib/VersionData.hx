@@ -49,6 +49,35 @@ class VcsData {
 	**/
 	@:optional
 	var subDir:Null<String>;
+
+	public function isReproducible() {
+		return commit != null;
+	}
+
+	/**
+		Returns an object containing the filled-in VcsData fields,
+		without the empty ones.
+	 **/
+	public function getCleaned() {
+		final data:{
+			url:String,
+			?commit:String,
+			?tag:String,
+			?branch:String,
+			?subDir:String
+		} = { url : url };
+
+		if (commit != null)
+			data.commit = commit;
+		if (tag != null)
+			data.tag = tag;
+		if (!(branch == null || branch == ""))
+			data.branch = branch;
+		if (!(subDir == null || haxe.io.Path.normalize(subDir) == ""))
+			data.subDir = subDir;
+
+		return data;
+	}
 }
 
 /** Data required to reproduce a library version **/
