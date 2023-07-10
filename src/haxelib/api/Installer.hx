@@ -641,7 +641,7 @@ class Installer {
 		}
 
 		scope.setVcsVersion(library, version, data);
-		if (data.subDir == null) {
+		if (data.subDir == "" || data.subDir == null) {
 			userInterface.log('  Current version is now $version');
 		} else {
 			final path = scope.getPath(library);
