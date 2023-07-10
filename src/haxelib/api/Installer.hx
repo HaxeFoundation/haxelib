@@ -439,7 +439,7 @@ class Installer {
 
 				// TODO: Properly handle sub directories
 				handleDependenciesVcs(library, version, null);
-			case Haxelib(version):
+			case Haxelib(_):
 				final latest = Connection.getLatestVersion(library);
 				if (repository.isVersionInstalled(library, latest)) {
 					userInterface.log('Latest version $latest of $library is already installed');
@@ -449,10 +449,10 @@ class Installer {
 				} else {
 					downloadAndInstall(library, latest);
 				}
-				scope.setVersion(library, version);
-				userInterface.log('  Current version is now $version');
+				scope.setVersion(library, latest);
+				userInterface.log('  Current version is now $latest');
 				userInterface.log("Done");
-				handleDependencies(library, version);
+				handleDependencies(library, latest);
 		}
 
 	/**
