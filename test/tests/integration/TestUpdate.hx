@@ -160,7 +160,7 @@ class TestUpdate extends IntegrationTests {
 
 		final r = haxelib(["update", "Bar"]).result();
 		assertSuccess(r);
-		assertTrue(r.out.indexOf('Library Bar $type repository is already up to date') >= 0);
+		assertTrue(r.out.indexOf('Library Bar is already up to date') >= 0);
 
 		// Don't show update message if vcs lib was already up to date
 		assertTrue(r.out.indexOf("Bar was updated") < 0);
