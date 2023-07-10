@@ -59,7 +59,7 @@ class VcsData {
 		without the empty ones.
 	 **/
 	public function getCleaned() {
-		final data:{
+		var data:{
 			url:String,
 			?commit:String,
 			?tag:String,
