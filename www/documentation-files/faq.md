@@ -2,7 +2,7 @@
 
 
 ### How do I change my password?  
-At the moment there is no way to change your password using the website or command-line. Please contact contact@haxe.org with the emailaddress of your account.  
+At the moment there is no way to change your password using the website or command-line. Please [create an issue](https://github.com/HaxeFoundation/haxelib/issues/new) and state your haxelib user name.
 
 ---
 
