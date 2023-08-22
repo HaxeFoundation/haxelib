@@ -1,5 +1,5 @@
 VERSION 0.6
-ARG UBUNTU_RELEASE=bionic
+ARG UBUNTU_RELEASE=focal
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
 ARG DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/haxelib_devcontainer_workspace
 ARG HAXELIB_SERVER_IMAGE_NAME_DEFAULT=haxe/lib.haxe.org
@@ -22,7 +22,7 @@ mysql-public-key:
     RUN gpg --batch --armor --export "$KEY" > mysql-public-key
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
 
-neko-latest:
+neko:
     ARG FILENAME=neko_2022-07-19_master_81c4dce.tar.gz
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
@@ -32,12 +32,9 @@ neko-latest:
     RUN tar --strip-components=1 -xf "$FILENAME" -C neko
     SAVE ARTIFACT neko/*
 
-haxe-latest:
-    ARG FILENAME=haxe_2022-08-09_development_779b005.tar.gz
-    RUN haxeArch=$(case "$TARGETARCH" in \
-        amd64) echo "linux64";; \
-        arm64) echo "linux-arm64";; \
-    esac); curl -fsSLO "https://build.haxe.org/builds/haxe/$haxeArch/$FILENAME"
+haxe:
+    ARG FILENAME=haxe.tar.gz
+    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.1/haxe-4.3.1-linux64.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
@@ -103,18 +100,18 @@ devcontainer-base:
         && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/*
 
-    # install neko nightly
-    COPY +neko-latest/neko /usr/bin/neko
-    COPY +neko-latest/libneko.so* /usr/lib/
+    # install neko
+    COPY +neko/neko /usr/bin/neko
+    COPY +neko/libneko.so* /usr/lib/
     RUN mkdir -p /usr/lib/neko/
-    COPY +neko-latest/*.ndll /usr/lib/neko/
+    COPY +neko/*.ndll /usr/lib/neko/
     RUN neko -version
 
-    # install haxe nightly
-    COPY +haxe-latest/haxe /usr/bin/haxe
-    COPY +haxe-latest/haxelib /usr/bin/haxelib
+    # install haxe
+    COPY +haxe/haxe /usr/bin/haxe
+    COPY +haxe/haxelib /usr/bin/haxelib
     RUN mkdir -p /usr/share/haxe/
-    COPY +haxe-latest/std /usr/share/haxe/std
+    COPY +haxe/std /usr/share/haxe/std
     RUN haxe --version
 
     ENV YARN_CACHE_FOLDER=/yarn
