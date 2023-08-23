@@ -2,7 +2,7 @@
 
 
 ### How do I change my password?  
-At the moment there is no way to change your password using the website or command-line. Please [create an issue](https://github.com/HaxeFoundation/haxelib/issues/new) and state your haxelib user name.
+At the moment there is no way to change your password using the website or command-line. Please [create an issue](https://github.com/HaxeFoundation/haxelib/issues/new?labels=support&title=change%20password%20request&body=My%20haxelib%20user%20name%20is%20`USERNAME`.) and state your haxelib user name.
 
 ---
 
@@ -42,7 +42,7 @@ The project stats graph is only shown when the project has more than one release
 ---
 
 ### How do I remove my haxelib?  
-At the moment there is no way to remove a library from the registry, because this could break existing projects. If there serious issues like vulnerabilities or copyright infringements, please contact contact@haxe.orgs with the emailaddress of your account.  
+At the moment there is no way to remove a library from the registry, because this could break existing projects. If there serious issues like vulnerabilities or copyright infringements, please [create an issue](https://github.com/HaxeFoundation/haxelib/issues/new?labels=support) and explain.
 
 ---
 
