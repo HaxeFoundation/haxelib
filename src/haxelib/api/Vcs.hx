@@ -21,6 +21,7 @@
  */
 package haxelib.api;
 
+import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.thread.Thread;
 import sys.thread.Lock;
@@ -232,6 +233,8 @@ abstract class Vcs implements IVcs {
 	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
 
 	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
+
+	public abstract function getReproducibleVersion(libPath: String): VcsData;
 }
 
 /** Class wrapping `git` operations. **/
@@ -347,6 +350,20 @@ class Git extends Vcs {
 		// return prev. cwd:
 		Sys.setCwd(oldCwd);
 	}
+
+	public function getReproducibleVersion(libPath: String): VcsData {
+		final oldCwd = Sys.getCwd();
+		Sys.setCwd(libPath);
+
+		final ret: VcsData = {
+			// could the remote's name not be "origin"?
+			url: run(["remote", "get-url", "origin"], true).out.trim(),
+			ref: run(["rev-parse", "HEAD"], true).out.trim(),
+		};
+
+		Sys.setCwd(oldCwd);
+		return ret;
+	}
 }
 
 /** Class wrapping `hg` operations. **/
@@ -419,5 +436,10 @@ class Mercurial extends Vcs {
 
 		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+	}
+
+	public function getReproducibleVersion(libPath: String): VcsData {
+		// TODO
+		throw new haxe.exceptions.NotImplementedException("Getting revision hash isn't supported for Mercurial");
 	}
 }

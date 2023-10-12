@@ -21,6 +21,7 @@
  */
 package haxelib.client;
 
+import haxelib.VersionData.VersionDataHelper;
 import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
 
@@ -232,6 +233,8 @@ class Main {
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
+
+			Lock => create(lock, 0),
 		];
 	}
 
@@ -841,6 +844,44 @@ class Main {
 		final path = RepoManager.getPath();
 		RepoManager.deleteLocal();
 		Cli.print('Local repository deleted ($path)');
+	}
+
+	/** Outputs a lock file with all the installed libraries **/
+	function lock() {
+		if (RepoManager.getLocalPath(Sys.getCwd()) == null) {
+			Cli.printWarning("no local repository found, dumping lock from global");
+		}
+
+		final scope = getScope();
+		final libraryInfo = scope.getArrayOfLibraryInfo();
+
+		// sort projects alphabetically
+		// libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+
+		for (library in scope.getArrayOfLibraryInfo()) {
+			// var line = new StringBuf();
+			// line.add("-L ")
+			if (library.devPath != null) {
+				Cli.printError('Error: version of "${library.name}" is "dev". The lockfile will not work properly in other environments!');
+			}
+
+			final version = scope.getVersion(library.name);
+			var versionData: VersionData;
+			if (VcsID.isValid(version)) {
+				final vcsId = VcsID.ofString(version);
+				versionData = VcsInstall(
+					vcsId,
+					scope.repository.getVcsData(library.name, vcsId)
+				);
+			} else {
+				versionData = Haxelib(SemVer.ofString(version));
+			}
+			final versionStr = VersionDataHelper.toString(versionData);
+			Cli.print('-L ${library.name}:$versionStr');
+
+
+			// Cli.print(line);
+		}
 	}
 
 	// ----------------------------------

@@ -55,6 +55,8 @@ enum abstract Command(String) to String {
 	// deprecated commands
 	final Local = "local";
 	final SelfUpdate = "selfupdate";
+
+	final Lock = "lock";
 }
 
 @:build(haxelib.client.Util.buildArgType())
