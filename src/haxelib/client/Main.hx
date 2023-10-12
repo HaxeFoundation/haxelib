@@ -856,11 +856,9 @@ class Main {
 		final libraryInfo = scope.getArrayOfLibraryInfo();
 
 		// sort projects alphabetically
-		// libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+		libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
 
-		for (library in scope.getArrayOfLibraryInfo()) {
-			// var line = new StringBuf();
-			// line.add("-L ")
+		for (library in libraryInfo) {
 			if (library.devPath != null) {
 				Cli.printError('Error: version of "${library.name}" is "dev". The lockfile will not work properly in other environments!');
 			}
@@ -878,9 +876,6 @@ class Main {
 			}
 			final versionStr = VersionDataHelper.toString(versionData);
 			Cli.print('-L ${library.name}:$versionStr');
-
-
-			// Cli.print(line);
 		}
 	}
 
