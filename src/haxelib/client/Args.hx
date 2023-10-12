@@ -257,6 +257,7 @@ class Args {
 		addCommand(Update, "update a single library (if given) or all installed libraries", Basic);
 		addCommand(Remove, "remove a given library/version", Basic);
 		addCommand(List, "list all installed libraries", Basic);
+		addCommand(Lock, "output an hxml file with all the installed libraries", Basic);
 		addCommand(Set, "set the current version for a library", Basic);
 
 		addCommand(Search, "list libraries matching a word", Information);
