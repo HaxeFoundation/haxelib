@@ -860,7 +860,8 @@ class Main {
 
 		for (library in libraryInfo) {
 			if (library.devPath != null) {
-				Cli.printError('Error: version of "${library.name}" is "dev". The lockfile will not work properly in other environments!');
+				Cli.printError('Error: dropping library "${library.name}" from the output! Its current version is "dev".');
+				continue;
 			}
 
 			final version = scope.getVersion(library.name);
@@ -875,7 +876,7 @@ class Main {
 				versionData = Haxelib(SemVer.ofString(version));
 			}
 			final versionStr = VersionDataHelper.toString(versionData);
-			Cli.print('-L ${library.name}:$versionStr');
+			Cli.print('--lib ${library.name}:$versionStr');
 		}
 	}
 
