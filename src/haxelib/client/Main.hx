@@ -849,7 +849,7 @@ class Main {
 	/** Outputs a lock file with all the installed libraries **/
 	function lock() {
 		if (RepoManager.getLocalPath(Sys.getCwd()) == null) {
-			Cli.printWarning("no local repository found, dumping lock from global");
+			Cli.printWarning("no local repository found, using global repository");
 		}
 
 		final scope = getScope();
@@ -860,11 +860,11 @@ class Main {
 
 		for (library in libraryInfo) {
 			if (library.devPath != null) {
-				Cli.printError('Error: version of "${library.name}" is "dev". The lockfile may not work properly in other environments!');
+				Cli.printWarning('Version of "${library.name}" is "dev". The lockfile may not work properly in other environments!');
 			}
 
 			final version = try scope.getVersion(library.name) catch (e) {
-				Cli.printError('Error: ${e.message}');
+				Cli.printWarning(e.message);
 				continue;
 			};
 

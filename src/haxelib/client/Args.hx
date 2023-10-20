@@ -278,7 +278,7 @@ class Args {
 		addCommand(Setup, "set the haxelib repository path", Miscellaneous);
 		addCommand(NewRepo, "create a new local repository", Miscellaneous);
 		addCommand(DeleteRepo, "delete the local repository", Miscellaneous);
-		addCommand(Lock, "output an hxml file with all the installed libraries", Miscellaneous);
+		addCommand(Lock, "output an hxml file with installation instructions for installed libraries", Miscellaneous);
 		addCommand(ConvertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand(Run, "run the specified library with parameters", Miscellaneous);
 		addCommand(Proxy, "setup the Http proxy", Miscellaneous);
