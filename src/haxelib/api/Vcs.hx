@@ -424,13 +424,17 @@ class Mercurial extends Vcs {
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final vcsArgs = ["clone", url, libPath];
 
-		if (branch != null) {
+		if (branch != null && version != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push(branch);
-		}
 
-		if (version != null) {
 			vcsArgs.push("--rev");
+			vcsArgs.push(version);
+		} else if (branch != null) {
+			vcsArgs.push("--updaterev");
+			vcsArgs.push(branch);
+		} else if (version != null) {
+			vcsArgs.push("--updaterev");
 			vcsArgs.push(version);
 		}
 
@@ -439,7 +443,15 @@ class Mercurial extends Vcs {
 	}
 
 	public function getReproducibleVersion(libPath: String): VcsData {
-		// TODO
-		throw new haxe.exceptions.NotImplementedException("Getting revision hash isn't supported for Mercurial");
+		final oldCwd = Sys.getCwd();
+		Sys.setCwd(libPath);
+
+		final ret: VcsData = {
+			url: run(["paths", "default"], true).out.trim(),
+			ref: run(["identify", "-i", "--debug"], true).out.trim(),
+		};
+
+		Sys.setCwd(oldCwd);
+		return ret;
 	}
 }
