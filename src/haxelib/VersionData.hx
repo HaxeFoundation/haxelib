@@ -44,7 +44,7 @@ class VcsData {
 	var subDir:Null<String>;
 
 	public function toString(): String {
-		final qualifier = 
+		var qualifier =
 			if (ref != null) ref
 			else if (tag != null) tag
 			else if (branch != null) branch
