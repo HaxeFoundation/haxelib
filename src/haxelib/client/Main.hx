@@ -230,11 +230,10 @@ class Main {
 			Proxy => create(proxy, 5, true),
 			#end
 			FixRepo => create(fixRepo, 0),
+			Lock => create(lock, 0),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
-
-			Lock => create(lock, 0),
 		];
 	}
 
