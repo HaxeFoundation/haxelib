@@ -19,15 +19,17 @@ class TestVcs extends TestBase
 	final id:VcsID = null;
 	final vcsName:String = null;
 	final url:String = null;
+	final branch:String = null;
 	final rev:String = null;
 	var counter:Int = 0;
 
 	//--------------- constructor ---------------//
 
-	public function new(id:VcsID, vcsName:String, url:String, ?rev:String) {
+	public function new(id:VcsID, vcsName:String, url:String, ?branch:String, ?rev:String) {
 		super();
 		this.id = id;
 		this.url = url;
+		this.branch = branch;
 		this.rev = rev;
 		this.vcsName = vcsName;
 
@@ -92,7 +94,7 @@ class TestVcs extends TestBase
 	public function testCloneBranch():Void {
 		final vcs = getVcs();
 		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop");
+		vcs.clone(dir, url, branch);
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.isDirectory(dir));
@@ -104,7 +106,7 @@ class TestVcs extends TestBase
 	public function testCloneBranchTag_0_9_2():Void {
 		final vcs = getVcs();
 		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", "0.9.2");
+		vcs.clone(dir, url, branch, "0.9.2");
 		Sys.sleep(3);
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
@@ -116,7 +118,7 @@ class TestVcs extends TestBase
 	public function testCloneBranchTag_0_9_3():Void {
 		final vcs = getVcs();
 		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", "0.9.3");
+		vcs.clone(dir, url, branch, "0.9.3");
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));
@@ -128,7 +130,7 @@ class TestVcs extends TestBase
 	public function testCloneBranchRev():Void {
 		final vcs = getVcs();
 		final dir = vcs.directory + counter++;
-		vcs.clone(dir, url, "develop", rev);
+		vcs.clone(dir, url, branch, rev);
 
 		assertTrue(FileSystem.exists(dir));
 		assertTrue(FileSystem.exists('$dir/.${vcs.directory}'));

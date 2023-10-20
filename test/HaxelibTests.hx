@@ -48,7 +48,7 @@ class HaxelibTests {
 		final isCI = Sys.getEnv("CI") != null;
 
 		if (isCI || cmdSucceed("hg", ["version"])) {
-			// Hg impl. suports tags & revs. Here "431513" is a first revision at that repo:
+			// Hg impl. suports tags & revs. Here "b022617bccfb" is a first revision at that repo:
 			TestHg.init();
 			r.add(new TestHg());
 		} else {
