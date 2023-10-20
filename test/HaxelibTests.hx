@@ -47,14 +47,13 @@ class HaxelibTests {
 
 		final isCI = Sys.getEnv("CI") != null;
 
-		// The test repo https://bitbucket.org/fzzr/hx.signal is gone.
-		// if (isCI || cmdSucceed("hg", ["version"])) {
-		// 	// Hg impl. suports tags & revs. Here "78edb4b" is a first revision "initial import" at that repo:
-		// 	TestHg.init();
-		// 	r.add(new TestHg());
-		// } else {
-		// 	Sys.println("hg not found.");
-		// }
+		if (isCI || cmdSucceed("hg", ["version"])) {
+			// Hg impl. suports tags & revs. Here "431513" is a first revision at that repo:
+			TestHg.init();
+			r.add(new TestHg());
+		} else {
+			Sys.println("hg not found.");
+		}
 		if (isCI || cmdSucceed("git", ["version"])) {
 			// Git impl. suports only tags. Here "0.9.2" is a first revision too ("initial import"):
 			TestGit.init();
