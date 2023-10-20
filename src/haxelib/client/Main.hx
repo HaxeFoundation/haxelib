@@ -878,7 +878,7 @@ class Main {
 				versionData = Haxelib(SemVer.ofString(version));
 			}
 			final versionStr = VersionDataHelper.toString(versionData);
-			Cli.print('--lib ${library.name}:$versionStr');
+			Cli.print('-lib ${library.name}:$versionStr');
 		}
 	}
 
