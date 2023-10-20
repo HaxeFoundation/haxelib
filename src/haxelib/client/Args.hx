@@ -56,7 +56,8 @@ enum abstract Command(String) to String {
 	final Local = "local";
 	final SelfUpdate = "selfupdate";
 
-	final Lock = "lock";
+	final PinGenerate = "pin generate";
+	final PinApply = "pin apply";
 }
 
 @:build(haxelib.client.Util.buildArgType())
@@ -175,12 +176,18 @@ class Args {
 
 		validate(flags);
 
-		final commandStr = mainArgs.shift();
+		var commandStr = mainArgs.shift();
 		if (commandStr == null)
 			throw new InvalidCommand("No command specified");
 
-		final command = Command.ofString(commandStr);
-		if(command == null)
+		// Allow multi words commands
+		var command = Command.ofString(commandStr);
+		while (command == null && mainArgs.length > 0) {
+			commandStr += ' ' + mainArgs.shift();
+			command = Command.ofString(commandStr);
+		}
+
+		if (command == null)
 			throw new InvalidCommand('Unknown command $commandStr');
 
 		return {
@@ -278,7 +285,8 @@ class Args {
 		addCommand(Setup, "set the haxelib repository path", Miscellaneous);
 		addCommand(NewRepo, "create a new local repository", Miscellaneous);
 		addCommand(DeleteRepo, "delete the local repository", Miscellaneous);
-		addCommand(Lock, "output an hxml file with installation instructions for installed libraries", Miscellaneous);
+		addCommand(PinGenerate, "generate an hxml pin file to install with haxelib pin apply", Miscellaneous);
+		addCommand(PinApply, "install libraries from an hxml pin file", Miscellaneous);
 		addCommand(ConvertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand(Run, "run the specified library with parameters", Miscellaneous);
 		addCommand(Proxy, "setup the Http proxy", Miscellaneous);

@@ -21,6 +21,7 @@
  */
 package haxelib.client;
 
+import haxe.display.Server.ConfigurePrintParams;
 import haxelib.VersionData.VersionDataHelper;
 import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
@@ -230,7 +231,8 @@ class Main {
 			Proxy => create(proxy, 5, true),
 			#end
 			FixRepo => create(fixRepo, 0),
-			Lock => create(lock, 0),
+			PinGenerate => create(pinGenerate, 1),
+			PinApply => create(pinApply, 1),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
@@ -845,8 +847,14 @@ class Main {
 		Cli.print('Local repository deleted ($path)');
 	}
 
-	/** Outputs a lock file with all the installed libraries **/
-	function lock() {
+	/** Outputs a pin file with all the installed libraries and their current version **/
+	function pinGenerate() {
+		final hxml = getArgument("Hxml pin file to generate");
+
+		final dir = haxe.io.Path.directory(hxml);
+		if (!sys.FileSystem.exists(dir)) sys.FileSystem.createDirectory(dir);
+		final out = sys.io.File.write(hxml);
+
 		if (RepoManager.getLocalPath(Sys.getCwd()) == null) {
 			Cli.printWarning("no local repository found, using global repository");
 		}
@@ -859,7 +867,7 @@ class Main {
 
 		for (library in libraryInfo) {
 			if (library.devPath != null) {
-				Cli.printWarning('Version of "${library.name}" is "dev". The lockfile may not work properly in other environments!');
+				Cli.printWarning('Version of "${library.name}" is "dev". The hxml pin file may not work properly in other environments!');
 			}
 
 			final version = try scope.getVersion(library.name) catch (e) {
@@ -878,8 +886,29 @@ class Main {
 				versionData = Haxelib(SemVer.ofString(version));
 			}
 			final versionStr = VersionDataHelper.toString(versionData);
-			Cli.print('-lib ${library.name}:$versionStr');
+			out.writeString('-lib ${library.name}:$versionStr\n');
 		}
+
+		out.close();
+	}
+
+	/** Reads a pin file and install all specified library versions **/
+	function pinApply() {
+		final hxml = getArgument("Hxml pin file");
+		final scope = getScope();
+		final installer = setupAndGetInstaller(scope);
+		Cli.defaultAnswer = Always;
+		Installer.skipDependencies = true;
+
+		if (sys.FileSystem.exists(hxml) && !sys.FileSystem.isDirectory(hxml)) {
+			switch (hxml) {
+				case hxml if (hxml.endsWith(".hxml")):
+					// *.hxml provided, install all libraries/versions in this hxml file
+					return installer.installFromHxml(hxml, confirmHxmlInstall);
+			}
+		}
+
+		throw 'Expected an hxml pin file.';
 	}
 
 	// ----------------------------------
