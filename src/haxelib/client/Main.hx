@@ -860,11 +860,14 @@ class Main {
 
 		for (library in libraryInfo) {
 			if (library.devPath != null) {
-				Cli.printError('Error: dropping library "${library.name}" from the output! Its current version is "dev".');
-				continue;
+				Cli.printError('Error: version of "${library.name}" is "dev". The lockfile may not work properly in other environments!');
 			}
 
-			final version = scope.getVersion(library.name);
+			final version = try scope.getVersion(library.name) catch (e) {
+				Cli.printError('Error: ${e.message}');
+				continue;
+			};
+
 			var versionData: VersionData;
 			if (VcsID.isValid(version)) {
 				final vcsId = VcsID.ofString(version);
