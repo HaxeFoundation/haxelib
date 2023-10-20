@@ -52,12 +52,12 @@ enum abstract Command(String) to String {
 	final ConvertXml = "convertxml";
 	final Run = "run";
 	final Proxy = "proxy";
+	final PinGenerate = "pin generate";
+	final PinApply = "pin apply";
+
 	// deprecated commands
 	final Local = "local";
 	final SelfUpdate = "selfupdate";
-
-	final PinGenerate = "pin generate";
-	final PinApply = "pin apply";
 }
 
 @:build(haxelib.client.Util.buildArgType())
