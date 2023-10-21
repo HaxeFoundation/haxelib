@@ -231,8 +231,8 @@ class Main {
 			Proxy => create(proxy, 5, true),
 			#end
 			FixRepo => create(fixRepo, 0),
-			PinGenerate => create(pinGenerate, 1),
-			PinApply => create(pinApply, 1),
+			GenerateManifest => create(generateManifest, 1),
+			ApplyManifest => create(applyManifest, 1),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
@@ -847,13 +847,13 @@ class Main {
 		Cli.print('Local repository deleted ($path)');
 	}
 
-	/** Outputs a pin file with all the installed libraries and their current version **/
-	function pinGenerate() {
-		final hxml = getArgument("Hxml pin file to generate");
+	/** Outputs a manifest file with all the installed libraries and their current version **/
+	function generateManifest() {
+		final manifest = getArgument("Manifest file to generate");
 
-		final dir = haxe.io.Path.directory(hxml);
+		final dir = haxe.io.Path.directory(manifest);
 		if (!sys.FileSystem.exists(dir)) sys.FileSystem.createDirectory(dir);
-		final out = sys.io.File.write(hxml);
+		final out = sys.io.File.write(manifest);
 
 		if (RepoManager.getLocalPath(Sys.getCwd()) == null) {
 			Cli.printWarning("no local repository found, using global repository");
@@ -867,7 +867,7 @@ class Main {
 
 		for (library in libraryInfo) {
 			if (library.devPath != null) {
-				Cli.printWarning('Version of "${library.name}" is "dev". The hxml pin file may not work properly in other environments!');
+				Cli.printWarning('Version of "${library.name}" is "dev". The manifest file may not work properly in other environments!');
 			}
 
 			final version = try scope.getVersion(library.name) catch (e) {
@@ -892,23 +892,19 @@ class Main {
 		out.close();
 	}
 
-	/** Reads a pin file and install all specified library versions **/
-	function pinApply() {
-		final hxml = getArgument("Hxml pin file");
+	/** Reads a manifest file and install all specified library versions **/
+	function applyManifest() {
+		final manifest = getArgument("Manifest file");
 		final scope = getScope();
 		final installer = setupAndGetInstaller(scope);
 		Cli.defaultAnswer = Always;
 		Installer.skipDependencies = true;
 
-		if (sys.FileSystem.exists(hxml) && !sys.FileSystem.isDirectory(hxml)) {
-			switch (hxml) {
-				case hxml if (hxml.endsWith(".hxml")):
-					// *.hxml provided, install all libraries/versions in this hxml file
-					return installer.installFromHxml(hxml, confirmHxmlInstall);
-			}
+		if (sys.FileSystem.exists(manifest) && !sys.FileSystem.isDirectory(manifest)) {
+			return installer.installFromHxml(manifest, confirmHxmlInstall);
 		}
 
-		throw 'Expected an hxml pin file.';
+		throw 'Expected a manifest file.';
 	}
 
 	// ----------------------------------

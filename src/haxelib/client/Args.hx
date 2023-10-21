@@ -52,8 +52,8 @@ enum abstract Command(String) to String {
 	final ConvertXml = "convertxml";
 	final Run = "run";
 	final Proxy = "proxy";
-	final PinGenerate = "pin generate";
-	final PinApply = "pin apply";
+	final GenerateManifest = "generate manifest";
+	final ApplyManifest = "apply manifest";
 
 	// deprecated commands
 	final Local = "local";
@@ -285,8 +285,8 @@ class Args {
 		addCommand(Setup, "set the haxelib repository path", Miscellaneous);
 		addCommand(NewRepo, "create a new local repository", Miscellaneous);
 		addCommand(DeleteRepo, "delete the local repository", Miscellaneous);
-		addCommand(PinGenerate, "generate an hxml pin file to install with haxelib pin apply", Miscellaneous);
-		addCommand(PinApply, "install libraries from an hxml pin file", Miscellaneous);
+		addCommand(GenerateManifest, "generate a manifest file to install with haxelib apply manifest", Miscellaneous);
+		addCommand(ApplyManifest, "install libraries from manifest file", Miscellaneous);
 		addCommand(ConvertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand(Run, "run the specified library with parameters", Miscellaneous);
 		addCommand(Proxy, "setup the Http proxy", Miscellaneous);
