@@ -231,8 +231,8 @@ class Main {
 			Proxy => create(proxy, 5, true),
 			#end
 			FixRepo => create(fixRepo, 0),
-			GenerateManifest => create(generateManifest, 1),
-			ApplyManifest => create(applyManifest, 1),
+			StateSave => create(stateSave, 1),
+			StateLoad => create(stateLoad, 1),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
@@ -848,8 +848,8 @@ class Main {
 	}
 
 	/** Outputs a manifest file with all the installed libraries and their current version **/
-	function generateManifest() {
-		final manifest = getArgument("Manifest file to generate");
+	function stateSave() {
+		final manifest = getArgument("Manifest file to save");
 
 		final dir = haxe.io.Path.directory(manifest);
 		if (!sys.FileSystem.exists(dir)) sys.FileSystem.createDirectory(dir);
@@ -893,8 +893,8 @@ class Main {
 	}
 
 	/** Reads a manifest file and install all specified library versions **/
-	function applyManifest() {
-		final manifest = getArgument("Manifest file");
+	function stateLoad() {
+		final manifest = getArgument("Manifest file to load");
 		final scope = getScope();
 		final installer = setupAndGetInstaller(scope);
 		Cli.defaultAnswer = Always;
