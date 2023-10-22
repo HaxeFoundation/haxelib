@@ -14,6 +14,8 @@ typedef InstallationInfo = {
 	final devPath:Null<String>;
 }
 
+class ScopeException extends haxe.Exception {}
+
 /**
 	Returns scope for directory `dir`. If `dir` is omitted, uses the current
 	working directory.
@@ -126,6 +128,11 @@ abstract class Scope {
 	public abstract function getArgsAsHxmlForLibraries(libraries:Array<{library:ProjectName, version:Null<Version>}>):String;
 
 	abstract function resolveCompiler():LibraryData;
+
+	/**
+		Returns the full version data for `library`.
+	**/
+	public abstract function resolve(library:ProjectName):VersionData;
 
 	// TODO: placeholders until https://github.com/HaxeFoundation/haxe/wiki/Haxe-haxec-haxelib-plan
 	static function loadOverrides():LockFormat {

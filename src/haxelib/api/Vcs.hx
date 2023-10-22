@@ -24,142 +24,124 @@ package haxelib.api;
 import sys.FileSystem;
 import sys.thread.Thread;
 import sys.thread.Lock;
-import haxelib.VersionData.VcsID;
+import haxelib.VersionData;
 using haxelib.api.Vcs;
 using StringTools;
 
-interface IVcs {
-	/** The name of the vcs system. **/
-	final name:String;
-	/** The directory used to install vcs library versions to. **/
-	final directory:String;
+private interface IVcs {
 	/** The vcs executable. **/
 	final executable:String;
 	/** Whether or not the executable can be accessed successfully. **/
 	var available(get, null):Bool;
 
 	/**
-		Clone repository at `vcsPath` into `libPath`.
+		Clone repository specified in `data` into `libPath`.
 
-		If `branch` is specified, the repository is checked out to that branch.
-
-		`version` can also be specified for tags in git or revisions in mercurial.
-
-		`debugLog` will be used to log executable output.
+		If `flat` is set to true, recursive cloning is disabled.
 	**/
-	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
+	function clone(libPath:String, data:VcsData, flat:Bool = false):Void;
 
 	/**
-		Updates repository in CWD or CWD/`Vcs.directory` to HEAD.
-		For git CWD must be in the format "...haxelib-repo/lib/git".
-
-		By default, uncommitted changes prevent updating.
-		If `confirm` is passed in, the changes may occur
-		if `confirm` returns true.
-
-		`debugLog` will be used to log executable output.
-
-		`summaryLog` may be used to log summaries of changes.
-
-		Returns `true` if update successful.
+		Checks out the repository based on the data provided
 	**/
-	function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?summaryLog:(msg:String)->Void):Bool;
+	function updateWithData(data:{?branch:String, ?tag:String, ?commit:String}):Void;
+
+	/**
+		Merges remote changes into repository.
+	**/
+	function mergeRemoteChanges():Void;
+
+	/**
+		Checks for possible remote changes, and returns whether there are any available.
+	**/
+	function checkRemoteChanges():Bool;
+
+	/**
+		Returns whether any uncommited local changes exist.
+	**/
+	function hasLocalChanges():Bool;
+
+	/**
+		Resets all local changes present in the working tree.
+	**/
+	function resetLocalChanges():Void;
+
+	function getRef():String;
+
+	function getOriginUrl():String;
+
+	function getBranchName():Null<String>;
 }
 
 /** Enum representing errors that can be thrown during a vcs operation. **/
 enum VcsError {
 	VcsUnavailable(vcs:Vcs);
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
-	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
-	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
+	CantCheckout(vcs:Vcs, ref:String, stderr:String);
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 }
-
-/** Exception thrown when a vcs update is cancelled. **/
-class VcsUpdateCancelled extends haxe.Exception {}
 
 /** Base implementation of `IVcs` for `Git` and `Mercurial` to extend. **/
 abstract class Vcs implements IVcs {
 	/** If set to true, recursive cloning is disabled **/
-	public static var flat = false;
-
-	public final name:String;
-	public final directory:String;
 	public final executable:String;
 	public var available(get, null):Bool;
 
-	var availabilityChecked = false;
-	var executableSearched = false;
-
-	function new(executable:String, directory:String, name:String) {
-		this.name = name;
-		this.directory = directory;
+	function new(executable:String, ?debugLog:(message:String)->Void) {
 		this.executable = executable;
+		if (debugLog != null)
+			this.debugLog = debugLog;
 	}
 
-	static var reg:Map<VcsID, Vcs>;
+	/**
+		Creates and returns a Vcs instance for `id`.
 
-	/** Returns the Vcs instance for `id`. **/
-	public static function get(id:VcsID):Null<Vcs> {
-		if (reg == null)
-			reg = [
-				VcsID.Git => new Git("git", "git", "Git"),
-				VcsID.Hg => new Mercurial("hg", "hg", "Mercurial")
-			];
-
-		return reg.get(id);
+		If `debugLog` is specified, it is used to log debug information
+		for executable calls.
+	**/
+	public static function create(id:VcsID, ?debugLog:(message:String)->Void):Null<Vcs> {
+		return switch id {
+			case Hg:
+				new Mercurial("hg", debugLog);
+			case Git:
+				new Git("git", debugLog);
+		};
 	}
 
 	/** Returns the sub directory to use for library versions of `id`. **/
-	public static function getDirectoryFor(id:VcsID):String {
-		return switch (get(id)) {
-			case null: throw 'Unable to get directory for $id';
-			case vcs: vcs.directory;
+	public static function getDirectoryFor(id:VcsID) {
+		return switch id {
+			case Git: "git";
+			case Hg: "hg";
 		}
 	}
 
-	static function set(id:VcsID, vcs:Vcs, ?rewrite:Bool):Void {
-		final existing = reg.get(id) != null;
-		if (!existing || rewrite)
-			reg.set(id, vcs);
+	dynamic function debugLog(msg:String) {}
+
+	abstract function searchExecutable():Bool;
+
+	function getCheckArgs() {
+		return [];
 	}
 
-	/** Returns the relevant Vcs if a vcs version is installed at `libPath`. **/
-	public static function getVcsForDevLib(libPath:String):Null<Vcs> {
-		for (k in reg.keys()) {
-			if (FileSystem.exists(libPath + "/" + k) && FileSystem.isDirectory(libPath + "/" + k))
-				return reg.get(k);
-		}
-		return null;
-	}
-
-	function searchExecutable():Void {
-		executableSearched = true;
-	}
-
-	function checkExecutable():Bool {
-		available = (executable != null) && try run([]).code == 0 catch(_:Dynamic) false;
-		availabilityChecked = true;
-
-		if (!available && !executableSearched)
-			searchExecutable();
-
-		return available;
+	final function checkExecutable():Bool {
+		return (executable != null) && try run(getCheckArgs()).code == 0 catch (_:Dynamic) false;
 	}
 
 	final function get_available():Bool {
-		if (!availabilityChecked)
-			checkExecutable();
+		if (available == null) {
+			available = checkExecutable() || searchExecutable();
+		}
 		return available;
 	}
 
-	final function run(args:Array<String>, ?debugLog:(msg:String) -> Void, strict = false):{
+	final function run(args:Array<String>, strict = false):{
 		code:Int,
 		out:String,
 		err:String,
 	} {
 		inline function print(msg)
-			if (debugLog != null && msg != "")
+			if (msg != "")
 				debugLog(msg);
 
 		print("# Running command: " + executable + " " + args.toString() + "\n");
@@ -229,36 +211,21 @@ abstract class Vcs implements IVcs {
 		return ret;
 	}
 
-	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
-
-	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
 }
 
 /** Class wrapping `git` operations. **/
 class Git extends Vcs {
 
-	@:allow(haxelib.api.Vcs.get)
-	function new(executable:String, directory:String, name:String) {
-		super(executable, directory, name);
+	@:allow(haxelib.api.Vcs.create)
+	function new(executable:String, ?debugLog:Null<(message:String) -> Void>) {
+		super(executable, debugLog);
 	}
 
-	override function checkExecutable():Bool {
-		// with `help` cmd because without any cmd `git` can return exit-code = 1.
-		available = (executable != null) && try run(["help"]).code == 0 catch(_:Dynamic) false;
-		availabilityChecked = true;
-
-		if (!available && !executableSearched)
-			searchExecutable();
-
-		return available;
+	override function getCheckArgs() {
+		return ["help"];
 	}
 
-	override function searchExecutable():Void {
-		super.searchExecutable();
-
-		if (available)
-			return;
-
+	function searchExecutable():Bool {
 		// if we have already msys git/cmd in our PATH
 		final match = ~/(.*)git([\\|\/])cmd$/;
 		for (path in Sys.getEnv("PATH").split(";")) {
@@ -269,100 +236,160 @@ class Git extends Vcs {
 		}
 
 		if (checkExecutable())
-			return;
+			return true;
 
 		// look at a few default paths
 		for (path in ["C:\\Program Files (x86)\\Git\\bin", "C:\\Progra~1\\Git\\bin"]) {
 			if (FileSystem.exists(path)) {
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + path);
 				if (checkExecutable())
-					return;
+					return true;
 			}
 		}
+		return false;
 	}
 
-	public function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?_):Bool {
-		if (
-			run(["diff", "--exit-code", "--no-ext-diff"], debugLog).code != 0
-			|| run(["diff", "--cached", "--exit-code", "--no-ext-diff"], debugLog).code != 0
-		) {
-			if (confirm == null || !confirm())
-				throw new VcsUpdateCancelled('$name update in ${Sys.getCwd()} was cancelled');
-			run(["reset", "--hard"], debugLog, true);
-		}
-
-		run(["fetch"], debugLog, true);
+	public function checkRemoteChanges():Bool {
+		run(["fetch", "--depth=1"], true);
 
 		// `git rev-parse @{u}` will fail if detached
-		final checkUpstream = run(["rev-parse", "@{u}"], debugLog);
-
-		if (checkUpstream.out == run(["rev-parse", "HEAD"], debugLog, true).out)
-			return false; // already up to date
-
-		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
+		final checkUpstream = run(["rev-parse", "@{u}"]);
 		if (checkUpstream.code != 0) {
-			// get parent-branch:
-			final branch = {
-				final raw = run(["show-branch"], debugLog).out;
-				final regx = ~/\[([^]]*)\]/;
-				if (regx.match(raw))
-					regx.matched(1);
-				else
-					raw;
-			}
-
-			run(["checkout", branch, "--force"], debugLog, true);
+			return false;
 		}
-		run(["merge"], debugLog, true);
-		return true;
+		return checkUpstream.out != run(["rev-parse", "HEAD"], true).out;
 	}
 
-	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
-		final oldCwd = Sys.getCwd();
+	public function mergeRemoteChanges() {
+		run(["reset", "--hard", "@{u}"], true);
+	}
 
-		final vcsArgs = ["clone", url, libPath];
+	public function clone(libPath:String, data:VcsData, flat = false):Void {
+		final vcsArgs = ["clone", data.url, libPath];
 
-		if (!Vcs.flat)
-			vcsArgs.push('--recursive');
-
-		if (run(vcsArgs, debugLog).code != 0)
-			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-
-		Sys.setCwd(libPath);
-
-		if (version != null && version != "") {
-			final ret = run(["checkout", "tags/" + version], debugLog);
-			if (ret.code != 0) {
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutVersion(this, version, ret.out);
-			}
-		} else if (branch != null) {
-			final ret = run(["checkout", branch], debugLog);
-			if (ret.code != 0){
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-			}
+		if (data.branch != null) {
+			vcsArgs.push('--single-branch');
+			vcsArgs.push('--branch');
+			vcsArgs.push(data.branch);
+		} else if (data.commit == null) {
+			vcsArgs.push('--single-branch');
 		}
 
-		// return prev. cwd:
-		Sys.setCwd(oldCwd);
+		final cloneDepth1 = data.commit == null || data.commit.length == 40;
+		// we cannot clone like this if the commit hash is short,
+		// as fetch requires full hash
+		if (cloneDepth1) {
+			vcsArgs.push('--depth=1');
+		}
+
+		if (run(vcsArgs).code != 0)
+			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
+
+		if (data.branch != null && data.commit != null) {
+			FsUtils.runInDirectory(libPath, () -> {
+				if (cloneDepth1) {
+					runCheckoutRelatedCommand(data.commit, ["fetch", "--depth=1", getRemoteName(), data.commit]);
+				}
+				run(["reset", "--hard", data.commit], true);
+			});
+		} else if (data.commit != null) {
+			FsUtils.runInDirectory(libPath, checkout.bind(data.commit, cloneDepth1));
+		} else if (data.tag != null) {
+			FsUtils.runInDirectory(libPath, () -> {
+				final tagRef = 'tags/${data.tag}';
+				runCheckoutRelatedCommand(tagRef, ["fetch", "--depth=1", getRemoteName(), '$tagRef:$tagRef']);
+				checkout('tags/${data.tag}', false);
+			});
+		}
+
+		if (!flat) {
+			FsUtils.runInDirectory(libPath, () -> {
+				run(["submodule", "update", "--init", "--depth=1", "--single-branch"], true);
+			});
+		}
+	}
+
+	public function updateWithData(data:{?commit:String, ?branch:Null<String>, ?tag:Null<String>}) {
+		if (data.commit != null && data.commit.length == 40) {
+			// full commit hash
+			checkout(data.commit, true);
+		} else if (data.branch != null) {
+			// short commit hash, but branch was provided
+			// we have to fetch the entire branch
+			runCheckoutRelatedCommand(data.branch, ["fetch", getRemoteName(), data.branch]);
+			checkout(data.commit, false);
+		} else if (data.tag != null) {
+			// short commit hash, but tag was provided
+			runCheckoutRelatedCommand(data.tag, ["fetch", "--depth=1", getRemoteName(), data.tag]);
+			if (!run(["rev-parse", data.tag], true).out.trim().startsWith(data.commit)) {
+				// the tag commit has changed from the one we expected...
+				// last resort: fetch entire remote repo
+				runCheckoutRelatedCommand(data.tag, ["fetch", getRemoteName()]);
+			}
+			checkout(data.commit, false);
+		} else {
+			// last resort: fetch entire remote repo
+			runCheckoutRelatedCommand(data.tag, ["fetch", getRemoteName()]);
+			checkout(data.commit, false);
+		}
+	}
+
+	inline function runCheckoutRelatedCommand(ref, args:Array<String>) {
+		final ret = run(args);
+		if (ret.code != 0) {
+			throw VcsError.CantCheckout(this, ref, ret.out);
+		}
+	}
+
+	function checkout(ref:String, fetch:Bool) {
+		if (fetch) {
+			runCheckoutRelatedCommand(ref, ["fetch", "--depth=1", getRemoteName(), ref]);
+		}
+
+		runCheckoutRelatedCommand(ref, ["checkout", ref]);
+
+		// clean up excess branch
+		run(["branch", "-D", "@{-1}"]);
+	}
+
+	function getRemoteName() {
+		return run(["remote"], true).out.split("\n")[0].trim();
+	}
+
+	public function getRef():String {
+		return run(["rev-parse", "--verify", "HEAD"], true).out.trim();
+	}
+
+	public function getOriginUrl():String {
+		return run(["ls-remote", "--get-url", getRemoteName()], true).out.trim();
+	}
+
+	public function getBranchName():Null<String> {
+		final ret = run(["symbolic-ref", "--short", "HEAD"]);
+		if (ret.code != 0)
+			return null;
+		return ret.out.trim();
+	}
+
+	public function hasLocalChanges():Bool {
+		return run(["diff", "--exit-code", "--no-ext-diff"]).code != 0
+			|| run(["diff", "--cached", "--exit-code", "--no-ext-diff"]).code != 0;
+	}
+
+	public function resetLocalChanges() {
+		run(["reset", "--hard"], true);
 	}
 }
 
 /** Class wrapping `hg` operations. **/
 class Mercurial extends Vcs {
 
-	@:allow(haxelib.api.Vcs.get)
-	function new(executable:String, directory:String, name:String) {
-		super(executable, directory, name);
+	@:allow(haxelib.api.Vcs.create)
+	function new(executable:String, ?debugLog:Null<(message:String) -> Void>) {
+		super(executable, debugLog);
 	}
 
-	override function searchExecutable():Void {
-		super.searchExecutable();
-
-		if (available)
-			return;
-
+	function searchExecutable():Bool {
 		// if we have already msys git/cmd in our PATH
 		final match = ~/(.*)hg([\\|\/])cmd$/;
 		for(path in Sys.getEnv("PATH").split(";")) {
@@ -371,53 +398,79 @@ class Mercurial extends Vcs {
 				Sys.putEnv("PATH", Sys.getEnv("PATH") + ";" + newPath);
 			}
 		}
-		checkExecutable();
+		return checkExecutable();
 	}
 
-	public function update(?confirm:()->Bool, ?debugLog:(msg:String)->Void, ?summaryLog:(msg:String)->Void):Bool {
-		inline function log(msg:String) if(summaryLog != null) summaryLog(msg);
-
-		run(["pull"], debugLog);
-		var summary = run(["summary"], debugLog).out;
-		final diff = run(["diff", "-U", "2", "--git", "--subrepos"], debugLog);
-		final status = run(["status"], debugLog);
+	public function checkRemoteChanges():Bool {
+		run(["pull"]);
 
 		// get new pulled changesets:
-		// (and search num of sets)
-		summary = summary.substr(0, summary.length - 1);
-		summary = summary.substr(summary.lastIndexOf("\n") + 1);
+		final summary = {
+			final out = run(["summary"]).out.rtrim();
+			out.substr(out.lastIndexOf("\n") + 1);
+		};
+
 		// we don't know any about locale then taking only Digit-exising:s
-		final changed = ~/(\d)/.match(summary);
-		if (changed)
-			// print new pulled changesets:
-			log(summary);
-
-		if (diff.code + status.code + diff.out.length + status.out.length != 0) {
-			log(diff.out);
-			if (confirm == null || !confirm())
-				throw new VcsUpdateCancelled('$name update in ${Sys.getCwd()} was cancelled');
-			run(["update", "--clean"], debugLog, true);
-		} else if (changed) {
-			run(["update"], debugLog, true);
-		}
-
-		return changed;
+		return ~/(\d)/.match(summary);
 	}
 
-	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
-		final vcsArgs = ["clone", url, libPath];
+	public function mergeRemoteChanges() {
+		run(["update"], true);
+	}
 
-		if (branch != null) {
+	public function clone(libPath:String, data:VcsData, _ = false):Void {
+		final vcsArgs = ["clone", data.url, libPath];
+
+		if (data.branch != null) {
 			vcsArgs.push("--branch");
-			vcsArgs.push(branch);
+			vcsArgs.push(data.branch);
 		}
 
-		if (version != null) {
+		if (data.commit != null) {
 			vcsArgs.push("--rev");
-			vcsArgs.push(version);
+			vcsArgs.push(data.commit);
 		}
 
-		if (run(vcsArgs, debugLog).code != 0)
-			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+		if (run(vcsArgs).code != 0)
+			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
+	}
+
+	inline function runCheckoutRelatedCommand(ref, args:Array<String>) {
+		final ret = run(args);
+		if (ret.code != 0) {
+			throw VcsError.CantCheckout(this, ref, ret.out);
+		}
+	}
+
+	public function updateWithData(data:{?commit:String, ?branch:Null<String>, ?tag:Null<String>}) {
+		runCheckoutRelatedCommand(data.commit, ["pull", "--rev", data.commit]);
+		runCheckoutRelatedCommand(data.commit, ["checkout", data.commit]);
+	}
+
+	public function getRef():String {
+		final out = run(["id", "-i"], true).out.trim();
+		// if the hash ends with +, there are edits
+		if (StringTools.endsWith(out, "+"))
+			return out.substr(0, out.length - 2);
+		return out;
+	}
+
+	public function getOriginUrl():String {
+		return run(["paths", "default"], true).out.trim();
+	}
+
+	public function getBranchName():Null<String> {
+		return run(["id", "-b"], true).out.trim();
+	}
+
+	public function hasLocalChanges():Bool {
+		final diff = run(["diff", "-U", "2", "--git", "--subrepos"]);
+		final status = run(["status"]);
+
+		return diff.code + status.code + diff.out.length + status.out.length > 0;
+	}
+
+	public function resetLocalChanges() {
+		run(["clean"], true);
 	}
 }
