@@ -36,9 +36,14 @@ class Site {
 	public static var REP_DIR = CWD+"../"+Data.REPOSITORY;
 
 	static function initDatabase() {
+		var alreadyExists = sys.FileSystem.exists(DB_FILE);
 		db = neko.db.Sqlite.open(DB_FILE);
 		neko.db.Manager.cnx = db;
 		neko.db.Manager.initialize();
+
+		if (!alreadyExists) {
+			SiteDb.create(db);
+		}
 	}
 
 	static function run() {
