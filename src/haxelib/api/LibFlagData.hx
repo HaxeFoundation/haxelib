@@ -71,7 +71,7 @@ function fromHxml(path:String):List<{name:ProjectName, data:Option<VersionData>}
 	final libsData = new List<{name:ProjectName, data:Option<VersionData>}>();
 	final targetLibraries:Map<ProjectName, Null<Bool>> = [for (_ => lib in TARGETS) lib => null];
 
-	final lines = [path];
+	final lines = normalizeHxml(File.getContent(path)).split("\n");
 
 	while (lines.length > 0) {
 		final line = lines.shift().trim();

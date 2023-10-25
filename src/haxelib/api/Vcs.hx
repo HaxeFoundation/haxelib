@@ -21,6 +21,7 @@
  */
 package haxelib.api;
 
+import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.thread.Thread;
 import sys.thread.Lock;
@@ -232,6 +233,8 @@ abstract class Vcs implements IVcs {
 	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
 
 	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
+
+	public abstract function getReproducibleVersion(libPath: String): VcsData;
 }
 
 /** Class wrapping `git` operations. **/
@@ -347,6 +350,20 @@ class Git extends Vcs {
 		// return prev. cwd:
 		Sys.setCwd(oldCwd);
 	}
+
+	public function getReproducibleVersion(libPath: String): VcsData {
+		final oldCwd = Sys.getCwd();
+		Sys.setCwd(libPath);
+
+		final ret: VcsData = {
+			// could the remote's name not be "origin"?
+			url: run(["remote", "get-url", "origin"], true).out.trim(),
+			ref: run(["rev-parse", "HEAD"], true).out.trim(),
+		};
+
+		Sys.setCwd(oldCwd);
+		return ret;
+	}
 }
 
 /** Class wrapping `hg` operations. **/
@@ -407,17 +424,34 @@ class Mercurial extends Vcs {
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final vcsArgs = ["clone", url, libPath];
 
-		if (branch != null) {
+		if (branch != null && version != null) {
 			vcsArgs.push("--branch");
 			vcsArgs.push(branch);
-		}
 
-		if (version != null) {
 			vcsArgs.push("--rev");
+			vcsArgs.push(version);
+		} else if (branch != null) {
+			vcsArgs.push("--updaterev");
+			vcsArgs.push(branch);
+		} else if (version != null) {
+			vcsArgs.push("--updaterev");
 			vcsArgs.push(version);
 		}
 
 		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+	}
+
+	public function getReproducibleVersion(libPath: String): VcsData {
+		final oldCwd = Sys.getCwd();
+		Sys.setCwd(libPath);
+
+		final ret: VcsData = {
+			url: run(["paths", "default"], true).out.trim(),
+			ref: run(["identify", "-i", "--debug"], true).out.trim(),
+		};
+
+		Sys.setCwd(oldCwd);
+		return ret;
 	}
 }

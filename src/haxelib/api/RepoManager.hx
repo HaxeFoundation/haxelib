@@ -77,7 +77,7 @@ class RepoManager {
 
 		Returns the directory path if it is found, otherwise returns null.
 	**/
-	static function getLocalPath(dir:String):Null<String> {
+	public static function getLocalPath(dir:String):Null<String> {
 		if (dir == "")
 			return null;
 		final repo = Path.join([dir, LOCAL_REPO_DIR]);

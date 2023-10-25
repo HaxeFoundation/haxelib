@@ -42,6 +42,18 @@ class VcsData {
 	**/
 	@:optional
 	var subDir:Null<String>;
+
+	public function toString(): String {
+		var qualifier =
+			if (ref != null) ref
+			else if (tag != null) tag
+			else if (branch != null) branch
+			else null;
+		return if (qualifier != null)
+			'$url#$qualifier'
+		else
+			url;
+	}
 }
 
 /** Data required to reproduce a library version **/
@@ -84,4 +96,10 @@ class VersionDataHelper {
 			}
 		}
 	}
+
+	public static function toString(data: VersionData): String
+		return switch data {
+			case Haxelib(semver): semver;
+			case VcsInstall(vcsId, vcsData): '$vcsId:${vcsData.toString()}';
+		}
 }

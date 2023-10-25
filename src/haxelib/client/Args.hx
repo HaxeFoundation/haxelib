@@ -52,6 +52,9 @@ enum abstract Command(String) to String {
 	final ConvertXml = "convertxml";
 	final Run = "run";
 	final Proxy = "proxy";
+	final StateSave = "state save";
+	final StateLoad = "state load";
+
 	// deprecated commands
 	final Local = "local";
 	final SelfUpdate = "selfupdate";
@@ -173,12 +176,18 @@ class Args {
 
 		validate(flags);
 
-		final commandStr = mainArgs.shift();
+		var commandStr = mainArgs.shift();
 		if (commandStr == null)
 			throw new InvalidCommand("No command specified");
 
-		final command = Command.ofString(commandStr);
-		if(command == null)
+		// Allow multi words commands
+		var command = Command.ofString(commandStr);
+		while (command == null && mainArgs.length > 0) {
+			commandStr += ' ' + mainArgs.shift();
+			command = Command.ofString(commandStr);
+		}
+
+		if (command == null)
 			throw new InvalidCommand('Unknown command $commandStr');
 
 		return {
@@ -276,6 +285,8 @@ class Args {
 		addCommand(Setup, "set the haxelib repository path", Miscellaneous);
 		addCommand(NewRepo, "create a new local repository", Miscellaneous);
 		addCommand(DeleteRepo, "delete the local repository", Miscellaneous);
+		addCommand(StateSave, "generate a manifest file to load with haxelib state load", Miscellaneous);
+		addCommand(StateLoad, "install libraries from manifest file", Miscellaneous);
 		addCommand(ConvertXml, "convert haxelib.xml file to haxelib.json", Miscellaneous);
 		addCommand(Run, "run the specified library with parameters", Miscellaneous);
 		addCommand(Proxy, "setup the Http proxy", Miscellaneous);

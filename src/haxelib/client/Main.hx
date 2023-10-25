@@ -21,6 +21,8 @@
  */
 package haxelib.client;
 
+import haxe.display.Server.ConfigurePrintParams;
+import haxelib.VersionData.VersionDataHelper;
 import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
 
@@ -229,6 +231,8 @@ class Main {
 			Proxy => create(proxy, 5, true),
 			#end
 			FixRepo => create(fixRepo, 0),
+			StateSave => create(stateSave, 1),
+			StateLoad => create(stateLoad, 1),
 			// deprecated commands
 			Local => create(local, 1, 'haxelib install <file>'),
 			SelfUpdate => create(updateSelf, 0, true, 'haxelib --global update $HAXELIB_LIBNAME'),
@@ -841,6 +845,66 @@ class Main {
 		final path = RepoManager.getPath();
 		RepoManager.deleteLocal();
 		Cli.print('Local repository deleted ($path)');
+	}
+
+	/** Outputs a manifest file with all the installed libraries and their current version **/
+	function stateSave() {
+		final manifest = getArgument("Manifest file to save");
+
+		final dir = haxe.io.Path.directory(manifest);
+		if (!sys.FileSystem.exists(dir)) sys.FileSystem.createDirectory(dir);
+		final out = sys.io.File.write(manifest);
+
+		if (RepoManager.getLocalPath(Sys.getCwd()) == null) {
+			Cli.printWarning("no local repository found, using global repository");
+		}
+
+		final scope = getScope();
+		final libraryInfo = scope.getArrayOfLibraryInfo();
+
+		// sort projects alphabetically
+		libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+
+		for (library in libraryInfo) {
+			if (library.devPath != null) {
+				Cli.printWarning('Version of "${library.name}" is "dev". The manifest file may not work properly in other environments!');
+			}
+
+			final version = try scope.getVersion(library.name) catch (e) {
+				Cli.printWarning(e.message);
+				continue;
+			};
+
+			var versionData: VersionData;
+			if (VcsID.isValid(version)) {
+				final vcsId = VcsID.ofString(version);
+				versionData = VcsInstall(
+					vcsId,
+					scope.repository.getVcsData(library.name, vcsId)
+				);
+			} else {
+				versionData = Haxelib(SemVer.ofString(version));
+			}
+			final versionStr = VersionDataHelper.toString(versionData);
+			out.writeString('-lib ${library.name}:$versionStr\n');
+		}
+
+		out.close();
+	}
+
+	/** Reads a manifest file and install all specified library versions **/
+	function stateLoad() {
+		final manifest = getArgument("Manifest file to load");
+		final scope = getScope();
+		final installer = setupAndGetInstaller(scope);
+		Cli.defaultAnswer = Always;
+		Installer.skipDependencies = true;
+
+		if (sys.FileSystem.exists(manifest) && !sys.FileSystem.isDirectory(manifest)) {
+			return installer.installFromHxml(manifest, confirmHxmlInstall);
+		}
+
+		throw 'Expected a manifest file.';
 	}
 
 	// ----------------------------------

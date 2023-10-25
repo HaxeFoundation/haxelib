@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.io.File;
 
@@ -469,5 +470,9 @@ class Repository {
 
 	function getDevFilePath(name:ProjectName):String {
 		return addToRepoPath(name, DEV_FILE);
+	}
+
+	public function getVcsData(name: ProjectName, version: VcsID): VcsData {
+		return Vcs.get(version).getReproducibleVersion(getProjectVersionPath(name, version));
 	}
 }
