@@ -4,3 +4,6 @@
 [submodule "lib/record-macros"]
 	path = lib/record-macros
 	url = https://github.com/HaxeFoundation/record-macros
+[submodule "hx4compat"]
+	path = hx4compat
+	url = https://github.com/HaxeFoundation/hx4compat
