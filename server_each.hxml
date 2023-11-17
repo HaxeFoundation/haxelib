@@ -1,5 +1,6 @@
 -cp src
 -cp hx3compat/std
+-cp hx4compat/std
 -lib ufront
 -lib ufront-mail:1.0.0-rc.4
 -lib ufront-ufadmin

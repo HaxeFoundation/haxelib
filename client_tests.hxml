@@ -1,6 +1,7 @@
 -p src
 -p test
 -p hx3compat/std
+-p hx4compat/std
 --main HaxelibTests
 --debug
 --neko bin/test.n
