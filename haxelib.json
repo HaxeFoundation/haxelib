@@ -9,7 +9,7 @@
 	"releasenote": "Added support for documenting custom defines and metadata (#573)",
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"],
 	"dependencies":{
-		"hx3compat": ""
+		"hx3compat": "",
 		"hx4compat": ""
 	}
 }
