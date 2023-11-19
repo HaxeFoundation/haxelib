@@ -7,3 +7,6 @@
 [submodule "hx4compat"]
 	path = hx4compat
 	url = https://github.com/HaxeFoundation/hx4compat
+[submodule "crypto"]
+	path = crypto
+	url = https://github.com/HaxeFoundation/crypto

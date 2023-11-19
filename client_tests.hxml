@@ -2,6 +2,7 @@
 -p test
 -p hx3compat/std
 -p hx4compat/std
+-p crypto/src
 --main HaxelibTests
 --debug
 --neko bin/test.n

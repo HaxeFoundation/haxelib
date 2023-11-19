@@ -2,5 +2,6 @@
 -cp test
 -lib hx3compat
 -cp hx4compat/std
+-cp crypto/src
 -main IntegrationTests
 -neko bin/integration_tests.n

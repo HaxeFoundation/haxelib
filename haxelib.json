@@ -10,6 +10,7 @@
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"],
 	"dependencies":{
 		"hx3compat": "",
-		"hx4compat": ""
+		"hx4compat": "",
+		"crypto": ""
 	}
 }

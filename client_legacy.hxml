@@ -1,5 +1,6 @@
 -cp src
 -cp hx3compat/std
 -cp hx4compat/std
+-cp crypto/src
 -neko bin/legacyhaxelib.n
 -main legacyhaxelib.Main
