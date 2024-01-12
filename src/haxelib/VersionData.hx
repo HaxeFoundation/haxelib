@@ -1,7 +1,7 @@
 package haxelib;
 
 /** Abstract enum representing the types of Vcs systems that are supported. **/
-@:enum abstract VcsID(String) to String {
+enum abstract VcsID(String) to String {
 	var Hg = "hg";
 	var Git = "git";
 
