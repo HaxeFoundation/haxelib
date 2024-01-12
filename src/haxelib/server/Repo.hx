@@ -25,6 +25,7 @@ import haxe.io.*;
 import sys.io.*;
 import sys.*;
 import sys.db.*;
+import haxe.crypto.Md5;
 
 import haxelib.Data;
 import haxelib.MetaData;
@@ -112,6 +113,7 @@ class Repo implements SiteApi {
 	}
 
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Void {
+		var hashedPassword = #if (haxelib_api_version == "4.0") Md5.encode(pass) #else pass #end;
 		if( name.length < 3 )
 			throw "User name must be at least 3 characters";
 		if( !Data.alphanum.match(name) )
@@ -125,7 +127,7 @@ class Repo implements SiteApi {
 
 		var u = new User();
 		u.name = name;
-		u.pass = pass;
+		u.pass = hashedPassword;
 		u.email = mail;
 		u.fullname = fullname;
 		u.insert();
@@ -146,8 +148,9 @@ class Repo implements SiteApi {
 	}
 
 	public function checkPassword( user : String, pass : String ) : Bool {
+		var hashedPassword = #if (haxelib_api_version == "4.0") Md5.encode(pass) #else pass #end;
 		var u = User.manager.search({ name : user }).first();
-		return u != null && u.pass == pass;
+		return u != null && u.pass == hashedPassword;
 	}
 
 	public function getSubmitId() : String {
@@ -176,6 +179,7 @@ class Repo implements SiteApi {
 	}
 
 	public function processSubmit( id : String, user : String, pass : String ) : String {
+		var hashedPassword = #if (haxelib_api_version == "4.0") Md5.encode(pass) #else pass #end;
 		neko.Web.logMessage("processSubmit " + id);
 		var tmpFile = Path.join([TMP_DIR_NAME, Std.parseInt(id)+".tmp"]);
 		return FileStorage.instance.readFile(
@@ -201,7 +205,7 @@ class Repo implements SiteApi {
 				Manager.cnx.startTransaction();
 
 				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass ) {
+				if( u == null || u.pass != hashedPassword ) {
 					Manager.cnx.rollback();
 					throw "Invalid username or password";
 				}
