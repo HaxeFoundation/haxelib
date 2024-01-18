@@ -3,5 +3,6 @@
 -main haxelib.server.Repo
 -lib aws-sdk-neko
 -lib record-macros
+-lib argon2
 -dce no
--D haxelib_api
+-D haxelib-api

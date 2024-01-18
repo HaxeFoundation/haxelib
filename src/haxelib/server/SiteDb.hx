@@ -32,6 +32,7 @@ class User extends Object {
 	public var fullname : String;
 	public var email : String;
 	public var pass : String;
+	public var salt : haxe.io.Bytes;
 
 }
 
@@ -117,6 +118,11 @@ class Developer extends Object {
 
 }
 
+class Meta extends Object {
+	var id:SString<1>;
+	public var dbVersion:SUInt;
+}
+
 class SiteDb {
 	static var db : Connection;
 	//TODO: this whole configuration business is rather messy to say the least
@@ -145,11 +151,25 @@ class SiteDb {
 			Project.manager,
 			Tag.manager,
 			Version.manager,
-			Developer.manager
+			Developer.manager,
+			Meta.manager
 		];
-		for (m in managers)
-			if (!TableCreate.exists(m))
+
+		var hasOldTables = false;
+
+		for (m in managers) {
+			if (TableCreate.exists(m)) {
+				hasOldTables = true;
+			} else {
 				TableCreate.create(m);
+			}
+		}
+
+		if (hasOldTables) {
+			Update.runNeededUpdates();
+		} else {
+			Update.setupFresh();
+		}
 	}
 
 	static public function cleanup() {
