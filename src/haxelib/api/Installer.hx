@@ -263,6 +263,8 @@ class Installer {
 		if (confirmHxmlInstall != null && !confirmHxmlInstall(libVersions))
 			return;
 
+		var hasFailures = false;
+
 		for (library in installData) {
 			if (library.versionData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
 				final version = SemVer.ofString(library.version);
@@ -281,6 +283,7 @@ class Installer {
 			try
 				installFromVersionData(library.name, library.versionData)
 			catch (e) {
+				hasFailures = true;
 				userInterface.log(e.toString());
 				continue;
 			}
@@ -296,6 +299,8 @@ class Installer {
 
 			handleDependenciesGeneral(libraryName, library.versionData);
 		}
+
+		if (hasFailures) throw "Some libraries could not be installed.";
 	}
 
 	/**
