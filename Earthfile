@@ -17,7 +17,7 @@ devcontainer-library-scripts:
 
 # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
 mysql-public-key:
-    ARG KEY=859BE8D7C586F538430B19C2467B942D3A79BD29
+    ARG KEY=B7B3B788A8D3785C
     RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$KEY"
     RUN gpg --batch --armor --export "$KEY" > mysql-public-key
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
@@ -34,7 +34,7 @@ neko:
 
 haxe:
     ARG FILENAME=haxe.tar.gz
-    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.1/haxe-4.3.1-linux64.tar.gz" -o "$FILENAME"
+    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.4/haxe-4.3.4-linux64.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
@@ -77,18 +77,18 @@ devcontainer-base:
             mercurial \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
-        && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
-        && apt-get install -y nodejs=16.* \
+        && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+        && apt-get install -y nodejs=18.* \
         # Install mysql-client
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
         && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
         && apt-get update \
         && apt-get -y install mysql-client=5.7.* \
         # install kubectl
-        && curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | apt-key add - \
-        && echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list \
+        && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
+        && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl=1.23.* \
+        && apt-get -y install --no-install-recommends kubectl=1.29.* \
         # install helm
         && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
         && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
@@ -335,7 +335,7 @@ aws-ndll:
     SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
 
 haxelib-server-builder:
-    FROM haxe:3.4
+    FROM haxe:4.3
 
     WORKDIR /workspace
     COPY lib/record-macros lib/record-macros
