@@ -335,7 +335,7 @@ aws-ndll:
     SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
 
 haxelib-server-builder:
-    FROM haxe:4.3
+    FROM haxe:3.4
 
     WORKDIR /workspace
     COPY lib/record-macros lib/record-macros
@@ -516,7 +516,7 @@ ci-tests:
     COPY *.hxml .
 
     # for package.hxml
-    COPY haxelib.json README.md . 
+    COPY haxelib.json README.md .
     COPY +run.n/run.n .
 
     COPY +ci-runner/ci.n bin/ci.n

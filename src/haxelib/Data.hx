@@ -35,7 +35,7 @@ using StringTools;
 using Lambda;
 
 /** The level of strictness with which a `haxelib.json` check is performed. **/
-enum abstract CheckLevel(Int) {
+#if haxe4 enum #else @:enum #end abstract CheckLevel(Int) {
 	/** No check is performed. **/
 	var NoCheck = 0;
 	/** Only the syntax of the file is checked. **/
@@ -183,7 +183,7 @@ typedef DefineDocumentation = {
 }
 
 /** An abstract enum representing the different Licenses a project can have. **/
-enum abstract License(String) to String {
+#if haxe4 enum #else @:enum #end abstract License(String) to String {
 	var Gpl = 'GPL';
 	var Lgpl = 'LGPL';
 	var Mit = 'MIT';
