@@ -62,7 +62,6 @@ abstract class Scope {
 
 	function new(repository:Repository) {
 		this.repository = repository;
-		// While this class is "GlobalScope", there's currently not a "LocalScope" equivalent class. For now we can add this here. 
 		isLocal = repository.path != RepoManager.suggestGlobalPath() ?? "";
 
 		overrides = loadOverrides();

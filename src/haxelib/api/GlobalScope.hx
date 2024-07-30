@@ -1,7 +1,5 @@
 package haxelib.api;
 
-import haxelib.client.Cli;
-import sys.FileSystem;
 import sys.io.File;
 import haxe.ds.GenericStack;
 import haxe.io.Path;
