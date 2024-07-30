@@ -22,10 +22,7 @@ using StringTools;
 **/
 class GlobalScope extends Scope {
 	function new(repository:Repository) {
-		super(false, repository);
-		
-		// While this class is "GlobalScope", there's currently not a "LocalScope" equivalent class. For now we can add this here. 
-		isLocal = repository.path != RepoManager.suggestGlobalPath() ?? "";
+		super(repository);
 	}
 
 	public function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void {
