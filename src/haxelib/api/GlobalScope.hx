@@ -25,7 +25,7 @@ class GlobalScope extends Scope {
 		super(false, repository);
 		
 		// While this class is "GlobalScope", there's currently not a "LocalScope" equivalent class. For now we can add this here. 
-		isLocal = RepoManager.getPath() != RepoManager.getGlobalPath();
+		isLocal = repository.path != RepoManager.getGlobalPath();
 	}
 
 	public function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void {
