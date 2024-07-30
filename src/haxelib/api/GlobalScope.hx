@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import sys.FileSystem;
 import sys.io.File;
 import haxe.ds.GenericStack;
 import haxe.io.Path;
@@ -21,6 +22,7 @@ using StringTools;
 class GlobalScope extends Scope {
 	function new(repository:Repository) {
 		super(false, repository);
+		isLocal = FileSystem.exists("./.haxelib");
 	}
 
 	public function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void {
