@@ -558,9 +558,9 @@ class Main {
 		var listStr = '';
 
 		if (scope.isLocal)
-			listStr += 'Local Haxelib Repository at: ${RepoManager.getLocalPath("./")}\n';
+			listStr += 'Local Haxelib Repository at: ${scope.repository.path}\n';
 		else
-			listStr += 'Global Haxelib at: ${RepoManager.getGlobalPath()}\n';
+			listStr += 'Global Haxelib at: ${scope.repository.path}\n';
 		
 		for (library in libraryInfo) {
 			listStr += '${library.name}:';
