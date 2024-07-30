@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import haxelib.client.Cli;
 import sys.FileSystem;
 import sys.io.File;
 import haxe.ds.Option;
@@ -793,6 +794,8 @@ class Installer {
 
 			final currentBranch = vcsBranchesByLibraryName[library];
 
+			Cli.print(id);
+
 			// TODO check different urls as well
 			if (branch != null && (!wasUpdated || currentBranch != branch)) {
 				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
@@ -800,7 +803,7 @@ class Installer {
 					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');
 					return;
 				}
-				FsUtils.deleteRec(libPath);
+				// FsUtils.deleteRec(libPath);
 				doVcsClone();
 			} else if (wasUpdated) {
 				userInterface.log('Library $library version ${vcs.directory} already up to date.');

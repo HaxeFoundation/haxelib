@@ -323,15 +323,21 @@ class Git extends Vcs {
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final oldCwd = Sys.getCwd();
 
-		final vcsArgs = ["clone", url, libPath];
+		if (!FileSystem.exists(libPath))
+		{
+			final vcsArgs = ["clone", url, libPath];
 
-		if (!Vcs.flat)
-			vcsArgs.push('--recursive');
-
-		if (run(vcsArgs, debugLog).code != 0)
-			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+			vcsArgs.push("--filter=tree:0");
+			vcsArgs.push("--progress");
+	
+			if (run(vcsArgs, debugLog).code != 0)
+				throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+	
+		}
 
 		Sys.setCwd(libPath);
+
+		run(["remote", "set-url", "origin", url], debugLog);
 
 		if (version != null && version != "") {
 			final ret = run(["checkout", "tags/" + version], debugLog);
@@ -347,6 +353,22 @@ class Git extends Vcs {
 			}
 		}
 
+		if (!Vcs.flat)
+		{
+			trace("getting submodules lol");
+			// fixes when a submodule potentially has a broken commit deep in it's history (the cairo submodule in openfl/lime)
+			run(["config", "transfer.fsck", "true"], debugLog);
+			run(["config", "fetch.fsckobjects", "true"], debugLog);
+			run(["config", "receive.fsckobjects", "true"], debugLog);
+
+			final ret = run(["submodule", "update", "--init", "--recursive", "--filter=tree:0"], debugLog, true);
+			if (ret.code != 0)
+			{
+				Sys.setCwd(oldCwd);
+				trace("erm trolled?");
+			}
+		}
+			
 		// return prev. cwd:
 		Sys.setCwd(oldCwd);
 	}
