@@ -47,7 +47,7 @@ class TestDev extends IntegrationTests {
 		final r = haxelib(["dev", "bar", Path.join([IntegrationTests.projectRoot, "test/libraries/libBar"])]).result();
 		assertSuccess(r);
 
-		final r = haxelib(["list", "Bar"]).result();
+		final r = haxelib(["list", "Bar", "--quiet"]).result();
 		assertTrue(r.out.startsWith("Bar"));
 		assertSuccess(r);
 		// even though the user used "bar", we show "Bar" as that is what is found in haxelib.json

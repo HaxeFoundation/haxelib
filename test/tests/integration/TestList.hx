@@ -116,7 +116,7 @@ class TestList extends IntegrationTests {
 	function testInvalidDirectories():Void {
 		FileSystem.createDirectory('${projectRoot}$repo/LIBRARY');
 
-		final r = haxelib(["list"]).result();
+		final r = haxelib(["list", "--quiet"]).result();
 		assertSuccess(r);
 		// the command should not crash
 		assertEquals("", r.out);
