@@ -558,9 +558,9 @@ class Main {
 		var listStr = '';
 
 		if (scope.isLocal)
-			listStr += 'Local Haxelib Repository at: ${scope.repository.path}\n';
+			Cli.printOptional('Local Haxelib Repository at: ${scope.repository.path}');
 		else
-			listStr += 'Global Haxelib at: ${scope.repository.path}\n';
+			Cli.printOptional('Global Haxelib at: ${scope.repository.path}');
 		
 		for (library in libraryInfo) {
 			listStr += '${library.name}:';
@@ -577,6 +577,9 @@ class Main {
 			listStr += "\n";
 
 		}
+
+		listStr = listStr.trim();
+
 		Cli.print(listStr);
 
 	}
