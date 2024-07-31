@@ -21,6 +21,7 @@
  */
 package haxelib.api;
 
+import haxelib.client.Cli;
 import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.thread.Thread;
@@ -190,13 +191,15 @@ abstract class Vcs implements IVcs {
 				err: Std.string(e)
 			}
 		};
+
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		final ret = if (Sys.systemName() == "Windows") {
+		final ret = if (true) {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
 				to.value = stream.readAll().toString();
+				Sys.println(to.value);
 				streamsLock.release();
 			}
 
@@ -218,6 +221,9 @@ abstract class Vcs implements IVcs {
 		} else {
 			final out = p.stdout.readAll().toString();
 			final err = p.stderr.readAll().toString();
+			
+			
+
 			final code = p.exitCode();
 			{
 				code: code,
@@ -321,31 +327,32 @@ class Git extends Vcs {
 	}
 
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
+		
 		final oldCwd = Sys.getCwd();
 
-		if (!FileSystem.exists(libPath))
-		{
-			final vcsArgs = ["clone", url, libPath];
+		final vcsArgs = ["clone", url, libPath];
 
-			vcsArgs.push("--filter=tree:0");
-			vcsArgs.push("--progress");
-	
-			if (run(vcsArgs, debugLog).code != 0)
-				throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-	
-		}
+		Cli.printOptional('Cloning ${name} from ${url}');
+
+		if (run(vcsArgs, debugLog).code != 0)
+			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
+		
 
 		Sys.setCwd(libPath);
 
-		run(["remote", "set-url", "origin", url], debugLog);
-
 		if (version != null && version != "") {
+
+			Cli.printOptional('Checking out tag/version ${version} of ${name}');
+
 			final ret = run(["checkout", "tags/" + version], debugLog);
 			if (ret.code != 0) {
 				Sys.setCwd(oldCwd);
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 			}
 		} else if (branch != null) {
+
+			Cli.printOptional('Checking out branch/commit ${branch} of ${libPath}');
+
 			final ret = run(["checkout", branch], debugLog);
 			if (ret.code != 0){
 				Sys.setCwd(oldCwd);
@@ -355,13 +362,14 @@ class Git extends Vcs {
 
 		if (!Vcs.flat)
 		{
-			trace("getting submodules lol");
-			// fixes when a submodule potentially has a broken commit deep in it's history (the cairo submodule in openfl/lime)
-			run(["config", "transfer.fsck", "true"], debugLog);
-			run(["config", "fetch.fsckobjects", "true"], debugLog);
-			run(["config", "receive.fsckobjects", "true"], debugLog);
+			Cli.printOptional('Updating submodules for ${name}');
 
-			final ret = run(["submodule", "update", "--init", "--recursive", "--filter=tree:0"], debugLog, true);
+			run(["submodule", "init"], debugLog);
+			run(["submodule", "sync", "--recursive"], debugLog);
+
+			// run(["fetch", "--recurse-submodules"], debugLog);
+
+			final ret = run(["submodule", "update", "--recursive"], debugLog);
 			if (ret.code != 0)
 			{
 				Sys.setCwd(oldCwd);
