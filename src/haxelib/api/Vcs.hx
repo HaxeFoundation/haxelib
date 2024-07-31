@@ -195,7 +195,7 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		final ret = if (Sys.systemName() == "Windows") {
+		final ret = if (true) {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
 				to.value = stream.readAll().toString();
@@ -366,7 +366,7 @@ class Git extends Vcs {
 			run(["submodule", "init"], debugLog);
 			run(["submodule", "sync", "--recursive"], debugLog);
 
-			// run(["fetch", "--recurse-submodules"], debugLog);
+			run(["fetch", "--recurse-submodules"], debugLog);
 
 			final ret = run(["submodule", "update", "--recursive"], debugLog);
 			if (ret.code != 0)
