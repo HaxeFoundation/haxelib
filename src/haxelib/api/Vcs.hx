@@ -366,7 +366,7 @@ class Git extends Vcs {
 			run(["submodule", "init"], debugLog);
 			run(["submodule", "sync", "--recursive"], debugLog);
 
-			run(["fetch", "--recurse-submodules"], debugLog);
+			// run(["fetch", "--recurse-submodules"], debugLog);
 
 			final ret = run(["submodule", "update", "--recursive"], debugLog);
 			if (ret.code != 0)
