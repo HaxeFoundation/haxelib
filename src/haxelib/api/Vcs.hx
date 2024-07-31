@@ -195,11 +195,10 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		final ret = if (true) {
+		final ret = if (Sys.systemName() == "Windows") {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
 				to.value = stream.readAll().toString();
-				Sys.println(to.value);
 				streamsLock.release();
 			}
 
