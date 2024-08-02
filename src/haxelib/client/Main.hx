@@ -557,7 +557,7 @@ class Main {
 		// we want to print in one batch, rather than one cli print for each line
 		var listStr = '';
 
-		if (scope.isLocal)
+		if (scope.repository.path != RepoManager.suggestGlobalPath())
 			Cli.printOptional('Local Haxelib Repository at: ${scope.repository.path}');
 		else
 			Cli.printOptional('Global Haxelib at: ${scope.repository.path}');

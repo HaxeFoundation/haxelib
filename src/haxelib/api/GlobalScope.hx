@@ -20,7 +20,7 @@ using StringTools;
 **/
 class GlobalScope extends Scope {
 	function new(repository:Repository) {
-		super(repository);
+		super(false, repository);
 	}
 
 	public function runScript(library:ProjectName, ?callData:CallData, ?version:Version):Void {

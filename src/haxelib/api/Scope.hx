@@ -60,9 +60,9 @@ abstract class Scope {
 	public final repository:Repository;
 	final overrides:LockFormat;
 
-	function new(repository:Repository) {
+	function new(isLocal:Bool, repository:Repository) {
 		this.repository = repository;
-		isLocal = repository.path != RepoManager.suggestGlobalPath() ?? "";
+		this.isLocal = isLocal;
 
 		overrides = loadOverrides();
 	}
