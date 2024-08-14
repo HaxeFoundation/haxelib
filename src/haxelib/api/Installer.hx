@@ -793,8 +793,22 @@ class Installer {
 
 			final currentBranch = vcsBranchesByLibraryName[library];
 
-			// TODO check different urls as well
-			if (branch != null && (!wasUpdated || currentBranch != branch)) {
+			var libUrl = vcs.getReproducibleVersion(libPath).url;
+
+			// Could return null if using Mecurial!
+			var urlInfo = vcs.parseUrl(url);
+			var libUrlInfo = vcs.parseUrl(libUrl);
+
+			if (urlInfo != null && libUrlInfo != null && urlInfo.cleanUrl != libUrlInfo.cleanUrl)
+			{
+				if (!userInterface.confirm('Update remote url: "${libUrl}" with "${url}"')) {
+					userInterface.log('Library $library $id repository url remains at "${libUrlInfo.cleanUrl}"');
+					return;
+				}
+				FsUtils.deleteRec(libPath);
+				doVcsClone();
+			}
+			else if (branch != null && (!wasUpdated || currentBranch != branch)) {
 				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
 				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
 					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');

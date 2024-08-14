@@ -235,6 +235,8 @@ abstract class Vcs implements IVcs {
 	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
 
 	public abstract function getReproducibleVersion(libPath: String): VcsData;
+
+	public abstract function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String};
 }
 
 /** Class wrapping `git` operations. **/
@@ -356,13 +358,38 @@ class Git extends Vcs {
 		Sys.setCwd(libPath);
 
 		final ret: VcsData = {
+			// `git config --get remote.remoteName.url` will get the original url of the remote
+			// for usecases where someone has something like `url."git@github.com:".insteadOf 'https://github.com/'` set
+
 			// could the remote's name not be "origin"?
-			url: run(["remote", "get-url", "origin"], true).out.trim(),
+			url: run(["config", "--get", "remote.origin.url"], true).out.trim(),
 			ref: run(["rev-parse", "HEAD"], true).out.trim(),
 		};
 
 		Sys.setCwd(oldCwd);
 		return ret;
+	}
+
+	public function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String}
+	{
+		var regex = new EReg("^(https:\\/\\/|git@)([^\\s/:]+)(?::|\\/)([^\\s/]+)\\/([^\\s/]+?)(?:\\.git)?$", "");
+		
+		if (regex.match(url)) {
+			var output = {
+				protocol: regex.matched(1),
+				domain: regex.matched(2),
+				user: regex.matched(3),
+				repo: regex.matched(4),
+				cleanUrl: ""
+			};
+			// cleanUrl should spit it out to a consistent `domain/user/repo` format for simple comparison
+			// which will accomodate using either https or ssh
+			output.cleanUrl = output.domain + "/" + output.user + "/" + output.repo;
+			output.cleanUrl = output.cleanUrl.toLowerCase();
+			return output;
+		} else {
+			throw 'Invalid Git URL: $url';
+		}
 	}
 }
 
@@ -453,5 +480,11 @@ class Mercurial extends Vcs {
 
 		Sys.setCwd(oldCwd);
 		return ret;
+	}
+	
+	public function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String}
+	{
+		// Mecurial unimplemented!
+		return null;
 	}
 }
