@@ -195,7 +195,19 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		final ret = if (true) {
+		// In certain cases of git clones, it will hang on reading from stderr
+		// if we don't read from it. So we will always try to read from it.
+		try {
+			while (true) {
+				Sys.stdout().writeByte(p.stderr.readByte());
+				Sys.stdout().flush();
+			}
+		}
+		catch (e:haxe.io.Eof) {
+			// We're done reading this processes stderr
+		}
+
+		final ret = if (Sys.systemName() == "Windows") {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
 				to.value = stream.readAll().toString();
@@ -220,7 +232,7 @@ abstract class Vcs implements IVcs {
 		} else {
 			final out = p.stdout.readAll().toString();
 			final err = p.stderr.readAll().toString();
-			
+
 			
 
 			final code = p.exitCode();
@@ -230,7 +242,7 @@ abstract class Vcs implements IVcs {
 				err: err
 			};
 		};
-
+		
 		p.close();
 		return ret;
 	}
@@ -329,7 +341,10 @@ class Git extends Vcs {
 		
 		final oldCwd = Sys.getCwd();
 
-		final vcsArgs = ["clone", url, libPath];
+		var vcsArgs = ["clone", url, libPath];
+
+		if (Cli.mode != Quiet)
+			vcsArgs.push("--progress");
 
 		Cli.printOptional('Cloning ${name} from ${url}');
 
@@ -364,12 +379,16 @@ class Git extends Vcs {
 			Cli.printOptional('Syncing submodules for ${name}');
 			run(["submodule", "sync", "--recursive"], debugLog);
 
+			var submoduleArgs = ["submodule", "update", "--init", "--recursive"];
+
+			if (Cli.mode == Quiet)
+				submoduleArgs.push("--quiet");
+
 			Cli.printOptional('Downloading/updating submodules for ${name}');
-			final ret = run(["submodule", "update", "--init", "--recursive", "--force"], debugLog);
+			final ret = run(submoduleArgs, debugLog);
 			if (ret.code != 0)
 			{
 				Sys.setCwd(oldCwd);
-				trace("erm trolled?");
 			}
 		}
 			
