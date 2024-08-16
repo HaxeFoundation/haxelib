@@ -361,14 +361,11 @@ class Git extends Vcs {
 
 		if (!Vcs.flat)
 		{
-			Cli.printOptional('Updating submodules for ${name}');
-
-			run(["submodule", "init"], debugLog);
+			Cli.printOptional('Syncing submodules for ${name}');
 			run(["submodule", "sync", "--recursive"], debugLog);
 
-			// run(["fetch", "--recurse-submodules"], debugLog);
-
-			final ret = run(["submodule", "update", "--recursive"], debugLog);
+			Cli.printOptional('Downloading/updating submodules for ${name}');
+			final ret = run(["submodule", "update", "--init", "--recursive", "--force"], debugLog);
 			if (ret.code != 0)
 			{
 				Sys.setCwd(oldCwd);
