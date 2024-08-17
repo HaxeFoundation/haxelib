@@ -235,8 +235,6 @@ abstract class Vcs implements IVcs {
 	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
 
 	public abstract function getReproducibleVersion(libPath: String): VcsData;
-
-	public abstract function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String};
 }
 
 /** Class wrapping `git` operations. **/
@@ -370,27 +368,6 @@ class Git extends Vcs {
 		return ret;
 	}
 
-	public function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String}
-	{
-		var regex = new EReg("^(https:\\/\\/|git@)([^\\s/:]+)(?::|\\/)([^\\s/]+)\\/([^\\s/]+?)(?:\\.git)?$", "");
-		
-		if (regex.match(url)) {
-			var output = {
-				protocol: regex.matched(1),
-				domain: regex.matched(2),
-				user: regex.matched(3),
-				repo: regex.matched(4),
-				cleanUrl: ""
-			};
-			// cleanUrl should spit it out to a consistent `domain/user/repo` format for simple comparison
-			// which will accomodate using either https or ssh
-			output.cleanUrl = output.domain + "/" + output.user + "/" + output.repo;
-			output.cleanUrl = output.cleanUrl.toLowerCase();
-			return output;
-		} else {
-			throw 'Invalid Git URL: $url';
-		}
-	}
 }
 
 /** Class wrapping `hg` operations. **/
@@ -480,11 +457,5 @@ class Mercurial extends Vcs {
 
 		Sys.setCwd(oldCwd);
 		return ret;
-	}
-	
-	public function parseUrl(url:String):{protocol:String, domain:String, user:String, repo:String, cleanUrl:String}
-	{
-		// Mecurial unimplemented!
-		return null;
 	}
 }

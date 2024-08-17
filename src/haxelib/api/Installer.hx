@@ -795,14 +795,10 @@ class Installer {
 
 			var libUrl = vcs.getReproducibleVersion(libPath).url;
 
-			// Could return null if using Mecurial!
-			var urlInfo = vcs.parseUrl(url);
-			var libUrlInfo = vcs.parseUrl(libUrl);
-
-			if (urlInfo != null && libUrlInfo != null && urlInfo.cleanUrl != libUrlInfo.cleanUrl)
+			if (url != null && libUrl != null && url != libUrl)
 			{
 				if (!userInterface.confirm('Update remote url: "${libUrl}" with "${url}"')) {
-					userInterface.log('Library $library $id repository url remains at "${libUrlInfo.cleanUrl}"');
+					userInterface.log('Library $library $id repository url remains at "${libUrl}"');
 					return;
 				}
 				FsUtils.deleteRec(libPath);
