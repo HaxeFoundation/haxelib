@@ -191,7 +191,6 @@ abstract class Vcs implements IVcs {
 				err: Std.string(e)
 			}
 		};
-
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
@@ -220,9 +219,6 @@ abstract class Vcs implements IVcs {
 		} else {
 			final out = p.stdout.readAll().toString();
 			final err = p.stderr.readAll().toString();
-
-			
-
 			final code = p.exitCode();
 			{
 				code: code,
@@ -230,7 +226,7 @@ abstract class Vcs implements IVcs {
 				err: err
 			};
 		};
-		
+
 		p.close();
 		return ret;
 	}
@@ -326,7 +322,6 @@ class Git extends Vcs {
 	}
 
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
-		
 		final oldCwd = Sys.getCwd();
 
 		var vcsArgs = ["clone", url, libPath];
@@ -335,12 +330,10 @@ class Git extends Vcs {
 
 		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
-		
 
 		Sys.setCwd(libPath);
 
 		if (version != null && version != "") {
-
 			Cli.printOptional('Checking out tag/version ${version} of ${name}');
 
 			final ret = run(["checkout", "tags/" + version], debugLog);
@@ -349,7 +342,6 @@ class Git extends Vcs {
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 			}
 		} else if (branch != null) {
-
 			Cli.printOptional('Checking out branch/commit ${branch} of ${libPath}');
 
 			final ret = run(["checkout", branch], debugLog);
@@ -376,7 +368,7 @@ class Git extends Vcs {
 				Sys.setCwd(oldCwd);
 			}
 		}
-			
+
 		// return prev. cwd:
 		Sys.setCwd(oldCwd);
 	}
