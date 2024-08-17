@@ -21,6 +21,7 @@
  */
 package haxelib.api;
 
+import haxelib.client.Cli;
 import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.thread.Thread;
@@ -193,6 +194,18 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
+		// In certain cases of git clones, it will hang on reading from stderr
+		// if we don't read from it. So we will always try to read from it.
+		try {
+			while (true) {
+				Sys.stdout().writeByte(p.stderr.readByte());
+				Sys.stdout().flush();
+			}
+		}
+		catch (e:haxe.io.Eof) {
+			// We're done reading this processes stderr
+		}
+
 		final ret = if (Sys.systemName() == "Windows") {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
@@ -323,7 +336,10 @@ class Git extends Vcs {
 	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
 		final oldCwd = Sys.getCwd();
 
-		final vcsArgs = ["clone", url, libPath];
+		var vcsArgs = ["clone", url, libPath];
+
+		if (Cli.mode != Quiet)
+			vcsArgs.push("--progress");
 
 		if (!Vcs.flat)
 			vcsArgs.push('--recursive');
