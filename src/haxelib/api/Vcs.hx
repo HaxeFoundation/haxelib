@@ -195,18 +195,6 @@ abstract class Vcs implements IVcs {
 		// just in case process hangs waiting for stdin
 		p.stdin.close();
 
-		// In certain cases of git clones, it will hang on reading from stderr
-		// if we don't read from it. So we will always try to read from it.
-		try {
-			while (true) {
-				Sys.stdout().writeByte(p.stderr.readByte());
-				Sys.stdout().flush();
-			}
-		}
-		catch (e:haxe.io.Eof) {
-			// We're done reading this processes stderr
-		}
-
 		final ret = if (Sys.systemName() == "Windows") {
 			final streamsLock = new sys.thread.Lock();
 			function readFrom(stream:haxe.io.Input, to:{value:String}) {
@@ -342,9 +330,6 @@ class Git extends Vcs {
 		final oldCwd = Sys.getCwd();
 
 		var vcsArgs = ["clone", url, libPath];
-
-		if (Cli.mode != Quiet)
-			vcsArgs.push("--progress");
 
 		Cli.printOptional('Cloning ${name} from ${url}');
 
