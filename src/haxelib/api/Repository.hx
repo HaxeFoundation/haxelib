@@ -170,7 +170,7 @@ class Repository {
 
 		final current = getCurrentFileContent(name);
 		if (getDevPath(name) == null && current == version)
-			throw 'Cannot remove current version of library $name';
+			throw 'Cannot remove current version of library $name, it\'s set as the current version';
 
 		try {
 			confirmRemovalAgainstDev(name, versionPath);
