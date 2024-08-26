@@ -791,7 +791,7 @@ class Installer {
 			final wasUpdated = vcsBranchesByLibraryName.exists(library);
 			// difference between a key not having a value and the value being null
 
-			final currentBranch = vcsBranchesByLibraryName[library];
+			final currentBranch = vcsBranchesByLibraryName[library] ?? vcs.getReproducibleVersion(libPath).ref;
 
 			// TODO check different urls as well
 			if (branch != null && (!wasUpdated || currentBranch != branch)) {
