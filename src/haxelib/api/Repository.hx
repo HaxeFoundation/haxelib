@@ -170,8 +170,10 @@ class Repository {
 			throw 'Library $name version $version is not installed';
 
 		final current = getCurrentFileContent(name);
-		if (getDevPath(name) == null && current == version)
-			throw 'Cannot remove current version of library $name, it\'s set as the current version';
+		final installationInfo = getProjectInstallationInfo(name);
+
+		if (installationInfo.devPath == null && current == version)
+			throw 'Cannot remove current version of library $name';
 
 		try {
 			confirmRemovalAgainstDev(name, versionPath);
@@ -182,8 +184,13 @@ class Repository {
 
 		FsUtils.deleteRec(versionPath);
 		
-		var versions = getProjectInstallationInfo(name).versions.pop();
-		setCurrentVersion(name, versions);
+		// Dev path is set here definitely, since we've had a previous check earlier that would throw if this and dev path were true
+		if (current == version)
+		{
+			var latestVersion = installationInfo.versions.pop();
+			setCurrentVersion(name, latestVersion);
+		}
+		
 	}
 
 	/** Throws an error if removing `versionPath` conflicts with the dev path of library `name` **/
