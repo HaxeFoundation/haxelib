@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import haxelib.client.Cli;
 import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.io.File;
@@ -180,6 +181,9 @@ class Repository {
 		}
 
 		FsUtils.deleteRec(versionPath);
+		
+		var versions = getProjectInstallationInfo(name).versions.pop();
+		setCurrentVersion(name, versions);
 	}
 
 	/** Throws an error if removing `versionPath` conflicts with the dev path of library `name` **/
