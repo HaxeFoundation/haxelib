@@ -209,6 +209,15 @@ run.n:
     RUN haxe client.hxml
     SAVE ARTIFACT run.n AS LOCAL run.n
 
+haxelib-binary:
+    FROM +devcontainer
+    COPY .git .git
+    COPY src src
+    COPY hx3compat hx3compat
+    COPY client_cpp.hxml haxelib.json .
+    RUN haxe client_cpp.hxml
+    SAVE ARTIFACT haxelib AS LOCAL haxelib
+
 package-haxelib:
     FROM +devcontainer-base
     COPY src src
@@ -518,6 +527,7 @@ ci-tests:
     # for package.hxml
     COPY haxelib.json README.md .
     COPY +run.n/run.n .
+    COPY +haxelib-binary/haxelib .
 
     COPY +ci-runner/ci.n bin/ci.n
     ENV HAXELIB_SERVER=localhost
