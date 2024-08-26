@@ -5,7 +5,6 @@ import haxe.zip.Tools;
 
 import sys.io.File;
 import sys.FileSystem;
-import haxelib.client.Main.VERSION;
 import haxelib.Data.Infos;
 
 using StringTools;

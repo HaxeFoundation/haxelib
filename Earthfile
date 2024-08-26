@@ -205,7 +205,7 @@ run.n:
     COPY .git .git
     COPY src src
     COPY hx3compat hx3compat
-    COPY client.hxml haxelib.json .
+    COPY client.hxml each.hxml haxelib.json .
     RUN haxe client.hxml
     SAVE ARTIFACT run.n AS LOCAL run.n
 
@@ -214,7 +214,7 @@ haxelib-binary:
     COPY .git .git
     COPY src src
     COPY hx3compat hx3compat
-    COPY client_cpp.hxml haxelib.json .
+    COPY client_cpp.hxml each.hxml haxelib.json .
     RUN haxe client_cpp.hxml
     SAVE ARTIFACT haxelib AS LOCAL haxelib
 
@@ -359,7 +359,7 @@ haxelib-server-builder:
 
 haxelib-server-legacy:
     FROM +haxelib-server-builder
-    COPY server_legacy.hxml server_each.hxml .
+    COPY server_legacy.hxml server_each.hxml each.hxml .
     COPY src src
     COPY hx3compat hx3compat
     COPY www/legacy www/legacy
@@ -368,7 +368,7 @@ haxelib-server-legacy:
 
 haxelib-server-website:
     FROM +haxelib-server-builder
-    COPY server_website.hxml server_each.hxml .
+    COPY server_website.hxml server_each.hxml each.hxml .
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_website.hxml
@@ -382,7 +382,7 @@ haxelib-server-website-highlighter:
 
 haxelib-server-tasks:
     FROM +haxelib-server-builder
-    COPY server_tasks.hxml server_each.hxml .
+    COPY server_tasks.hxml server_each.hxml each.hxml .
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_tasks.hxml
@@ -390,7 +390,7 @@ haxelib-server-tasks:
 
 haxelib-server-api:
     FROM +haxelib-server-builder
-    COPY server_api.hxml server_each.hxml .
+    COPY server_api.hxml server_each.hxml each.hxml .
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_api.hxml
