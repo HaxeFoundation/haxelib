@@ -1,0 +1,9 @@
+-cp src
+-cp hx3compat/std
+-cp hx4compat/std
+-cp crypto/src
+--cpp bin/cpp
+-main haxelib.client.Main
+-D destination=../../haxelib{EXESUFFIX}
+--dce full
+-D analyzer-optimize
