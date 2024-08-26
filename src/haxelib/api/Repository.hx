@@ -169,7 +169,7 @@ class Repository {
 			throw 'Library $name version $version is not installed';
 
 		final current = getCurrentFileContent(name);
-		if (current == version)
+		if (getDevPath(name) == null && current == version)
 			throw 'Cannot remove current version of library $name';
 
 		try {
