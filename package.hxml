@@ -1,5 +1,2 @@
--cp src
--cp hx3compat/std
--cp hx4compat/std
--cp crypto/src
+-p src
 --run Package
