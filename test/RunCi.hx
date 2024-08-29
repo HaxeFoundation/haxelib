@@ -370,19 +370,6 @@ Listen 2000
 	}
 
 	static function integrationTests():Void {
-		function test():Void {
-			switch (Sys.getEnv("TRAVIS_HAXE_VERSION")) {
-				case null, "development":
-					runCommand("haxe", ["integration_tests.hxml"]);
-				case "3.1.3":
-					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
-				case _:
-					runCommand("haxe", ["integration_tests.hxml"]);
-					runCommand("neko", ["bin/integration_tests.n"]);
-					runCommand("haxe", ["integration_tests.hxml", "-D", "system_haxelib"]);
-			}
-			runCommand("neko", ["bin/integration_tests.n"]);
-		}
 		var dbConfigPath = Path.join(["www", "dbconfig.json"]);
 		saveContent(dbConfigPath, Json.stringify({
 			user: Sys.getEnv("HAXELIB_DB_USER"),
@@ -391,7 +378,14 @@ Listen 2000
 			port: Std.parseInt(Sys.getEnv("HAXELIB_DB_PORT")),
 			database: Sys.getEnv("HAXELIB_DB_NAME"),
 		}, "\t"));
-		test();
+		runCommand("haxe", ["integration_tests.hxml"]);
+		runCommand("neko", ["bin/integration_tests.n"]);
+		runCommand("haxe", [
+			"integration_tests.hxml",
+			"-D",
+			'haxelib_path=${Path.join([Sys.getCwd(), "haxelib"])}'
+		]);
+		runCommand("neko", ["bin/integration_tests.n"]);
 	}
 
 	static function deploy():Void {

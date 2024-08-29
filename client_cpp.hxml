@@ -1,0 +1,6 @@
+each.hxml
+--cpp bin/cpp
+--main haxelib.client.Main
+-D destination=../../haxelib{EXESUFFIX}
+--dce full
+-D analyzer-optimize
