@@ -79,13 +79,13 @@ class ScriptRunner {
 	/**
 		Run `library`, with `callData`.
 
-		`compilerData` is used if it is an interpreted script.
+		`getCompilerVersion` is used if it is an interpreted script.
 	 **/
-	public static function run(library:LibraryRunData, compilerData:LibraryData, callData:CallData):Void {
+	public static function run(library:LibraryRunData, callData:CallData, getCompilerVersion:()->SemVer):Void {
 		final type = getType(library);
 
 		final cmd = getCmd(type);
-		final args = generateArgs(type, callData, SemVer.ofString(compilerData.version));
+		final args = generateArgs(type, callData, getCompilerVersion);
 
 		final oldState = getState();
 
@@ -122,7 +122,7 @@ class ScriptRunner {
 		}
 	}
 
-	static function generateArgs(runType:RunType, callData:CallData, compilerVersion:SemVer):Array<String> {
+	static function generateArgs(runType:RunType, callData:CallData, getCompilerVersion:() -> SemVer):Array<String> {
 		switch runType {
 			case Neko(path):
 				final callArgs = callData.args.copy();
@@ -130,7 +130,7 @@ class ScriptRunner {
 				callArgs.push(callData.dir);
 				return callArgs;
 			case Script(main, name, version, dependencies):
-				final isHaxe4 = SemVer.compare(compilerVersion, SemVer.ofString('4.0.0')) >= 0;
+				final isHaxe4 = SemVer.compare(getCompilerVersion(), SemVer.ofString('4.0.0')) >= 0;
 				final useGlobalRepo = isHaxe4 && callData.useGlobalRepo;
 
 				final callArgs = generateScriptArgs(main, name, version, dependencies, useGlobalRepo);
