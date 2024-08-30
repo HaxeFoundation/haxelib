@@ -47,7 +47,7 @@ class GlobalScope extends Scope {
 			main: info.main
 		};
 
-		ScriptRunner.run(libraryRunData, resolveCompiler(), callData);
+		ScriptRunner.run(libraryRunData, callData, () -> haxeVersion);
 	}
 
 	public function getVersion(library:ProjectName):Version {
