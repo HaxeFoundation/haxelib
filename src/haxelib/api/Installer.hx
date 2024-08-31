@@ -768,7 +768,6 @@ class Installer {
 			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
 			final tag = vcsData.tag;
 			try {
-				FsUtils.deleteRec(libPath);
 				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug), userInterface.log.bind(_, Optional));
 			} catch (error:VcsError) {
 				FsUtils.deleteRec(libPath);
