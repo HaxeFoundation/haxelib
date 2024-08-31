@@ -16,7 +16,7 @@
 		},
 		"license": {
 			"description": "Open source license under which the project is licensed",
-			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT", "Apache"]
+			"enum": ["GPL", "LGPL", "BSD", "Public", "MIT", "Apache", "MPL", "Other"]
 		},
 		"version": { "$ref": "#/definitions/semver" },
 		"classPath": {
