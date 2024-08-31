@@ -61,8 +61,8 @@ abstract class Scope {
 	final overrides:LockFormat;
 
 	function new(isLocal:Bool, repository:Repository) {
-		this.isLocal = isLocal;
 		this.repository = repository;
+		this.isLocal = isLocal;
 
 		overrides = loadOverrides();
 	}

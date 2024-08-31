@@ -553,21 +553,35 @@ class Main {
 
 		// sort projects alphabetically
 		libraryInfo.sort(function(a, b) return Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+		
+		// we want to print in one batch, rather than one cli print for each line
+		var listStr = '';
 
+		if (scope.repository.path != RepoManager.suggestGlobalPath())
+			Cli.printOptional('Local Haxelib Repository at: ${scope.repository.path}');
+		else
+			Cli.printOptional('Global Haxelib at: ${scope.repository.path}');
+		
 		for (library in libraryInfo) {
-			var line = '${library.name}:';
+			listStr += '${library.name}:';
 			for (version in library.versions)
-				line +=
+				listStr +=
 					if (library.devPath == null && version == library.current)
 						' [$version]'
 					else
 						' $version';
 
 			if (library.devPath != null)
-				line += ' [dev:${library.devPath}]';
+				listStr += ' [dev:${library.devPath}]';
 
-			Cli.print(line);
+			listStr += "\n";
+
 		}
+
+		listStr = listStr.trim();
+
+		Cli.print(listStr);
+
 	}
 
 	function update() {
