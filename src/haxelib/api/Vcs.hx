@@ -21,7 +21,6 @@
  */
 package haxelib.api;
 
-import haxelib.client.Cli;
 import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.thread.Thread;
@@ -361,9 +360,6 @@ class Git extends Vcs {
 			run(["submodule", "sync", "--recursive"], debugLog);
 
 			var submoduleArgs = ["submodule", "update", "--init", "--recursive"];
-
-			if (Cli.mode == Quiet)
-				submoduleArgs.push("--quiet");
 
 			printOptional('Downloading/updating submodules for ${name}');
 			final ret = run(submoduleArgs, debugLog);
