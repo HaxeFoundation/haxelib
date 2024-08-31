@@ -125,7 +125,7 @@ class TestSubmit extends IntegrationTests {
 
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libInvalidLicense.zip"]), bar.pw]).result();
 		assertFail(r);
-		assertEquals("Error: Invalid value `Unknown` for License. Allowed values: GPL, LGPL, MIT, BSD, Public, Apache", r.err.trim());
+		assertEquals("Error: Invalid value `Unknown` for License. Allowed values: GPL, LGPL, MIT, BSD, Public, Apache, MPL, Other", r.err.trim());
 
 		final r = haxelib(["search", "Bar"]).result();
 		// did not get submitted
