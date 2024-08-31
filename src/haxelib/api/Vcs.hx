@@ -74,6 +74,7 @@ enum VcsError {
 	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
 	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
+	SubmoduleError(vcs:Vcs, repo:String, stderr:String);
 }
 
 /** Exception thrown when a vcs update is cancelled. **/
@@ -366,6 +367,7 @@ class Git extends Vcs {
 			if (ret.code != 0)
 			{
 				Sys.setCwd(oldCwd);
+				throw VcsError.SubmoduleError(this, url, ret.out);
 			}
 		}
 
