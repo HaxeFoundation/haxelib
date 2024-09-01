@@ -48,7 +48,7 @@ interface IVcs {
 
 		`debugLog` will be used to log executable output.
 	**/
-	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
+	function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void, ?optionalLog:(msg:String)->Void):Void;
 
 	/**
 		Updates repository in CWD or CWD/`Vcs.directory` to HEAD.
@@ -74,6 +74,7 @@ enum VcsError {
 	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
 	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
+	SubmoduleError(vcs:Vcs, repo:String, stderr:String);
 }
 
 /** Exception thrown when a vcs update is cancelled. **/
@@ -230,7 +231,7 @@ abstract class Vcs implements IVcs {
 		return ret;
 	}
 
-	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void;
+	public abstract function clone(libPath:String, vcsPath:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void, ?optionalLog:(msg:String)->Void):Void;
 
 	public abstract function update(?confirm:() -> Bool, ?debugLog:(msg:String) -> Void, ?summaryLog:(msg:String) -> Void):Bool;
 
@@ -320,13 +321,16 @@ class Git extends Vcs {
 		return true;
 	}
 
-	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
+	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void, ?optionalLog:(msg:String)->Void):Void {
 		final oldCwd = Sys.getCwd();
 
-		final vcsArgs = ["clone", url, libPath];
+		var vcsArgs = ["clone", url, libPath];
 
-		if (!Vcs.flat)
-			vcsArgs.push('--recursive');
+		inline function printOptional(msg)
+			if (optionalLog != null && msg != "")
+				optionalLog(msg);
+
+		printOptional('Cloning ${name} from ${url}');
 
 		if (run(vcsArgs, debugLog).code != 0)
 			throw VcsError.CantCloneRepo(this, url/*, ret.out*/);
@@ -334,16 +338,36 @@ class Git extends Vcs {
 		Sys.setCwd(libPath);
 
 		if (version != null && version != "") {
+			printOptional('Checking out tag/version ${version} of ${name}');
+
 			final ret = run(["checkout", "tags/" + version], debugLog);
 			if (ret.code != 0) {
 				Sys.setCwd(oldCwd);
 				throw VcsError.CantCheckoutVersion(this, version, ret.out);
 			}
 		} else if (branch != null) {
+			printOptional('Checking out branch/commit ${branch} of ${libPath}');
+
 			final ret = run(["checkout", branch], debugLog);
 			if (ret.code != 0){
 				Sys.setCwd(oldCwd);
 				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
+			}
+		}
+
+		if (!Vcs.flat)
+		{
+			printOptional('Syncing submodules for ${name}');
+			run(["submodule", "sync", "--recursive"], debugLog);
+
+			var submoduleArgs = ["submodule", "update", "--init", "--recursive"];
+
+			printOptional('Downloading/updating submodules for ${name}');
+			final ret = run(submoduleArgs, debugLog);
+			if (ret.code != 0)
+			{
+				Sys.setCwd(oldCwd);
+				throw VcsError.SubmoduleError(this, url, ret.out);
 			}
 		}
 
@@ -425,7 +449,7 @@ class Mercurial extends Vcs {
 		return changed;
 	}
 
-	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void):Void {
+	public function clone(libPath:String, url:String, ?branch:String, ?version:String, ?debugLog:(msg:String)->Void, ?optionalLog:(msg:String)->Void):Void {
 		final vcsArgs = ["clone", url, libPath];
 
 		if (branch != null && version != null) {
