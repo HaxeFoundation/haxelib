@@ -767,7 +767,7 @@ class Installer {
 			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
 			final tag = vcsData.tag;
 			try {
-				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug));
+				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug), userInterface.log.bind(_, Optional));
 			} catch (error:VcsError) {
 				FsUtils.deleteRec(libPath);
 				switch (error) {
@@ -779,6 +779,8 @@ class Installer {
 						throw 'Could not checkout branch, tag or path "$branch": ' + stderr;
 					case CantCheckoutVersion(_, version, stderr):
 						throw 'Could not checkout tag "$version": ' + stderr;
+					case SubmoduleError(_, repo, stderr):
+						throw 'Could not clone submodule(s) from $repo: ' + stderr;
 					case CommandFailed(_, code, stdout, stderr):
 						throw new VcsCommandFailed(id, code, stdout, stderr);
 				};
