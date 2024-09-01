@@ -191,7 +191,7 @@ typedef DefineDocumentation = {
 	var Public = 'Public';
 	var Apache = 'Apache';
 	var Mpl = 'MPL';
-	var Other = "Other";
+	var Other = "Open-Source-Other";
 	@:disallowed
 	var Unknown = 'Unknown';
 }
