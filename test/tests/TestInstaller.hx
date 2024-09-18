@@ -105,6 +105,10 @@ class TestInstaller extends TestBase {
 		assertTrue(scope.isLibraryInstalled(ProjectName.ofString("hx.signal")));
 	}
 
+	public function testInstallUrlChanges() {
+		
+	}
+
 	function getLibraryName():String {
 		final haxelibFile = File.read("haxelib.json", false);
 		final details = Data.readData(haxelibFile.readAll().toString(), NoCheck);
