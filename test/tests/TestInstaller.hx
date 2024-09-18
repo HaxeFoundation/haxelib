@@ -1,5 +1,6 @@
 package tests;
 
+import haxelib.VersionData.VcsID;
 import sys.FileSystem;
 import sys.io.File;
 import haxe.io.Path;
@@ -106,7 +107,16 @@ class TestInstaller extends TestBase {
 	}
 
 	public function testInstallUrlChanges() {
+		installer.installFromHxml("git-deps-url-old.hxml");
 		
+		assertTrue(scope.isLibraryInstalled(ProjectName.ofString("flixel")));
+		assertEquals(scope.repository.getVcsData(ProjectName.ofString("flixel"), VcsID.Git).url, "https://github.com/HaxeFlixel/flixel.git");
+
+
+		installer.installFromHxml("git-deps-url-new.hxml");
+
+		assertTrue(scope.isLibraryInstalled(ProjectName.ofString("flixel")));
+		assertEquals(scope.repository.getVcsData(ProjectName.ofString("flixel"), VcsID.Git).url, "https://github.com/geokureli/flixel.git");
 	}
 
 	function getLibraryName():String {
