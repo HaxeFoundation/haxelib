@@ -97,6 +97,8 @@ class IntegrationTests extends TestBase {
 	function haxelib(args:Array<String>, ?input:String):Process {
 		final p = #if system_haxelib
 			new Process("haxelib", ["-R", serverUrl].concat(args));
+		#elseif haxelib_path
+			new Process(haxe.macro.Compiler.getDefine("haxelib_path"), ["-R", serverUrl].concat(args));
 		#else
 			new Process("neko", [haxelibBin, "-R", serverUrl].concat(args));
 		#end

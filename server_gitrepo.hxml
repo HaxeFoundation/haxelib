@@ -1,9 +1,6 @@
---class-path src
+each.hxml
 --class-path lib/dts2hx-generated
 --class-path lib/node-sys-db
---class-path hx3compat/std
---class-path hx4compat/std
---class-path crypto/src
 --library hxnodejs
 --library record-macros
 --js gitrepo.js

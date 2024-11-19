@@ -29,5 +29,6 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-2,0,0.zip -o haxelib_global/ufront.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/utest-1,9,6.zip -o haxelib_global/utest.zip && neko run.n install --always --skip-dependencies haxelib_global/utest.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/hxnodejs-12,1,0.zip -o haxelib_global/hxnodejs.zip && neko run.n install --always --skip-dependencies haxelib_global/hxnodejs.zip
+-cmd curl -sSLk https://lib.haxe.org/files/3.0/hxcpp-4,3,2.zip -o haxelib_global/hxcpp.zip && neko run.n install --always --skip-dependencies haxelib_global/hxcpp.zip
 -cmd neko run.n dev record-macros lib/record-macros
 -cmd neko run.n dev argon2 lib/argon2

@@ -1,8 +1,5 @@
--cp src
--cp test
--cp hx4compat/std
--cp crypto/src
--lib hx3compat
+each.hxml
+-p test
 -lib record-macros
 -lib argon2
 -main IntegrationTests

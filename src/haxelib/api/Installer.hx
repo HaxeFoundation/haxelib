@@ -263,6 +263,8 @@ class Installer {
 		if (confirmHxmlInstall != null && !confirmHxmlInstall(libVersions))
 			return;
 
+		var hasFailures = false;
+
 		for (library in installData) {
 			if (library.versionData.match(Haxelib(_)) && repository.isVersionInstalled(library.name, library.version)) {
 				final version = SemVer.ofString(library.version);
@@ -281,6 +283,7 @@ class Installer {
 			try
 				installFromVersionData(library.name, library.versionData)
 			catch (e) {
+				hasFailures = true;
 				userInterface.log(e.toString());
 				continue;
 			}
@@ -296,6 +299,8 @@ class Installer {
 
 			handleDependenciesGeneral(libraryName, library.versionData);
 		}
+
+		if (hasFailures) throw "Some libraries could not be installed.";
 	}
 
 	/**
@@ -762,7 +767,7 @@ class Installer {
 			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
 			final tag = vcsData.tag;
 			try {
-				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug));
+				vcs.clone(libPath, url, branch, tag, userInterface.log.bind(_, Debug), userInterface.log.bind(_, Optional));
 			} catch (error:VcsError) {
 				FsUtils.deleteRec(libPath);
 				switch (error) {
@@ -774,6 +779,8 @@ class Installer {
 						throw 'Could not checkout branch, tag or path "$branch": ' + stderr;
 					case CantCheckoutVersion(_, version, stderr):
 						throw 'Could not checkout tag "$version": ' + stderr;
+					case SubmoduleError(_, repo, stderr):
+						throw 'Could not clone submodule(s) from $repo: ' + stderr;
 					case CommandFailed(_, code, stdout, stderr):
 						throw new VcsCommandFailed(id, code, stdout, stderr);
 				};
