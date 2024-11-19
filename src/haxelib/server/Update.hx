@@ -13,6 +13,8 @@ class Update {
 		Checks which updates are needed and if there are any needed, runs them.
 	**/
 	public static function runNeededUpdates() {
+		sys.db.Manager.cnx.startTransaction();
+
 		var meta = Meta.manager.all().first();
 
 		if (meta == null) {
@@ -28,15 +30,21 @@ class Update {
 
 		meta.dbVersion = CURRENT_VERSION;
 		meta.update();
+
+		sys.db.Manager.cnx.commit();
 	}
 
 	/**
 		Sets up a fresh database
 	**/
 	public static function setupFresh() {
+		sys.db.Manager.cnx.startTransaction();
+
 		var meta = new Meta();
 		meta.dbVersion = CURRENT_VERSION;
 		meta.insert();
+
+		sys.db.Manager.cnx.commit();
 	}
 
 	static function rehashPasswords() {
