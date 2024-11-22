@@ -799,10 +799,6 @@ class Installer {
 
 			if (url != null && libUrl != null && url != libUrl)
 			{
-				if (!userInterface.confirm('Update remote url: "${libUrl}" with "${url}"')) {
-					userInterface.log('Library $library $id repository url remains at "${libUrl}"');
-					return;
-				}
 				FsUtils.deleteRec(libPath);
 				doVcsClone();
 			}
