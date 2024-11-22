@@ -673,7 +673,7 @@ class Main {
 					version: {
 						final versionStr = libraryAndVersion.matched(2);
 						if (versionStr != null)
-							haxelib.api.Version.ofString(versionStr.split(":")[0])
+							haxelib.api.LibraryData.Version.ofString(versionStr.split(":")[0])
 						else
 							null;
 					}
@@ -768,7 +768,7 @@ class Main {
 
 		final project = ProjectName.ofString(libraryAndVersion.matched(1));
 		final versionStr = libraryAndVersion.matched(2);
-		final version = if (versionStr != null) haxelib.api.Version.ofString(versionStr) else null;
+		final version = if (versionStr != null) haxelib.api.LibraryData.Version.ofString(versionStr) else null;
 
 		try {
 			scope.runScript(project, {
