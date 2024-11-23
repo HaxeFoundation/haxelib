@@ -23,7 +23,6 @@ package haxelib.client;
 
 import haxe.display.Server.ConfigurePrintParams;
 import haxelib.VersionData.VersionDataHelper;
-import haxe.crypto.Md5;
 import haxe.iterators.ArrayIterator;
 
 import sys.FileSystem;
@@ -358,13 +357,12 @@ class Main {
 	function doRegister(name) {
 		final email = getArgument("Email");
 		final fullname = getArgument("Fullname");
-		final pass = getSecretArgument("Password");
-		final pass2 = getSecretArgument("Confirm");
-		if( pass != pass2 )
+		final password = getSecretArgument("Password");
+		final repeatedPassword = getSecretArgument("Confirm");
+		if (password != repeatedPassword )
 			throw "Password does not match";
-		final encodedPassword = Md5.encode(pass);
-		Connection.register(name, encodedPassword, email, fullname);
-		return encodedPassword;
+		Connection.register(name, password, email, fullname);
+		return password;
 	}
 
 	#if !js
@@ -400,13 +398,13 @@ class Main {
 	#end
 
 	function readPassword(user:String, prompt = "Password"):String {
-		var password = Md5.encode(getSecretArgument(prompt));
+		var password = getSecretArgument(prompt);
 		var attempts = 5;
 		while (!Connection.checkPassword(user, password)) {
 			Cli.print('Invalid password for $user');
 			if (--attempts == 0)
 				throw 'Failed to input correct password';
-			password = Md5.encode(getSecretArgument('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})'));
+			password = getSecretArgument('$prompt ($attempts more attempt${attempts == 1 ? "" : "s"})');
 		}
 		return password;
 	}
