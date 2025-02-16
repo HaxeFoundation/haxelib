@@ -1,6 +1,5 @@
--cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_core-1,23,0.zip -o haxelib_global/tink_core.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_core.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_core-1,0,0-rc,11.zip -o haxelib_global/tink_core.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_core.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_macro-0,6,4.zip -o haxelib_global/tink_macro.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_macro.zip
+-cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_core-2,1,1.zip -o haxelib_global/tink_core.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_core.zip
+-cmd curl -sSLk https://lib.haxe.org/files/3.0/tink_macro-1,0,0.zip -o haxelib_global/tink_macro.zip && neko run.n install --always --skip-dependencies haxelib_global/tink_macro.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/promhx-1,1,0.zip -o haxelib_global/promhx.zip && neko run.n install --always --skip-dependencies haxelib_global/promhx.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/asynctools-0,1,0.zip -o haxelib_global/asynctools.zip && neko run.n install --always --skip-dependencies haxelib_global/asynctools.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/buddy-2,8,1.zip -o haxelib_global/buddy.zip && neko run.n install --always --skip-dependencies haxelib_global/buddy.zip
@@ -20,11 +19,11 @@
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/mtwin-1,6,0.zip -o haxelib_global/mtwin.zip && neko run.n install --always --skip-dependencies haxelib_global/mtwin.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/PBKDF2-1,0,0.zip -o haxelib_global/PBKDF2.zip && neko run.n install --always --skip-dependencies haxelib_global/PBKDF2.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/tora-1,8,1.zip -o haxelib_global/tora.zip && neko run.n install --always --skip-dependencies haxelib_global/tora.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-mvc-1,1,0.zip -o haxelib_global/ufront-mvc.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-mvc.zip
+-cmd git clone https://github.com/ufront/ufront-mvc haxelib_global/ufront-mvc --depth=1 --single-branch && neko run.n dev ufront-mvc haxelib_global/ufront-mvc
+-cmd git clone https://github.com/ufront/ufront-ufadmin haxelib_global/ufront-ufadmin --depth=1 --single-branch && neko run.n dev ufront-ufadmin haxelib_global/ufront-ufadmin
+-cmd git clone https://github.com/ufront/ufront-easyauth haxelib_global/ufront-easyauth --depth=1 --single-branch && neko run.n dev ufront-easyauth haxelib_global/ufront-easyauth
+-cmd git clone https://github.com/ufront/ufront-mail haxelib_global/ufront-mail --depth=1 --single-branch && neko run.n dev ufront-mail haxelib_global/ufront-mail
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-orm-1,1,0.zip -o haxelib_global/ufront-orm.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-orm.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-easyauth-1,0,0.zip -o haxelib_global/ufront-easyauth.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-easyauth.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-mail-1,0,0-rc,4.zip -o haxelib_global/ufront-mail.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-mail.zip
--cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-ufadmin-1,0,0-beta,14.zip -o haxelib_global/ufront-ufadmin.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-ufadmin.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-uftasks-1,0,0-beta,15.zip -o haxelib_global/ufront-uftasks.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront-uftasks.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/ufront-2,0,0.zip -o haxelib_global/ufront.zip && neko run.n install --always --skip-dependencies haxelib_global/ufront.zip
 -cmd curl -sSLk https://lib.haxe.org/files/3.0/utest-1,9,6.zip -o haxelib_global/utest.zip && neko run.n install --always --skip-dependencies haxelib_global/utest.zip
