@@ -3,5 +3,7 @@
 -main haxelib.server.Repo
 -lib aws-sdk-neko
 -lib record-macros
+-cp hx3compat/std
+-cp hx4compat/std
 -dce no
 -D haxelib_api
