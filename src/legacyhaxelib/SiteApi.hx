@@ -47,10 +47,10 @@ class SiteApi {
 			versions.push({ name : v.name, comments : v.comments, date : v.date });
 		return {
 			name : p.name,
-			curversion : if( p.version == null ) null else p.version.name,
+			curversion : if( p.versionObj == null ) null else p.versionObj.name,
 			desc : p.description,
 			versions : versions,
-			owner : p.owner.name,
+			owner : p.ownerObj.name,
 			website : p.website,
 			license : p.license,
 			tags : Tag.manager.search({ project : p.id }).map(function(t) return t.tag),
@@ -98,7 +98,7 @@ class SiteApi {
 		if( p == null )
 			return;
 		for( d in Developer.manager.search({ project : p.id }) )
-			if( d.user.name == user )
+			if( d.userObj.name == user )
 				return;
 		throw "User '"+user+"' is not a developer of project '"+prj+"'";
 	}
@@ -146,18 +146,18 @@ class SiteApi {
 			p.website = infos.website;
 			p.license = infos.license;
 			p.downloads = 0;
-			p.owner = u;
+			p.ownerObj = u;
 			p.insert();
 			for( u in devs ) {
 				var d = new Developer();
-				d.user = u;
-				d.project = p;
+				d.userObj = u;
+				d.projectObj = p;
 				d.insert();
 			}
 			for( tag in tags ) {
 				var t = new Tag();
 				t.tag = tag;
-				t.project = p;
+				t.projectObj = p;
 				t.insert();
 			}
 		}
@@ -166,7 +166,7 @@ class SiteApi {
 		var pdevs = Developer.manager.search({ project : p.id });
 		var isdev = false;
 		for( d in pdevs )
-			if( d.user.id == u.id ) {
+			if( d.userObj.id == u.id ) {
 				isdev = true;
 				break;
 			}
@@ -178,7 +178,7 @@ class SiteApi {
 
 		// update public infos
 		if( infos.desc != p.description || p.website != infos.website || p.license != infos.license || pdevs.length != devs.length || tags.join(":") != curtags ) {
-			if( u.id != p.owner.id )
+			if( u.id != p.ownerObj.id )
 				throw "Only project owner can modify project infos";
 			p.description = infos.desc;
 			p.website = infos.website;
@@ -189,8 +189,8 @@ class SiteApi {
 					d.delete();
 				for( u in devs ) {
 					var d = new Developer();
-					d.user = u;
-					d.project = p;
+					d.userObj = u;
+					d.projectObj = p;
 					d.insert();
 				}
 			}
@@ -200,7 +200,7 @@ class SiteApi {
 				for( tag in tags ) {
 					var t = new Tag();
 					t.tag = tag;
-					t.project = p;
+					t.projectObj = p;
 					t.insert();
 				}
 			}
@@ -262,7 +262,7 @@ class SiteApi {
 
 		// add new version
 		var v = new Version();
-		v.project = p;
+		v.projectObj = p;
 		v.name = infos.version;
 		v.comments = infos.versionComments;
 		v.downloads = 0;
@@ -270,7 +270,7 @@ class SiteApi {
 		v.documentation = doc;
 		v.insert();
 
-		p.version = v;
+		p.versionObj = v;
 		p.update();
 		return "Version "+v.name+" (id#"+v.id+") added";
 	}
