@@ -1,7 +1,7 @@
 server_each.hxml
 -neko www/legacy/index.n
 -main legacyhaxelib.Site
--lib hx2compat
+-lib record-macros
 -D haxelib_site
 -D haxelib_legacy
 -dce no

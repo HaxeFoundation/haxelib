@@ -37,9 +37,9 @@ class Site {
 
 	static function initDatabase() {
 		var alreadyExists = sys.FileSystem.exists(DB_FILE);
-		db = neko.db.Sqlite.open(DB_FILE);
-		neko.db.Manager.cnx = db;
-		neko.db.Manager.initialize();
+		db = sys.db.Sqlite.open(DB_FILE);
+		sys.db.Manager.cnx = db;
+		sys.db.Manager.initialize();
 
 		if (!alreadyExists) {
 			SiteDb.create(db);
@@ -118,8 +118,8 @@ class Site {
 			if( p == null )
 				return error("Unknown project '"+name+"'");
 			ctx.p = p;
-			ctx.owner = p.owner;
-			ctx.version = p.version;
+			ctx.owner = p.ownerObj;
+			ctx.version = p.versionObj;
 			ctx.versions = Version.manager.byProject(p);
 			var tags = Tag.manager.search({ project : p.id });
 			if( !tags.isEmpty() ) ctx.tags = tags;
@@ -129,11 +129,11 @@ class Site {
 			if( u == null )
 				return error("Unknown user '"+name+"'");
 			ctx.u = u;
-			ctx.uprojects = Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.project; });
+			ctx.uprojects = Developer.manager.search({ user : u.id }).map(function(d:Developer) { return d.projectObj; });
 		case "t":
 			var tag = uri.shift();
 			ctx.tag = StringTools.htmlEscape(tag);
-			ctx.tprojects = Tag.manager.search({ tag : tag }).map(function(t) return t.project);
+			ctx.tprojects = Tag.manager.search({ tag : tag }).map(function(t) return t.projectObj);
 		case "d":
 			var name = uri.shift();
 			var p = Project.manager.search({ name : name }).first();
@@ -142,7 +142,7 @@ class Site {
 			var version = uri.shift();
 			var v;
 			if( version == null ) {
-				v = p.version;
+				v = p.versionObj;
 				version = v.name;
 			} else {
 				v = Version.manager.search({ project : p.id, name : version }).first();
@@ -175,7 +175,7 @@ class Site {
 		case "index":
 			var vl = Version.manager.latest(10);
 			for( v in vl ) {
-				var p = v.project; // fetch
+				var p = v.projectObj; // fetch
 			}
 			ctx.versions = vl;
 		case "all":
@@ -238,14 +238,14 @@ class Site {
 		createChildWithContent(channel, "generator", "haxe");
 		createChildWithContent(channel, "language", "en");
 		for (v in Version.manager.latest(10)){
-			var project = v.project;
+			var project = v.projectObj;
 			var item = createChild(channel, "item");
 			createChildWithContent(item, "title", StringTools.htmlEscape(project.name+" "+v.name));
 			createChildWithContent(item, "link", url+"/p/"+project.name);
 			createChildWithContent(item, "guid", url+"/p/"+project.name+"?v="+v.id);
 			var date = DateTools.format(Date.fromString(v.date), "%a, %e %b %Y %H:%M:%S %z");
 			createChildWithContent(item, "pubDate", date);
-			createChildWithContent(item, "author", project.owner.name);
+			createChildWithContent(item, "author", project.ownerObj.name);
 			createChildWithContent(item, "description", StringTools.htmlEscape(v.comments));
 		}
 		return rss;
@@ -260,7 +260,7 @@ class Site {
 			error = { e : e };
 		}
 		db.close();
-		neko.db.Manager.cleanup();
+		sys.db.Manager.cleanup();
 		if( error != null )
 			neko.Lib.rethrow(error.e);
 	}

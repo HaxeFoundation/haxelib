@@ -21,9 +21,9 @@
  */
 package legacyhaxelib;
 
-class User extends neko.db.Object {
+class User extends sys.db.Object {
 
-	public static var manager = new neko.db.Manager<User>(User);
+	public static var manager = new sys.db.Manager<User>(User);
 
 	public var id : Int;
 	public var name : String;
@@ -33,14 +33,7 @@ class User extends neko.db.Object {
 
 }
 
-class Project extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [
-			{ key : "owner", prop : "owner", manager : User.manager },
-			{ key : "version", prop : "version", manager : Version.manager },
-		];
-	}
+class Project extends sys.db.Object {
 
 	public static var manager = new ProjectManager(Project);
 
@@ -50,37 +43,27 @@ class Project extends neko.db.Object {
 	public var website : String;
 	public var license : String;
 	public var downloads : Int;
-	public var owner(dynamic,dynamic) : User;
-	public var version(dynamic,dynamic) : Version;
+	@:relation(owner) public var ownerObj:User;
+	@:relation(version) public var versionObj:Version;
 
 }
 
-class Tag extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [
-			{ key : "project", prop : "project", manager : Project.manager },
-		];
-	}
+class Tag extends sys.db.Object {
 
 	public static var manager = new TagManager(Tag);
 
 	public var id : Int;
 	public var tag : String;
-	public var project(dynamic,dynamic) : Project;
+	@:relation(project) public var projectObj : Project;
 
 }
 
-class Version extends neko.db.Object {
-
-	static function RELATIONS() {
-		return [{ key : "project", prop : "project", manager : Project.manager }];
-	}
+class Version extends sys.db.Object {
 
 	public static var manager = new VersionManager(Version);
 
 	public var id : Int;
-	public var project(dynamic,dynamic) : Project;
+	@:relation(project) public var projectObj : Project;
 	public var name : String;
 	public var date : String; // sqlite does not have a proper 'date' type
 	public var comments : String;
@@ -89,52 +72,45 @@ class Version extends neko.db.Object {
 
 }
 
-class Developer extends neko.db.Object {
+@:id(user, project)
+class Developer extends sys.db.Object {
 
-	static var TABLE_IDS = ["user","project"];
-	static function RELATIONS() {
-		return [
-			{ key : "user", prop : "user", manager : User.manager },
-			{ key : "project", prop : "project", manager : Project.manager },
-		];
-	}
+	public static var manager = new sys.db.Manager<Developer>(Developer);
 
-	public static var manager = new neko.db.Manager<Developer>(Developer);
-
-	public var user(dynamic,dynamic) : User;
-	public var project(dynamic,dynamic) : Project;
+	@:relation(user) public var userObj : User;
+	@:relation(project) public var projectObj : Project;
 
 }
 
-class ProjectManager extends neko.db.Manager<Project> {
+class ProjectManager extends sys.db.Manager<Project> {
 
 	public function containing( word ) : List<{ id : Int, name : String }> {
 		word = quote("%"+word+"%");
-		return results("SELECT id, name FROM Project WHERE name LIKE "+word+" OR description LIKE "+word);
+		return cast sys.db.Manager.cnx.request("SELECT id, name FROM Project WHERE name LIKE "+word+" OR description LIKE "+word).results();
 	}
 
 	public function allByName() {
-		return objects("SELECT * FROM Project ORDER BY name COLLATE NOCASE",false);
+		return unsafeObjects("SELECT * FROM Project ORDER BY name COLLATE NOCASE",false);
 	}
 
 }
 
-class VersionManager extends neko.db.Manager<Version> {
+class VersionManager extends sys.db.Manager<Version> {
 
 	public function latest( n : Int ) {
-		return objects("SELECT * FROM Version ORDER BY date DESC LIMIT "+n,false);
+		return unsafeObjects("SELECT * FROM Version ORDER BY date DESC LIMIT "+n,false);
 	}
 
 	public function byProject( p : Project ) {
-		return objects("SELECT * FROM Version WHERE project = "+p.id+" ORDER BY date DESC",false);
+		return unsafeObjects("SELECT * FROM Version WHERE project = "+p.id+" ORDER BY date DESC",false);
 	}
 
 }
 
-class TagManager extends neko.db.Manager<Tag> {
+class TagManager extends sys.db.Manager<Tag> {
 
 	public function topTags( n : Int ) {
-		return results("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT "+n);
+		return cast sys.db.Manager.cnx.request("SELECT tag, COUNT(*) as count FROM Tag GROUP BY tag ORDER BY count DESC LIMIT "+n).results();
 	}
 
 }
