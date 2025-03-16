@@ -83,7 +83,7 @@ function main() {
 		File.saveContent('$devlibPath/haxelib.json', '{"name": "devlib", "version":"1.0.0", "dependencies":{"lib":"1.0.0"}}');
 	}
 
-	static function cleanUpRepo() {
+	public static function cleanUpRepo() {
 		HaxelibTests.deleteDirectory(repo);
 		HaxelibTests.deleteDirectory(devlibPath.split("/")[0]);
 	}

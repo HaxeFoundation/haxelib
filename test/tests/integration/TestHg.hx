@@ -3,7 +3,7 @@ package tests.integration;
 import tests.util.Vcs;
 
 class TestHg extends TestVcs {
-	function new () {
+	public function new () {
 		super("hg");
 	}
 
