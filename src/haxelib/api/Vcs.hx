@@ -192,7 +192,10 @@ abstract class Vcs implements IVcs {
 			}
 		};
 		// just in case process hangs waiting for stdin
-		p.stdin.close();
+		#if neko
+		if (!((untyped __dollar__version()) <= 240 && Sys.systemName() == "Windows"))
+		#end
+			p.stdin.close();
 
 		final ret = if (Sys.systemName() == "Windows") {
 			final streamsLock = new sys.thread.Lock();
