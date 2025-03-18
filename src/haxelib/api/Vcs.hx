@@ -380,14 +380,18 @@ class Git extends Vcs {
 		Sys.setCwd(libPath);
 
 		final ret: VcsData = {
+			// `git config --get remote.remoteName.url` will get the original url of the remote
+			// for usecases where someone has something like `url."git@github.com:".insteadOf 'https://github.com/'` set
+
 			// could the remote's name not be "origin"?
-			url: run(["remote", "get-url", "origin"], true).out.trim(),
+			url: run(["config", "--get", "remote.origin.url"], true).out.trim(),
 			ref: run(["rev-parse", "HEAD"], true).out.trim(),
 		};
 
 		Sys.setCwd(oldCwd);
 		return ret;
 	}
+
 }
 
 /** Class wrapping `hg` operations. **/

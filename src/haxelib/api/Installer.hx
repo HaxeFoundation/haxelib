@@ -795,8 +795,14 @@ class Installer {
 
 			final currentBranch = vcsBranchesByLibraryName[library];
 
-			// TODO check different urls as well
-			if (branch != null && (!wasUpdated || currentBranch != branch)) {
+			var libUrl = vcs.getReproducibleVersion(libPath).url;
+
+			if (url != null && libUrl != null && url != libUrl)
+			{
+				FsUtils.deleteRec(libPath);
+				doVcsClone();
+			}
+			else if (branch != null && (!wasUpdated || currentBranch != branch)) {
 				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
 				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
 					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');
