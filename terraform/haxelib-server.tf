@@ -1,4 +1,5 @@
 locals {
+  imagePullSecrets = data.kubernetes_secret_v1.dockerhub-imagepullsecrets.metadata[0].name
   haxelib_server = {
     stage = {
       dev = {
@@ -47,6 +48,11 @@ output "haxelib_server" {
   value = local.haxelib_server
 }
 
+data "kubernetes_secret_v1" "dockerhub-imagepullsecrets" {
+  metadata {
+    name = "dockerhub-imagepullsecrets"
+  }
+}
 resource "kubernetes_secret_v1" "do-haxelib-minio-s3fs-config" {
   metadata {
     name = "haxelib-minio-s3fs-config"

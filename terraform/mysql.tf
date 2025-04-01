@@ -32,6 +32,7 @@ data "kubernetes_secret_v1" "haxelib-mysql-57" {
   ]
 }
 
+# https://github.com/bitnami/charts/tree/mysql/8.8.23/bitnami/mysql
 resource "helm_release" "haxelib-mysql-57" {
   name       = "haxelib-mysql-57"
   repository = "https://charts.bitnami.com/bitnami"
@@ -40,6 +41,11 @@ resource "helm_release" "haxelib-mysql-57" {
 
   values = [
     yamlencode({
+      # "global" : {
+      #   "imagePullSecrets" : [
+      #     local.imagePullSecrets
+      #   ]
+      # },
       "image" : {
         "tag" : "5.7.37-debian-10-r12"
       },

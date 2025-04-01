@@ -234,6 +234,10 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-api" {
           }
         }
 
+        image_pull_secrets {
+          name = local.imagePullSecrets
+        }
+
         security_context {
           fs_group = 33 # www-data
         }

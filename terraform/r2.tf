@@ -112,6 +112,10 @@ resource "kubernetes_cron_job_v1" "copy-r2-to-do-spaces" {
               }
             }
 
+            image_pull_secrets {
+              name = local.imagePullSecrets
+            }
+
             volume {
               name = "config"
               config_map {
