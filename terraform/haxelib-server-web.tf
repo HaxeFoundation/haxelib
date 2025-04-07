@@ -66,10 +66,10 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           resources {
             requests = {
               cpu    = "50m"
-              memory = each.key == "prod" ? "1Gi" : "200Mi"
+              memory = each.key == "prod" ? "1.5Gi" : "200Mi"
             }
             limits = {
-              memory = "1Gi"
+              memory = "1.5Gi"
             }
           }
 
