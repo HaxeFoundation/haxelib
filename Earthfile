@@ -23,7 +23,7 @@ mysql-public-key:
     SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
 
 neko:
-    ARG FILENAME=neko_2025-04-08_apache-thread-register_7c18782.tar.gz
+    ARG FILENAME=neko_2025-04-09_apache-thread-register_44eec59.tar.gz
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
         arm64) echo "linux-arm64";; \
