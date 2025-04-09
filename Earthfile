@@ -420,14 +420,20 @@ haxelib-server:
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             curl \
             apache2 \
-            neko \
-            libapache2-mod-neko \
         && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
         && apt-get update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             libcurl3-gnutls \ # for aws.ndll
             libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
+
+    # install neko
+    COPY +neko/neko /usr/bin/neko
+    COPY +neko/libneko.so* /usr/lib/
+    RUN mkdir -p /usr/lib/neko/
+    COPY +neko/*.ndll /usr/lib/neko/
+    COPY +neko/mod_neko2.ndll /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll
+    RUN neko -version
 
     # apache httpd
     RUN rm -rf /var/www/html \
