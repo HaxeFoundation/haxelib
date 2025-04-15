@@ -158,46 +158,32 @@ class Vcs implements IVcs {
         		code: -1,
         		out: Std.string(e)
         	}
-		};
-		var ret = if (Sys.systemName() == "Windows") {
-			var streamsLock = new sys.thread.Lock();
-			function readFrom(stream:haxe.io.Input, to: {value: String}) {
-				to.value = stream.readAll().toString();
-				streamsLock.release();
-			}
+        }
+		var streamsLock = new sys.thread.Lock();
+		function readFrom(stream:haxe.io.Input, to: {value: String}) {
+			to.value = stream.readAll().toString();
+			streamsLock.release();
+		}
 
-			var out = {value: ""};
-			var err = {value: ""};
-			Thread.create(readFrom.bind(p.stdout, out));
-			Thread.create(readFrom.bind(p.stderr, err));
+		var out = {value: ""};
+		var err = {value: ""};
+		Thread.create(readFrom.bind(p.stdout, out));
+		Thread.create(readFrom.bind(p.stderr, err));
 
-			var code = p.exitCode();
-			for (_ in 0...2) {
-				// wait until we finish reading from both streams
-				streamsLock.wait();
-			}
+		var code = p.exitCode();
+		for (_ in 0...2) {
+			// wait until we finish reading from both streams
+			streamsLock.wait();
+		}
 
-			if (settings.debug && out.value != "")
-				Sys.println(out.value);
-			if (settings.debug && err.value != "")
-				Sys.stderr().writeString(err.value);
+		if (settings.debug && out.value != "")
+			Sys.println(out.value);
+		if (settings.debug && err.value != "")
+			Sys.stderr().writeString(err.value);
 
-			{
-				code: code,
-				out: code == 0 ? out.value : err.value
-			};
-		} else {
-			var out = p.stdout.readAll().toString();
-			var err = p.stderr.readAll().toString();
-			if (settings.debug && out != "")
-				Sys.println(out);
-			if (settings.debug && err != "")
-				Sys.stderr().writeString(err);
-			var code = p.exitCode();
-			{
-				code: code,
-				out: code == 0 ? out : err
-			};
+		var ret = {
+			code: code,
+			out: code == 0 ? out.value : err.value
 		};
         p.close();
         return ret;
