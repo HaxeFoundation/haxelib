@@ -1,3 +1,7 @@
+## 4.1.1 (2025-04-15)
+
+ - Fixed large git installations hanging on non-Windows systems
+
 ## 4.1.0 (2023-04-06)
 
  - Added support for documenting custom defines and metadata ([#573](https://github.com/HaxeFoundation/haxelib/pull/573))
