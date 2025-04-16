@@ -32,8 +32,8 @@ class Server {
 		});
 		ufApp.injector.map( String, "documentationPath" ).toValue( neko.Web.getCwd()+"documentation-files/" );
 
-		ufApp.injector.map( UFCacheConnectionSync ).toClass( DummyCacheConnection );
-		ufApp.injector.map( UFCacheConnection ).toClass( DummyCacheConnection );
+		ufApp.injector.map( UFCacheConnectionSync ).toClass( DBCacheConnection );
+		ufApp.injector.map( UFCacheConnection ).toClass( DBCacheConnection );
 		// var cacheMiddleware = new RequestCacheMiddleware();
 		// ufApp.addRequestMiddleware( cacheMiddleware, true ).addResponseMiddleware( cacheMiddleware, true );
 
