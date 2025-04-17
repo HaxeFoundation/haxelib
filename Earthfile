@@ -438,11 +438,10 @@ haxelib-server:
         && a2enmod proxy \
         && a2enmod proxy_http \
         && a2enmod headers \
-        && a2enmod status \
+        && a2dismod status \
         && a2dismod mpm_event \
         && a2enmod mpm_prefork \
         && rm /etc/apache2/apache2.conf \
-        && rm /etc/apache2/mods-enabled/status.conf \
         && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
@@ -489,7 +488,7 @@ haxelib-server:
     CMD ["/sbin/my_init"]
 
     HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-        CMD curl -fsSL http://localhost/httpd-status?auto
+        CMD curl -fsSL http://localhost/robots.txt
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
