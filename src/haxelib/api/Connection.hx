@@ -453,8 +453,9 @@ class Connection {
 			final dataBytes = new haxe.io.BytesInput(data);
 			if (logUploadStatus == null)
 				dataBytes;
-			new ProgressIn(dataBytes, data.length, logUploadStatus);
-		}
+			else
+				new ProgressIn(dataBytes, data.length, logUploadStatus);
+		};
 
 		h.fileTransfer("file", id, inp, data.length);
 		log("Sending data...");
