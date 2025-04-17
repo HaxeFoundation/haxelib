@@ -384,10 +384,14 @@ class Connection {
 		operation is aborted by default.
 
 		`logUploadStatus` can be passed in optionally to show progress during upload.
+
+		`runClientChecks` determines whether to run additional checks
+		before submitting to server, which will repeat these checks anyway.
 	**/
 	public static function submitLibrary(path:String, login:(Array<String>)->{name:String, password:String},
 		?overwrite:(version:SemVer)->Bool,
-		?logUploadStatus:(current:Int, total:Int) -> Void
+		?logUploadStatus:(current:Int, total:Int) -> Void,
+		runClientChecks = true
 	) {
 		var data:haxe.io.Bytes, zip:List<Entry>;
 		if (FileSystem.isDirectory(path)) {
@@ -401,9 +405,12 @@ class Connection {
 		}
 
 		final infos = Data.readDataFromZip(zip, CheckData);
-		Data.checkDisallowedFiles(zip);
-		Data.checkClassPath(zip, infos);
-		Data.checkDocumentation(zip, infos);
+
+		if (runClientChecks) {
+			Data.checkDisallowedFiles(zip);
+			Data.checkClassPath(zip, infos);
+			Data.checkDocumentation(zip, infos);
+		}
 
 		// ask user which contributor they are
 		final user = login(infos.contributors);
