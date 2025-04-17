@@ -194,6 +194,14 @@ typedef DefineDocumentation = {
 	var Unknown = 'Unknown';
 }
 
+typedef HaxelibFileEntry = {
+	@:requires( "Submission must not contain .git folder" =>
+		!(StringTools.startsWith(_, ".git/") ||
+		StringTools.contains(_, "/.git/"))
+	)
+	var fileName:String;
+};
+
 /** Class providing functions for working with project information. **/
 class Data {
 
@@ -330,6 +338,10 @@ class Data {
 
 		if (hasDefines && !definesFound) throw 'Json file `${infos.documentation.defines}` not found';
 		if (hasMetadata && !metadataFound) throw 'Json file `${infos.documentation.metadata}` not found';
+	}
+
+	public static function checkDisallowedFiles( zip : List<HaxelibFileEntry> ):Void {
+		Validator.validate(zip);
 	}
 
 	static function cleanDependencies(dependencies:Null<Dependencies>):Void {

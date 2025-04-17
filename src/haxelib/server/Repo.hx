@@ -191,6 +191,7 @@ class Repo implements SiteApi {
 				var infos = Data.readDataFromZip(zip,CheckData);
 				neko.Web.logMessage("processSubmit " + id + " readDataFromZip completed");
 
+				Data.checkDisallowedFiles(zip);
 				Data.checkClassPath(zip, infos);
 				Data.checkDocumentation(zip, infos);
 

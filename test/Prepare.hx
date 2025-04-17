@@ -39,6 +39,15 @@ class Prepare {
 	static function main():Void {
 		var system = Sys.systemName();
 		var cwd = Sys.getCwd();
+
+		/*
+			Additional setup
+		*/
+		var gitFolder = "test/libraries/libWithGitFolder/.git";
+		if (!sys.FileSystem.exists(gitFolder)) {
+			FileSystem.createDirectory(gitFolder);
+		}
+
 		/*
 			(re)package the dummy libraries
 		*/

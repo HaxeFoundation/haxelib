@@ -401,6 +401,7 @@ class Connection {
 		}
 
 		final infos = Data.readDataFromZip(zip, CheckData);
+		Data.checkDisallowedFiles(zip);
 		Data.checkClassPath(zip, infos);
 		Data.checkDocumentation(zip, infos);
 

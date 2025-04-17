@@ -136,6 +136,14 @@ class Validator {
 							${doCheck(p, IARG)};
 					}
 
+				case TInst(_.get().module => 'haxe.ds.List', [p]):
+
+					macro @:pos(pos) {
+						${enforce('List')};
+						for ($IARG in $IARG)
+							${doCheck(p, IARG)};
+					}
+
 				case TAbstract(_.get() => { from: [ { t: t, field: null } ] }, _):
 
 					makeCheck(t);

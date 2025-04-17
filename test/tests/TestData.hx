@@ -125,6 +125,52 @@ class TestData extends TestBase {
 		}
 	}
 
+	public function testCheckDisallowedFiles() {
+		final cases = [
+			{
+				zip: {
+					final list = new List();
+					list.add({ fileName: ".git/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: "root/.git/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: ".github/"});
+					list;
+				},
+				valid: true
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: "root/.github/"});
+					list;
+				},
+				valid: true
+			},
+		];
+
+		for (testCase in cases) {
+			try {
+				Data.checkDisallowedFiles(testCase.zip);
+				assertTrue(testCase.valid);
+			} catch (e:Dynamic) {
+				assertFalse(testCase.valid);
+			}
+		}
+	}
+
 	public function testReadDataWithDataCheck() {
 		assertFalse( readDataOkay("bad json") );
 
