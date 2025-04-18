@@ -69,6 +69,7 @@ class HaxelibTests {
 		r.add(new TestRemoveSymlinks());
 		r.add(new TestRemoveSymlinksBroken());
 		r.add(new TestInstaller());
+		r.add(new TestLibFlagData());
 		r.add(new TestRepoManager());
 		r.add(new TestRepoReformatter());
 		r.add(new TestRepoReformatterOnLocal());

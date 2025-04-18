@@ -75,28 +75,6 @@ class TestInstaller extends TestBase {
 		assertFalse(FileSystem.exists(Path.join([lib, "git", "README.md"])));
 	}
 
-	public function testInstallHxmlWithBackend() {
-		// inferred from -cpp/--cpp flags
-		installer.installFromHxml("cpp.hxml", (libs) -> {
-			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
-			return false;
-		});
-
-		// specified explicitly
-		// test for issue #511
-		installer.installFromHxml("target-lib.hxml", (libs) -> {
-			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
-			return false;
-		});
-
-		// specified explicitly with non-standard capitalisation
-		installer.installFromHxml("target-lib-uppercase.hxml", (libs) -> {
-			assertEquals(1, Lambda.count(libs, (lib) -> lib.name == "HXCPP"));
-			assertEquals(0, Lambda.count(libs, (lib) -> lib.name == "hxcpp"));
-			return false;
-		});
-	}
-
 	public function testReinstallHxml() {
 		installer.installFromHxml("git-deps.hxml");
 
