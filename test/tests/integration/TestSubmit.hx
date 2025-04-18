@@ -73,8 +73,6 @@ class TestSubmit extends IntegrationTests {
 		assertFail(r);
 		assertEquals("Error: Library Bar does not have version 2.0.0", r.err.trim());
 
-		trace("hello");
-
 		final r = haxelib(["search", "Foo"]).result();
 		// did not get submitted
 		assertFalse(r.out.indexOf("Foo") >= 0);
