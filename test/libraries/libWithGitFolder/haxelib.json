@@ -1,0 +1,10 @@
+{
+	"name": "libWithGitFolder",
+	"url" : "http://example.org",
+	"license": "GPL",
+	"tags": [],
+	"description": "This project contains a .git folder",
+	"version": "0.0.1",
+	"releasenote": "Initial release, everything is working correctly",
+	"contributors": ["Bar"]
+}

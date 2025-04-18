@@ -1,5 +1,7 @@
 package tests.integration;
 
+import haxelib.api.Connection;
+
 import tests.util.Vcs;
 
 class TestSubmit extends IntegrationTests {
@@ -128,5 +130,33 @@ class TestSubmit extends IntegrationTests {
 		final r = haxelib(["search", "Bar"]).result();
 		// did not get submitted
 		assertFalse(r.out.indexOf("Bar") >= 0);
+	}
+
+	function testGitFolder() {
+		final r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
+		assertSuccess(r);
+
+		final r = haxelib([
+			"submit",
+			Path.join([IntegrationTests.projectRoot, "test/libraries/libWithGitFolder.zip"]),
+			bar.pw
+		]).result();
+		assertFail(r);
+		assertEquals("Submission must not contain .git folder", r.err.trim().split(": ").pop());
+
+		// also test submission with client side checks disabled
+		try {
+			Connection.submitLibrary(Path.join([IntegrationTests.projectRoot, "test/libraries/libWithGitFolder.zip"]), _ -> {
+				password: bar.pw,
+				name: bar.user
+			}, false);
+			assertTrue(false);
+		} catch (e:String) {
+			assertEquals("Submission must not contain .git folder", e.split(": ").pop());
+		}
+
+		final r = haxelib(["search", "libWithGitFolder"]).result();
+		// did not get submitted
+		assertFalse(r.out.indexOf("libWithGitFolder") >= 0);
 	}
 }

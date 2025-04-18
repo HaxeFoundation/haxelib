@@ -57,4 +57,8 @@ class Util {
 			return macro $v{version};
 		}
 	}
+
+	public static function pathContainsDirectory(path:String, directory:String) {
+		return path.startsWith('$directory/') || path.contains('/$directory/');
+	}
 }

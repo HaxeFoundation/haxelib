@@ -4,6 +4,8 @@ import sys.FileSystem;
 import sys.io.Process;
 import sys.io.File;
 
+import haxelib.api.Connection as HaxelibConnection;
+
 import haxe.unit.TestRunner;
 
 import haxelib.SemVer;
@@ -196,6 +198,8 @@ class IntegrationTests extends TestBase {
 		deleteDirectory(repo);
 		FileSystem.createDirectory(repo);
 		haxelibSetup(repo);
+
+		HaxelibConnection.remote = serverUrl;
 
 		Sys.setCwd(Path.join([projectRoot, "test"]));
 	}
