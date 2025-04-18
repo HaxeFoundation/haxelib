@@ -190,6 +190,7 @@ typedef DefineDocumentation = {
 	var Bsd = 'BSD';
 	var Public = 'Public';
 	var Apache = 'Apache';
+	var Mpl = 'MPL';
 	@:disallowed
 	var Unknown = 'Unknown';
 }
