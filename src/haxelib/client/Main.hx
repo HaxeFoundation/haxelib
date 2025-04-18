@@ -459,6 +459,8 @@ class Main {
 				case jsonPath if (jsonPath.endsWith("haxelib.json")):
 					return installer.installFromHaxelibJson(jsonPath);
 			}
+		} else if ((toInstall.startsWith("https://") || toInstall.startsWith("http://")) && toInstall.endsWith(".zip")) {
+			return installer.installFromUri(toInstall);
 		}
 		// Name provided that wasn't a local hxml or zip, so try to install it from server
 		final info = Connection.getInfo(ProjectName.ofString(toInstall));

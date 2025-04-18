@@ -102,6 +102,7 @@ devcontainer-base:
 
     # install neko
     COPY +neko/neko /usr/bin/neko
+    COPY +neko/nekotools /usr/bin/nekotools
     COPY +neko/libneko.so* /usr/lib/
     RUN mkdir -p /usr/lib/neko/
     COPY +neko/*.ndll /usr/lib/neko/
