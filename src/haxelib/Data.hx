@@ -195,10 +195,9 @@ typedef DefineDocumentation = {
 }
 
 typedef HaxelibFileEntry = {
-	@:requires( "Submission must not contain .git folder" =>
-		!(StringTools.startsWith(_, ".git/") ||
-		StringTools.contains(_, "/.git/"))
-	)
+	@:requires("Submission must not contain .git folder" => !haxelib.Util.pathContainsDirectory(_, ".git"))
+	@:requires("Submission must not contain .svn folder" => !haxelib.Util.pathContainsDirectory(_, ".svn"))
+	@:requires("Submission must not contain .hg folder" => !haxelib.Util.pathContainsDirectory(_, ".hg"))
 	var fileName:String;
 };
 

@@ -146,6 +146,38 @@ class TestData extends TestBase {
 			{
 				zip: {
 					final list = new List();
+					list.add({fileName: ".svn/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: "root/.svn/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: ".hg/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
+					list.add({fileName: "root/.hg/"});
+					list;
+				},
+				valid: false
+			},
+			{
+				zip: {
+					final list = new List();
 					list.add({fileName: ".github/"});
 					list;
 				},
