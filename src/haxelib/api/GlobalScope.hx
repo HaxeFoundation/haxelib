@@ -184,6 +184,7 @@ class GlobalScope extends Scope {
 					resolved.path
 			);
 			addLine('-D ${info.name}=${info.version}');
+			addLine('-D lib.${info.name}=${info.version}');
 
 			if (info.documentation != null) {
 				var doc = info.documentation;
