@@ -140,8 +140,6 @@ private class InstallData {
 	}
 }
 
-private class AlreadyUpToDate extends InstallationException {}
-
 private function getLatest(versions:Array<SemVer>):SemVer {
 	if (versions.length == 0)
 		throw 'Library has not yet released a version';
@@ -368,14 +366,8 @@ class Installer {
 
 		library = getVcsLibraryName(library, id, vcsData.subDir);
 
-		scope.setVcsVersion(library, id, vcsData);
+		setVcsVersion(library, id, vcsData);
 
-		if (vcsData.subDir != null) {
-			final path = scope.getPath(library);
-			userInterface.log('  Development directory set to $path');
-		} else {
-			userInterface.log('  Current version is now $id');
-		}
 		userInterface.log("Done");
 
 		handleDependenciesVcs(library, id, vcsData.subDir);
@@ -386,14 +378,67 @@ class Installer {
 		or pull latest changes with git or hg.
 	**/
 	public function update(library:ProjectName) {
+		final version = scope.resolve(library);
+		library = getCorrectName(library, version);
+		// check if update is needed
+		if (isUpToDate(library, version)) {
+			userInterface.log('Library $library is already up to date');
+			return;
+		}
+
 		try {
-			updateIfNeeded(library);
-		} catch (e:AlreadyUpToDate) {
-			userInterface.log(e.toString());
+			updateResolved(library, version);
 		} catch (e:UpdateCancelled) {
+			// perhaps we should exit with an error?
 			return;
 		}
 	}
+
+	function getCorrectName(library:ProjectName, versionData:VersionData) {
+		return switch versionData {
+			case VcsInstall(version, {subDir: subDir}):
+				getVcsLibraryName(library, version, subDir);
+			case Haxelib(_):
+				ProjectName.ofString(Connection.getInfo(library).name);
+		};
+	}
+
+	function isUpToDate(library:ProjectName, versionData:VersionData):Bool {
+		return switch versionData {
+			case Haxelib(version):
+				version == Connection.getLatestVersion(library);
+			case VcsInstall(version, _):
+				final vcs = getVcs(version);
+				!FsUtils.runInDirectory(repository.getVersionPath(library, version), vcs.checkRemoteChanges);
+		};
+	}
+
+	function updateResolved(library:ProjectName, versionData:VersionData)
+		switch versionData {
+			case VcsInstall(version, vcsData):
+				final vcs = getVcs(version);
+				// with version locking we'll be able to be smarter with this
+				updateVcs(library, version, vcs);
+
+				setVcsVersion(library, version, vcsData);
+
+				// TODO: Properly handle sub directories
+				handleDependenciesVcs(library, version, null);
+			case Haxelib(_):
+				final latest = Connection.getLatestVersion(library);
+				if (repository.isVersionInstalled(library, latest)) {
+					userInterface.log('Latest version $latest of $library is already installed');
+					// only ask if running in a global scope
+					if (!scope.isLocal && !userInterface.confirm('Set $library to $latest'))
+						return;
+				} else {
+					downloadAndInstall(library, latest);
+				}
+				scope.setVersion(library, latest);
+				userInterface.log('  Current version is now $latest');
+				userInterface.log("Done");
+				handleDependencies(library, latest);
+		}
 
 	/**
 		Updates all libraries in the scope.
@@ -407,14 +452,18 @@ class Installer {
 
 		for (library in libraries) {
 			userInterface.log('Checking $library');
-			try {
-				updateIfNeeded(library);
-				updated = true;
-			} catch(e:AlreadyUpToDate) {
+
+			final version = scope.resolve(library);
+			if (isUpToDate(library, version)) {
 				continue;
+			}
+
+			try {
+				updateResolved(library, version);
+				updated = true;
 			} catch (e:UpdateCancelled) {
 				continue;
-			} catch(e) {
+			} catch (e) {
 				++failures;
 				userInterface.log("Failed to update: " + e.toString());
 				userInterface.log(e.stack.toString(), Debug);
@@ -429,47 +478,6 @@ class Installer {
 			}
 		} else
 			userInterface.log("All libraries are already up-to-date");
-	}
-
-	function updateIfNeeded(library:ProjectName) {
-		final current = try scope.getVersion(library) catch (_:CurrentVersionException) null;
-
-		final vcsId = try VcsID.ofString(current) catch (_) null;
-		if (vcsId != null) {
-			final vcs = getVcs(vcsId);
-			if (!FsUtils.runInDirectory(repository.getVersionPath(library, vcsId), vcs.checkRemoteChanges))
-				throw new AlreadyUpToDate('Library $library $vcsId repository is already up to date');
-			// with version locking we'll be able to be smarter with this
-			updateVcs(library, vcsId, vcs);
-
-			scope.setVcsVersion(library, vcsId);
-
-			handleDependenciesVcs(library, vcsId, null);
-			// we dont know if a subdirectory was given anymore
-			return;
-		}
-
-		final semVer = try SemVer.ofString(current) catch (_) null;
-
-		final info = Connection.getInfo(library);
-		final library = ProjectName.ofString(info.name);
-		final latest = info.getLatest();
-
-		if (semVer != null && semVer == latest) {
-			throw new AlreadyUpToDate('Library $library is already up to date');
-		} else if (repository.isVersionInstalled(library, latest)) {
-			userInterface.log('Latest version $latest of $library is already installed');
-			// only ask if running in a global scope
-			if (!scope.isLocal && !userInterface.confirm('Set $library to $latest'))
-				return;
-		} else {
-			downloadAndInstall(library, latest);
-		}
-		scope.setVersion(library, latest);
-		userInterface.log('  Current version is now $latest');
-		userInterface.log("Done");
-
-		handleDependencies(library, latest);
 	}
 
 	function getDependencies(path:String):Dependencies {
@@ -584,16 +592,20 @@ class Installer {
 	function setVersionAndLog(library:ProjectName, installData:VersionData) {
 		switch installData {
 			case VcsInstall(version, vcsData):
-				scope.setVcsVersion(library, version, vcsData);
-				if (vcsData.subDir == null){
-					userInterface.log('  Current version is now $version');
-				} else {
-					final path = scope.getPath(library);
-					userInterface.log('  Development directory set to $path');
-				}
+				setVcsVersion(library, version, vcsData);
 			case Haxelib(version):
 				scope.setVersion(library, version);
 				userInterface.log('  Current version is now $version');
+		}
+	}
+
+	function setVcsVersion(library:ProjectName, version:VcsID, data:VcsData) {
+		scope.setVcsVersion(library, version, data);
+		if (data.subDir == null) {
+			userInterface.log('  Current version is now $version');
+		} else {
+			final path = scope.getPath(library);
+			userInterface.log('  Development directory set to $path');
 		}
 	}
 

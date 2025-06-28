@@ -273,4 +273,14 @@ class GlobalScope extends Scope {
 		return {path: path, version: current};
 	}
 
+	public function resolve(library:ProjectName):VersionData {
+		final version = repository.getCurrentVersion(library);
+
+		return switch version {
+			case vcs if (VcsID.isValid(vcs)):
+				VcsInstall(VcsID.ofString(vcs), {url: "<unknown>"});
+			case semVer:
+				Haxelib(SemVer.ofString(semVer));
+		};
+	}
 }

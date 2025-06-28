@@ -127,6 +127,11 @@ abstract class Scope {
 
 	abstract function resolveCompiler():LibraryData;
 
+	/**
+		Returns the full version data for `library`.
+	**/
+	public abstract function resolve(library:ProjectName):VersionData;
+
 	// TODO: placeholders until https://github.com/HaxeFoundation/haxe/wiki/Haxe-haxec-haxelib-plan
 	static function loadOverrides():LockFormat {
 		return {};
