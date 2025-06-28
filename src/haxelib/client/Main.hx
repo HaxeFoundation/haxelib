@@ -29,9 +29,9 @@ import haxe.iterators.ArrayIterator;
 import sys.FileSystem;
 import sys.io.File;
 
-import haxelib.api.*;
 import haxelib.VersionData.VcsID;
-import haxelib.api.LibraryData;
+import haxelib.api.*;
+import haxelib.api.LibraryData.Version;
 
 import haxelib.client.Args;
 import haxelib.Util.rethrow;
@@ -58,6 +58,7 @@ class Main {
 
 	final command:Command;
 	final mainArgs:Array<String>;
+	final flags:Array<Flag>;
 	final argsIterator:ArrayIterator<String>;
 	final useGlobalRepo:Bool;
 
@@ -72,10 +73,6 @@ class Main {
 			Cli.mode = Quiet;
 		else if (args.flags.contains(Debug))
 			Cli.mode = Debug;
-
-		if (args.flags.contains(SkipDependencies))
-			Installer.skipDependencies = true;
-		Vcs.flat = args.flags.contains(Flat);
 
 		// connection setup
 		if (args.flags.contains(NoTimeout))
@@ -96,6 +93,7 @@ class Main {
 
 		command = args.command;
 		mainArgs = args.mainArgs;
+		flags = args.flags;
 		argsIterator = mainArgs.iterator();
 
 		useGlobalRepo = args.flags.contains(Global);
@@ -434,7 +432,10 @@ class Main {
 			logInstallationProgress: (Cli.mode == Debug) ? Cli.printInstallStatus: null,
 			logDownloadProgress: (Cli.mode != Quiet) ? Cli.printDownloadStatus : null
 		}
-		return new Installer(scope, userInterface);
+		final installer = new Installer(scope, userInterface);
+		installer.skipDependencies = flags.contains(SkipDependencies);
+		installer.noVcsSubmodules = flags.contains(Flat);
+		return installer;
 	}
 
 	function install() {
@@ -735,14 +736,9 @@ class Main {
 	}
 
 	function vcs(id:VcsID) {
-		// Prepare check vcs.available:
-		final vcs = Vcs.get(id);
-		if (vcs == null || !vcs.available)
-			throw 'Could not use $id, please make sure it is installed and available in your PATH.';
-
 		// get args
 		final library = ProjectName.ofString(getArgument("Library name"));
-		final url = getArgument(vcs.name + " path");
+		final url = getArgument(id.getName() + " path");
 		final ref = argsIterator.next();
 
 		final isRefHash = ref == null || LibraryData.isCommitHash(ref);
@@ -898,7 +894,7 @@ class Main {
 		final scope = getScope();
 		final installer = setupAndGetInstaller(scope);
 		Cli.defaultAnswer = Always;
-		Installer.skipDependencies = true;
+		installer.skipDependencies = true;
 
 		if (sys.FileSystem.exists(manifest) && !sys.FileSystem.isDirectory(manifest)) {
 			return installer.installFromHxml(manifest, confirmHxmlInstall);
