@@ -473,6 +473,6 @@ class Repository {
 	}
 
 	public function getVcsData(name: ProjectName, version: VcsID): VcsData {
-		return Vcs.get(version).getReproducibleVersion(getProjectVersionPath(name, version));
+		return Vcs.create(version).getReproducibleVersion(getProjectVersionPath(name, version));
 	}
 }

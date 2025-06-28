@@ -19,6 +19,13 @@ package haxelib;
 		else
 			throw 'Invalid VscID $s';
 	}
+
+	public function getName() {
+		return switch cast(this, VcsID) {
+			case Git: "Git";
+			case Hg: "Mercurial";
+		};
+	}
 }
 
 /** Class containing repoducible git or hg library data. **/
