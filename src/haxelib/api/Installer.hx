@@ -824,11 +824,12 @@ class Installer {
 
 		final libPath = repository.getVersionPath(library, id);
 
-		final branch = vcsData.commit != null ? vcsData.commit : vcsData.branch;
-		final url:String = vcsData.url;
-
 		function doVcsClone() {
-			userInterface.log('Installing $library from $url' + (branch != null ? " branch: " + branch : ""));
+			userInterface.log('Installing $library from ${vcsData.url}'
+				+ (vcsData.branch != null ? " branch: " + vcsData.branch : "")
+				+ (vcsData.tag != null ? " tag: " + vcsData.tag : "")
+				+ (vcsData.commit != null ? " commit: " + vcsData.commit : "")
+			);
 			try {
 				vcs.clone(libPath, vcsData, noVcsSubmodules);
 			} catch (error:VcsError) {
