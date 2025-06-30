@@ -61,7 +61,11 @@ private interface IVcs {
 	**/
 	function resetLocalChanges():Void;
 
-	function getReproducibleVersion(libPath: String): VcsData;
+	function getRef():String;
+
+	function getOriginUrl():String;
+
+	function getBranchName():Null<String>;
 }
 
 /** Enum representing errors that can be thrown during a vcs operation. **/
@@ -317,18 +321,19 @@ class Git extends Vcs {
 		Sys.setCwd(oldCwd);
 	}
 
-	public function getReproducibleVersion(libPath: String): VcsData {
-		final oldCwd = Sys.getCwd();
-		Sys.setCwd(libPath);
+	public function getRef():String {
+		return run(["rev-parse", "--verify", "HEAD"], true).out.trim();
+	}
 
-		final ret: VcsData = {
-			// could the remote's name not be "origin"?
-			url: run(["remote", "get-url", "origin"], true).out.trim(),
-			commit: run(["rev-parse", "HEAD"], true).out.trim(),
-		};
+	public function getOriginUrl():String {
+		return run(["ls-remote", "--get-url", "origin"], true).out.trim();
+	}
 
-		Sys.setCwd(oldCwd);
-		return ret;
+	public function getBranchName():Null<String> {
+		final ret = run(["symbolic-ref", "--short", "HEAD"]);
+		if (ret.code != 0)
+			return null;
+		return ret.out.trim();
 	}
 
 	public function hasLocalChanges():Bool {
@@ -400,6 +405,22 @@ class Mercurial extends Vcs {
 			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
 	}
 
+	public function getRef():String {
+		final out = run(["identify", "-i"], true).out.trim();
+		// if the hash ends with +, there are edits
+		if (StringTools.endsWith(out, "+"))
+			return out.substr(0, out.length - 2);
+		return out;
+	}
+
+	public function getOriginUrl():String {
+		return run(["paths", "default"], true).out.trim();
+	}
+
+	public function getBranchName():Null<String> {
+		return run(["identify", "-b"], true).out.trim();
+	}
+
 	public function hasLocalChanges():Bool {
 		final diff = run(["diff", "-U", "2", "--git", "--subrepos"]);
 		final status = run(["status"]);
@@ -409,18 +430,5 @@ class Mercurial extends Vcs {
 
 	public function resetLocalChanges() {
 		run(["revert", "--all"], true);
-	}
-
-	public function getReproducibleVersion(libPath: String): VcsData {
-		final oldCwd = Sys.getCwd();
-		Sys.setCwd(libPath);
-
-		final ret: VcsData = {
-			url: run(["paths", "default"], true).out.trim(),
-			commit: run(["identify", "-i", "--debug"], true).out.trim(),
-		};
-
-		Sys.setCwd(oldCwd);
-		return ret;
 	}
 }
