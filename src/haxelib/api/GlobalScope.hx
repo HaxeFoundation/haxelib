@@ -59,7 +59,9 @@ class GlobalScope extends Scope {
 	}
 
 	public function setVcsVersion(library:ProjectName, vcsVersion:VcsID, ?data:VcsData):Void {
-		if (data == null) data = {url: "unknown"};
+		if (data != null) {
+			repository.setVcsData(library, vcsVersion, data);
+		}
 
 		if (data.subDir != null) {
 			final devDir = repository.getValidVersionPath(library, vcsVersion) + data.subDir;
@@ -278,7 +280,8 @@ class GlobalScope extends Scope {
 
 		return switch version {
 			case vcs if (VcsID.isValid(vcs)):
-				VcsInstall(VcsID.ofString(vcs), {url: "<unknown>"});
+				final vcsId = VcsID.ofString(vcs);
+				VcsInstall(vcsId, repository.getVcsData(library, vcsId));
 			case semVer:
 				Haxelib(SemVer.ofString(semVer));
 		};
