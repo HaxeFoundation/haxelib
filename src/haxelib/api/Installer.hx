@@ -179,7 +179,7 @@ class Installer {
 	final repository:Repository;
 	final userInterface:UserInterface;
 
-	final vcsBranchesByLibraryName = new Map<ProjectName, String>();
+	final vcsDataByName = new Map<ProjectName, VcsData>();
 
 	/**
 		Creates a new Installer object that installs projects to `scope`.
@@ -217,15 +217,15 @@ class Installer {
 	}
 
 	/**
-		Clears memory on git or hg library branches.
+		Clears cached data for git or hg libraries.
 
 		An installer instance keeps track of updated vcs dependencies
-		to avoid cloning the same branch twice.
+		to avoid cloning the same version twice.
 
 		This function can be used to clear that memory.
 	**/
-	public function forgetVcsBranches():Void {
-		vcsBranchesByLibraryName.clear();
+	public function forgetVcsDataCache():Void {
+		vcsDataByName.clear();
 	}
 
 	/** Installs libraries from the `haxelib.json` file at `path`. **/
@@ -418,8 +418,10 @@ class Installer {
 			case VcsInstall(version, vcsData):
 				final vcs = getVcs(version);
 				// with version locking we'll be able to be smarter with this
+				final libPath = repository.getVersionPath(library, version);
 				updateVcs(library, version, vcs);
 
+				vcsData.commit = FsUtils.runInDirectory(libPath, vcs.getRef);
 				setVcsVersion(library, version, vcsData);
 
 				// TODO: Properly handle sub directories
@@ -599,7 +601,32 @@ class Installer {
 		}
 	}
 
+	function getReproducibleVcsData(library:ProjectName, version:VcsID, data:VcsData):VcsData {
+		final vcs = getVcs(version);
+		final libPath = repository.getVersionPath(library, version);
+		return FsUtils.runInDirectory(libPath, function():VcsData {
+			return {
+				url: data.url,
+				commit: data.commit ?? vcs.getRef(),
+				branch: if (data.branch == null && data.tag == null) vcs.getBranchName() else data.branch,
+				tag: data.tag,
+				subDir: if (data.subDir != null) haxe.io.Path.normalize(data.subDir) else null
+			};
+		});
+	}
+
+	/**
+		Retrieves fully reproducible vcs data if necessary,
+		and then uses it to lock down the current version.
+	**/
 	function setVcsVersion(library:ProjectName, version:VcsID, data:VcsData) {
+		// save here prior to modification
+		vcsDataByName[library] = data;
+		if (!data.isReproducible()) {
+			// always get reproducible data for local scope
+			data = getReproducibleVcsData(library, version, data);
+		}
+
 		scope.setVcsVersion(library, version, data);
 		if (data.subDir == null) {
 			userInterface.log('  Current version is now $version');
@@ -818,15 +845,14 @@ class Installer {
 		if (repository.isVersionInstalled(library, id)) {
 			userInterface.log('You already have $library version $id installed.');
 
-			final wasUpdated = vcsBranchesByLibraryName.exists(library);
-			// difference between a key not having a value and the value being null
+			final wasUpdated = vcsDataByName.exists(library);
 
-			final currentBranch = vcsBranchesByLibraryName[library];
+			final currentData = vcsDataByName[library];
 
 			// TODO check different urls as well
-			if (branch != null && (!wasUpdated || currentBranch != branch)) {
-				final currentBranchStr = currentBranch != null ? currentBranch : "<unspecified>";
-				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "$branch"')) {
+			if (vcsData.branch != null && (!wasUpdated || currentData.branch != vcsData.branch)) {
+				final currentBranchStr = currentData.branch != null ? currentData.branch : "<unspecified>";
+				if (!userInterface.confirm('Overwrite branch: "$currentBranchStr" with "${vcsData.branch}"')) {
 					userInterface.log('Library $library $id repository remains at "$currentBranchStr"');
 					return;
 				}
@@ -837,16 +863,13 @@ class Installer {
 				updateVcs(library, id, vcs);
 			} else {
 				userInterface.log('Library $library version $id already up to date');
-				if (wasUpdated) {
-					return;
-				}
 			}
 		} else {
 			FsUtils.safeDir(libPath);
 			doVcsClone();
 		}
 
-		vcsBranchesByLibraryName[library] = branch;
+		vcsData.commit = FsUtils.runInDirectory(libPath, vcs.getRef);
 	}
 
 	function updateVcs(library:ProjectName, id:VcsID, vcs:Vcs)

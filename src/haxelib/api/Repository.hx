@@ -4,6 +4,7 @@ import haxelib.VersionData.VcsData;
 import sys.FileSystem;
 import sys.io.File;
 
+import haxelib.VersionData.VcsData;
 import haxelib.VersionData.VcsID;
 import haxelib.api.RepoManager;
 import haxelib.api.LibraryData;
@@ -282,6 +283,44 @@ class Repository {
 		return getProjectVersionPath(name, version);
 	}
 
+	private function getVcsDataPath(name:ProjectName, version:VcsID) {
+		return haxe.io.Path.join([getProjectPath(name), '.${version}data']);
+	}
+
+	public function setVcsData(name:ProjectName, version:VcsID, vcsData:VcsData) {
+		File.saveContent(
+			getVcsDataPath(name, version),
+			haxe.Json.stringify(vcsData.getCleaned(), "\t")
+		);
+	}
+
+	public function getVcsData(name:ProjectName, version:VcsID):VcsData {
+		final vcsDataPath = getVcsDataPath(name, version);
+		if (!FileSystem.exists(vcsDataPath) || FileSystem.isDirectory(vcsDataPath)) {
+			final versionPath = getProjectVersionPath(name, version);
+
+			if (!FileSystem.exists(versionPath)) {
+				throw 'Library $name version $version is not installed';
+			}
+
+			return FsUtils.runInDirectory(versionPath, function():VcsData {
+				final vcs = Vcs.create(version);
+				return {
+					url: vcs.getOriginUrl(),
+					commit: vcs.getRef()
+				};
+			} );
+		}
+		final data = haxe.Json.parse(File.getContent(vcsDataPath));
+		return {
+			url: data.url,
+			commit: data.commit,
+			tag: data.tag,
+			branch: data.branch,
+			subDir: data.subDir
+		};
+	}
+
 	/**
 		Returns the correctly capitalized name for library `name`.
 
@@ -470,9 +509,5 @@ class Repository {
 
 	function getDevFilePath(name:ProjectName):String {
 		return addToRepoPath(name, DEV_FILE);
-	}
-
-	public function getVcsData(name: ProjectName, version: VcsID): VcsData {
-		return Vcs.create(version).getReproducibleVersion(getProjectVersionPath(name, version));
 	}
 }
