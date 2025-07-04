@@ -1,3 +1,13 @@
+## 4.2.0 (2025-07-04)
+
+ - Add `state save` and `state load` commands ([#610](https://github.com/HaxeFoundation/haxelib/issues/610))
+ - Exit with error when hxml install fails ([#625](https://github.com/HaxeFoundation/haxelib/issues/625))
+ - Allow compiling client with hxcpp target ([#643](https://github.com/HaxeFoundation/haxelib/issues/643))
+ - Get compiler version for run scripts lazily ([#646](https://github.com/HaxeFoundation/haxelib/issues/646))
+ - Change the order of haxelib git submodule installation ([#638](https://github.com/HaxeFoundation/haxelib/issues/638))
+ - Fix crashes with git commands on Windows ([#642](https://github.com/HaxeFoundation/haxelib/issues/642))
+ - Disallow library submissions containing .git folders ([#664](https://github.com/HaxeFoundation/haxelib/issues/664))
+
 ## 4.1.0 (2023-04-06)
 
  - Added support for documenting custom defines and metadata ([#573](https://github.com/HaxeFoundation/haxelib/pull/573))

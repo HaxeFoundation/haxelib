@@ -176,7 +176,7 @@ class Main {
 			categories[categoryName].push({usage: command.name, description: command.description});
 		}
 
-		Cli.print('Haxe Library Manager $VERSION - (c)2006-2024 Haxe Foundation');
+		Cli.print('Haxe Library Manager $VERSION - (c)2006-2025 Haxe Foundation');
 		Cli.print("  Usage: haxelib [command] [options]");
 
 		inline function display(type:String, lines:Array<{usage:String, description:String}>) {

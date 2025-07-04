@@ -5,8 +5,8 @@
 	"tags": ["haxelib", "core"],
 	"description": "The haxelib client",
 	"classPath": "src",
-	"version": "4.1.0",
-	"releasenote": "Added support for documenting custom defines and metadata (#573)",
+	"version": "4.2.0",
+	"releasenote": " * Add `state save` and `state load` commands (#610)\n * Exit with error when hxml install fails (#625)\n * Allow compiling client with hxcpp target (#643)\n * Get compiler version for run scripts lazily (#646)\n * Change the order of haxelib git submodule installation (#638)\n * Fix crashes with git commands on Windows (#642)\n * Disallow library submissions containing .git folders (#664)",
 	"contributors": ["HaxeFoundation", "back2dos", "ncannasse", "jason", "Simn", "nadako", "andyli"],
 	"dependencies":{
 		"hx3compat": "",
