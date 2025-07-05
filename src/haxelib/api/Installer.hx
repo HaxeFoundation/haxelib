@@ -419,6 +419,14 @@ class Installer {
 				final vcs = getVcs(version);
 				// with version locking we'll be able to be smarter with this
 				final libPath = repository.getVersionPath(library, version);
+
+				FsUtils.runInDirectory(
+					libPath,
+					function() {
+						if (vcs.getRef() != vcsData.commit) {
+							throw 'Cannot update ${version.getName()} version of $library. There are local changes.';
+						}
+				});
 				updateVcs(library, version, vcs);
 
 				vcsData.commit = FsUtils.runInDirectory(libPath, vcs.getRef);
@@ -845,7 +853,12 @@ class Installer {
 
 			final wasUpdated = vcsDataByName.exists(library);
 
-			final currentData = vcsDataByName[library];
+			final currentData = vcsDataByName[library] ?? repository.getVcsData(library, id);
+			FsUtils.runInDirectory(libPath, function() {
+				if (vcs.getRef() != currentData.commit) {
+					throw 'Cannot overwrite currently installed $id version of $library. There are local changes.';
+				}
+			});
 
 			// TODO check different urls as well
 			if (vcsData.branch != null && (!wasUpdated || currentData.branch != vcsData.branch)) {
