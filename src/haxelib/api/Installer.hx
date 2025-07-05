@@ -828,12 +828,10 @@ class Installer {
 				switch (error) {
 					case VcsUnavailable(vcs):
 						throw 'Could not use ${vcs.executable}, please make sure it is installed and available in your PATH.';
-					case CantCloneRepo(vcs, _, stderr):
+					case CantCloneRepo(_, _, stderr):
 						throw 'Could not clone ${id.getName()} repository' + (stderr != null ? ":\n" + stderr : ".");
-					case CantCheckoutBranch(_, branch, stderr):
-						throw 'Could not checkout branch, tag or path "$branch": ' + stderr;
-					case CantCheckoutVersion(_, version, stderr):
-						throw 'Could not checkout tag "$version": ' + stderr;
+					case CantCheckout(_, ref, stderr):
+						throw 'Could not checkout commit or tag "$ref": ' + stderr;
 					case SubmoduleError(_, repo, stderr):
 						throw 'Could not clone submodule(s) from $repo: ' + stderr;
 					case CommandFailed(_, code, stdout, stderr):
