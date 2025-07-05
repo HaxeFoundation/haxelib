@@ -72,8 +72,7 @@ private interface IVcs {
 enum VcsError {
 	VcsUnavailable(vcs:Vcs);
 	CantCloneRepo(vcs:Vcs, repo:String, ?stderr:String);
-	CantCheckoutBranch(vcs:Vcs, branch:String, stderr:String);
-	CantCheckoutVersion(vcs:Vcs, version:String, stderr:String);
+	CantCheckout(vcs:Vcs, ref:String, stderr:String);
 	CommandFailed(vcs:Vcs, code:Int, stdout:String, stderr:String);
 	SubmoduleError(vcs:Vcs, repo:String, stderr:String);
 }
@@ -245,7 +244,7 @@ class Git extends Vcs {
 	}
 
 	public function checkRemoteChanges():Bool {
-		run(["fetch"], true);
+		run(["fetch", "--depth=1"], true);
 
 		// `git rev-parse @{u}` will fail if detached
 		final checkUpstream = run(["rev-parse", "@{u}"]);
@@ -260,55 +259,79 @@ class Git extends Vcs {
 	}
 
 	public function clone(libPath:String, data:VcsData, flat = false):Void {
-		final oldCwd = Sys.getCwd();
-
 		final vcsArgs = ["clone", data.url, libPath];
 
 		optionalLog('Cloning ${VcsID.Git.getName()} from ${data.url}');
 
+		if (data.branch != null) {
+			vcsArgs.push('--single-branch');
+			vcsArgs.push('--branch');
+			vcsArgs.push(data.branch);
+		} else if (data.commit == null) {
+			vcsArgs.push('--single-branch');
+		}
+
+		final cloneDepth1 = data.commit == null || data.commit.length == 40;
+		// we cannot clone like this if the commit hash is short,
+		// as fetch requires full hash
+		if (cloneDepth1) {
+			vcsArgs.push('--depth=1');
+		}
+
 		if (run(vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
 
-		Sys.setCwd(libPath);
-
-		final branch = data.commit ?? data.branch;
-
-		if (data.tag != null) {
+		if (data.branch != null && data.commit != null) {
+			optionalLog('Checking out branch ${data.branch} at commit ${data.commit} of ${libPath}');
+			FsUtils.runInDirectory(libPath, () -> {
+				if (cloneDepth1) {
+					runCheckoutRelatedCommand(data.commit, ["fetch", "--depth=1", "origin", data.commit]);
+				}
+				run(["reset", "--hard", data.commit], true);
+			});
+		} else if (data.commit != null) {
+			optionalLog('Checking out commit ${data.commit} of ${libPath}');
+			FsUtils.runInDirectory(libPath, checkout.bind(data.commit, cloneDepth1));
+		} else if (data.tag != null) {
 			optionalLog('Checking out tag/version ${data.tag} of ${VcsID.Git.getName()}');
-
-			final ret = run(["checkout", "tags/" + data.tag]);
-			if (ret.code != 0) {
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutVersion(this, data.tag, ret.out);
-			}
-		} else if (branch != null) {
-			optionalLog('Checking out branch/commit ${branch} of ${libPath}');
-
-			final ret = run(["checkout", branch]);
-			if (ret.code != 0){
-				Sys.setCwd(oldCwd);
-				throw VcsError.CantCheckoutBranch(this, branch, ret.out);
-			}
+			FsUtils.runInDirectory(libPath, () -> {
+				final tagRef = 'tags/${data.tag}';
+				runCheckoutRelatedCommand(tagRef, ["fetch", "--depth=1", "origin", '$tagRef:$tagRef']);
+				checkout('tags/${data.tag}', false);
+			});
 		}
 
-		if (!flat)
-		{
-			optionalLog('Syncing submodules for ${VcsID.Git.getName()}');
-			run(["submodule", "sync", "--recursive"]);
+		if (!flat) {
+			FsUtils.runInDirectory(libPath, () -> {
+				optionalLog('Syncing submodules for ${VcsID.Git.getName()}');
+				run(["submodule", "sync", "--recursive"]);
 
-			var submoduleArgs = ["submodule", "update", "--init", "--recursive"];
+				optionalLog('Downloading/updating submodules for ${VcsID.Git.getName()}');
+				final ret = run(["submodule", "update", "--init", "--recursive", "--depth=1", "--single-branch"]);
+				if (ret.code != 0)
+				{
+					throw VcsError.SubmoduleError(this, data.url, ret.out);
+				}
+			});
+		}
+	}
 
-			optionalLog('Downloading/updating submodules for ${VcsID.Git.getName()}');
-			final ret = run(submoduleArgs);
-			if (ret.code != 0)
-			{
-				Sys.setCwd(oldCwd);
-				throw VcsError.SubmoduleError(this, data.url, ret.out);
-			}
+	inline function runCheckoutRelatedCommand(ref, args:Array<String>) {
+		final ret = run(args);
+		if (ret.code != 0) {
+			throw VcsError.CantCheckout(this, ref, ret.out);
+		}
+	}
+
+	function checkout(ref:String, fetch:Bool) {
+		if (fetch) {
+			runCheckoutRelatedCommand(ref, ["fetch", "--depth=1", "origin", ref]);
 		}
 
-		// return prev. cwd:
-		Sys.setCwd(oldCwd);
+		runCheckoutRelatedCommand(ref, ["checkout", ref]);
+
+		// clean up excess branch
+		run(["branch", "-D", "@{-1}"]);
 	}
 
 	public function getRef():String {
