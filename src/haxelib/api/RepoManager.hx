@@ -250,7 +250,14 @@ class RepoManager {
 		if (IS_WINDOWS)
 			return getWindowsDefaultGlobalPath();
 
-		// TODO `lib/` is for binaries, see if we can move all of these to `share/`
+		final dataHome = Sys.getEnv("XDG_DATA_HOME");
+		if (dataHome != null) {
+			return dataHome + '/haxe/$REPO_DIR/';
+		}
+		final home = Sys.getEnv("HOME");
+		if (home != null) {
+			return home + '/.local/share/haxe/$REPO_DIR/';
+		}
 		return if (FileSystem.exists("/usr/share/haxe/")) // for Debian
 			'/usr/share/haxe/$REPO_DIR/'
 		else if (Sys.systemName() == "Mac") // for newer OSX, where /usr/lib is not writable
