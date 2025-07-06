@@ -248,25 +248,15 @@ class Git extends Vcs {
 		run(["fetch"], true);
 
 		// `git rev-parse @{u}` will fail if detached
-		return run(["rev-parse", "@{u}"]).out != run(["rev-parse", "HEAD"], true).out;
+		final checkUpstream = run(["rev-parse", "@{u}"]);
+		if (checkUpstream.code != 0) {
+			return false;
+		}
+		return checkUpstream.out != run(["rev-parse", "HEAD"], true).out;
 	}
 
 	public function mergeRemoteChanges() {
-		// But if before we pulled specified branch/tag/rev => then possibly currently we haxe "HEAD detached at ..".
-		if (run(["rev-parse", "@{u}"]).code != 0) {
-			// get parent-branch:
-			final branch = {
-				final raw = run(["show-branch"]).out;
-				final regx = ~/\[([^]]*)\]/;
-				if (regx.match(raw))
-					regx.matched(1);
-				else
-					raw;
-			}
-
-			run(["checkout", branch, "--force"], true);
-		}
-		run(["merge"], true);
+		run(["reset", "--hard", "@{u}"], true);
 	}
 
 	public function clone(libPath:String, data:VcsData, flat = false):Void {
@@ -403,6 +393,22 @@ class Mercurial extends Vcs {
 
 		if (run(vcsArgs).code != 0)
 			throw VcsError.CantCloneRepo(this, data.url/*, ret.out*/);
+
+		if (data.branch == null && !(data.commit == null && data.tag == null)) {
+			FsUtils.runInDirectory(libPath, function() {
+				final rcFile = '.hg/hgrc';
+				sys.io.File.saveContent(rcFile,
+					sys.io.File.getContent(rcFile)
+					// unlink from upstream so updates stick to specified commit/tag
+					.replace("default =", '# default =')
+					// still store url in "haxelib_url" so we can retrieve it if needed
+					.replace("[paths]", '[paths]\nhaxelib_url = ${data.url}')
+					+ "\n[extensions]\nstrip =\n"
+				);
+				// also strip to get rid of newer changesets we have already cloned
+				run(["strip", data.tag]);
+			});
+		}
 	}
 
 	public function getRef():String {
@@ -414,7 +420,10 @@ class Mercurial extends Vcs {
 	}
 
 	public function getOriginUrl():String {
-		return run(["paths", "default"], true).out.trim();
+		final ret = run(["paths", "default"]);
+		if (ret.code == 0)
+			return ret.out.trim();
+		return run(["paths", "haxelib_url"], true).out.trim();
 	}
 
 	public function getBranchName():Null<String> {
