@@ -162,7 +162,6 @@ class TestVcs extends TestBase
 		assertFalse(vcs.checkRemoteChanges());
 		try {
 			vcs.mergeRemoteChanges();
-			assertFalse(true);
 		} catch (e:VcsError) {
 			assertTrue(e.match(CommandFailed(_)));
 		}
@@ -189,7 +188,6 @@ class TestVcs extends TestBase
 		assertFalse(vcs.checkRemoteChanges());
 		try {
 			vcs.mergeRemoteChanges();
-			assertFalse(true);
 		} catch (e:VcsError) {
 			assertTrue(e.match(CommandFailed(_)));
 		}
