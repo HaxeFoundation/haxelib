@@ -455,7 +455,7 @@ class Mercurial extends Vcs {
 
 	public function hasLocalChanges():Bool {
 		final diff = run(["diff", "-U", "2", "--git", "--subrepos"]);
-		final status = run(["status"]);
+		final status = run(["status", "-q"]);
 
 		return diff.code + status.code + diff.out.length + status.out.length > 0;
 	}
