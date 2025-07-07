@@ -1,12 +1,92 @@
 ## 4.2.0 (2025-07-04)
 
- - Add `state save` and `state load` commands ([#610](https://github.com/HaxeFoundation/haxelib/issues/610))
- - Exit with error when hxml install fails ([#625](https://github.com/HaxeFoundation/haxelib/issues/625))
- - Allow compiling client with hxcpp target ([#643](https://github.com/HaxeFoundation/haxelib/issues/643))
- - Get compiler version for run scripts lazily ([#646](https://github.com/HaxeFoundation/haxelib/issues/646))
+### Features
+
+- Document haxelib.client and haxelib packages ([#548](https://github.com/HaxeFoundation/haxelib/pull/548))
+- Add `fixrepo` command to deal with capitalisation bugs ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Added --no-timeout alias to --notimeout and --remote alias to -R ([#553](https://github.com/HaxeFoundation/haxelib/pull/553))
+- Print which haxelib is used when in debug mode ([#555](https://github.com/HaxeFoundation/haxelib/pull/555))
+- Add support for hg dependencies ([#557](https://github.com/HaxeFoundation/haxelib/pull/557))
+- List allowed licenses when license is invalid ([#559](https://github.com/HaxeFoundation/haxelib/pull/559))
+- Add `state save` and `state load` commands ([#610](https://github.com/HaxeFoundation/haxelib/issues/610))
+- Allow compiling client with hxcpp target ([#643](https://github.com/HaxeFoundation/haxelib/issues/643))
+- Add check for library submissions containing .git folders ([#664](https://github.com/HaxeFoundation/haxelib/issues/664))
+- Add support for -preview version tags ([20199d4](https://github.com/HaxeFoundation/haxelib/commit/20199d4e6c1eec17286efdc52067ad6ff94bb3d7))
+
+### Bug fixes
+
+GENERAL
+
+- Fix minor typos in error/help messages ([#550](https://github.com/HaxeFoundation/haxelib/pull/550))
+- Fix missing git/hg error output in `--debug` mode ([#550](https://github.com/HaxeFoundation/haxelib/pull/550))
+- Show error for invalid switches ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Fix downloads when using HAXELIB_NO_SSL ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- `--quiet` and `--debug` are considered mutually exclusive ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Give errors when a command is given too many arguments ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Fix `--cwd` option when system haxelib passes onto updated haxelib ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Library names are case insensitive everywhere ([#529](https://github.com/HaxeFoundation/haxelib/issues/529), [#465](https://github.com/HaxeFoundation/haxelib/issues/465) and [#503](https://github.com/HaxeFoundation/haxelib/issues/503))
+- Fix flags that only worked with one dash ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Don't assume MIT if haxelib.json fails to parse ([#554](https://github.com/HaxeFoundation/haxelib/pull/554))
+- Don't allow libraries to be published with git dependencies ([#554](https://github.com/HaxeFoundation/haxelib/pull/554))
+
+API
+
+- Add `haxelib.api` package with haxelib client functionality ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+PATH and LIBPATH and RUN
+
+- Show an error if a non-existent version is specified ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+RUN
+
+- Fix specifying a version not working if a development directory is set ([#510](https://github.com/HaxeFoundation/haxelib/pull/510), see also [#249](https://github.com/HaxeFoundation/haxelib/pull/249))
+- Fix version check breaking on old versions of haxe ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Get compiler version for run scripts lazily ([#646](https://github.com/HaxeFoundation/haxelib/issues/646))
+
+PATH
+
+- Maintain input order for conflicting library version error ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+LIST
+
+- Libraries are now correctly ordered alphabetically ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Do not list invalid versions ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+INSTALL
+
+- Don't auto-install a target backend lib if it's specified manually ([#511](https://github.com/HaxeFoundation/haxelib/issues/511))
+- Fix auto-install target backend lib with double dash ([9f7f851](https://github.com/HaxeFoundation/haxelib/commit/9f7f8518e2472c0e7bf2a4e1cde0cbe74b1bfb90))
+- Check for hashlink target when installing from hxml ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Fix incorrect `--skip-dependencies` behaviour with haxelib.json ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Prevent installing repeated library versions from hxml ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- List libraries in order they appear when installing from hxmls ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+- Exit with error when hxml install fails ([#625](https://github.com/HaxeFoundation/haxelib/issues/625))
+
+SET
+
+- Fix proxy not loading for installs via `haxelib set` ([#550](https://github.com/HaxeFoundation/haxelib/pull/550))
+- Prevent setting invalid library versions ([#526](https://github.com/HaxeFoundation/haxelib/issues/526))
+
+UPDATE
+
+- Prevent updating git/hg version if it is not set as current ([#364](https://github.com/HaxeFoundation/haxelib/issues/364))
+- Don't show update message if vcs lib was already up to date ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+REMOVE
+
+- Prevent removal of git/hg version if there is a dev version set within it ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
+
+DEV, GIT and HG
+
+- Fix error during mercurial update ([#550](https://github.com/HaxeFoundation/haxelib/pull/550))
+- Prevent giving invalid name when using these commands ([#357](https://github.com/HaxeFoundation/haxelib/issues/357))
+- -D library name is always taken from `haxelib.json` rather than install name ([#510](https://github.com/HaxeFoundation/haxelib/pull/510))
  - Change the order of haxelib git submodule installation ([#638](https://github.com/HaxeFoundation/haxelib/issues/638))
  - Fix crashes with git commands on Windows ([#642](https://github.com/HaxeFoundation/haxelib/issues/642))
- - Disallow library submissions containing .git folders ([#664](https://github.com/HaxeFoundation/haxelib/issues/664))
+
+## 4.1.1 (2025-04-15)
+
+ - Fixed large git installations hanging on non-Windows systems
 
 ## 4.1.0 (2023-04-06)
 
