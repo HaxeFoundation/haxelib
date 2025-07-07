@@ -5,7 +5,7 @@ import sys.io.Process;
 /**
 	Makes library at `libPath` into a git repo and commits all files.
 **/
-function makeGitRepo(libPath:String) {
+function makeGitRepo(libPath:String, ?exclude:Array<String>) {
 	final oldCwd = Sys.getCwd();
 
 	Sys.setCwd(libPath);
@@ -17,9 +17,40 @@ function makeGitRepo(libPath:String) {
 	runCommand(cmd, ["config", "user.name", "Your Name"]);
 
 	runCommand(cmd, ["add", "-A"]);
+	if (exclude != null) {
+		for (file in exclude) {
+			runCommand(cmd, ["rm", "--cached", file]);
+		}
+	}
+
 	runCommand(cmd, ["commit", "-m", "Create repo"]);
 	// different systems may have different default branch names set
 	runCommand(cmd, ["branch", "--move", "main"]);
+
+	Sys.setCwd(oldCwd);
+}
+
+function createGitTag(libPath:String, name:String) {
+	final oldCwd = Sys.getCwd();
+
+	Sys.setCwd(libPath);
+
+	final cmd = "git";
+
+	runCommand(cmd, ["tag", "-a", name, "-m", name]);
+
+	Sys.setCwd(oldCwd);
+}
+
+function addToGitRepo(libPath:String, item:String) {
+	final oldCwd = Sys.getCwd();
+
+	Sys.setCwd(libPath);
+
+	final cmd = "git";
+
+	runCommand(cmd, ["add", item]);
+	runCommand(cmd, ["commit", "-m", 'Add $item']);
 
 	Sys.setCwd(oldCwd);
 }
@@ -42,7 +73,7 @@ function resetGitRepo(libPath:String) {
 	HaxelibTests.deleteDirectory(gitDirectory);
 }
 
-function makeHgRepo(libPath:String) {
+function makeHgRepo(libPath:String, ?exclude:Array<String>) {
 	final oldCwd = Sys.getCwd();
 
 	Sys.setCwd(libPath);
@@ -51,7 +82,39 @@ function makeHgRepo(libPath:String) {
 
 	runCommand(cmd, ["init"]);
 	runCommand(cmd, ["add"]);
+	if (exclude != null) {
+		for (file in exclude) {
+			runCommand(cmd, ["forget", file]);
+		}
+	}
+
 	runCommand(cmd, ["commit", "-m", "Create repo"]);
+	runCommand(cmd, ["branch", "main"]);
+
+	Sys.setCwd(oldCwd);
+}
+
+function createHgTag(libPath:String, name:String) {
+	final oldCwd = Sys.getCwd();
+
+	Sys.setCwd(libPath);
+
+	final cmd = "hg";
+
+	runCommand(cmd, ["tag", name]);
+
+	Sys.setCwd(oldCwd);
+}
+
+function addToHgRepo(libPath:String, item:String) {
+	final oldCwd = Sys.getCwd();
+
+	Sys.setCwd(libPath);
+
+	final cmd = "hg";
+
+	runCommand(cmd, ["add", item]);
+	runCommand(cmd, ["commit", "-m", 'Add $item']);
 
 	Sys.setCwd(oldCwd);
 }

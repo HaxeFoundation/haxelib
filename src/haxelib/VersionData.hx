@@ -19,6 +19,13 @@ package haxelib;
 		else
 			throw 'Invalid VscID $s';
 	}
+
+	public function getName() {
+		return switch cast(this, VcsID) {
+			case Git: "Git";
+			case Hg: "Mercurial";
+		};
+	}
 }
 
 /** Class containing repoducible git or hg library data. **/
@@ -28,7 +35,7 @@ class VcsData {
 	var url:String;
 	/** Commit hash **/
 	@:optional
-	var ref:Null<String>;
+	var commit:Null<String>;
 	/** The git tag or mercurial revision **/
 	@:optional
 	var tag:Null<String>;
@@ -45,7 +52,7 @@ class VcsData {
 
 	public function toString(): String {
 		var qualifier =
-			if (ref != null) ref
+			if (commit != null) commit
 			else if (tag != null) tag
 			else if (branch != null) branch
 			else null;
@@ -53,6 +60,35 @@ class VcsData {
 			'$url#$qualifier'
 		else
 			url;
+	}
+
+	public function isReproducible() {
+		return commit != null;
+	}
+
+	/**
+		Returns an object containing the filled-in VcsData fields,
+		without the empty ones.
+	 **/
+	public function getCleaned() {
+		var data:{
+			url:String,
+			?commit:String,
+			?tag:String,
+			?branch:String,
+			?subDir:String
+		} = { url : url };
+
+		if (commit != null)
+			data.commit = commit;
+		if (tag != null)
+			data.tag = tag;
+		if (!(branch == null || branch == ""))
+			data.branch = branch;
+		if (!(subDir == null || haxe.io.Path.normalize(subDir) == ""))
+			data.subDir = subDir;
+
+		return data;
 	}
 }
 
@@ -89,7 +125,7 @@ class VersionDataHelper {
 			type: type,
 			data: {
 				url: vcsRegex.matched(2),
-				ref: vcsRegex.matched(3),
+				commit: vcsRegex.matched(3),
 				branch: vcsRegex.matched(4),
 				subDir: null,
 				tag: null

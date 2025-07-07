@@ -59,9 +59,11 @@ class GlobalScope extends Scope {
 	}
 
 	public function setVcsVersion(library:ProjectName, vcsVersion:VcsID, ?data:VcsData):Void {
-		if (data == null) data = {url: "unknown"};
+		if (data != null) {
+			repository.setVcsData(library, vcsVersion, data);
+		}
 
-		if (data.subDir != null) {
+		if (!(data == null || data.subDir == "" || data.subDir == null)) {
 			final devDir = repository.getValidVersionPath(library, vcsVersion) + data.subDir;
 			repository.setDevPath(library, devDir);
 		} else {
@@ -273,4 +275,15 @@ class GlobalScope extends Scope {
 		return {path: path, version: current};
 	}
 
+	public function resolve(library:ProjectName):VersionData {
+		final version = repository.getCurrentVersion(library);
+
+		return switch version {
+			case vcs if (VcsID.isValid(vcs)):
+				final vcsId = VcsID.ofString(vcs);
+				VcsInstall(vcsId, repository.getVcsData(library, vcsId));
+			case semVer:
+				Haxelib(SemVer.ofString(semVer));
+		};
+	}
 }

@@ -18,7 +18,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("git:https://some.url"), VcsInstall(VcsID.ofString("git"), {
 			url: "https://some.url",
 			branch: null,
-			ref: null,
+			commit: null,
 			tag: null,
 			subDir: null
 		}));
@@ -26,7 +26,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("git:https://some.url#branch"), VcsInstall(VcsID.ofString("git"), {
 			url: "https://some.url",
 			branch: "branch",
-			ref: null,
+			commit: null,
 			tag: null,
 			subDir: null
 		}));
@@ -34,7 +34,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("git:https://some.url#abcdef0"), VcsInstall(VcsID.ofString("git"), {
 			url: "https://some.url",
 			branch: null,
-			ref: "abcdef0",
+			commit: "abcdef0",
 			tag: null,
 			subDir: null
 		}));
@@ -44,7 +44,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("hg:https://some.url"), VcsInstall(VcsID.ofString("hg"), {
 			url: "https://some.url",
 			branch: null,
-			ref: null,
+			commit: null,
 			tag: null,
 			subDir: null
 		}));
@@ -52,7 +52,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("hg:https://some.url#branch"), VcsInstall(VcsID.ofString("hg"), {
 			url: "https://some.url",
 			branch: "branch",
-			ref: null,
+			commit: null,
 			tag: null,
 			subDir: null
 		}));
@@ -60,7 +60,7 @@ class TestVersionData extends TestBase {
 		assertVersionDataEquals(extractVersion("hg:https://some.url#abcdef0"), VcsInstall(VcsID.ofString("hg"), {
 			url: "https://some.url",
 			branch: null,
-			ref: "abcdef0",
+			commit: "abcdef0",
 			tag: null,
 			subDir: null
 		}));
