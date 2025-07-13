@@ -63,7 +63,7 @@ class GlobalScope extends Scope {
 			repository.setVcsData(library, vcsVersion, data);
 		}
 
-		if (!(data == null || data.subDir == "" || data.subDir == null)) {
+		if (data != null && data.subDir != "" && data.subDir != null) {
 			final devDir = repository.getValidVersionPath(library, vcsVersion) + data.subDir;
 			repository.setDevPath(library, devDir);
 		} else {
