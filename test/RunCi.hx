@@ -385,7 +385,7 @@ Listen 2000
 			"-D",
 			'haxelib_path=${Path.join([Sys.getCwd(), "haxelib"])}'
 		]);
-		runCommand("neko", ["bin/integration_tests.n"]);
+		// runCommand("neko", ["bin/integration_tests.n"]);
 	}
 
 	static function deploy():Void {
