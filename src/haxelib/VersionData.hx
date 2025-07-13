@@ -62,13 +62,17 @@ class VcsData {
 			url;
 	}
 
+	/**
+		Returns whether this vcs data will always reproduce an identical installation
+		(i.e. the commit id is locked down)
+	**/
 	public function isReproducible() {
 		return commit != null;
 	}
 
 	/**
-		Returns an object containing the filled-in VcsData fields,
-		without the empty ones.
+		Returns an anonymous object containing only the non-null, non-empty VcsData fields,
+		excluding the null/empty ones.
 	 **/
 	public function getCleaned() {
 		var data:{
