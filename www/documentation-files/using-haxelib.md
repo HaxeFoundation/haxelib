@@ -527,7 +527,7 @@ haxelib run openfl create DisplayingABitmap
 > Libraries with either a `run.n` helper, a `Run.hx` module, or another main class defined in `haxelib.json`, can be executed using `haxelib run`.
 >
 > You can specify the version to run by appending `:version`. If no version is specified, the [development](#dev) version is used if one has been set, otherwise the set version is used.
-> NOTE: Before Haxelib 5.0.0, due to a bug, development versions will always take priority over a version specified this way.
+> NOTE: Before Haxelib 4.2.0, due to a bug, development versions will always take priority over a version specified this way.
 >
 > The environment within which the library is run will have the `HAXELIB_RUN` environment variable set to `"1"`, and `HAXELIB_RUN_NAME` set to the name of the library.
 >
@@ -557,7 +557,7 @@ haxelib proxy [host port [username password]]
 **Warning**: when using the [run](#run) command you need to specify the flags before `run`,
 otherwise they'll be passed as arguments to the library.
 
-From Haxelib 5.0.0, all flags can be used with either one or two dashes (e.g., `-debug` or `--debug`). However, with older versions, the [`-notimeout`](#no-timeout) flag is only recognized when one dash is used.
+From Haxelib 4.2.0, all flags can be used with either one or two dashes (e.g., `-debug` or `--debug`). However, with older versions, the [`-notimeout`](#no-timeout) flag is only recognized when one dash is used.
 
 <a name="flat" class="anch"></a>
 
@@ -663,12 +663,12 @@ haxelib --skip-dependencies
 
 ```sh
 haxelib -notimeout
-haxelib --no-timeout # alias available from Haxelib 5.0.0
+haxelib --no-timeout # alias available from Haxelib 4.2.0
 ```
 
 > Remove timeout when connecting to the Haxelib server, downloading or [submitting](#submit) a library.
 >
-> NOTE: In Haxelib versions older than 5.0.0, `--notimeout` is not recognized so only `-notimeout` can be used. This is a bug affects this flag as well as [-cwd](#cwd)
+> NOTE: In Haxelib versions older than 4.2.0, `--notimeout` is not recognized so only `-notimeout` can be used. This is a bug affects this flag as well as [-cwd](#cwd)
 
 
 
@@ -679,7 +679,7 @@ haxelib --no-timeout # alias available from Haxelib 5.0.0
 **Warning**: when using the [run](#run) command you need to specify the parameters before `run`,
 otherwise they'll be passed as arguments to the library.
 
-From Haxelib 5.0.0, all parameters can be used with either one or two dashes (e.g., `-cwd` or `--cwd`), with the exception of single character aliases like [`-R`](#remote). However, with older versions, the [`-cwd`](#cwd) parameter is only recognized when one dash is used.
+From Haxelib 4.2.0, all parameters can be used with either one or two dashes (e.g., `-cwd` or `--cwd`), with the exception of single character aliases like [`-R`](#remote). However, with older versions, the [`-cwd`](#cwd) parameter is only recognized when one dash is used.
 
 <a name="cwd" class="anch"></a>
 
@@ -687,12 +687,12 @@ From Haxelib 5.0.0, all parameters can be used with either one or two dashes (e.
 
 ```sh
 haxelib -cwd [dir]
-haxelib --cwd [dir] # also recognized from Haxelib 5.0.0
+haxelib --cwd [dir] # also recognized from Haxelib 4.2.0
 ```
 
 > Act like the Haxelib command was run from another repository. Affect all commands that use the "current directory".
 >
-> NOTE: In Haxelib versions older than 5.0.0, `--cwd` is not recognized so only `-cwd` can be used. This is a bug affects this parameter as well as [-notimeout](#no-timeout)
+> NOTE: In Haxelib versions older than 4.2.0, `--cwd` is not recognized so only `-cwd` can be used. This is a bug affects this parameter as well as [-notimeout](#no-timeout)
 
 
 
@@ -702,7 +702,7 @@ haxelib --cwd [dir] # also recognized from Haxelib 5.0.0
 
 ```sh
 haxelib -R [host:port[/dir]]
-haxelib --remote [host:port[/dir]] # alias available from Haxelib 5.0.0
+haxelib --remote [host:port[/dir]] # alias available from Haxelib 4.2.0
 ```
 
 > Allow the usage of a custom Haxelib server instead of `lib.haxe.org`.
