@@ -85,7 +85,7 @@ abstract class Vcs implements IVcs {
 
 	private var availabilityChecked = false;
 
-	function new(executable:String, ?debugLog:(message:String) -> Void, ?optional:(message:String) -> Void) {
+	function new(executable:String, ?debugLog:(message:String) -> Void, ?optionalLog:(message:String) -> Void) {
 		this.executable = executable;
 		if (debugLog != null)
 			this.debugLog = debugLog;
