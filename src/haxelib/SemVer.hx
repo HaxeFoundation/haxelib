@@ -29,10 +29,10 @@ using Std;
 enum Preview {
 	ALPHA;
 	BETA;
-	#if !server
+	RC;
+	#if !(server || haxelib_api)
 	PREVIEW;
 	#end
-	RC;
 }
 
 /**
@@ -132,7 +132,7 @@ abstract SemVer(String) to String {
 	static final PREVIEW_TYPES = [
 		"alpha",
 		"beta",
-		#if !server
+		#if !(server || haxelib_api)
 		"preview",
 		#end
 		"rc"
@@ -166,7 +166,7 @@ abstract SemVer(String) to String {
 					switch FORMAT.matched(5) {
 						case 'alpha': ALPHA;
 						case 'beta': BETA;
-						#if !server
+						#if !(server || haxelib_api)
 						case 'preview': PREVIEW;
 						#end
 						case 'rc': RC;
