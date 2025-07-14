@@ -29,7 +29,9 @@ using Std;
 enum Preview {
 	ALPHA;
 	BETA;
+	#if !server
 	PREVIEW;
+	#end
 	RC;
 }
 
@@ -125,7 +127,16 @@ abstract SemVer(String) to String {
 	@:op(a != b) static inline function neq(a:SemVer, b:SemVer)
 		return compare(a, b) != 0;
 
-	static var FORMAT = ~/^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.(\d|[1-9]\d*)(-(alpha|beta|preview|rc)(\.(\d|[1-9]\d*))?)?$/;
+	static var FORMAT = ~/^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.(\d|[1-9]\d*)(-([a-z]*)(\.(\d|[1-9]\d*))?)?$/;
+
+	static final PREVIEW_TYPES = [
+		"alpha",
+		"beta",
+		#if !server
+		"preview",
+		#end
+		"rc"
+	];
 
 	static var cache = new Map();
 
@@ -155,7 +166,9 @@ abstract SemVer(String) to String {
 					switch FORMAT.matched(5) {
 						case 'alpha': ALPHA;
 						case 'beta': BETA;
+						#if !server
 						case 'preview': PREVIEW;
+						#end
 						case 'rc': RC;
 						case null: null;
 						case v: throw 'unrecognized preview tag $v';
@@ -170,7 +183,9 @@ abstract SemVer(String) to String {
 				throw '$this is not a valid version string';//TODO: include some URL for reference
 
 	static public function isValid(s:String)
-		return #if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(s, String) && FORMAT.match(s.toLowerCase());
+		return #if (haxe_ver < 4.1) Std.is #else Std.isOfType #end(s, String)
+			&& FORMAT.match(s.toLowerCase())
+			&& (FORMAT.matched(5) == null || PREVIEW_TYPES.contains(FORMAT.matched(5)));
 
 	static public function ofString(s:String) {
 		var ret = new SemVer(s);
