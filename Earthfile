@@ -1,5 +1,5 @@
 VERSION 0.6
-ARG UBUNTU_RELEASE=focal
+ARG UBUNTU_RELEASE=jammy
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
 ARG DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/haxelib_devcontainer_workspace
 ARG HAXELIB_SERVER_IMAGE_NAME_DEFAULT=haxe/lib.haxe.org
@@ -34,7 +34,7 @@ neko:
 
 haxe:
     ARG FILENAME=haxe.tar.gz
-    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.4/haxe-4.3.4-linux64.tar.gz" -o "$FILENAME"
+    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.6/haxe-4.3.6-linux64.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
@@ -412,7 +412,7 @@ tora:
     SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
 
 haxelib-server:
-    FROM phusion/baseimage:focal-1.1.0
+    FROM phusion/baseimage:jammy-1.0.4
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
@@ -422,6 +422,7 @@ haxelib-server:
             apache2 \
             neko \
             libapache2-mod-neko \
+        && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 \
         && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
         && apt-get update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -559,7 +560,7 @@ ci-images:
         --GIT_SHA="$GIT_SHA"
 
 s3fs-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     RUN apt-get update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             s3fs \
@@ -575,7 +576,7 @@ gh-ost-deb:
     SAVE ARTIFACT gh-ost.deb
 
 gh-ost-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     ARG GHOST_VERSION=1.1.2
     COPY (+gh-ost-deb/gh-ost.deb --GHOST_VERSION="$GHOST_VERSION") .
     RUN apt-get install ./gh-ost.deb \
@@ -589,7 +590,7 @@ curl-file:
     SAVE ARTIFACT "$FILENAME"
 
 ghostferry-copydb-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     ARG GHOSTFERRY_COMMIT="ce94688"
     ARG GHOSTFERRY_BUILD="1.1.0+20220112142231+ce94688"
     COPY (+curl-file/* --URL="https://github.com/Shopify/ghostferry/releases/download/release-${GHOSTFERRY_COMMIT}/ghostferry-copydb_${GHOSTFERRY_BUILD}.deb" --FILENAME=ghostferry-copydb.deb) .
