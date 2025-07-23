@@ -40,6 +40,7 @@ using StringTools;
 using Lambda;
 using haxelib.MetaData;
 using haxelib.api.RepoReformatter;
+using haxelib.client.ansi.Ansi;
 
 @:structInit
 class CommandInfo {
@@ -151,8 +152,12 @@ class Main {
 		var maxLength = 0;
 
 		inline function checkLength(line:String)
-			if (line.length > maxLength)
-				maxLength = line.length;
+		{
+			var regexp = ~/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -\]*[@-~])/g;
+			if (regexp.replace(line, '').length > maxLength)
+				maxLength = regexp.replace(line, '').length;
+		}
+			
 
 		function generateLines(data:List<UsageData>, generate:(UsageData -> String)):Array<{usage:String, description:String}>
 			return [
@@ -162,8 +167,8 @@ class Main {
 					{usage: line, description: item.description};
 				}];
 
-		final switchLines = generateLines(Args.generateSwitchDocs(), (flag) -> '--${flag.name}');
-		final optionLines = generateLines(Args.generateOptionDocs(), (flag) -> combineAliases(flag.name, flag.aliases) + ' ${flag.parameter}');
+		final switchLines = generateLines(Args.generateSwitchDocs(), (flag) -> '--${flag.name}'.fg(ORANGE).attr(INTENSITY_BOLD).reset());
+		final optionLines = generateLines(Args.generateOptionDocs(), (flag) -> combineAliases(flag.name, flag.aliases).fg(ORANGE).attr(INTENSITY_BOLD).reset() + ' ${flag.parameter}'.fg(ORANGE).reset());
 
 		final categories = new Map<String, Array<{usage:String, description:String}>>();
 		for (command in Args.generateCommandDocs()) {
@@ -171,18 +176,19 @@ class Main {
 			final categoryName = command.category.getName();
 			if (!categories.exists(categoryName))
 				categories[categoryName] = [];
-			categories[categoryName].push({usage: command.name, description: command.description});
+			categories[categoryName].push({usage: '${command.name.fg(ORANGE).attr(INTENSITY_BOLD).reset()}', description: command.description});
 		}
 
 		Cli.print('Haxe Library Manager $VERSION - (c)2006-2025 Haxe Foundation');
-		Cli.print("  Usage: haxelib [command] [options]");
+		Cli.print('  Usage: '.fg(DARK_ORANGE).attr(INTENSITY_BOLD).reset() + 'haxelib '.fg(ORANGE).attr(INTENSITY_BOLD).reset() + '[command] '.fg(ORANGE) +  '[options]'.reset());
 
 		inline function display(type:String, lines:Array<{usage:String, description:String}>) {
-			Cli.print('  $type');
+			Cli.print('  $type'.fg(DARK_ORANGE).attr(INTENSITY_BOLD).reset());
 			for (line in lines) {
 				final padded = line.usage.rpad(' ', maxLength);
-				Cli.print('    $padded : ${line.description}');
+				Cli.print('   $padded ${line.description}');
 			}
+			Cli.print('');
 		}
 
 		for (name => commands in categories)
