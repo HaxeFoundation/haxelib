@@ -67,6 +67,7 @@ Build files:
 * package.hxml: Package the client as package.zip for submitting to the lib.haxe.org as [haxelib](https://lib.haxe.org/p/haxelib/).
 * prepare_tests.hxml: Package the test libs.
 * ci.hxml: Used by our CIs, TravisCI and AppVeyor.
+* Makefile: Used to build and install haxelib on Unix like systems.
 
 Folders:
 
