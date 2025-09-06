@@ -69,7 +69,7 @@ $(HAXELIB_OUTPUT): bin/haxelib_eval.hxb
 	echo $(HAXELIB_TARGET) > $(TARGET_CACHE_FILE)
 
 install:
-	mkdir $(datadir)/haxelib -p
+	mkdir -p $(datadir)/haxelib
 	mv bin/haxelib_eval.hxb $(datadir)/haxelib/
 
 	printf $(subst %hxb_file%,"$(datadir)/haxelib/haxelib_eval.hxb",$(SCRIPT)) > $(bindir)/haxelib
@@ -77,10 +77,10 @@ install:
 endif
 
 uninstall:
-	rm $(bindir)/haxelib $(datadir)/haxelib -rf
+	rm -rf $(bindir)/haxelib $(datadir)/haxelib
 
 clean:
-	rm run.n run.c $(HAXELIB_OUTPUT) bin/haxelib_eval.hxb $(TARGET_CACHE_FILE) -rf
+	rm -rf run.n run.c $(HAXELIB_OUTPUT) bin/haxelib_eval.hxb $(TARGET_CACHE_FILE)
 
 .DEFAULT_GOAL := $(HAXELIB_OUTPUT)
 
