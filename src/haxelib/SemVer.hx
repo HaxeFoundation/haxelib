@@ -110,16 +110,16 @@ abstract SemVer(String) to String {
 		return isValid(this);
 
 	@:op(a > b) static inline function gt(a:SemVer, b:SemVer)
-		return compare(a, b) == 1;
+		return compare(a, b) > 0;
 
 	@:op(a >= b) static inline function gteq(a:SemVer, b:SemVer)
-		return compare(a, b) != -1;
+		return compare(a, b) >= 0;
 
 	@:op(a < b) static inline function lt(a:SemVer, b:SemVer)
-		return compare(a, b) == -1;
+		return compare(a, b) < 0;
 
 	@:op(a <= b) static inline function lteq(a:SemVer, b:SemVer)
-		return compare(a, b) != 1;
+		return compare(a, b) <= 0;
 
 	@:op(a == b) static inline function eq(a:SemVer, b:SemVer)
 		return compare(a, b) == 0;
