@@ -7,7 +7,7 @@ import haxelib.server.SiteDb;
 **/
 class Update {
 	/** The current version of the database. **/
-	static final CURRENT_VERSION = 0;
+	static final CURRENT_VERSION = 1;
 
 	/**
 		Checks which updates are needed and if there are any needed, runs them.
@@ -22,6 +22,10 @@ class Update {
 			meta = new Meta();
 			meta.dbVersion = 0;
 			meta.insert();
+		}
+
+		if (meta.dbVersion == 0) {
+			updateFromV0();
 		}
 
 		meta.dbVersion = CURRENT_VERSION;
@@ -41,6 +45,13 @@ class Update {
 		meta.insert();
 
 		sys.db.Manager.cnx.commit();
+	}
+
+	static function updateFromV0() {
+		sys.db.Manager.cnx.request("
+			ALTER TABLE User
+			ADD COLUMN pass2 mediumtext;
+		");
 	}
 
 }
