@@ -111,6 +111,11 @@ class Repo implements SiteApi {
 		};
 	}
 
+	static inline function setPassword(user:User, password:String) {
+		final salt = Hashing.generateSalt();
+		user.pass2 = Hashing.hash(password, salt);
+	}
+
 	public function register( name : String, pass : String, mail : String, fullname : String ) : Void {
 		if( name.length < 3 )
 			throw "User name must be at least 3 characters";
@@ -125,9 +130,9 @@ class Repo implements SiteApi {
 
 		var u = new User();
 		u.name = name;
-		u.pass = pass;
 		u.email = mail;
 		u.fullname = fullname;
+		setPassword(u,pass);
 		u.insert();
 	}
 
@@ -145,9 +150,28 @@ class Repo implements SiteApi {
 		throw "User '"+user+"' is not a developer of project '"+prj+"'";
 	}
 
+	static function verifyPassword(user:User, password:String):Bool {
+		if (user.pass2 != null) {
+			return Hashing.verify(user.pass2, password);
+		}
+
+		if (user.pass != password) {
+			// compute dummy hash to prevent time based attacks
+			Hashing.verify(Hashing.DUMMY_HASH, password);
+			return false;
+		}
+
+		setPassword(user, password);
+		user.update();
+		return true;
+	}
+
 	public function checkPassword( user : String, pass : String ) : Bool {
-		var u = User.manager.search({ name : user }).first();
-		return u != null && u.pass == pass;
+		Manager.cnx.startTransaction();
+		final u = User.manager.search({ name : user }).first();
+		final verified = u != null && verifyPassword(u, pass);
+		Manager.cnx.commit();
+		return verified;
 	}
 
 	public function getSubmitId() : String {
@@ -202,7 +226,7 @@ class Repo implements SiteApi {
 				Manager.cnx.startTransaction();
 
 				var u = User.manager.search({ name : user }).first();
-				if( u == null || u.pass != pass ) {
+				if( u == null || !verifyPassword(u,pass) ) {
 					Manager.cnx.rollback();
 					throw "Invalid username or password";
 				}
