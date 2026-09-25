@@ -375,7 +375,14 @@ do-kubeconfig:
 
 aws-ndll:
     FROM +haxelib-deps
-    SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
+    ARG --required TARGETARCH
+    RUN ndllDir=$(case "$TARGETARCH" in \
+            amd64) echo "Linux64";; \
+            arm64) echo "LinuxArm64";; \
+            *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+        esac) \
+        && cp /workspace/haxelib_global/aws-sdk-neko/*/ndll/$ndllDir/aws.ndll /tmp/aws.ndll
+    SAVE ARTIFACT /tmp/aws.ndll
 
 haxelib-server-builder:
     FROM haxe:4.3
@@ -475,12 +482,13 @@ haxelib-server:
         && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
-            echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
+            echo "LoadModule neko_module /usr/lib/$(uname -m)-linux-gnu/neko/mod_neko2.ndll"; \
             echo 'AddHandler neko-handler .n'; \
         } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
+    COPY +aws-ndll/aws.ndll /tmp/aws.ndll
+    RUN mv /tmp/aws.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/aws.ndll"
 
     # Need rclone to do the upload to R2
     COPY +rclone/rclone /usr/local/bin/
@@ -566,6 +574,16 @@ ci-tests:
     ENV HAXELIB_DB_USER=dbUser
     ENV HAXELIB_DB_PASS=dbPass
     ENV HAXELIB_DB_NAME=haxelib
+    # the s3 service in test/docker-compose.yml
+    ENV HAXELIB_S3BUCKET=haxelib
+    ENV RCLONE_CONFIG_S3_TYPE=s3
+    ENV RCLONE_CONFIG_S3_PROVIDER=Other
+    ENV RCLONE_CONFIG_S3_ENV_AUTH=false
+    # virtual hosted style, i.e. haxelib.localhost:9000
+    ENV RCLONE_CONFIG_S3_ENDPOINT=http://localhost:9000
+    ENV RCLONE_CONFIG_S3_FORCE_PATH_STYLE=false
+    ENV RCLONE_CONFIG_S3_ACCESS_KEY_ID=s3AccessKey
+    ENV RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=s3SecretKey
     WITH DOCKER \
             --compose test/docker-compose.yml \
             --load haxe/lib.haxe.org:development=+haxelib-server
