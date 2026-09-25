@@ -12,6 +12,7 @@ services:
       - HAXELIB_DB_NAME=haxelib
       - HAXELIB_S3BUCKET=haxelib
       - HAXELIB_S3BUCKET_ENDPOINT=http://s3:9000
+      - HAXELIB_S3BUCKET_FORCE_PATH_STYLE=true
       - HAXELIB_S3BUCKET_MOUNTED_PATH=/var/haxelib-s3fs
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=s3AccessKey
@@ -27,16 +28,11 @@ services:
   # An S3-compatible server that stores objects as plain files,
   # such that the bucket's directory can be mounted to haxelib_server as HAXELIB_S3BUCKET_MOUNTED_PATH.
   # The top-level directories of /data are the buckets.
-  # Virtual hosted style is used (bucket in hostname, e.g. haxelib.s3:9000), as aws-sdk-neko's S3Client does,
-  # so all clients have to use it (e.g. force_path_style = false for rclone).
+  # Path style (e.g. s3:9000/haxelib) is used, as in rclone.conf and HAXELIB_S3BUCKET_FORCE_PATH_STYLE.
   s3:
     image: rclone/rclone:1.68.2
     user: "33:33" # www-data, same as haxelib_server
-    command: ["serve", "s3", "/data", "--addr", ":9000", "--auth-key", "s3AccessKey,s3SecretKey", "--force-path-style=false"]
-    networks:
-      default:
-        aliases:
-          - haxelib.s3
+    command: ["serve", "s3", "/data", "--addr", ":9000", "--auth-key", "s3AccessKey,s3SecretKey"]
     ports:
       - "9000:9000"
     environment:

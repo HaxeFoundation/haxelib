@@ -66,7 +66,7 @@ class FileStorage {
 			case [bucket, region, null] if (bucket != null && region != null):
 				var endpoint = Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT");
 				log('using S3FileStorage with bucket $bucket in ${region} ${endpoint == null ? "" : endpoint}');
-				new S3FileStorage(Paths.CWD, bucket, region, endpoint);
+				new S3FileStorage(Paths.CWD, bucket, region, endpoint, Sys.getEnv("HAXELIB_S3BUCKET_FORCE_PATH_STYLE") == "true");
 			#end
 			case [bucket, region, mounted] if (bucket != null && region != null && mounted != null):
 				log('using LocalFileStorage with S3 mounted path');
@@ -203,24 +203,31 @@ class S3FileStorage extends FileStorage {
 	*/
 	public var bucketEndpointOverride(default, null):String;
 
+	/**
+		Whether to use path style (e.g. 'http://${endpoint}/${bucket}/${key}')
+		instead of virtual hosted style (e.g. 'http://${bucket}.${endpoint}/${key}') to access the bucket.
+	*/
+	public var bucketForcePathStyle(default, null):Bool;
+
 	var s3Client(default, null):S3Client;
 	var transferManager(default, null):TransferManager;
 
 	static var awsInited = false;
 
-	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String, ?bucketEndpointOverride:String):Void {
+	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String, ?bucketEndpointOverride:String, bucketForcePathStyle = false):Void {
 		assertAbsolute(localPath);
 		this.localPath = localPath;
 		this.bucketName = bucketName;
 		this.bucketRegion = bucketRegion;
 		this.bucketEndpointOverride = bucketEndpointOverride;
+		this.bucketForcePathStyle = bucketForcePathStyle;
 
 		if (!awsInited) {
 			Aws.initAPI();
 			awsInited = true;
 		}
 
-		this.transferManager = new TransferManager(this.s3Client = new S3Client(bucketRegion, bucketEndpointOverride));
+		this.transferManager = new TransferManager(this.s3Client = new S3Client(bucketRegion, bucketEndpointOverride, !this.bucketForcePathStyle));
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
