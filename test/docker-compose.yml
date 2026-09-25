@@ -12,6 +12,7 @@ services:
       - HAXELIB_DB_NAME=haxelib
   dbHost:
     image: mysql:5.7.36
+    platform: linux/amd64 # the image is only available for amd64
     ports:
       - "3306:3306"
     environment:

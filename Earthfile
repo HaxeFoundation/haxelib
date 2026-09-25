@@ -42,12 +42,19 @@ neko:
 
 haxe:
     ARG FILENAME=haxe.tar.gz
-    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.6/haxe-4.3.6-linux64.tar.gz" -o "$FILENAME"
+    ARG HAXE_VERSION=4.3.7
+    RUN haxeArch=$(case "$TARGETARCH" in \
+        amd64) echo "linux64";; \
+        arm64) echo "linux-arm64";; \
+    esac); curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-${haxeArch}.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
 
 devcontainer-base:
+    # Install docker-compose such that docker-debian.sh don't have to
+    COPY +docker-compose/docker-compose /usr/local/bin/
+
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
@@ -86,11 +93,13 @@ devcontainer-base:
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
         && apt-get install -y nodejs=18.* \
-        # Install mysql-client
+        # Install mysql-client (only available for amd64)
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-        && echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
-        && apt-get update \
-        && apt-get -y install mysql-client=5.7.* \
+        && if [ "$TARGETARCH" = "amd64" ]; then \
+            echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
+            && apt-get update \
+            && apt-get -y install mysql-client=5.7.*; \
+        fi \
         # install kubectl
         && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
         && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
@@ -197,6 +206,18 @@ earthly:
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
+docker-compose:
+    ARG TARGETARCH
+    ARG VERSION=5.5.1
+    RUN composeArch=$(case "$TARGETARCH" in \
+        amd64) echo "x86_64";; \
+        arm64) echo "aarch64";; \
+        *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+    esac) \
+        && curl -fsSL "https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-${composeArch}" -o /usr/local/bin/docker-compose \
+        && chmod +x /usr/local/bin/docker-compose
+    SAVE ARTIFACT /usr/local/bin/docker-compose
+
 rclone:
     FROM +devcontainer-base
     ARG TARGETARCH
@@ -235,6 +256,12 @@ package-haxelib:
     RUN haxe package.hxml
     SAVE ARTIFACT package.zip AS LOCAL package.zip
 
+# The haxelib package zip, with ndlls of all platforms, built and pushed by aws-sdk-neko's CI (+ci-package-zip).
+aws-sdk-neko.zip:
+    ARG AWS_SDK_NEKO_COMMIT=857e17ea45c6da310922be70e5abb29c2765c4d6
+    FROM ghcr.io/andyli/aws_sdk_neko_zip:$AWS_SDK_NEKO_COMMIT
+    SAVE ARTIFACT /workspace/aws-sdk-neko.zip
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
@@ -243,8 +270,7 @@ haxelib-deps:
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
-    ARG AWS_SDK_NEKO_COMMIT=c614b20f1302a92095865690b5649269f3eb3171
-    COPY (github.com/andyli/aws-sdk-neko:${AWS_SDK_NEKO_COMMIT}+package-zip/aws-sdk-neko.zip --IMAGE_TAG="$AWS_SDK_NEKO_COMMIT") /tmp/aws-sdk-neko.zip
+    COPY +aws-sdk-neko.zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
     SAVE ARTIFACT haxelib_global
 
@@ -420,7 +446,7 @@ tora:
     SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
 
 haxelib-server:
-    FROM phusion/baseimage:jammy-1.0.4
+    FROM phusion/baseimage:jammy-1.0.5
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
@@ -430,12 +456,6 @@ haxelib-server:
             apache2 \
             neko \
             libapache2-mod-neko \
-        && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 \
-        && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
-        && apt-get update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            libcurl3-gnutls \ # for aws.ndll
-            libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
 
     # apache httpd
