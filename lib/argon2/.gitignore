@@ -1,0 +1,6 @@
+*.n
+*.ndll
+
+obj/
+bin/
+build/
