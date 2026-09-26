@@ -9,6 +9,7 @@ import haxelib.api.Connection as HaxelibConnection;
 import haxe.unit.TestRunner;
 
 import haxelib.SemVer;
+import haxelib.Data;
 
 using StringTools;
 using haxe.io.Path;
@@ -169,17 +170,33 @@ class IntegrationTests extends TestBase {
 		dbCnx.request('DROP DATABASE IF EXISTS ${db};');
 		dbCnx.request('CREATE DATABASE ${db};');
 
-		final filesPath = "www/files/3.0";
-		for (item in FileSystem.readDirectory(filesPath)) {
-			if (item.endsWith(".zip")) {
-				FileSystem.deleteFile(Path.join([filesPath, item]));
-			}
-		}
-		final tmpPath = "tmp";
-		for (item in FileSystem.readDirectory(filesPath)) {
-			if (item.endsWith(".tmp")) {
-				FileSystem.deleteFile(Path.join([tmpPath, item]));
-			}
+		switch (Sys.getEnv("HAXELIB_S3BUCKET")) {
+			case null:
+				final filesPath = "www/files/3.0";
+				if (FileSystem.exists(filesPath))
+					for (item in FileSystem.readDirectory(filesPath)) {
+						if (item.endsWith(".zip")) {
+							FileSystem.deleteFile(Path.join([filesPath, item]));
+						}
+					}
+				final tmpPath = "www/tmp";
+				if (FileSystem.exists(tmpPath))
+					for (item in FileSystem.readDirectory(tmpPath)) {
+						if (item.endsWith(".tmp")) {
+							FileSystem.deleteFile(Path.join([tmpPath, item]));
+						}
+					}
+			case bucket:
+				// the server stores the files in the bucket (see test/docker-compose.yml)
+				// the "s3" rclone remote should be configured via RCLONE_CONFIG_S3_* env vars
+				final p = new Process("rclone", [
+					"delete", 's3:${bucket}',
+					"--include", '/${Data.REPOSITORY}/*.zip',
+					"--include", "/tmp/*.tmp",
+				]);
+				final r = p.result();
+				if (r.code != 0)
+					throw 'failed to clean up bucket ${bucket}: ${r.err}';
 		}
 	}
 

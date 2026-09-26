@@ -196,8 +196,33 @@ class Installer {
 
 	/** Installs library from the zip file at `path`. **/
 	public function installLocal(path:String) {
-		final path = FileSystem.fullPath(path);
-		userInterface.log('Installing $path');
+		installFromUri(path);
+	}
+
+	/** Installs library from the zip file at `uri`. **/
+	public function installFromUri(uri:String) {
+		var fileName = haxe.io.Path.withoutDirectory(uri);
+		var path:String;
+
+		if (uri.startsWith("http://") || uri.startsWith("https://")) {
+			final progressFunction = switch userInterface.getDownloadProgressFunction() {
+				case null:
+					null;
+				case fn:
+					(f, c, m, d, t) -> {
+						fn('Downloading $uri', f, c, m, d, t);
+					};
+			};
+
+			path = haxe.io.Path.join([repository.path, fileName]);
+
+			Connection.download(uri, path, progressFunction);
+			userInterface.log('Installing $fileName');
+		} else {
+			path = FileSystem.fullPath(uri);
+			userInterface.log('Installing $path');
+		}
+
 		// read zip content
 		final zip = FsUtils.unzip(path);
 
@@ -752,7 +777,7 @@ class Installer {
 				(f, c, m, d, t) -> {fn('Downloading $filename', f, c, m, d, t);};
 		};
 
-		Connection.download(filename, filepath, progressFunction);
+		Connection.downloadFromSite(filename, filepath, progressFunction);
 
 		final zip = try FsUtils.unzip(filepath) catch (e) {
 			FileSystem.deleteFile(filepath);

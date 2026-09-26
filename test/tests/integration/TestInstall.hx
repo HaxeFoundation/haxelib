@@ -7,6 +7,8 @@ class TestInstall extends IntegrationTests {
 	final gitLibPath = "libraries/libBar";
 	final hgLibPath = "libraries/libBar";
 
+	var fileServerProcess:sys.io.Process;
+
 	override function setup(){
 		super.setup();
 
@@ -21,11 +23,19 @@ class TestInstall extends IntegrationTests {
 		assertSuccess(r);
 		final r = haxelib(["submit", Path.join([IntegrationTests.projectRoot, "test/libraries/libFoo.zip"]), foo.pw]).result();
 		assertSuccess(r);
+
+		fileServerProcess = new sys.io.Process("nekotools", [
+			"server",
+			"-d", Path.join([IntegrationTests.projectRoot, "test/libraries"
+		])]);
 	}
 
 	override function tearDown() {
 		resetGitRepo(gitLibPath);
 		resetHgRepo(hgLibPath);
+
+		fileServerProcess.kill();
+
 		super.tearDown();
 	}
 
@@ -253,5 +263,14 @@ class TestInstall extends IntegrationTests {
 		assertFail(r);
 		assertOutputEquals(["Error: Failed installing dependencies for Foo:", "Could not clone Git repository."], r.err.trim());
 
+	}
+
+	function testZipFromHttp() {
+		final r = haxelib(["install", "http://localhost:2000/libBar.zip"]).result();
+		assertSuccess(r);
+
+		final r = haxelib(["list", "Bar"]).result();
+		assertTrue(r.out.indexOf("Bar") >= 0);
+		assertSuccess(r);
 	}
 }

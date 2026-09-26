@@ -130,8 +130,12 @@ haxelib install build.hxml
 ### haxelib install [library-file]
 
 Install the project contained in the zip file.
-```
+
+```sh
+# from local file
 haxelib install actuate.zip
+# from url
+haxelib install https://github.com/openfl/actuate/archive/refs/tags/1.9.0.zip
 ```
 
 <a name="update" class="anch"></a>

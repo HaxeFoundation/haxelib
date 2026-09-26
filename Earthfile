@@ -1,5 +1,5 @@
 VERSION 0.6
-ARG UBUNTU_RELEASE=focal
+ARG UBUNTU_RELEASE=jammy
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-$UBUNTU_RELEASE
 ARG DEVCONTAINER_IMAGE_NAME_DEFAULT=haxe/haxelib_devcontainer_workspace
 ARG HAXELIB_SERVER_IMAGE_NAME_DEFAULT=haxe/lib.haxe.org
@@ -15,12 +15,20 @@ devcontainer-library-scripts:
     RUN curl -fsSLO https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/docker-debian.sh
     SAVE ARTIFACT --keep-ts *.sh AS LOCAL .devcontainer/library-scripts/
 
-# https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-mysql-public-key:
-    ARG KEY=B7B3B788A8D3785C
-    RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$KEY"
-    RUN gpg --batch --armor --export "$KEY" > mysql-public-key
-    SAVE ARTIFACT mysql-public-key AS LOCAL .devcontainer/mysql-public-key
+# https://github.com/docker-library/mysql/blob/master/8.0/Dockerfile.debian
+mysql.gpg:
+    FROM alpine:3.22
+    RUN apk add gnupg
+    WORKDIR /tmp
+    RUN set -eux; \
+        key='BCA4 3417 C3B4 85DD 128E C6D4 B7B3 B788 A8D3 785C'; \
+        export GNUPGHOME="$(mktemp -d)"; \
+        gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+        mkdir -p /etc/apt/keyrings; \
+        gpg --batch --export "$key" > mysql.gpg; \
+        gpgconf --kill all; \
+        rm -rf "$GNUPGHOME"
+    SAVE ARTIFACT mysql.gpg AS LOCAL .devcontainer/mysql.gpg
 
 neko:
     ARG FILENAME=neko_2022-07-19_master_81c4dce.tar.gz
@@ -34,12 +42,19 @@ neko:
 
 haxe:
     ARG FILENAME=haxe.tar.gz
-    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.4/haxe-4.3.4-linux64.tar.gz" -o "$FILENAME"
+    ARG HAXE_VERSION=4.3.7
+    RUN haxeArch=$(case "$TARGETARCH" in \
+        amd64) echo "linux64";; \
+        arm64) echo "linux-arm64";; \
+    esac); curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-${haxeArch}.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
 
 devcontainer-base:
+    # Install docker-compose such that docker-debian.sh don't have to
+    COPY +docker-compose/docker-compose /usr/local/bin/
+
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
@@ -55,8 +70,7 @@ devcontainer-base:
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
     # see +mysql-public-key
-    COPY .devcontainer/mysql-public-key /tmp/mysql-public-key
-    RUN apt-key add /tmp/mysql-public-key
+    COPY .devcontainer/mysql.gpg /etc/apt/keyrings/mysql.gpg
 
     # Configure apt and install packages
     RUN set -ex; apt-get update \
@@ -79,19 +93,21 @@ devcontainer-base:
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
         && apt-get install -y nodejs=18.* \
-        # Install mysql-client
+        # Install mysql-client (only available for amd64)
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-        && echo 'deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
-        && apt-get update \
-        && apt-get -y install mysql-client=5.7.* \
+        && if [ "$TARGETARCH" = "amd64" ]; then \
+            echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
+            && apt-get update \
+            && apt-get -y install mysql-client=5.7.*; \
+        fi \
         # install kubectl
         && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
         && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends kubectl=1.29.* \
         # install helm
-        && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
-        && echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
+        && curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null \
+        && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends helm \
         #
@@ -102,6 +118,7 @@ devcontainer-base:
 
     # install neko
     COPY +neko/neko /usr/bin/neko
+    COPY +neko/nekotools /usr/bin/nekotools
     COPY +neko/libneko.so* /usr/lib/
     RUN mkdir -p /usr/lib/neko/
     COPY +neko/*.ndll /usr/lib/neko/
@@ -185,9 +202,23 @@ tfk8s:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    # Keep in sync with the earthly versions in .devcontainer/docker-compose.yml and .github/workflows/ci-dev.yml
+    ARG VERSION=0.8.16
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
+
+docker-compose:
+    ARG TARGETARCH
+    ARG VERSION=5.5.1
+    RUN composeArch=$(case "$TARGETARCH" in \
+        amd64) echo "x86_64";; \
+        arm64) echo "aarch64";; \
+        *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+    esac) \
+        && curl -fsSL "https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-${composeArch}" -o /usr/local/bin/docker-compose \
+        && chmod +x /usr/local/bin/docker-compose
+    SAVE ARTIFACT /usr/local/bin/docker-compose
 
 rclone:
     FROM +devcontainer-base
@@ -227,6 +258,12 @@ package-haxelib:
     RUN haxe package.hxml
     SAVE ARTIFACT package.zip AS LOCAL package.zip
 
+# The haxelib package zip, with ndlls of all platforms, built and pushed by aws-sdk-neko's CI (+ci-package-zip).
+aws-sdk-neko.zip:
+    ARG AWS_SDK_NEKO_COMMIT=857e17ea45c6da310922be70e5abb29c2765c4d6
+    FROM ghcr.io/andyli/aws_sdk_neko_zip:$AWS_SDK_NEKO_COMMIT
+    SAVE ARTIFACT /workspace/aws-sdk-neko.zip AS LOCAL aws-sdk-neko.zip
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
@@ -235,8 +272,7 @@ haxelib-deps:
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
-    ARG AWS_SDK_NEKO_COMMIT=c614b20f1302a92095865690b5649269f3eb3171
-    COPY (github.com/andyli/aws-sdk-neko:${AWS_SDK_NEKO_COMMIT}+package-zip/aws-sdk-neko.zip --IMAGE_TAG="$AWS_SDK_NEKO_COMMIT") /tmp/aws-sdk-neko.zip
+    COPY +aws-sdk-neko.zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
     SAVE ARTIFACT haxelib_global
 
@@ -341,7 +377,14 @@ do-kubeconfig:
 
 aws-ndll:
     FROM +haxelib-deps
-    SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
+    ARG --required TARGETARCH
+    RUN ndllDir=$(case "$TARGETARCH" in \
+            amd64) echo "Linux64";; \
+            arm64) echo "LinuxArm64";; \
+            *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+        esac) \
+        && cp /workspace/haxelib_global/aws-sdk-neko/*/ndll/$ndllDir/aws.ndll /tmp/aws.ndll
+    SAVE ARTIFACT /tmp/aws.ndll
 
 haxelib-server-builder:
     FROM haxe:4.3
@@ -364,7 +407,7 @@ haxelib-server-legacy:
     COPY hx3compat hx3compat
     COPY www/legacy www/legacy
     RUN haxe server_legacy.hxml
-    SAVE ARTIFACT www/legacy/index.n
+    SAVE ARTIFACT www/legacy/index.n AS LOCAL www/legacy/index.n
 
 haxelib-server-website:
     FROM +haxelib-server-builder
@@ -372,13 +415,13 @@ haxelib-server-website:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_website.hxml
-    SAVE ARTIFACT www/index.n
+    SAVE ARTIFACT www/index.n AS LOCAL www/index.n
 
 haxelib-server-website-highlighter:
     FROM +haxelib-server-builder
     COPY server_website_highlighter.hxml .
     RUN haxe server_website_highlighter.hxml
-    SAVE ARTIFACT www/js/highlighter.js
+    SAVE ARTIFACT www/js/highlighter.js AS LOCAL www/js/highlighter.js
 
 haxelib-server-tasks:
     FROM +haxelib-server-builder
@@ -386,7 +429,7 @@ haxelib-server-tasks:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_tasks.hxml
-    SAVE ARTIFACT www/tasks.n
+    SAVE ARTIFACT www/tasks.n AS LOCAL www/tasks.n
 
 haxelib-server-api:
     FROM +haxelib-server-builder
@@ -394,25 +437,43 @@ haxelib-server-api:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_api.hxml
-    SAVE ARTIFACT www/api/3.0/index.n
+    SAVE ARTIFACT www/api/3.0/index.n AS LOCAL www/api/3.0/index.n
 
 haxelib-server-www-js:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
     RUN curl -fsSL https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
-    SAVE ARTIFACT *.js
+    SAVE ARTIFACT *.js AS LOCAL www/js/
 
 haxelib-server-www-css:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
-    SAVE ARTIFACT *.css
+    SAVE ARTIFACT *.css AS LOCAL www/css/
+
+# Save the compiled and third-party files, which are added to the +haxelib-server image, into the local www directory.
+# (Artifacts are only saved locally when the targets are called directly or via BUILD, not when +haxelib-server COPYs them.)
+# They are needed to serve the local www directory with test/docker-compose-dev.yml.
+haxelib-server-www-files:
+    BUILD +haxelib-server-www-compiled-files
+    BUILD +haxelib-server-www-downloaded-files
+
+haxelib-server-www-compiled-files:
+    BUILD +haxelib-server-legacy
+    BUILD +haxelib-server-website
+    BUILD +haxelib-server-website-highlighter
+    BUILD +haxelib-server-tasks
+    BUILD +haxelib-server-api
+
+haxelib-server-www-downloaded-files:
+    BUILD +haxelib-server-www-js
+    BUILD +haxelib-server-www-css
 
 tora:
     FROM +haxelib-deps
     SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
 
 haxelib-server:
-    FROM phusion/baseimage:focal-1.1.0
+    FROM phusion/baseimage:jammy-1.0.5
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
@@ -422,11 +483,6 @@ haxelib-server:
             apache2 \
             neko \
             libapache2-mod-neko \
-        && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
-        && apt-get update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            libcurl3-gnutls \ # for aws.ndll
-            libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
 
     # apache httpd
@@ -446,12 +502,13 @@ haxelib-server:
         && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
-            echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
+            echo "LoadModule neko_module /usr/lib/$(uname -m)-linux-gnu/neko/mod_neko2.ndll"; \
             echo 'AddHandler neko-handler .n'; \
         } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
+    COPY +aws-ndll/aws.ndll /tmp/aws.ndll
+    RUN mv /tmp/aws.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/aws.ndll"
 
     # Need rclone to do the upload to R2
     COPY +rclone/rclone /usr/local/bin/
@@ -537,6 +594,14 @@ ci-tests:
     ENV HAXELIB_DB_USER=dbUser
     ENV HAXELIB_DB_PASS=dbPass
     ENV HAXELIB_DB_NAME=haxelib
+    # the s3 service in test/docker-compose.yml
+    ENV HAXELIB_S3BUCKET=haxelib
+    ENV RCLONE_CONFIG_S3_TYPE=s3
+    ENV RCLONE_CONFIG_S3_PROVIDER=Other
+    ENV RCLONE_CONFIG_S3_ENV_AUTH=false
+    ENV RCLONE_CONFIG_S3_ENDPOINT=http://localhost:9000
+    ENV RCLONE_CONFIG_S3_ACCESS_KEY_ID=s3AccessKey
+    ENV RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=s3SecretKey
     WITH DOCKER \
             --compose test/docker-compose.yml \
             --load haxe/lib.haxe.org:development=+haxelib-server
@@ -559,7 +624,7 @@ ci-images:
         --GIT_SHA="$GIT_SHA"
 
 s3fs-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     RUN apt-get update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
             s3fs \
@@ -575,7 +640,7 @@ gh-ost-deb:
     SAVE ARTIFACT gh-ost.deb
 
 gh-ost-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     ARG GHOST_VERSION=1.1.2
     COPY (+gh-ost-deb/gh-ost.deb --GHOST_VERSION="$GHOST_VERSION") .
     RUN apt-get install ./gh-ost.deb \
@@ -589,7 +654,7 @@ curl-file:
     SAVE ARTIFACT "$FILENAME"
 
 ghostferry-copydb-image:
-    FROM ubuntu:focal
+    FROM ubuntu:jammy
     ARG GHOSTFERRY_COMMIT="ce94688"
     ARG GHOSTFERRY_BUILD="1.1.0+20220112142231+ce94688"
     COPY (+curl-file/* --URL="https://github.com/Shopify/ghostferry/releases/download/release-${GHOSTFERRY_COMMIT}/ghostferry-copydb_${GHOSTFERRY_BUILD}.deb" --FILENAME=ghostferry-copydb.deb) .

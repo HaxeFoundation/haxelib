@@ -237,7 +237,7 @@ class Connection {
 		`downloadProgress` is the function used to log download information.
 	 **/
 	#if js
-	public static function download(fileUrl:String, outPath:String, downloadProgress = null):Void {
+	public static function downloadFromSite(fileUrl:String, outPath:String, downloadProgress = null):Void {
 		node_fetch.Fetch.call(fileUrl, {
 			headers: {
 				"User-Agent": 'haxelib ${Util.getHaxelibVersionLong()}',
@@ -248,9 +248,13 @@ class Connection {
 			.sync();
 	}
 	#else
-	public static function download(filename:String, outPath:String, downloadProgress:DownloadProgress = null) {
-		final maxRetry = 3;
+	public static function downloadFromSite(filename:String, outPath:String, downloadProgress:DownloadProgress = null) {
 		final fileUrl = haxe.io.Path.join([data.siteUrl, Data.REPOSITORY, filename]);
+		download(fileUrl, outPath, downloadProgress);
+	}
+
+	public static function download(fileUrl:String, outPath:String, downloadProgress:DownloadProgress = null) {
+		final maxRetry = 3;
 		var lastError = new haxe.Exception("");
 
 		for (i in 0...maxRetry) {

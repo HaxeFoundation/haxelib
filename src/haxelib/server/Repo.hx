@@ -366,7 +366,7 @@ class Repo implements SiteApi {
 						FileStorage.instance;
 					case [bucket, region, endpoint]:
 						neko.Web.logMessage('using S3FileStorage with bucket $bucket in ${region} ${endpoint}');
-						new haxelib.server.FileStorage.S3FileStorage(Paths.CWD, bucket, region, endpoint);
+						new haxelib.server.FileStorage.S3FileStorage(Paths.CWD, bucket, region, endpoint, Sys.getEnv("HAXELIB_S3BUCKET_FORCE_PATH_STYLE") == "true");
 				}
 				storage.importFile(path, Path.join([Paths.REP_DIR_NAME, fileName]), true);
 				storage.deleteFile(tmpFile);

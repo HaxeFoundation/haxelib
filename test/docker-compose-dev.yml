@@ -1,28 +1,25 @@
-version: '3'
+# An override of docker-compose.yml that serves the local www directory, instead of the one built into the image,
+# such that the server can be tested with locally compiled files without rebuilding the image.
+#
+# Prepare the local www directory, i.e. the compiled .n files and the third-party js/css files:
+#   earthly +haxelib-server-www-files
+# Alternatively, in the devcontainer, compile the .n files with `haxe server.hxml` and `haxe server_legacy.hxml`.
+#
+# Start the server (the image, haxe/lib.haxe.org:development, only provides the runtime, e.g. apache, neko, and aws.ndll):
+#   docker compose -f test/docker-compose.yml -f test/docker-compose-dev.yml up -d
+# It can be combined with a database dump. See HAXELIB_DB_INIT_DIR in docker-compose.yml.
+#
+# Changes to the local www directory (e.g. recompiled .n files or modified views) take effect immediately.
+# There is no need to restart the containers.
 services:
-  web:
-    build: ..
-    image: haxelib_web
-    ports:
-      - "2000:80"
-    environment:
-      - HAXELIB_DB_HOST=dbHost
-      - HAXELIB_DB_PORT=3306
-      - HAXELIB_DB_USER=dbUser
-      - HAXELIB_DB_PASS=dbPass
-      - HAXELIB_DB_NAME=haxelib
+  haxelib_server:
     volumes:
-      - ../www:/var/www/html
-  dbHost:
-    image: mariadb
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_DATABASE=haxelib
-      - MYSQL_USER=dbUser
-      - MYSQL_PASSWORD=dbPass
-    volumes:
-      - database:/var/lib/mysql
+      - ../www:/src/www
+      # The legacy website
+      - ../src/legacyhaxelib/.htaccess:/src/www/legacy/.htaccess:ro
+      - ../src/legacyhaxelib/haxelib.css:/src/www/legacy/haxelib.css:ro
+      - ../src/legacyhaxelib/website.mtt:/src/www/legacy/website.mtt:ro
+      # Keep the temporary upload files out of the local www directory. It also ensures www-data can write to it.
+      - www-tmp:/src/www/tmp
 volumes:
-  database: {}
+  www-tmp: {}

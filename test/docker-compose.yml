@@ -10,8 +10,46 @@ services:
       - HAXELIB_DB_USER=dbUser
       - HAXELIB_DB_PASS=dbPass
       - HAXELIB_DB_NAME=haxelib
+      - HAXELIB_S3BUCKET=haxelib
+      - HAXELIB_S3BUCKET_ENDPOINT=http://s3:9000
+      - HAXELIB_S3BUCKET_FORCE_PATH_STYLE=true
+      - HAXELIB_S3BUCKET_MOUNTED_PATH=/var/haxelib-s3fs
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=s3AccessKey
+      - AWS_SECRET_ACCESS_KEY=s3SecretKey
+      - RCLONE_CONFIG_S3_ACCESS_KEY_ID=s3AccessKey
+      - RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=s3SecretKey
+    volumes:
+      # Similar to the s3fs sidecar in production, but we share the bucket's backing directory directly.
+      - s3:/var/haxelib-s3fs
+      - ./rclone.conf:/var/www/.rclone.conf:ro
+    depends_on:
+      - s3
+  # An S3-compatible server that stores objects as plain files,
+  # such that the bucket's directory can be mounted to haxelib_server as HAXELIB_S3BUCKET_MOUNTED_PATH.
+  # The top-level directories of /data are the buckets.
+  # Path style (e.g. s3:9000/haxelib) is used, as in rclone.conf and HAXELIB_S3BUCKET_FORCE_PATH_STYLE.
+  s3:
+    image: rclone/rclone:1.68.2
+    user: "33:33" # www-data, same as haxelib_server
+    command: ["serve", "s3", "/data", "--addr", ":9000", "--auth-key", "s3AccessKey,s3SecretKey"]
+    ports:
+      - "9000:9000"
+    environment:
+      - RCLONE_CONFIG=/dev/null
+    volumes:
+      - s3:/data/haxelib
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+  s3-init:
+    image: rclone/rclone:1.68.2
+    entrypoint: ["chown", "-R", "33:33", "/data/haxelib"]
+    volumes:
+      - s3:/data/haxelib
   dbHost:
     image: mysql:5.7.36
+    platform: linux/amd64 # the image is only available for amd64
     ports:
       - "3306:3306"
     environment:
@@ -22,7 +60,25 @@ services:
       - MYSQL_PASSWORD=dbPass
     volumes:
       - database:/var/lib/mysql
+      # Scripts/dumps (*.sh, *.sql, *.sql.gz) in this directory are imported on the first start, i.e. when the database volume is empty.
+      # It is an empty volume by default. Set HAXELIB_DB_INIT_DIR to a host directory (relative to this file) to load a dump, e.g.
+      #   HAXELIB_DB_INIT_DIR=../dump docker compose -p haxelib-dump -f test/docker-compose.yml up -d
+      # Use a separate project name (-p) such that the dump goes into a separate database volume instead of the one used by the tests.
+      - ${HAXELIB_DB_INIT_DIR:-db-init}:/docker-entrypoint-initdb.d:ro
+    configs:
+      - source: mysql-cnf
+        target: /etc/mysql/conf.d/haxelib.cnf
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--silent"]
+configs:
+  mysql-cnf:
+    # Production dumps contain rows larger than the default max_allowed_packet of the server (4M) and the client (16M).
+    content: |
+      [mysqld]
+      max_allowed_packet=64M
+      [mysql]
+      max_allowed_packet=64M
 volumes:
   database: {}
+  s3: {}
+  db-init: {}
