@@ -60,8 +60,25 @@ services:
       - MYSQL_PASSWORD=dbPass
     volumes:
       - database:/var/lib/mysql
+      # Scripts/dumps (*.sh, *.sql, *.sql.gz) in this directory are imported on the first start, i.e. when the database volume is empty.
+      # It is an empty volume by default. Set HAXELIB_DB_INIT_DIR to a host directory (relative to this file) to load a dump, e.g.
+      #   HAXELIB_DB_INIT_DIR=../dump docker compose -p haxelib-dump -f test/docker-compose.yml up -d
+      # Use a separate project name (-p) such that the dump goes into a separate database volume instead of the one used by the tests.
+      - ${HAXELIB_DB_INIT_DIR:-db-init}:/docker-entrypoint-initdb.d:ro
+    configs:
+      - source: mysql-cnf
+        target: /etc/mysql/conf.d/haxelib.cnf
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--silent"]
+configs:
+  mysql-cnf:
+    # Production dumps contain rows larger than the default max_allowed_packet of the server (4M) and the client (16M).
+    content: |
+      [mysqld]
+      max_allowed_packet=64M
+      [mysql]
+      max_allowed_packet=64M
 volumes:
   database: {}
   s3: {}
+  db-init: {}

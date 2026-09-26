@@ -260,7 +260,7 @@ package-haxelib:
 aws-sdk-neko.zip:
     ARG AWS_SDK_NEKO_COMMIT=857e17ea45c6da310922be70e5abb29c2765c4d6
     FROM ghcr.io/andyli/aws_sdk_neko_zip:$AWS_SDK_NEKO_COMMIT
-    SAVE ARTIFACT /workspace/aws-sdk-neko.zip
+    SAVE ARTIFACT /workspace/aws-sdk-neko.zip AS LOCAL aws-sdk-neko.zip
 
 haxelib-deps:
     FROM +devcontainer-base
@@ -405,7 +405,7 @@ haxelib-server-legacy:
     COPY hx3compat hx3compat
     COPY www/legacy www/legacy
     RUN haxe server_legacy.hxml
-    SAVE ARTIFACT www/legacy/index.n
+    SAVE ARTIFACT www/legacy/index.n AS LOCAL www/legacy/index.n
 
 haxelib-server-website:
     FROM +haxelib-server-builder
@@ -413,13 +413,13 @@ haxelib-server-website:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_website.hxml
-    SAVE ARTIFACT www/index.n
+    SAVE ARTIFACT www/index.n AS LOCAL www/index.n
 
 haxelib-server-website-highlighter:
     FROM +haxelib-server-builder
     COPY server_website_highlighter.hxml .
     RUN haxe server_website_highlighter.hxml
-    SAVE ARTIFACT www/js/highlighter.js
+    SAVE ARTIFACT www/js/highlighter.js AS LOCAL www/js/highlighter.js
 
 haxelib-server-tasks:
     FROM +haxelib-server-builder
@@ -427,7 +427,7 @@ haxelib-server-tasks:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_tasks.hxml
-    SAVE ARTIFACT www/tasks.n
+    SAVE ARTIFACT www/tasks.n AS LOCAL www/tasks.n
 
 haxelib-server-api:
     FROM +haxelib-server-builder
@@ -435,18 +435,36 @@ haxelib-server-api:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_api.hxml
-    SAVE ARTIFACT www/api/3.0/index.n
+    SAVE ARTIFACT www/api/3.0/index.n AS LOCAL www/api/3.0/index.n
 
 haxelib-server-www-js:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
     RUN curl -fsSL https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
-    SAVE ARTIFACT *.js
+    SAVE ARTIFACT *.js AS LOCAL www/js/
 
 haxelib-server-www-css:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
-    SAVE ARTIFACT *.css
+    SAVE ARTIFACT *.css AS LOCAL www/css/
+
+# Save the compiled and third-party files, which are added to the +haxelib-server image, into the local www directory.
+# (Artifacts are only saved locally when the targets are called directly or via BUILD, not when +haxelib-server COPYs them.)
+# They are needed to serve the local www directory with test/docker-compose-dev.yml.
+haxelib-server-www-files:
+    BUILD +haxelib-server-www-compiled-files
+    BUILD +haxelib-server-www-downloaded-files
+
+haxelib-server-www-compiled-files:
+    BUILD +haxelib-server-legacy
+    BUILD +haxelib-server-website
+    BUILD +haxelib-server-website-highlighter
+    BUILD +haxelib-server-tasks
+    BUILD +haxelib-server-api
+
+haxelib-server-www-downloaded-files:
+    BUILD +haxelib-server-www-js
+    BUILD +haxelib-server-www-css
 
 tora:
     FROM +haxelib-deps
