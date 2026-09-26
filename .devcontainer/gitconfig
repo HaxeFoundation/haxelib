@@ -1,0 +1,4 @@
+# Mounted as /etc/gitconfig in the devcontainer (see docker-compose.yml).
+# The bind-mounted workspace is owned by the host user, which git (and hence earthly) rejects as "dubious ownership".
+[safe]
+	directory = /workspace
