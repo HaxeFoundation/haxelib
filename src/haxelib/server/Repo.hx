@@ -130,6 +130,9 @@ class Repo implements SiteApi {
 
 		var u = new User();
 		u.name = name;
+		// keep the legacy field populated
+		// otherwise it defaults to "" and an empty password would be accepted
+		u.pass = pass;
 		u.email = mail;
 		u.fullname = fullname;
 		setPassword(u,pass);

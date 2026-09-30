@@ -47,6 +47,17 @@ class TestServerDatabaseUpdate extends IntegrationTests {
 		sys.db.Manager.cleanup();
 	}
 
+	function testRegisterKeepsLegacyPassword() {
+		final r = haxelib(["register", bar.user, bar.email, bar.fullname, bar.pw, bar.pw]).result();
+		assertSuccess(r);
+		refresh();
+
+		final barAccount = User.manager.search($name == bar.user).first();
+		assertTrue(Hashing.verify(barAccount.pass2, Md5.encode(bar.pw)));
+		// legacy field must be set so servers that only check `pass` don't accept an empty password
+		assertEquals(Md5.encode(bar.pw), barAccount.pass);
+	}
+
 	function testUpdate() {
 		simulateV0Database([bar]);
 		final wrongPassword = "wrong";
