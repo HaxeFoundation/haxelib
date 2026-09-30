@@ -66,7 +66,7 @@ class FileStorage {
 			case [bucket, region, null] if (bucket != null && region != null):
 				var endpoint = Sys.getEnv("HAXELIB_S3BUCKET_ENDPOINT");
 				log('using S3FileStorage with bucket $bucket in ${region} ${endpoint == null ? "" : endpoint}');
-				new S3FileStorage(Paths.CWD, bucket, region, endpoint);
+				new S3FileStorage(Paths.CWD, bucket, region, endpoint, Sys.getEnv("HAXELIB_S3BUCKET_FORCE_PATH_STYLE") == "true");
 			#end
 			case [bucket, region, mounted] if (bucket != null && region != null && mounted != null):
 				log('using LocalFileStorage with S3 mounted path');
@@ -203,24 +203,31 @@ class S3FileStorage extends FileStorage {
 	*/
 	public var bucketEndpointOverride(default, null):String;
 
+	/**
+		Whether to use path style (e.g. 'http://${endpoint}/${bucket}/${key}')
+		instead of virtual hosted style (e.g. 'http://${bucket}.${endpoint}/${key}') to access the bucket.
+	*/
+	public var bucketForcePathStyle(default, null):Bool;
+
 	var s3Client(default, null):S3Client;
-	var transferClient(default, null):TransferClient;
+	var transferManager(default, null):TransferManager;
 
 	static var awsInited = false;
 
-	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String, ?bucketEndpointOverride:String):Void {
+	public function new(localPath:AbsPath, bucketName:String, bucketRegion:String, ?bucketEndpointOverride:String, bucketForcePathStyle = false):Void {
 		assertAbsolute(localPath);
 		this.localPath = localPath;
 		this.bucketName = bucketName;
 		this.bucketRegion = bucketRegion;
 		this.bucketEndpointOverride = bucketEndpointOverride;
+		this.bucketForcePathStyle = bucketForcePathStyle;
 
 		if (!awsInited) {
 			Aws.initAPI();
 			awsInited = true;
 		}
 
-		this.transferClient = new TransferClient(this.s3Client = new S3Client(bucketRegion, bucketEndpointOverride));
+		this.transferManager = new TransferManager(this.s3Client = new S3Client(bucketRegion, bucketEndpointOverride, !this.bucketForcePathStyle));
 	}
 
 	override public function readFile<T>(file:RelPath, f:AbsPath->T):T {
@@ -229,12 +236,10 @@ class S3FileStorage extends FileStorage {
 		var localFile:AbsPath = Path.join([localPath, file]);
 		FileSystem.createDirectory(Path.directory(localFile));
 		if (!FileSystem.exists(localFile)) {
-			var request = transferClient.downloadFile(localFile, bucketName, file);
-			while (!request.isDone()) {
-				Sys.sleep(0.01);
-			}
-			if (!request.completedSuccessfully()) {
-				throw 'failed to download ${s3Path} to ${localFile}\n${request.getFailure()}';
+			var request = transferManager.downloadFile(localFile, bucketName, file);
+			request.waitUntilFinished();
+			if (request.getStatus() != COMPLETED) {
+				throw 'failed to download ${s3Path} to ${localFile}\n${request.getLastErrorMessage()}';
 			}
 			if (!FileSystem.exists(localFile)) {
 				throw 'failed to download ${s3Path} to ${localFile}';
@@ -246,12 +251,10 @@ class S3FileStorage extends FileStorage {
 	function uploadToS3(localFile:AbsPath, file:RelPath, contentType = "application/octet-stream") {
 		var s3Path = Path.join(['s3://${bucketName}', file]);
 
-		// somehow R2 doesn't process the multipart upload from transferClient
-		// var request = transferClient.uploadFile(localFile, bucketName, file, contentType);
-		// while (!request.isDone()) {
-		// 	Sys.sleep(0.01);
-		// }
-		// switch (request.getFailure()) {
+		// somehow R2 doesn't process the multipart upload from transferManager
+		// var request = transferManager.uploadFile(localFile, bucketName, file, contentType);
+		// request.waitUntilFinished();
+		// switch (request.getLastErrorMessage()) {
 		// 	case null:
 		// 		//pass
 		// 	case failure:

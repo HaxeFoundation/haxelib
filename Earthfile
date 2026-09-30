@@ -54,12 +54,19 @@ INSTALL_NEKO:
 
 haxe:
     ARG FILENAME=haxe.tar.gz
-    RUN curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/4.3.6/haxe-4.3.6-linux64.tar.gz" -o "$FILENAME"
+    ARG HAXE_VERSION=4.3.7
+    RUN haxeArch=$(case "$TARGETARCH" in \
+        amd64) echo "linux64";; \
+        arm64) echo "linux-arm64";; \
+    esac); curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-${haxeArch}.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
 
 devcontainer-base:
+    # Install docker-compose such that docker-debian.sh don't have to
+    COPY +docker-compose/docker-compose /usr/local/bin/
+
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
@@ -98,11 +105,13 @@ devcontainer-base:
         && apt-get install -y git \
         && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
         && apt-get install -y nodejs=18.* \
-        # Install mysql-client
+        # Install mysql-client (only available for amd64)
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
-        && echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
-        && apt-get update \
-        && apt-get -y install mysql-client=5.7.* \
+        && if [ "$TARGETARCH" = "amd64" ]; then \
+            echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/ubuntu/ bionic mysql-5.7' > /etc/apt/sources.list.d/mysql.list \
+            && apt-get update \
+            && apt-get -y install mysql-client=5.7.*; \
+        fi \
         # install kubectl
         && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
         && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
@@ -201,9 +210,23 @@ tfk8s:
 earthly:
     FROM +devcontainer-base
     ARG --required TARGETARCH
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    # Keep in sync with the earthly versions in .devcontainer/docker-compose.yml and .github/workflows/ci-dev.yml
+    ARG VERSION=0.8.16
+    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
+
+docker-compose:
+    ARG TARGETARCH
+    ARG VERSION=5.5.1
+    RUN composeArch=$(case "$TARGETARCH" in \
+        amd64) echo "x86_64";; \
+        arm64) echo "aarch64";; \
+        *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+    esac) \
+        && curl -fsSL "https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-${composeArch}" -o /usr/local/bin/docker-compose \
+        && chmod +x /usr/local/bin/docker-compose
+    SAVE ARTIFACT /usr/local/bin/docker-compose
 
 rclone:
     FROM +devcontainer-base
@@ -243,6 +266,12 @@ package-haxelib:
     RUN haxe package.hxml
     SAVE ARTIFACT package.zip AS LOCAL package.zip
 
+# The haxelib package zip, with ndlls of all platforms, built and pushed by aws-sdk-neko's CI (+ci-package-zip).
+aws-sdk-neko.zip:
+    ARG AWS_SDK_NEKO_COMMIT=857e17ea45c6da310922be70e5abb29c2765c4d6
+    FROM ghcr.io/andyli/aws_sdk_neko_zip:$AWS_SDK_NEKO_COMMIT
+    SAVE ARTIFACT /workspace/aws-sdk-neko.zip AS LOCAL aws-sdk-neko.zip
+
 haxelib-deps:
     FROM +devcontainer-base
     USER $USERNAME
@@ -252,8 +281,7 @@ haxelib-deps:
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
-    ARG AWS_SDK_NEKO_COMMIT=c614b20f1302a92095865690b5649269f3eb3171
-    COPY (github.com/andyli/aws-sdk-neko:${AWS_SDK_NEKO_COMMIT}+package-zip/aws-sdk-neko.zip --IMAGE_TAG="$AWS_SDK_NEKO_COMMIT") /tmp/aws-sdk-neko.zip
+    COPY +aws-sdk-neko.zip/aws-sdk-neko.zip /tmp/aws-sdk-neko.zip
     RUN haxelib install /tmp/aws-sdk-neko.zip && rm /tmp/aws-sdk-neko.zip
     SAVE ARTIFACT haxelib_global
 
@@ -358,7 +386,14 @@ do-kubeconfig:
 
 aws-ndll:
     FROM +haxelib-deps
-    SAVE ARTIFACT /workspace/haxelib_global/aws-sdk-neko/*/ndll/Linux64/aws.ndll
+    ARG --required TARGETARCH
+    RUN ndllDir=$(case "$TARGETARCH" in \
+            amd64) echo "Linux64";; \
+            arm64) echo "LinuxArm64";; \
+            *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
+        esac) \
+        && cp /workspace/haxelib_global/aws-sdk-neko/*/ndll/$ndllDir/aws.ndll /tmp/aws.ndll
+    SAVE ARTIFACT /tmp/aws.ndll
 
 argon2-ndll:
     # install build-essential, cmake, and neko
@@ -400,7 +435,7 @@ haxelib-server-legacy:
     COPY hx3compat hx3compat
     COPY www/legacy www/legacy
     RUN haxe server_legacy.hxml
-    SAVE ARTIFACT www/legacy/index.n
+    SAVE ARTIFACT www/legacy/index.n AS LOCAL www/legacy/index.n
 
 haxelib-server-website:
     FROM +haxelib-server-builder
@@ -408,13 +443,13 @@ haxelib-server-website:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_website.hxml
-    SAVE ARTIFACT www/index.n
+    SAVE ARTIFACT www/index.n AS LOCAL www/index.n
 
 haxelib-server-website-highlighter:
     FROM +haxelib-server-builder
     COPY server_website_highlighter.hxml .
     RUN haxe server_website_highlighter.hxml
-    SAVE ARTIFACT www/js/highlighter.js
+    SAVE ARTIFACT www/js/highlighter.js AS LOCAL www/js/highlighter.js
 
 haxelib-server-tasks:
     FROM +haxelib-server-builder
@@ -422,7 +457,7 @@ haxelib-server-tasks:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_tasks.hxml
-    SAVE ARTIFACT www/tasks.n
+    SAVE ARTIFACT www/tasks.n AS LOCAL www/tasks.n
 
 haxelib-server-api:
     FROM +haxelib-server-builder
@@ -430,25 +465,43 @@ haxelib-server-api:
     COPY src src
     COPY hx3compat hx3compat
     RUN haxe server_api.hxml
-    SAVE ARTIFACT www/api/3.0/index.n
+    SAVE ARTIFACT www/api/3.0/index.n AS LOCAL www/api/3.0/index.n
 
 haxelib-server-www-js:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
     RUN curl -fsSL https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
-    SAVE ARTIFACT *.js
+    SAVE ARTIFACT *.js AS LOCAL www/js/
 
 haxelib-server-www-css:
     FROM +devcontainer-base
     RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
-    SAVE ARTIFACT *.css
+    SAVE ARTIFACT *.css AS LOCAL www/css/
+
+# Save the compiled and third-party files, which are added to the +haxelib-server image, into the local www directory.
+# (Artifacts are only saved locally when the targets are called directly or via BUILD, not when +haxelib-server COPYs them.)
+# They are needed to serve the local www directory with test/docker-compose-dev.yml.
+haxelib-server-www-files:
+    BUILD +haxelib-server-www-compiled-files
+    BUILD +haxelib-server-www-downloaded-files
+
+haxelib-server-www-compiled-files:
+    BUILD +haxelib-server-legacy
+    BUILD +haxelib-server-website
+    BUILD +haxelib-server-website-highlighter
+    BUILD +haxelib-server-tasks
+    BUILD +haxelib-server-api
+
+haxelib-server-www-downloaded-files:
+    BUILD +haxelib-server-www-js
+    BUILD +haxelib-server-www-css
 
 tora:
     FROM +haxelib-deps
     SAVE ARTIFACT /workspace/haxelib_global/tora/*/run.n
 
 haxelib-server:
-    FROM phusion/baseimage:jammy-1.0.4
+    FROM phusion/baseimage:jammy-1.0.5
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
@@ -458,12 +511,6 @@ haxelib-server:
             apache2 \
             neko \
             libapache2-mod-neko \
-        && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 \
-        && echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/apt/sources.list \
-        && apt-get update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            libcurl3-gnutls \ # for aws.ndll
-            libssl1.0.0 \     # for aws.ndll
         && rm -r /var/lib/apt/lists/*
 
     # apache httpd
@@ -483,13 +530,14 @@ haxelib-server:
         && rm /etc/apache2/conf-enabled/* /etc/apache2/sites-enabled/*
     COPY apache2.conf /etc/apache2/apache2.conf
     RUN { \
-            echo 'LoadModule neko_module /usr/lib/x86_64-linux-gnu/neko/mod_neko2.ndll'; \
+            echo "LoadModule neko_module /usr/lib/$(uname -m)-linux-gnu/neko/mod_neko2.ndll"; \
             echo 'AddHandler neko-handler .n'; \
         } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /usr/lib/x86_64-linux-gnu/neko/aws.ndll
-    COPY +argon2-ndll/argon2.ndll /usr/lib/x86_64-linux-gnu/neko/argon2.ndll
+    COPY +aws-ndll/aws.ndll +argon2-ndll/argon2.ndll /tmp/
+    RUN mv /tmp/aws.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/aws.ndll"
+    RUN mv /tmp/argon2.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/argon2.ndll"
 
     # Need rclone to do the upload to R2
     COPY +rclone/rclone /usr/local/bin/
@@ -577,6 +625,14 @@ ci-tests:
     ENV HAXELIB_DB_USER=dbUser
     ENV HAXELIB_DB_PASS=dbPass
     ENV HAXELIB_DB_NAME=haxelib
+    # the s3 service in test/docker-compose.yml
+    ENV HAXELIB_S3BUCKET=haxelib
+    ENV RCLONE_CONFIG_S3_TYPE=s3
+    ENV RCLONE_CONFIG_S3_PROVIDER=Other
+    ENV RCLONE_CONFIG_S3_ENV_AUTH=false
+    ENV RCLONE_CONFIG_S3_ENDPOINT=http://localhost:9000
+    ENV RCLONE_CONFIG_S3_ACCESS_KEY_ID=s3AccessKey
+    ENV RCLONE_CONFIG_S3_SECRET_ACCESS_KEY=s3SecretKey
     WITH DOCKER \
             --compose test/docker-compose.yml \
             --load haxe/lib.haxe.org:development=+haxelib-server
