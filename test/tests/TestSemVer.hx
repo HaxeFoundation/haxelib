@@ -62,6 +62,17 @@ class TestSemVer extends TestBase {
 		assertEquals( "invalid", parseInvalid("10.50.2-rc.01"));
 	}
 
+	public function testPreviewComparison() {
+		assertTrue(SemVer.ofString("0.1.1-beta.1") < SemVer.ofString("0.1.1"));
+		assertTrue(SemVer.ofString("0.1.1-beta.1") > SemVer.ofString("0.1.0"));
+		assertTrue(SemVer.ofString("0.1.1-alpha.2") > SemVer.ofString("0.1.1-alpha.1"));
+		assertTrue(SemVer.ofString("0.1.1-beta.1") > SemVer.ofString("0.1.1-alpha.2"));
+		assertTrue(SemVer.ofString("0.1.1-rc.1") > SemVer.ofString("0.1.1-beta.1"));
+		#if !(server || haxelib_api)
+		assertTrue(SemVer.ofString("0.1.1-preview.1") > SemVer.ofString("0.1.1-rc.1"));
+		#end
+	}
+
 	function parseInvalid( str:String ):String {
 		return try {
 			SemVer.ofString(str);
