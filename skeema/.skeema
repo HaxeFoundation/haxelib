@@ -7,3 +7,9 @@ flavor=mysql:5.7
 host=haxe-org.ct0xwjh6v08k.eu-west-1.rds.amazonaws.com
 port=3306
 schema=haxelib
+
+[test]
+flavor=mysql:5.7
+host=localhost
+port=3306
+schema=haxelib
