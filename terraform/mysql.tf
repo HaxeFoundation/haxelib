@@ -56,6 +56,14 @@ resource "helm_release" "haxelib-mysql-57" {
       },
       "architecture" : "replication",
       "primary" : {
+        "resources" : {
+          "requests" : {
+            "memory" : "768Mi",
+          },
+          "limits" : {
+            "memory" : "1Gi",
+          },
+        },
         "configuration" : <<-EOT
           [mysqld]
           default_authentication_plugin=mysql_native_password
