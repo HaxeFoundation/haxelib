@@ -134,7 +134,13 @@ class Main {
 	}
 
 	function version() {
-		Cli.print(VERSION_LONG);
+		// Print haxelib version when no arguments are given
+		if (mainArgs.length == 0) {
+			Cli.print(VERSION_LONG);
+			return;
+		}
+
+		Cli.print(getRepository().getCurrentVersion(ProjectName.ofString(mainArgs[0])));
 	}
 
 	static function combineAliases(name:String, aliases:Array<String>):String {
@@ -209,7 +215,7 @@ class Main {
 			Config => create(config, 0),
 			Path => create(path, null),
 			LibPath => create(libpath, null),
-			Version => create(version, 0),
+			Version => create(version, 1),
 			Help => create(usage, 0),
 
 			#if !js
