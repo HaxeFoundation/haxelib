@@ -79,6 +79,10 @@ resource "helm_release" "haxelib-mysql-57" {
           "timeoutSeconds" : 5,
           "failureThreshold" : 3,
         },
+        "command" : [
+          "/bin/bash", "-ec",
+          "ulimit -n 65536 && exec /opt/bitnami/scripts/mysql/entrypoint.sh /opt/bitnami/scripts/mysql/run.sh",
+        ],
         "configuration" : <<-EOT
           [mysqld]
           default_authentication_plugin=mysql_native_password
