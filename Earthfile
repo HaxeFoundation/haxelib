@@ -11,8 +11,8 @@ ARG USER_GID=$USER_UID
 ARG --required TARGETARCH
 
 devcontainer-library-scripts:
-    RUN curl -fsSLO https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/common-debian.sh
-    RUN curl -fsSLO https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/docker-debian.sh
+    RUN curl -fsSLO --retry 3 https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/common-debian.sh
+    RUN curl -fsSLO --retry 3 https://raw.githubusercontent.com/microsoft/vscode-dev-containers/main/script-library/docker-debian.sh
     SAVE ARTIFACT --keep-ts *.sh AS LOCAL .devcontainer/library-scripts/
 
 # https://github.com/docker-library/mysql/blob/master/8.0/Dockerfile.debian
@@ -35,7 +35,7 @@ neko:
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
         arm64) echo "linux-arm64";; \
-    esac); curl -fsSLO "https://build.haxe.org/builds/neko/$haxeArch/$FILENAME"
+    esac); curl -fsSLO --retry 3 "https://build.haxe.org/builds/neko/$haxeArch/$FILENAME"
     RUN mkdir -p neko
     RUN tar --strip-components=1 -xf "$FILENAME" -C neko
     SAVE ARTIFACT neko/*
@@ -58,7 +58,7 @@ haxe:
     RUN haxeArch=$(case "$TARGETARCH" in \
         amd64) echo "linux64";; \
         arm64) echo "linux-arm64";; \
-    esac); curl -fsSL "https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-${haxeArch}.tar.gz" -o "$FILENAME"
+    esac); curl -fsSL --retry 3 "https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-${haxeArch}.tar.gz" -o "$FILENAME"
     RUN mkdir -p haxe
     RUN tar --strip-components=1 -xf "$FILENAME" -C haxe
     SAVE ARTIFACT haxe/*
@@ -103,7 +103,7 @@ devcontainer-base:
             mercurial \
         && add-apt-repository ppa:git-core/ppa \
         && apt-get install -y git \
-        && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+        && curl -sL --retry 3 https://deb.nodesource.com/setup_18.x | bash - \
         && apt-get install -y nodejs=18.* \
         # Install mysql-client (only available for amd64)
         # https://github.com/docker-library/mysql/blob/master/5.7/Dockerfile.debian
@@ -113,12 +113,12 @@ devcontainer-base:
             && apt-get -y install mysql-client=5.7.*; \
         fi \
         # install kubectl
-        && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
+        && curl -fsSL --retry 3 https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
         && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends kubectl=1.29.* \
         # install helm
-        && curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null \
+        && curl -fsSL --retry 3 https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null \
         && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
         && apt-get update \
         && apt-get -y install --no-install-recommends helm \
@@ -158,7 +158,7 @@ devcontainer-base:
 # RUN /aws/install
 awscli:
     FROM +devcontainer-base
-    RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "/tmp/awscliv2.zip" \
+    RUN curl -fsSL --retry 3 "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "/tmp/awscliv2.zip" \
         && unzip -qq /tmp/awscliv2.zip -d / \
         && rm /tmp/awscliv2.zip
     SAVE ARTIFACT /aws
@@ -168,7 +168,7 @@ awscli:
 doctl:
     ARG TARGETARCH
     ARG DOCTL_VERSION=1.92.1
-    RUN curl -fsSL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
+    RUN curl -fsSL --retry 3 "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
     SAVE ARTIFACT /usr/local/bin/doctl
 
 # Usage:
@@ -184,7 +184,7 @@ tfenv:
 terraform-ls:
     ARG TARGETARCH
     ARG VERSION=0.30.3
-    RUN curl -fsSL -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
+    RUN curl -fsSL --retry 3 -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
         && unzip -qq terraform-ls.zip \
         && mv ./terraform-ls /usr/local/bin/ \
         && rm terraform-ls.zip
@@ -212,7 +212,7 @@ earthly:
     ARG --required TARGETARCH
     # Keep in sync with the earthly versions in .devcontainer/docker-compose.yml and .github/workflows/ci-dev.yml
     ARG VERSION=0.8.16
-    RUN curl -fsSL https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
+    RUN curl -fsSL --retry 3 https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
         && chmod +x /usr/local/bin/earthly
     SAVE ARTIFACT /usr/local/bin/earthly
 
@@ -224,7 +224,7 @@ docker-compose:
         arm64) echo "aarch64";; \
         *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1;; \
     esac) \
-        && curl -fsSL "https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-${composeArch}" -o /usr/local/bin/docker-compose \
+        && curl -fsSL --retry 3 "https://github.com/docker/compose/releases/download/v${VERSION}/docker-compose-linux-${composeArch}" -o /usr/local/bin/docker-compose \
         && chmod +x /usr/local/bin/docker-compose
     SAVE ARTIFACT /usr/local/bin/docker-compose
 
@@ -232,7 +232,7 @@ rclone:
     FROM +devcontainer-base
     ARG TARGETARCH
     ARG VERSION=1.61.1
-    RUN curl -fsSL "https://downloads.rclone.org/v${VERSION}/rclone-v${VERSION}-linux-${TARGETARCH}.zip" -o rclone.zip \
+    RUN curl -fsSL --retry 3 "https://downloads.rclone.org/v${VERSION}/rclone-v${VERSION}-linux-${TARGETARCH}.zip" -o rclone.zip \
         && unzip -qq rclone.zip \
         && rm rclone.zip
     RUN rclone-*/rclone completion bash > bash_completion
@@ -333,7 +333,7 @@ devcontainer:
     COPY +rclone/bash_completion /etc/bash_completion.d/rclone
 
     # Install skeema
-    RUN curl -fsSL -o skeema.deb https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_${TARGETARCH}.deb \
+    RUN curl -fsSL --retry 3 -o skeema.deb https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_${TARGETARCH}.deb \
         && apt-get install -y ./skeema.deb \
         && rm ./skeema.deb
 
@@ -469,13 +469,13 @@ haxelib-server-api:
 
 haxelib-server-www-js:
     FROM +devcontainer-base
-    RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
-    RUN curl -fsSL https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
+    RUN curl -fsSLO --retry 3 https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js
+    RUN curl -fsSL --retry 3 https://code.jquery.com/jquery-1.12.4.min.js -o jquery.min.js
     SAVE ARTIFACT *.js AS LOCAL www/js/
 
 haxelib-server-www-css:
     FROM +devcontainer-base
-    RUN curl -fsSLO https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
+    RUN curl -fsSLO --retry 3 https://stackpath.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css
     SAVE ARTIFACT *.css AS LOCAL www/css/
 
 # Save the compiled and third-party files, which are added to the +haxelib-server image, into the local www directory.
@@ -667,7 +667,7 @@ s3fs-image:
 
 gh-ost-deb:
     ARG --required GHOST_VERSION
-    RUN curl -fsSL "https://github.com/github/gh-ost/releases/download/v${GHOST_VERSION}/gh-ost_${GHOST_VERSION}_amd64.deb" -o gh-ost.deb
+    RUN curl -fsSL --retry 3 "https://github.com/github/gh-ost/releases/download/v${GHOST_VERSION}/gh-ost_${GHOST_VERSION}_amd64.deb" -o gh-ost.deb
     SAVE ARTIFACT gh-ost.deb
 
 gh-ost-image:
@@ -681,7 +681,7 @@ gh-ost-image:
 curl-file:
     ARG --required URL
     ARG --required FILENAME
-    RUN curl -fsSL "$URL" -o "$FILENAME"
+    RUN curl -fsSL --retry 3 "$URL" -o "$FILENAME"
     SAVE ARTIFACT "$FILENAME"
 
 ghostferry-copydb-image:
@@ -694,5 +694,5 @@ ghostferry-copydb-image:
     SAVE IMAGE --push haxe/ghostferry-copydb:$GHOSTFERRY_COMMIT
 
 rds-pem:
-    RUN curl -fsSLO https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem
+    RUN curl -fsSLO --retry 3 https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem
     SAVE ARTIFACT --keep-ts eu-west-1-bundle.pem AS LOCAL rds-eu-west-1-bundle.pem
