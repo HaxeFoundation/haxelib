@@ -40,6 +40,18 @@ neko:
     RUN tar --strip-components=1 -xf "$FILENAME" -C neko
     SAVE ARTIFACT neko/*
 
+INSTALL_NEKO:
+    COMMAND
+    ARG NEKOPATH=/neko
+    COPY +neko/* "$NEKOPATH/"
+    ARG PREFIX=/usr/local
+    RUN bash -c "ln -s \"$NEKOPATH\"/{neko,nekoc,nekoml,nekotools} \"$PREFIX/bin/\""
+    RUN bash -c "ln -s \"$NEKOPATH\"/libneko.* \"$PREFIX/lib/\""
+    RUN bash -c "ln -s \"$NEKOPATH\"/neko.h \"$PREFIX/include/\""
+    RUN mkdir -p "$PREFIX/lib/neko/"
+    RUN bash -c "ln -s \"$NEKOPATH\"/*.ndll \"$PREFIX/lib/neko/\""
+    RUN ldconfig
+
 haxe:
     ARG FILENAME=haxe.tar.gz
     ARG HAXE_VERSION=4.3.7
@@ -117,11 +129,7 @@ devcontainer-base:
         && rm -rf /var/lib/apt/lists/*
 
     # install neko
-    COPY +neko/neko /usr/bin/neko
-    COPY +neko/nekotools /usr/bin/nekotools
-    COPY +neko/libneko.so* /usr/lib/
-    RUN mkdir -p /usr/lib/neko/
-    COPY +neko/*.ndll /usr/lib/neko/
+    DO +INSTALL_NEKO
     RUN neko -version
 
     # install haxe
@@ -269,6 +277,7 @@ haxelib-deps:
     USER $USERNAME
     COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
+    COPY --chown=$USER_UID:$USER_GID lib/argon2 lib/argon2
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
@@ -386,11 +395,30 @@ aws-ndll:
         && cp /workspace/haxelib_global/aws-sdk-neko/*/ndll/$ndllDir/aws.ndll /tmp/aws.ndll
     SAVE ARTIFACT /tmp/aws.ndll
 
+argon2-ndll:
+    # install build-essential, cmake, and neko
+    RUN apt-get update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential \
+            cmake \
+        && rm -r /var/lib/apt/lists/*
+
+    DO +INSTALL_NEKO
+    RUN neko -version
+
+    COPY lib/argon2 lib/argon2
+    RUN mkdir lib/argon2/build
+    RUN cmake -B lib/argon2/build -S lib/argon2
+    RUN make -C lib/argon2/build Argon2
+    RUN make -C lib/argon2/build
+    SAVE ARTIFACT lib/argon2/build/argon2.ndll
+
 haxelib-server-builder:
     FROM haxe:4.3
 
     WORKDIR /workspace
     COPY lib/record-macros lib/record-macros
+    COPY lib/argon2 lib/argon2
     COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
     COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
     COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
@@ -507,8 +535,9 @@ haxelib-server:
         } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /tmp/aws.ndll
+    COPY +aws-ndll/aws.ndll +argon2-ndll/argon2.ndll /tmp/
     RUN mv /tmp/aws.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/aws.ndll"
+    RUN mv /tmp/argon2.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/argon2.ndll"
 
     # Need rclone to do the upload to R2
     COPY +rclone/rclone /usr/local/bin/
@@ -576,6 +605,8 @@ ci-tests:
     COPY hx3compat hx3compat
     COPY lib/node-sys-db lib/node-sys-db
     COPY lib/record-macros lib/record-macros
+    COPY lib/argon2 lib/argon2
+    COPY +argon2-ndll/argon2.ndll argon2.ndll
     COPY src src
     COPY www www
     COPY test test
