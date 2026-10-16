@@ -12,7 +12,9 @@ ExternalProject_Add(Argon2
 	DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/libs/download
 	URL https://github.com/P-H-C/phc-winner-argon2/archive/refs/tags/20190702.tar.gz
 	URL_HASH SHA256=daf972a89577f8772602bf2eb38b6a3dd3d922bf5724d45e7f9589b5e830442c
-	BUILD_COMMAND cd ${CMAKE_BINARY_DIR}/libs/src/Argon2 && CFLAGS=-fPIC make
+	# argon2 defaults to -march=native, which would tie the ndll to the build machine's CPU (e.g. AVX-512 on CI runners)
+	# x86-64-v2 runs on any x86-64 server from the last ~15 years; other archs fall back to argon2's portable implementation
+	BUILD_COMMAND cd ${CMAKE_BINARY_DIR}/libs/src/Argon2 && CFLAGS=-fPIC make OPTTARGET=x86-64-v2
 	CONFIGURE_COMMAND echo skip config
 	INSTALL_COMMAND echo skip install
 	BYPRODUCTS ${ARGON2_LIB}
