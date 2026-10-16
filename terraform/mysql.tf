@@ -56,6 +56,33 @@ resource "helm_release" "haxelib-mysql-57" {
       },
       "architecture" : "replication",
       "primary" : {
+        "resources" : {
+          "requests" : {
+            "memory" : "768Mi",
+          },
+          "limits" : {
+            "memory" : "1Gi",
+          },
+        },
+        # Use a TCP probe instead of the chart's exec probe. An exec probe cannot run in a
+        # stopped container, which kubelet treats as "unknown" rather than a failure, so it
+        # never restarts a dead mysqld.
+        "livenessProbe" : {
+          "enabled" : false,
+        },
+        "customLivenessProbe" : {
+          "tcpSocket" : {
+            "port" : "mysql",
+          },
+          "initialDelaySeconds" : 5,
+          "periodSeconds" : 10,
+          "timeoutSeconds" : 5,
+          "failureThreshold" : 3,
+        },
+        "command" : [
+          "/bin/bash", "-ec",
+          "ulimit -n 65536 && exec /opt/bitnami/scripts/mysql/entrypoint.sh /opt/bitnami/scripts/mysql/run.sh",
+        ],
         "configuration" : <<-EOT
           [mysqld]
           default_authentication_plugin=mysql_native_password

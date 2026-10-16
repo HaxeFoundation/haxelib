@@ -32,7 +32,7 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio-r2" {
 
       spec {
         container {
-          image = "quay.io/minio/minio:RELEASE.2022-01-28T02-28-16Z"
+          image = "docker.io/bitnamilegacy/minio:2022.1.28"
           name  = "minio"
 
           command = [
