@@ -138,7 +138,7 @@ abstract SemVer(String) to String {
 		"rc"
 	];
 
-	static var cache = new Map();
+	static var cache:Map<String, SemVerData> = new Map();
 
 	@:to function get_data():SemVerData {
 		if (!cache.exists(this))

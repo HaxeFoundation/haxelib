@@ -93,7 +93,7 @@ class Cli {
 		return s.toString();
 	}
 
-	public static function printInstallStatus(_, current:Int, total:Int) {
+	public static function printInstallStatus(_:String, current:Int, total:Int) {
 		Sys.stdout().writeString("\033[2K\r");
 		if (current != total) {
 			final percent = Std.int((current / total) * 100);

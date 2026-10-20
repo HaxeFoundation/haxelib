@@ -122,7 +122,7 @@ abstract class Vcs implements IVcs {
 
 	abstract function searchExecutable():Bool;
 
-	function getCheckArgs() {
+	function getCheckArgs():Array<String> {
 		return [];
 	}
 

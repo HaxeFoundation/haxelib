@@ -45,7 +45,7 @@ class Validator {
 		IARG = macro @:pos(pos) $i{ARG};
 	}
 
-	function doCheck(t:Type, e:Expr) {
+	function doCheck(t:Type, e:Expr):Expr {
 		var ct = t.toComplexType();
 		return
 			macro @:pos (function ($ARG : $ct) ${makeCheck(t)})($e);
