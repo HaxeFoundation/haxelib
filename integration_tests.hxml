@@ -1,4 +1,6 @@
 each.hxml
 -p test
+-lib record-macros
+-lib argon2
 -main IntegrationTests
 -neko bin/integration_tests.n
