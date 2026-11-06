@@ -14,7 +14,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -39,7 +39,7 @@ jobs:
     if: success() && github.repository_owner == 'HaxeFoundation' && github.event_name == 'push' && github.ref_name == 'development'
     needs: test
     concurrency: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: haxe/haxelib_devcontainer_workspace:${{ github.sha }}
     env:
       AWS_DEFAULT_REGION: eu-west-1
