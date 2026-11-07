@@ -55,14 +55,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: Verify image existence
         run: docker manifest inspect haxe/lib.haxe.org:${{ github.sha }}
-      - name: Initialize Terraform
-        run: terraform init
+      - name: Initialize OpenTofu
+        run: tofu init
         working-directory: terraform
       - name: Ensure no pending infra changes
-        run: terraform plan -refresh=false -detailed-exitcode
+        run: tofu plan -refresh=false -detailed-exitcode
         working-directory: terraform
       - name: Set haxelib-server image
-        run: terraform apply -auto-approve -refresh=false
+        run: tofu apply -auto-approve -refresh=false
         working-directory: terraform
         env:
           TF_VAR_HAXELIB_SERVER_IMAGE_DEVELOPMENT: haxe/lib.haxe.org:${{ github.sha }}

@@ -163,32 +163,6 @@ mise:
     SAVE ARTIFACT /usr/local/bin/mise
 
 # Usage:
-# COPY +tfenv/tfenv /tfenv
-# RUN ln -s /tfenv/bin/* /usr/local/bin
-tfenv:
-    FROM +devcontainer-base
-    RUN git clone --depth 1 https://github.com/tfutils/tfenv.git /tfenv
-    SAVE ARTIFACT /tfenv
-
-# Usage:
-# COPY +terraform-ls/terraform-ls /usr/local/bin/
-terraform-ls:
-    ARG TARGETARCH
-    ARG VERSION=0.30.3
-    RUN curl -fsSL --retry 3 -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
-        && unzip -qq terraform-ls.zip \
-        && mv ./terraform-ls /usr/local/bin/ \
-        && rm terraform-ls.zip
-    SAVE ARTIFACT /usr/local/bin/terraform-ls
-
-terraform:
-    FROM +tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin
-    ARG --required TERRAFORM_VERSION
-    RUN tfenv install "$TERRAFORM_VERSION"
-    RUN tfenv use "$TERRAFORM_VERSION"
-
-# Usage:
 # COPY +tfk8s/tfk8s /usr/local/bin/
 tfk8s:
     FROM golang:1.17
@@ -287,14 +261,6 @@ dts2hx-externs:
 devcontainer:
     FROM +devcontainer-base
 
-    # tfenv
-    COPY +tfenv/tfenv /tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin/
-    COPY --chown=$USER_UID:$USER_GID terraform/.terraform-version "/home/$USERNAME/"
-    RUN tfenv install "$(cat /home/$USERNAME/.terraform-version)"
-    RUN tfenv use "$(cat /home/$USERNAME/.terraform-version)"
-    COPY +terraform-ls/terraform-ls /usr/local/bin/
-
     COPY +tfk8s/tfk8s /usr/local/bin/
 
     # Install mise
@@ -332,7 +298,7 @@ devcontainer:
     # Config bash
     RUN echo 'eval "$(mise activate bash)"' >> ~/.bashrc \
         && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
-        && echo 'complete -C terraform terraform' >> ~/.bashrc \
+        && echo 'complete -C tofu tofu' >> ~/.bashrc \
         && echo 'complete -C aws_completer aws' >> ~/.bashrc \
         && echo 'source <(helm completion bash)' >> ~/.bashrc \
         && echo 'source <(kubectl completion bash)' >> ~/.bashrc \

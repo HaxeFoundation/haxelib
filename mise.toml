@@ -9,6 +9,8 @@ aws-cli = "2"
 earthly = "0.8.16"
 rclone = "1.75"
 skeema = "1.7.0"
+opentofu = "1.13"
+"github:opentofu/tofu-ls" = "0.5.3"
 
 [env]
 KUBECONFIG = "{{config_root}}/terraform/kubeconfig_do"
