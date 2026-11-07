@@ -1,0 +1,14 @@
+[tools]
+# kubectl should always match the k8s cluster minor version
+kubectl = "1.34"
+helm = "4"
+k9s = "latest"
+doctl = "1"
+aws-cli = "2"
+# Keep in sync with the earthly version in .github/workflows/ci-dev.yml
+earthly = "0.8.16"
+rclone = "1.75"
+skeema = "1.7.0"
+
+[env]
+KUBECONFIG = "{{config_root}}/terraform/kubeconfig_do"
