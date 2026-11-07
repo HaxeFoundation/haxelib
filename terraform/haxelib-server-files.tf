@@ -97,11 +97,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
             value = each.value.HAXELIB_S3BUCKET_ENDPOINT
           }
           env {
-            name  = "HAXELIB_S3BUCKET_MOUNTED_PATH"
-            value = "/var/haxelib-s3fs"
-          }
-
-          env {
             name = "AWS_ACCESS_KEY_ID"
             value_from {
               secret_key_ref {
@@ -124,13 +119,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
             value = "us-east-1"
           }
 
-          volume_mount {
-            name              = "pod-haxelib-s3fs"
-            mount_path        = "/var/haxelib-s3fs"
-            mount_propagation = "HostToContainer"
-            read_only         = false
-          }
-
           liveness_probe {
             http_get {
               path = "/httpd-status?auto"
@@ -142,55 +130,8 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
           }
         }
 
-        container {
-          image = "haxe/s3fs:latest"
-          name  = "s3fs"
-          command = [
-            "s3fs", each.value.HAXELIB_S3BUCKET, "/var/s3fs",
-            "-f",
-            "-o", "url=${each.value.bucket_gateway_url}",
-            "-o", "use_path_request_style",
-            "-o", "umask=022,uid=33,gid=33", # 33 = www-data
-            "-o", "allow_other",
-          ]
-
-          security_context {
-            privileged = true
-          }
-
-          resources {
-            requests = {
-              cpu    = "50m"
-              memory = "50Mi"
-            }
-          }
-
-          env {
-            name = "AWSACCESSKEYID"
-            value_from {
-              secret_key_ref {
-                name = each.value.AWS_ACCESS_KEY_ID.name
-                key  = each.value.AWS_ACCESS_KEY_ID.key
-              }
-            }
-          }
-          env {
-            name = "AWSSECRETACCESSKEY"
-            value_from {
-              secret_key_ref {
-                name = each.value.AWS_SECRET_ACCESS_KEY.name
-                key  = each.value.AWS_SECRET_ACCESS_KEY.key
-              }
-            }
-          }
-
-          volume_mount {
-            name              = "pod-haxelib-s3fs"
-            mount_path        = "/var/s3fs"
-            mount_propagation = "Bidirectional"
-            read_only         = false
-          }
-        }
+        # No s3fs sidecar: /files/3.0 is always redirected/proxied to HAXELIB_CDN
+        # (see www/.htaccess and HomeController.downloadFile), so the bucket mount is never read.
 
         image_pull_secrets {
           name = local.imagePullSecrets
@@ -198,11 +139,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
 
         security_context {
           fs_group = 33 # www-data
-        }
-
-        volume {
-          name = "pod-haxelib-s3fs"
-          empty_dir {}
         }
       }
     }
