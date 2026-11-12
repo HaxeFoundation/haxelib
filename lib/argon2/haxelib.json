@@ -1,0 +1,7 @@
+{
+	"name": "argon2",
+	"description": "Neko wrapper for C argon2 implementation",
+	"version": "0.0.0",
+	"classPath": "src",
+	"license": "MIT"
+}
