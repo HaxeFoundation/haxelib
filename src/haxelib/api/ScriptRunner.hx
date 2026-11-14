@@ -105,10 +105,17 @@ class ScriptRunner {
 			throw new ScriptError(library.name, output);
 	}
 
+	static function isNekoAvailable() {
+		final p = new sys.io.Process("neko", ["-version"]);
+		final outCode = p.exitCode();
+		p.close();
+		return outCode == 0;
+	}
+
 	static function getType(library:LibraryRunData) {
 		if (library.main != null)
 			return Script(library.main, library.name, library.version, library.dependencies);
-		if (FileSystem.exists(library.path + 'run.n'))
+		if (FileSystem.exists(library.path + 'run.n') #if !neko && isNekoAvailable() #end)
 			return Neko(library.path + 'run.n');
 		if (FileSystem.exists(library.path + 'Run.hx'))
 			return Script("Run", library.name, library.version, library.dependencies);
