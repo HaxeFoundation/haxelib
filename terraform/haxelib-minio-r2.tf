@@ -52,8 +52,9 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio-r2" {
 
           resources {
             requests = {
-              cpu    = "100m"
-              memory = "200Mi"
+              cpu = "100m"
+              # Measured over 10 days (Nov 2026): p50 114Mi, p99 347Mi.
+              memory = "128Mi"
             }
             limits = {
               memory = "1Gi"

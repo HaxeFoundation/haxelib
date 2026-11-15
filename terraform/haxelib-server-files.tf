@@ -49,8 +49,9 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
 
           resources {
             requests = {
-              cpu    = "50m"
-              memory = "100Mi"
+              cpu = "50m"
+              # Measured over 10 days (Nov 2026): p50 23Mi, p99 47Mi.
+              memory = "48Mi"
             }
             limits = {
               memory = "500Mi"

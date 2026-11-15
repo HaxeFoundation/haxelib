@@ -248,6 +248,17 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
             "copyto", "--verbose", "do:${digitalocean_spaces_bucket.haxelib.name}/legacy/haxelib.db", "/legacy/haxelib.db"
           ]
 
+          # Init containers run before the others, so these don't add to the pod's requests.
+          resources {
+            requests = {
+              cpu    = "10m"
+              memory = "16Mi"
+            }
+            limits = {
+              memory = "128Mi"
+            }
+          }
+
           env {
             name = "RCLONE_CONFIG_DO_ACCESS_KEY_ID"
             value_from {
