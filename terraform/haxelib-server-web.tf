@@ -180,14 +180,30 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
             read_only  = true
           }
 
+          # Liveness only checks that Apache accepts TCP connections. The kernel completes the handshake
+          # even when all prefork workers are busy, so a saturated (but alive) Apache is not restarted.
           liveness_probe {
-            http_get {
-              path = "/httpd-status?auto"
+            tcp_socket {
               port = 80
             }
             initial_delay_seconds = 10
             period_seconds        = 15
             timeout_seconds       = 5
+            failure_threshold     = 3
+          }
+
+          # Readiness goes through an Apache worker. When all workers are busy, the pod is taken out of
+          # the Service endpoints until it recovers, instead of being killed.
+          readiness_probe {
+            http_get {
+              path = "/httpd-status?auto"
+              port = 80
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 3
+            success_threshold     = 1
           }
         }
 
