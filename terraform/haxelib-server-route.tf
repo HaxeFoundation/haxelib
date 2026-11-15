@@ -1,5 +1,4 @@
-# Gateway API routes for haxelib, replacing the three Ingresses per stage
-# (do-haxelib-server, do-haxelib-server-api, do-haxelib-server-files).
+# Gateway API routes for haxelib. They replaced the ingress-nginx Ingresses in Nov 2026.
 #
 # The Gateway, its listeners and certificates, and the "proxy-cache" SnippetsFilter are defined in
 # https://github.com/HaxeFoundation/haxe-terraform (do-k8s-gateway.tf).
