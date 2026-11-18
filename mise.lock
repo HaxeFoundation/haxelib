@@ -382,7 +382,7 @@ url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/624717601"
 [[tools.skeema]]
 version = "1.14.2"
 backend = "aqua:skeema/skeema"
-specifiers = ["latest"]
+specifiers = ["1.14"]
 
 [tools.skeema."platforms.linux-arm64"]
 checksum = "sha256:290adf616cf7fd80964f7ecbe5112abccbcded5a9604566a815691a21be41ec3"
