@@ -380,36 +380,41 @@ url = "https://github.com/rclone/rclone/releases/download/v1.75.2/rclone-v1.75.2
 url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/624717601"
 
 [[tools.skeema]]
-version = "1.7.0"
+version = "1.14.2"
 backend = "aqua:skeema/skeema"
-specifiers = ["1.7.0"]
+specifiers = ["latest"]
 
 [tools.skeema."platforms.linux-arm64"]
-checksum = "sha256:8518ce50b148222d89cb7d6494b225532ba9b546d143a475c9a9a13b4cb09d88"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853515"
+checksum = "sha256:290adf616cf7fd80964f7ecbe5112abccbcded5a9604566a815691a21be41ec3"
+checksum_source = "mise-versions"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056610"
 
 [tools.skeema."platforms.linux-arm64-musl"]
-checksum = "sha256:8518ce50b148222d89cb7d6494b225532ba9b546d143a475c9a9a13b4cb09d88"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853515"
+checksum = "sha256:290adf616cf7fd80964f7ecbe5112abccbcded5a9604566a815691a21be41ec3"
+checksum_source = "mise-versions"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056610"
 
 [tools.skeema."platforms.linux-x64"]
-checksum = "sha256:cb7ca7c74ff49e631c21949004fdd1b2624461f70e3c95b31dd3ed42f2195d06"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853491"
+checksum = "sha256:3c5424486cd788c0a32568c771389e60d7bd95469fbd37d522d3695be6baba6f"
+checksum_source = "mise-versions"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056609"
 
 [tools.skeema."platforms.linux-x64-musl"]
-checksum = "sha256:cb7ca7c74ff49e631c21949004fdd1b2624461f70e3c95b31dd3ed42f2195d06"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853491"
+checksum = "sha256:3c5424486cd788c0a32568c771389e60d7bd95469fbd37d522d3695be6baba6f"
+checksum_source = "mise-versions"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056609"
 
 [tools.skeema."platforms.macos-arm64"]
-checksum = "sha256:2d2f1c61edef7291ecd7361835c2f4d948a65410e3165d7b24b1876dbabca554"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_mac_arm64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853513"
+checksum = "sha256:3a1f939088c58818a56321a54854bb81f43b260b0fec34afa638077276a15183"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_mac_arm64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056613"
 
 [tools.skeema."platforms.macos-x64"]
-checksum = "sha256:7bdd4aea003afe039ba75bd6145eec24402f1d6ae63a043a45731b386d638fb4"
-url = "https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_1.7.0_mac_amd64.tar.gz"
-url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/54853511"
+checksum = "sha256:3058f7735fa098ef8a82f27e6a3c91c55b044954a65bf8df16beeab3846ec524"
+checksum_source = "mise-versions"
+url = "https://github.com/skeema/skeema/releases/download/v1.14.2/skeema_1.14.2_mac_amd64.tar.gz"
+url_api = "https://api.github.com/repos/skeema/skeema/releases/assets/690056611"

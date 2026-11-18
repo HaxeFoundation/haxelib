@@ -8,7 +8,7 @@ aws-cli = "2"
 # Keep in sync with the earthly version in .github/workflows/ci-dev.yml
 earthly = "0.8.16"
 rclone = "1.75"
-skeema = "1.7.0"
+skeema = "1.14"
 opentofu = "1.13"
 "github:opentofu/tofu-ls" = "0.5.3"
 

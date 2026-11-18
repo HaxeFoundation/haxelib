@@ -1,9 +1,14 @@
-default-character-set=utf8mb4
-default-collation=utf8mb4_general_ci
-generator=skeema:1.7.0-community
+default-character-set=utf8
+default-collation=utf8_general_ci
+generator=skeema:1.14.2-community
 
-[rds]
+# The production database is running on k8s (see ../terraform/).
+# Use port-forwarding to connect to it:
+# kubectl port-forward haxelib-mysql-57-primary-0 3306:3306
+[production]
 flavor=mysql:5.7
-host=haxe-org.ct0xwjh6v08k.eu-west-1.rds.amazonaws.com
+host=localhost
 port=3306
 schema=haxelib
+user=$PRODUCTION_DB_USER
+password=$PRODUCTION_DB_PASS
