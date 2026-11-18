@@ -4,7 +4,8 @@ generator=skeema:1.14.2-community
 
 # The production database is running on k8s (see ../terraform/).
 # Use port-forwarding to connect to it:
-# kubectl port-forward haxelib-mysql-57-primary-0 3306:3306
+# kubectl port-forward svc/haxelib-mysql-57-primary 3306:3306
+# CI runs `skeema diff production` before deploying, using a read-only user.
 [production]
 flavor=mysql:5.7
 host=localhost

@@ -218,36 +218,3 @@ provider "registry.opentofu.org/integrations/github" {
     "zh:f71c11d127b194cefacdba0949c93c8e8b9c2045e3a723bd47f8fc1b7ba262b6",
   ]
 }
-
-provider "registry.opentofu.org/winebarrel/mysql" {
-  version     = "1.10.6"
-  constraints = "~> 1.10"
-  hashes = [
-    "h1:0KfsyQNeJ9UKG5aEuLQUCsO5lUFLJUQYwQ/em5Oxmbo=",
-    "h1:Axqwzsmj9y/lTRZEmwk8PADaxC2nTz3axqwslcj7uoM=",
-    "h1:GaTA+SO0LMovBXBp0bnxgOSmH1ehLfX3fgzy/ZBgsug=",
-    "h1:Ng3eXjg9pUlAT7heyjilxOVXiGKc1rsuchc8Z9+IPOk=",
-    "h1:Sv1tzGF/XsBYTmz0atWUL3Ne55S/CYptWW/Dg6LJPik=",
-    "h1:Wu4VmQSut6+v93zd/AQK+W/RDgsX86Jta/QZco4ANeA=",
-    "h1:XWQfORmY7BJsoqAd3u13ghEvQV/o7IPrMtq3k+t6I/8=",
-    "h1:ZUEA05L0EZhKf/x+ZGlDYktozD8HSNf/c4N5E1hJ/So=",
-    "h1:bFZckv/HZ20GH0wv4dXDgNgfh507LeqzqBCwH+Cyino=",
-    "h1:bymYzMkcsCc2A+C70NGUOuCiQItPi3t9s2CdXV3FcHU=",
-    "h1:ltrsQT1MOHdzsEB+JjQC6OM4bTzdaa4eUV2PwrNw8lM=",
-    "h1:qhgITnzbCi5YKx3zgmygj3RP2K5wofbJ8QZGXknNacI=",
-    "h1:zV/BYzKKXPterCRxzkYrmk1287uRlDhfjrWMrhDdKQQ=",
-    "zh:1574e2ef747a186883f02fbfbcde418f6516a3b0597b5354aa7ff77d0cff7819",
-    "zh:30c9796f16d1c4c6dc3bc628046b11ddb9cfe6e91e13b02e6032f74f8fd964bd",
-    "zh:375163b2fc78fd7de8c2eef92cb52a178b1179d13219616e1914f40f8dbaa5ec",
-    "zh:3983db82333d4c03d00135712d623b7768dec6de1c8bc71ce4126355fc3f1718",
-    "zh:39d2b42d0456a634fed70d3f22defeb36df352ba20b55ba8118aea857cf381e2",
-    "zh:4a0b8ae7604dcabb21479111eb87abaab93358df3e529c52a982d49349d3787a",
-    "zh:669b6292dd8db76fe843f4745249aba71eb2ee8aa33cdab5c29ddc62387174ab",
-    "zh:71120d3707721f010f10be00f90c6ba7b8b3b1bf3ea3a77d823f11da144853e5",
-    "zh:782db3809bd7f9a4259a4e79a164ed28bd7cb147d7eeedab1ae8bf439a7f592c",
-    "zh:95ceb30ac9192d10db941b8ff43b83bcfd7dde1006f35bc069cff172ea900ec7",
-    "zh:9d5d9edab661329329a08c146e5d88144e1cab340726bf93c980785357b96cc0",
-    "zh:a5a09a35913c00ccf8c67af98146f638b5a46b808999c36c22e31f81b6c920e9",
-    "zh:dc278124518580d2426c585d01eb968f12f18e403e5e2f3e9d92715cc3038b35",
-  ]
-}
