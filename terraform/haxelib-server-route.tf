@@ -27,6 +27,29 @@ resource "kubernetes_manifest" "do-haxelib-server-route" {
       hostnames = [each.value.host]
       # The longest matching path prefix wins, as with the Ingresses.
       rules = [
+        # Apache's mod_status page (apache2.conf) shows the requests being served, so keep it private.
+        # The readiness probes and the image's HEALTHCHECK call the pod directly, not through the Gateway.
+        # The backend is never called (the filter returns first), but NGF needs one to generate a normal location.
+        {
+          matches = [{
+            path = {
+              type  = "PathPrefix"
+              value = "/httpd-status"
+            }
+          }]
+          filters = [{
+            type = "ExtensionRef"
+            extensionRef = {
+              group = "gateway.nginx.org"
+              kind  = "SnippetsFilter"
+              name  = kubernetes_manifest.do-haxelib-server-not-found.manifest.metadata.name
+            }
+          }]
+          backendRefs = [{
+            name = kubernetes_service_v1.do-haxelib-server[each.key].metadata[0].name
+            port = 80
+          }]
+        },
         {
           matches = [{
             path = {
@@ -72,6 +95,24 @@ resource "kubernetes_manifest" "do-haxelib-server-route" {
           }]
         },
       ]
+    }
+  }
+}
+
+# Responds 404 without calling the backend. Used to hide paths that must not be public.
+resource "kubernetes_manifest" "do-haxelib-server-not-found" {
+  manifest = {
+    apiVersion = "gateway.nginx.org/v1alpha1"
+    kind       = "SnippetsFilter"
+    metadata = {
+      name      = "haxelib-server-not-found"
+      namespace = "default"
+    }
+    spec = {
+      snippets = [{
+        context = "http.server.location"
+        value   = "return 404;"
+      }]
     }
   }
 }
