@@ -40,3 +40,30 @@ resource "cloudflare_record" "do-development-lib" {
   ttl     = "86400"
   value   = "do-k8s.haxe.org"
 }
+
+# Let web pages read the library files (Access-Control-Allow-Origin: *), so tools that run
+# in a browser (a Haxe compiler in a page, playgrounds, documentation sites) can download
+# libraries straight from haxelib. The files are public and need no credentials; the
+# header only lets pages read what anyone can already download, and `*` excludes
+# requests that carry cookies or credentials.
+resource "cloudflare_ruleset" "haxe-org-response-headers" {
+  zone_id     = local.cloudflare.zones.haxe-org.zone_id
+  name        = "Response headers"
+  description = "Response header transform rules for the haxe.org zone"
+  kind        = "zone"
+  phase       = "http_response_headers_transform"
+
+  rules {
+    description = "haxelib files: readable by web pages (CORS)"
+    expression  = "(http.host eq \"${local.r2.domain_access}\")"
+    action      = "rewrite"
+    action_parameters {
+      headers {
+        name      = "Access-Control-Allow-Origin"
+        operation = "set"
+        value     = "*"
+      }
+    }
+    enabled = true
+  }
+}
