@@ -31,6 +31,9 @@ resource "kubernetes_cron_job_v1" "mysqldump" {
         template {
           metadata {
             name = "mysqldump"
+            labels = {
+              "app.kubernetes.io/name" = "mysqldump"
+            }
           }
           spec {
             container {

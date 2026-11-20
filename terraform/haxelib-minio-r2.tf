@@ -158,6 +158,39 @@ resource "kubernetes_service_v1" "do-haxelib-minio-r2" {
   }
 }
 
+# Only the s3fs sidecars of haxelib-server use the gateway (bucket_gateway_url in haxelib-server.tf).
+# Its root credentials are the R2 keys, so nothing else should reach it.
+# The console (9001) is reachable only via `kubectl port-forward`, which this policy doesn't affect.
+resource "kubernetes_network_policy_v1" "do-haxelib-minio-r2" {
+  metadata {
+    name = "haxelib-minio-r2"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"     = "minio"
+        "app.kubernetes.io/instance" = "haxelib-minio-r2"
+      }
+    }
+    policy_types = ["Ingress"]
+
+    ingress {
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "haxelib-server"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "9000"
+      }
+    }
+  }
+}
+
 # The MinIO console is not exposed publicly. Access it via port-forwarding:
 #   kubectl port-forward svc/haxelib-minio-r2 9001:9001
 # then open http://localhost:9001 and log in with the R2 access key id / secret
