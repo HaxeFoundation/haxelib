@@ -38,24 +38,8 @@ haxelib_global
 
 .devcontainer/workspace
 
-
 # CMake
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-
-# VisualStudio
-*.vcxproj
-*.vcxproj.filters
-*.sln
-Win32
-haxelib.dir
+build
 
 # unit testing
 .unittest

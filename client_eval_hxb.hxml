@@ -1,0 +1,4 @@
+each.hxml
+--interp
+haxelib.client.Main
+--hxb bin/haxelib_eval.hxb
