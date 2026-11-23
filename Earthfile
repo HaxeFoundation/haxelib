@@ -70,6 +70,8 @@ devcontainer-base:
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
 
+    RUN echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
+
     ARG INSTALL_ZSH="false"
     ARG UPGRADE_PACKAGES="true"
     ARG ENABLE_NONROOT_DOCKER="true"
@@ -459,6 +461,8 @@ tora:
 
 haxelib-server:
     FROM phusion/baseimage:jammy-1.0.5
+
+    RUN echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
 
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
