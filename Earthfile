@@ -40,6 +40,18 @@ neko:
     RUN tar --strip-components=1 -xf "$FILENAME" -C neko
     SAVE ARTIFACT neko/*
 
+INSTALL_NEKO:
+    COMMAND
+    ARG NEKOPATH=/neko
+    COPY +neko/* "$NEKOPATH/"
+    ARG PREFIX=/usr/local
+    RUN bash -c "ln -s \"$NEKOPATH\"/{neko,nekoc,nekoml,nekotools} \"$PREFIX/bin/\""
+    RUN bash -c "ln -s \"$NEKOPATH\"/libneko.* \"$PREFIX/lib/\""
+    RUN bash -c "ln -s \"$NEKOPATH\"/neko.h \"$PREFIX/include/\""
+    RUN mkdir -p "$PREFIX/lib/neko/"
+    RUN bash -c "ln -s \"$NEKOPATH\"/*.ndll \"$PREFIX/lib/neko/\""
+    RUN ldconfig
+
 haxe:
     ARG FILENAME=haxe.tar.gz
     ARG HAXE_VERSION=4.3.7
@@ -57,6 +69,8 @@ devcontainer-base:
 
     # Avoid warnings by switching to noninteractive
     ENV DEBIAN_FRONTEND=noninteractive
+
+    RUN echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
 
     ARG INSTALL_ZSH="false"
     ARG UPGRADE_PACKAGES="true"
@@ -100,16 +114,6 @@ devcontainer-base:
             && apt-get update \
             && apt-get -y install mysql-client=5.7.*; \
         fi \
-        # install kubectl
-        && curl -fsSL --retry 3 https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor | apt-key add - \
-        && echo "deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee -a /etc/apt/sources.list.d/kubernetes.list \
-        && apt-get update \
-        && apt-get -y install --no-install-recommends kubectl=1.29.* \
-        # install helm
-        && curl -fsSL --retry 3 https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null \
-        && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list \
-        && apt-get update \
-        && apt-get -y install --no-install-recommends helm \
         #
         # Clean up
         && apt-get autoremove -y \
@@ -117,11 +121,7 @@ devcontainer-base:
         && rm -rf /var/lib/apt/lists/*
 
     # install neko
-    COPY +neko/neko /usr/bin/neko
-    COPY +neko/nekotools /usr/bin/nekotools
-    COPY +neko/libneko.so* /usr/lib/
-    RUN mkdir -p /usr/lib/neko/
-    COPY +neko/*.ndll /usr/lib/neko/
+    DO +INSTALL_NEKO
     RUN neko -version
 
     # install haxe
@@ -147,47 +147,30 @@ devcontainer-base:
     WORKDIR /workspace
 
 # Usage:
-# RUN /aws/install
-awscli:
-    FROM +devcontainer-base
-    RUN curl -fsSL --retry 3 "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "/tmp/awscliv2.zip" \
-        && unzip -qq /tmp/awscliv2.zip -d / \
-        && rm /tmp/awscliv2.zip
-    SAVE ARTIFACT /aws
-
-# Usage:
-# COPY +doctl/doctl /usr/local/bin/
-doctl:
+# COPY +mise/mise /usr/local/bin/
+mise:
+    # minisign is not available in jammy
+    FROM ubuntu:noble
     ARG TARGETARCH
-    ARG DOCTL_VERSION=1.92.1
-    RUN curl -fsSL --retry 3 "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-${TARGETARCH}.tar.gz" | tar xvz -C /usr/local/bin/
-    SAVE ARTIFACT /usr/local/bin/doctl
-
-# Usage:
-# COPY +tfenv/tfenv /tfenv
-# RUN ln -s /tfenv/bin/* /usr/local/bin
-tfenv:
-    FROM +devcontainer-base
-    RUN git clone --depth 1 https://github.com/tfutils/tfenv.git /tfenv
-    SAVE ARTIFACT /tfenv
-
-# Usage:
-# COPY +terraform-ls/terraform-ls /usr/local/bin/
-terraform-ls:
-    ARG TARGETARCH
-    ARG VERSION=0.30.3
-    RUN curl -fsSL --retry 3 -o terraform-ls.zip "https://releases.hashicorp.com/terraform-ls/${VERSION}/terraform-ls_${VERSION}_linux_${TARGETARCH}.zip" \
-        && unzip -qq terraform-ls.zip \
-        && mv ./terraform-ls /usr/local/bin/ \
-        && rm terraform-ls.zip
-    SAVE ARTIFACT /usr/local/bin/terraform-ls
-
-terraform:
-    FROM +tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin
-    ARG --required TERRAFORM_VERSION
-    RUN tfenv install "$TERRAFORM_VERSION"
-    RUN tfenv use "$TERRAFORM_VERSION"
+    # Should be at least the version that wrote mise.lock (see lockfile_version)
+    ARG VERSION=2026.11.3 # https://github.com/jdx/mise/releases
+    RUN apt-get update \
+        && apt-get install -y --no-install-recommends ca-certificates curl minisign \
+        && rm -rf /var/lib/apt/lists/*
+    # https://mise.jdx.dev/installing-mise.html#github-releases
+    RUN case "$TARGETARCH" in \
+            amd64) mise_platform=linux-x64 ;; \
+            arm64) mise_platform=linux-arm64 ;; \
+            *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+        esac \
+        && base="https://github.com/jdx/mise/releases/download/v${VERSION}" \
+        && curl -fsSL --retry 3 -o mise "$base/mise-v${VERSION}-${mise_platform}" \
+        && curl -fsSL --retry 3 -O "$base/SHASUMS256.txt" -O "$base/SHASUMS256.txt.minisig" \
+        && minisign -Vm SHASUMS256.txt -P RWTC3g8W3z4RZK3V3qv7fa1QY4JEWyBtqIHW+85QlJpZc5yG+uNYNBSZ \
+        && grep " ./mise-v${VERSION}-${mise_platform}$" SHASUMS256.txt | sed 's| ./mise-.*| mise|' | sha256sum -c \
+        && install -m 755 mise /usr/local/bin/mise \
+        && /usr/local/bin/mise --version
+    SAVE ARTIFACT /usr/local/bin/mise
 
 # Usage:
 # COPY +tfk8s/tfk8s /usr/local/bin/
@@ -195,18 +178,6 @@ tfk8s:
     FROM golang:1.17
     RUN go install github.com/jrhouston/tfk8s@v0.1.7
     SAVE ARTIFACT /go/bin/tfk8s
-
-# Usage:
-# COPY +earthly/earthly /usr/local/bin/
-# RUN earthly bootstrap --no-buildkit --with-autocomplete
-earthly:
-    FROM +devcontainer-base
-    ARG --required TARGETARCH
-    # Keep in sync with the earthly versions in .devcontainer/docker-compose.yml and .github/workflows/ci-dev.yml
-    ARG VERSION=0.8.16
-    RUN curl -fsSL --retry 3 https://github.com/earthly/earthly/releases/download/v${VERSION}/earthly-linux-${TARGETARCH} -o /usr/local/bin/earthly \
-        && chmod +x /usr/local/bin/earthly
-    SAVE ARTIFACT /usr/local/bin/earthly
 
 docker-compose:
     ARG TARGETARCH
@@ -220,6 +191,8 @@ docker-compose:
         && chmod +x /usr/local/bin/docker-compose
     SAVE ARTIFACT /usr/local/bin/docker-compose
 
+# rclone for the +haxelib-server image.
+# The devcontainer gets rclone from mise instead.
 rclone:
     FROM +devcontainer-base
     ARG TARGETARCH
@@ -269,6 +242,7 @@ haxelib-deps:
     USER $USERNAME
     COPY --chown=$USER_UID:$USER_GID libs.hxml run.n .
     COPY --chown=$USER_UID:$USER_GID lib/record-macros lib/record-macros
+    COPY --chown=$USER_UID:$USER_GID lib/argon2 lib/argon2
     RUN mkdir -p haxelib_global
     RUN neko run.n setup haxelib_global
     RUN haxe libs.hxml && rm haxelib_global/*.zip
@@ -298,37 +272,26 @@ dts2hx-externs:
 devcontainer:
     FROM +devcontainer-base
 
-    # AWS cli
-    COPY +awscli/aws /aws
-    RUN /aws/install
-
-    # doctl
-    COPY +doctl/doctl /usr/local/bin/
-
-    # tfenv
-    COPY +tfenv/tfenv /tfenv
-    RUN ln -s /tfenv/bin/* /usr/local/bin/
-    COPY --chown=$USER_UID:$USER_GID terraform/.terraform-version "/home/$USERNAME/"
-    RUN tfenv install "$(cat /home/$USERNAME/.terraform-version)"
-    RUN tfenv use "$(cat /home/$USERNAME/.terraform-version)"
-    COPY +terraform-ls/terraform-ls /usr/local/bin/
-
     COPY +tfk8s/tfk8s /usr/local/bin/
 
-    # Install earthly
-    COPY +earthly/earthly /usr/local/bin/
-    RUN earthly bootstrap --no-buildkit --with-autocomplete
-
-    # Install rclone
-    COPY +rclone/rclone /usr/local/bin/
-    COPY +rclone/bash_completion /etc/bash_completion.d/rclone
-
-    # Install skeema
-    RUN curl -fsSL --retry 3 -o skeema.deb https://github.com/skeema/skeema/releases/download/v1.7.0/skeema_${TARGETARCH}.deb \
-        && apt-get install -y ./skeema.deb \
-        && rm ./skeema.deb
+    # Install mise
+    # Tools are installed to a fixed location instead of $HOME,
+    # because GitHub Actions overrides HOME (and runs as root) in container jobs.
+    # The system config makes the tools available outside of the project directory too.
+    COPY +mise/mise /usr/local/bin/
+    ENV MISE_DATA_DIR="/mise"
+    ENV PATH="$MISE_DATA_DIR/shims:$PATH"
+    # /workspace for the devcontainer, /__w for GitHub Actions checkouts
+    ENV MISE_TRUSTED_CONFIG_PATHS="/workspace:/__w"
+    RUN install -d -o "$USERNAME" -g "$USERNAME" "$MISE_DATA_DIR"
+    COPY mise.toml /etc/mise/config.toml
+    COPY mise.lock /etc/mise/mise.lock
+    # the source files may be private (e.g. mise writes mise.lock as 0600)
+    RUN chmod 644 /etc/mise/config.toml /etc/mise/mise.lock
 
     USER $USERNAME
+
+    RUN mise install --locked
 
     COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
     VOLUME /workspace/node_modules
@@ -344,12 +307,14 @@ devcontainer:
     COPY --chown=$USER_UID:$USER_GID .devcontainer/direnv.toml /home/$USERNAME/.config/direnv/config.toml
 
     # Config bash
-    RUN echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
-        && echo 'complete -C terraform terraform' >> ~/.bashrc \
-        && echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc \
+    RUN echo 'eval "$(mise activate bash)"' >> ~/.bashrc \
+        && echo 'eval "$(direnv hook bash)"' >> ~/.bashrc \
+        && echo 'complete -C tofu tofu' >> ~/.bashrc \
+        && echo 'complete -C aws_completer aws' >> ~/.bashrc \
         && echo 'source <(helm completion bash)' >> ~/.bashrc \
         && echo 'source <(kubectl completion bash)' >> ~/.bashrc \
-        && echo 'source <(doctl completion bash)' >> ~/.bashrc
+        && echo 'source <(doctl completion bash)' >> ~/.bashrc \
+        && echo 'source <(rclone completion bash -)' >> ~/.bashrc
 
     # Create kubeconfig for storing current-context,
     # such that the project kubeconfig_* files wouldn't be touched.
@@ -359,6 +324,9 @@ devcontainer:
 
     # config haxelib for root
     RUN haxelib setup /workspace/haxelib_global
+
+    # earthly is installed by mise; bootstrap needs root to install the bash completion
+    RUN earthly bootstrap --no-buildkit --with-autocomplete
 
     ARG GIT_SHA
     ENV GIT_SHA="$GIT_SHA"
@@ -386,11 +354,30 @@ aws-ndll:
         && cp /workspace/haxelib_global/aws-sdk-neko/*/ndll/$ndllDir/aws.ndll /tmp/aws.ndll
     SAVE ARTIFACT /tmp/aws.ndll
 
+argon2-ndll:
+    # install build-essential, cmake, and neko
+    RUN apt-get update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential \
+            cmake \
+        && rm -r /var/lib/apt/lists/*
+
+    DO +INSTALL_NEKO
+    RUN neko -version
+
+    COPY lib/argon2 lib/argon2
+    RUN mkdir lib/argon2/build
+    RUN cmake -B lib/argon2/build -S lib/argon2
+    RUN make -C lib/argon2/build Argon2
+    RUN make -C lib/argon2/build
+    SAVE ARTIFACT lib/argon2/build/argon2.ndll
+
 haxelib-server-builder:
     FROM haxe:4.3
 
     WORKDIR /workspace
     COPY lib/record-macros lib/record-macros
+    COPY lib/argon2 lib/argon2
     COPY --chown=$USER_UID:$USER_GID +node-modules-dev/node_modules node_modules
     COPY --chown=$USER_UID:$USER_GID +dts2hx-externs/dts2hx-generated lib/dts2hx-generated
     COPY --chown=$USER_UID:$USER_GID +haxelib-deps/haxelib_global haxelib_global
@@ -475,6 +462,8 @@ tora:
 haxelib-server:
     FROM phusion/baseimage:jammy-1.0.5
 
+    RUN echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
+
     RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
         && add-apt-repository ppa:haxe/releases -y \
         && apt-get update && apt-get upgrade -y \
@@ -507,8 +496,9 @@ haxelib-server:
         } > /etc/apache2/mods-enabled/neko.conf \
         && apachectl stop
 
-    COPY +aws-ndll/aws.ndll /tmp/aws.ndll
+    COPY +aws-ndll/aws.ndll +argon2-ndll/argon2.ndll /tmp/
     RUN mv /tmp/aws.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/aws.ndll"
+    RUN mv /tmp/argon2.ndll "/usr/lib/$(uname -m)-linux-gnu/neko/argon2.ndll"
 
     # Need rclone to do the upload to R2
     COPY +rclone/rclone /usr/local/bin/
@@ -576,6 +566,8 @@ ci-tests:
     COPY hx3compat hx3compat
     COPY lib/node-sys-db lib/node-sys-db
     COPY lib/record-macros lib/record-macros
+    COPY lib/argon2 lib/argon2
+    COPY +argon2-ndll/argon2.ndll argon2.ndll
     COPY src src
     COPY www www
     COPY test test
@@ -646,22 +638,3 @@ gh-ost-image:
     RUN apt-get install ./gh-ost.deb \
         && rm ./gh-ost.deb
     SAVE IMAGE --push haxe/gh-ost:$GHOST_VERSION
-
-curl-file:
-    ARG --required URL
-    ARG --required FILENAME
-    RUN curl -fsSL --retry 3 "$URL" -o "$FILENAME"
-    SAVE ARTIFACT "$FILENAME"
-
-ghostferry-copydb-image:
-    FROM ubuntu:jammy
-    ARG GHOSTFERRY_COMMIT="ce94688"
-    ARG GHOSTFERRY_BUILD="1.1.0+20220112142231+ce94688"
-    COPY (+curl-file/* --URL="https://github.com/Shopify/ghostferry/releases/download/release-${GHOSTFERRY_COMMIT}/ghostferry-copydb_${GHOSTFERRY_BUILD}.deb" --FILENAME=ghostferry-copydb.deb) .
-    RUN apt-get install ./ghostferry-copydb.deb \
-        && rm ./ghostferry-copydb.deb
-    SAVE IMAGE --push haxe/ghostferry-copydb:$GHOSTFERRY_COMMIT
-
-rds-pem:
-    RUN curl -fsSLO --retry 3 https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem
-    SAVE ARTIFACT --keep-ts eu-west-1-bundle.pem AS LOCAL rds-eu-west-1-bundle.pem

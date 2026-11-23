@@ -1,9 +1,9 @@
 variable "HAXELIB_SERVER_IMAGE_DEVELOPMENT" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "HAXELIB_SERVER_IMAGE_MASTER" {
-  type = string
+  type    = string
   default = null
 }

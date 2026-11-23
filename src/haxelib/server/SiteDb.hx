@@ -32,6 +32,7 @@ class User extends Object {
 	public var fullname : String;
 	public var email : String;
 	public var pass : String;
+	public var pass2 : Null<String>;
 
 }
 

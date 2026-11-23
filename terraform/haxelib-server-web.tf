@@ -180,14 +180,30 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
             read_only  = true
           }
 
+          # Liveness only checks that Apache accepts TCP connections. The kernel completes the handshake
+          # even when all prefork workers are busy, so a saturated (but alive) Apache is not restarted.
           liveness_probe {
-            http_get {
-              path = "/httpd-status?auto"
+            tcp_socket {
               port = 80
             }
             initial_delay_seconds = 10
             period_seconds        = 15
             timeout_seconds       = 5
+            failure_threshold     = 3
+          }
+
+          # Readiness goes through an Apache worker. When all workers are busy, the pod is taken out of
+          # the Service endpoints until it recovers, instead of being killed.
+          readiness_probe {
+            http_get {
+              path = "/httpd-status?auto"
+              port = 80
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 3
+            success_threshold     = 1
           }
         }
 
@@ -247,6 +263,17 @@ resource "kubernetes_deployment_v1" "do-haxelib-server" {
           args = [
             "copyto", "--verbose", "do:${digitalocean_spaces_bucket.haxelib.name}/legacy/haxelib.db", "/legacy/haxelib.db"
           ]
+
+          # Init containers run before the others, so these don't add to the pod's requests.
+          resources {
+            requests = {
+              cpu    = "10m"
+              memory = "16Mi"
+            }
+            limits = {
+              memory = "128Mi"
+            }
+          }
 
           env {
             name = "RCLONE_CONFIG_DO_ACCESS_KEY_ID"
@@ -349,59 +376,6 @@ resource "kubernetes_service_v1" "do-haxelib-server" {
       name     = "http"
       protocol = "TCP"
       port     = 80
-    }
-  }
-}
-
-resource "kubernetes_ingress_v1" "do-haxelib-server" {
-  for_each = local.haxelib_server.stage
-
-  metadata {
-    name = "haxelib-server-${each.key}"
-    annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
-
-      # Do not force https at ingress-level.
-      # Let the Apache in the haxelib server container handle it.
-      "nginx.ingress.kubernetes.io/ssl-redirect" = false
-
-      # https://nginx.org/en/docs/http/ngx_http_proxy_module.html
-      "nginx.ingress.kubernetes.io/proxy-buffering"       = "on"
-      "nginx.ingress.kubernetes.io/configuration-snippet" = <<-EOT
-        proxy_set_header Cookie "";
-        proxy_cache mycache;
-        proxy_cache_key "$scheme$request_method$host$request_uri";
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        proxy_cache_background_update on;
-        proxy_cache_revalidate on;
-        proxy_cache_lock on;
-        add_header X-Cache-Status $upstream_cache_status;
-      EOT
-    }
-  }
-
-  spec {
-    ingress_class_name = "nginx"
-    tls {
-      hosts       = [each.value.host]
-      secret_name = "haxelib-server-${each.key}-tls"
-    }
-    rule {
-      host = each.value.host
-      http {
-        path {
-          backend {
-            service {
-              name = kubernetes_service_v1.do-haxelib-server[each.key].metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-          path      = "/"
-          path_type = "Prefix"
-        }
-      }
     }
   }
 }

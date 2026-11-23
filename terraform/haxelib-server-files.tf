@@ -49,8 +49,9 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
 
           resources {
             requests = {
-              cpu    = "50m"
-              memory = "100Mi"
+              cpu = "50m"
+              # Measured over 10 days (Nov 2026): p50 23Mi, p99 47Mi.
+              memory = "48Mi"
             }
             limits = {
               memory = "500Mi"
@@ -97,11 +98,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
             value = each.value.HAXELIB_S3BUCKET_ENDPOINT
           }
           env {
-            name  = "HAXELIB_S3BUCKET_MOUNTED_PATH"
-            value = "/var/haxelib-s3fs"
-          }
-
-          env {
             name = "AWS_ACCESS_KEY_ID"
             value_from {
               secret_key_ref {
@@ -124,73 +120,35 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
             value = "us-east-1"
           }
 
-          volume_mount {
-            name              = "pod-haxelib-s3fs"
-            mount_path        = "/var/haxelib-s3fs"
-            mount_propagation = "HostToContainer"
-            read_only         = false
-          }
-
+          # Liveness only checks that Apache accepts TCP connections. The kernel completes the handshake
+          # even when all prefork workers are busy, so a saturated (but alive) Apache is not restarted.
           liveness_probe {
-            http_get {
-              path = "/httpd-status?auto"
+            tcp_socket {
               port = 80
             }
             initial_delay_seconds = 10
             period_seconds        = 15
             timeout_seconds       = 5
+            failure_threshold     = 3
+          }
+
+          # Readiness goes through an Apache worker. When all workers are busy, the pod is taken out of
+          # the Service endpoints until it recovers, instead of being killed.
+          readiness_probe {
+            http_get {
+              path = "/httpd-status?auto"
+              port = 80
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 3
+            success_threshold     = 1
           }
         }
 
-        container {
-          image = "haxe/s3fs:latest"
-          name  = "s3fs"
-          command = [
-            "s3fs", each.value.HAXELIB_S3BUCKET, "/var/s3fs",
-            "-f",
-            "-o", "url=${each.value.bucket_gateway_url}",
-            "-o", "use_path_request_style",
-            "-o", "umask=022,uid=33,gid=33", # 33 = www-data
-            "-o", "allow_other",
-          ]
-
-          security_context {
-            privileged = true
-          }
-
-          resources {
-            requests = {
-              cpu    = "50m"
-              memory = "50Mi"
-            }
-          }
-
-          env {
-            name = "AWSACCESSKEYID"
-            value_from {
-              secret_key_ref {
-                name = each.value.AWS_ACCESS_KEY_ID.name
-                key  = each.value.AWS_ACCESS_KEY_ID.key
-              }
-            }
-          }
-          env {
-            name = "AWSSECRETACCESSKEY"
-            value_from {
-              secret_key_ref {
-                name = each.value.AWS_SECRET_ACCESS_KEY.name
-                key  = each.value.AWS_SECRET_ACCESS_KEY.key
-              }
-            }
-          }
-
-          volume_mount {
-            name              = "pod-haxelib-s3fs"
-            mount_path        = "/var/s3fs"
-            mount_propagation = "Bidirectional"
-            read_only         = false
-          }
-        }
+        # No s3fs sidecar: /files/3.0 is always redirected/proxied to HAXELIB_CDN
+        # (see www/.htaccess and HomeController.downloadFile), so the bucket mount is never read.
 
         image_pull_secrets {
           name = local.imagePullSecrets
@@ -198,11 +156,6 @@ resource "kubernetes_deployment_v1" "do-haxelib-server-files" {
 
         security_context {
           fs_group = 33 # www-data
-        }
-
-        volume {
-          name = "pod-haxelib-s3fs"
-          empty_dir {}
         }
       }
     }
@@ -243,46 +196,6 @@ resource "kubernetes_service_v1" "do-haxelib-server-files" {
       name     = "http"
       protocol = "TCP"
       port     = 80
-    }
-  }
-}
-
-resource "kubernetes_ingress_v1" "do-haxelib-server-files" {
-  for_each = local.haxelib_server.stage
-
-  metadata {
-    name = "haxelib-server-${each.key}-files"
-    annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-production"
-
-      # Do not force https at ingress-level.
-      # Let the Apache in the haxelib server container handle it.
-      "nginx.ingress.kubernetes.io/ssl-redirect" = false
-    }
-  }
-
-  spec {
-    ingress_class_name = "nginx"
-    tls {
-      hosts       = [each.value.host]
-      secret_name = "haxelib-server-${each.key}-tls"
-    }
-    rule {
-      host = each.value.host
-      http {
-        path {
-          backend {
-            service {
-              name = kubernetes_service_v1.do-haxelib-server-files[each.key].metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-          path      = "/files/3.0"
-          path_type = "Prefix"
-        }
-      }
     }
   }
 }

@@ -1,0 +1,34 @@
+name: Skeema diff
+description: >
+  Ensure the production database schema matches the skeema files.
+  Requires the repo to be checked out and DIGITALOCEAN_ACCESS_TOKEN to be set (for kubectl).
+runs:
+  using: composite
+  steps:
+    - name: Ensure the production database schema matches the skeema files
+      shell: bash
+      working-directory: skeema
+      run: |
+        set -euo pipefail
+        export KUBECONFIG="$GITHUB_WORKSPACE/terraform/kubeconfig_do"
+
+        # read-only user, see terraform/mysql-skeema.tf
+        PRODUCTION_DB_USER="$(kubectl get secret haxelib-mysql-57-skeema -o jsonpath='{.data.username}' | base64 -d)"
+        PRODUCTION_DB_PASS="$(kubectl get secret haxelib-mysql-57-skeema -o jsonpath='{.data.password}' | base64 -d)"
+        echo "::add-mask::$PRODUCTION_DB_PASS"
+        export PRODUCTION_DB_USER PRODUCTION_DB_PASS
+
+        log="$RUNNER_TEMP/mysql-port-forward.log"
+        kubectl port-forward svc/haxelib-mysql-57-primary 3306:3306 > "$log" 2>&1 &
+        port_forward_pid=$!
+        trap 'kill "$port_forward_pid"' EXIT
+        for i in $(seq 30); do
+          if grep -q 'Forwarding from' "$log"; then break; fi
+          if [ "$i" = 30 ]; then cat "$log"; exit 1; fi
+          sleep 1
+        done
+
+        # `skeema diff` never modifies the database.
+        # --allow-unsafe only makes it print unsafe changes.
+        # It exits with non-zero if there is any difference.
+        skeema diff production --allow-unsafe

@@ -52,8 +52,9 @@ resource "kubernetes_deployment_v1" "do-haxelib-minio-r2" {
 
           resources {
             requests = {
-              cpu    = "100m"
-              memory = "200Mi"
+              cpu = "100m"
+              # Measured over 10 days (Nov 2026): p50 114Mi, p99 347Mi.
+              memory = "128Mi"
             }
             limits = {
               memory = "1Gi"
@@ -157,53 +158,40 @@ resource "kubernetes_service_v1" "do-haxelib-minio-r2" {
   }
 }
 
-resource "kubernetes_ingress_v1" "do-haxelib-minio-r2" {
+# Only the s3fs sidecars of haxelib-server use the gateway (bucket_gateway_url in haxelib-server.tf).
+# Its root credentials are the R2 keys, so nothing else should reach it.
+# The console (9001) is reachable only via `kubectl port-forward`, which this policy doesn't affect.
+resource "kubernetes_network_policy_v1" "do-haxelib-minio-r2" {
   metadata {
-    name = "do-haxelib-minio-r2"
-    annotations = {
-      "nginx.ingress.kubernetes.io/auth-url"    = "https://do-oauth2-proxy.haxe.org/oauth2/auth"
-      "nginx.ingress.kubernetes.io/auth-signin" = "https://do-oauth2-proxy.haxe.org/oauth2/sign_in?rd=https://$host$request_uri"
-      "cert-manager.io/cluster-issuer"          = "letsencrypt-production"
-    }
+    name = "haxelib-minio-r2"
   }
 
   spec {
-    ingress_class_name = "nginx"
-    tls {
-      hosts       = ["do-haxelib-minio-r2-console.haxe.org"]
-      secret_name = "do-haxelib-minio-r2-console-tls"
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"     = "minio"
+        "app.kubernetes.io/instance" = "haxelib-minio-r2"
+      }
     }
-    rule {
-      host = "do-haxelib-minio-r2-console.haxe.org"
-      http {
-        path {
-          backend {
-            service {
-              name = kubernetes_service_v1.do-haxelib-minio-r2.metadata[0].name
-              port {
-                number = 9001
-              }
-            }
+    policy_types = ["Ingress"]
+
+    ingress {
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "haxelib-server"
           }
-          path = "/"
         }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "9000"
       }
     }
   }
 }
 
-resource "aws_route53_record" "do-haxelib-minio-r2-console" {
-  zone_id = local.haxe_org_zoneid
-  name    = "do-haxelib-minio-r2-console.haxe.org"
-  type    = "CNAME"
-  ttl     = "60"
-  records = ["do-k8s.haxe.org"]
-}
-
-resource "cloudflare_record" "do-haxelib-minio-r2-console" {
-  zone_id = local.cloudflare.zones.haxe-org.zone_id
-  name    = "do-haxelib-minio-r2-console"
-  type    = "CNAME"
-  ttl     = "60"
-  value   = "do-k8s.haxe.org"
-}
+# The MinIO console is not exposed publicly. Access it via port-forwarding:
+#   kubectl port-forward svc/haxelib-minio-r2 9001:9001
+# then open http://localhost:9001 and log in with the R2 access key id / secret
+# (MINIO_ROOT_USER / MINIO_ROOT_PASSWORD above).
