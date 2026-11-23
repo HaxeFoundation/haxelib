@@ -74,7 +74,7 @@ Folders:
 * /bin/: The compile target for building the haxelib client, legacy client, and others.
 * /www/: The compile target (and supporting files) for the haxelib website (including legacy server)
 * /test/: Source code and files for testings.
-* /terraform/: Terraform module that defines the haxelib server (lib.haxe.org) infrastructure.
+* /terraform/: OpenTofu module that defines the haxelib server (lib.haxe.org) infrastructure.
 
 Other files:
 

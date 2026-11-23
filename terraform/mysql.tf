@@ -139,6 +139,65 @@ resource "helm_release" "haxelib-mysql-57" {
   }
 }
 
+# Only the pods that use the database can connect to it.
+# Not affected: kubelet probes (Cilium allows traffic from the local node),
+# and `kubectl port-forward` (e.g. skeema diff in CI), which connects from inside the pod.
+resource "kubernetes_network_policy_v1" "haxelib-mysql-57" {
+  metadata {
+    name = "haxelib-mysql-57"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/name"     = "mysql"
+        "app.kubernetes.io/instance" = "haxelib-mysql-57"
+      }
+    }
+    policy_types = ["Ingress"]
+
+    ingress {
+      # haxelib-server (web, api, files; dev and prod)
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "haxelib-server"
+          }
+        }
+      }
+      # kubernetes_cron_job_v1.mysqldump (mysqldump.tf)
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name" = "mysqldump"
+          }
+        }
+      }
+      # kubernetes_job_v1.haxelib-mysql-57-skeema-user (mysql-skeema.tf). The label is set by Kubernetes.
+      from {
+        pod_selector {
+          match_labels = {
+            "batch.kubernetes.io/job-name" = "haxelib-mysql-57-skeema-user"
+          }
+        }
+      }
+      # Replication, in case secondaries are added.
+      from {
+        pod_selector {
+          match_labels = {
+            "app.kubernetes.io/name"     = "mysql"
+            "app.kubernetes.io/instance" = "haxelib-mysql-57"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "3306"
+      }
+    }
+  }
+}
+
 output "mysql-root-password" {
   value = random_password.haxelib-mysql-57-root-password.result
 

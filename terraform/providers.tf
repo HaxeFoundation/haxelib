@@ -25,19 +25,15 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.5"
     }
-    mysql = {
-      source  = "winebarrel/mysql"
-      version = "~> 1.10"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.3"
     }
   }
   backend "s3" {
-    bucket         = "haxe-terraform"
-    key            = "haxelib.tfstate"
-    dynamodb_table = "haxe-terraform"
+    bucket       = "haxe-terraform"
+    key          = "haxelib.tfstate"
+    use_lockfile = true
     # AWS_DEFAULT_REGION
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
@@ -48,9 +44,8 @@ data "terraform_remote_state" "previous" {
   backend = "s3"
 
   config = {
-    bucket         = "haxe-terraform"
-    key            = "haxelib.tfstate"
-    dynamodb_table = "haxe-terraform"
+    bucket = "haxe-terraform"
+    key    = "haxelib.tfstate"
     # AWS_DEFAULT_REGION
     # AWS_ACCESS_KEY_ID
     # AWS_SECRET_ACCESS_KEY
