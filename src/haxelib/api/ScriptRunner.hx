@@ -1,5 +1,6 @@
 package haxelib.api;
 
+import haxe.io.Path;
 import sys.FileSystem;
 
 import haxelib.Data.DependencyVersion;
@@ -75,6 +76,7 @@ class ScriptError extends haxe.Exception {
 class ScriptRunner {
 	static final HAXELIB_RUN = "HAXELIB_RUN";
 	static final HAXELIB_RUN_NAME = "HAXELIB_RUN_NAME";
+	static final EXTRA_RUN_PARAMS = "extraRunParams.hxml";
 
 	/**
 		Run `library`, with `callData`.
@@ -132,8 +134,9 @@ class ScriptRunner {
 			case Script(main, name, version, dependencies):
 				final isHaxe4 = SemVer.compare(getCompilerVersion(), SemVer.ofString('4.0.0')) >= 0;
 				final useGlobalRepo = isHaxe4 && callData.useGlobalRepo;
+				final hasExtraParams = FileSystem.exists(Path.join([callData.dir, EXTRA_RUN_PARAMS]));
 
-				final callArgs = generateScriptArgs(main, name, version, dependencies, useGlobalRepo);
+				final callArgs = generateScriptArgs(main, name, version, dependencies, useGlobalRepo, hasExtraParams);
 				for (arg in callData.args)
 					callArgs.push(arg);
 				callArgs.push(callData.dir);
@@ -141,7 +144,8 @@ class ScriptRunner {
 		}
 	}
 
-	static function generateScriptArgs(main:String, name:ProjectName, version:VersionOrDev, dependencies:Dependencies, useGlobalRepo:Bool):Array<String> {
+	static function generateScriptArgs(main:String, name:ProjectName, version:VersionOrDev, dependencies:Dependencies, useGlobalRepo:Bool,
+			hasExtraParams):Array<String> {
 		final args = [];
 
 		function addLib(data:String):Void {
@@ -157,6 +161,9 @@ class ScriptRunner {
 
 		for (d in dependencies)
 			addLib(d);
+
+		if (hasExtraParams)
+			args.push(EXTRA_RUN_PARAMS);
 
 		args.push('--run');
 		args.push(main);
